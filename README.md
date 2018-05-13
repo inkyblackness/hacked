@@ -2,6 +2,7 @@
 
 Hacked is the main, graphical editor application as part of the [InkyBlackness](https://inkyblackness.github.io) project, written in [Go](http://golang.org/).
 
+Note: At the moment, this application is being rebuilt from scratch. For a working editor, refer to the `shocked-client` application from InkyBlackness.
 
 ## License
 
