@@ -10,7 +10,8 @@ import (
 // Run creates a native OpenGL window, initializes it with the given function and
 // then runs the event loop until the window shall be closed.
 // The provided deferrer is a channel of tasks that can be injected into the event loop.
-func Run(initializer func(opengl.Window), title string, framesPerSecond float64, deferrer <-chan func()) (err error) {
+// When the channel is closed, the loop is stopped and the window is closed.
+func Run(initializer func(opengl.Window) error, title string, framesPerSecond float64, deferrer <-chan func()) (err error) {
 	runtime.LockOSThread()
 
 	var window *OpenGlWindow
@@ -18,18 +19,26 @@ func Run(initializer func(opengl.Window), title string, framesPerSecond float64,
 	if err != nil {
 		return
 	}
+	defer window.Close()
 
-	initializer(window)
-	for !window.ShouldClose() {
+	err = initializer(window)
+	if err != nil {
+		return
+	}
+
+	stopLoop := false
+	for !window.ShouldClose() && !stopLoop {
 		select {
-		case task := <-deferrer:
-			task()
-		default:
-			time.Sleep(time.Nanosecond)
+		case task, ok := <-deferrer:
+			if ok {
+				task()
+			} else {
+				stopLoop = true
+			}
+		case <-time.After(time.Millisecond):
 		}
 		window.Update()
 	}
-	window.Close()
 
 	return
 }
