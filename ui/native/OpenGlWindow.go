@@ -60,6 +60,7 @@ func NewOpenGlWindow(title string, framesPerSecond float64) (window *OpenGlWindo
 			glfwWindow.SetFramebufferSizeCallback(window.onFramebufferResize)
 			glfwWindow.SetKeyCallback(window.onKey)
 			glfwWindow.SetCharCallback(window.onChar)
+			glfwWindow.SetCloseCallback(window.onClosing)
 		}
 	}
 	return
@@ -72,7 +73,7 @@ func (window *OpenGlWindow) ShouldClose() bool {
 
 // Close closes the window and releases its resources.
 func (window *OpenGlWindow) Close() {
-	window.CallClosing()
+	window.CallClosed()
 	window.glfwWindow.Destroy()
 	glfw.Terminate()
 }
@@ -126,6 +127,15 @@ func (window *OpenGlWindow) SetFullScreen(on bool) {
 	} else {
 		window.glfwWindow.SetMonitor(nil, 0, 0, 1280, 720, glfw.DontCare)
 	}
+}
+
+// SetCloseRequest sets the should-close property of the window.
+func (window *OpenGlWindow) SetCloseRequest(shouldClose bool) {
+	window.glfwWindow.SetShouldClose(shouldClose)
+}
+
+func (window *OpenGlWindow) onClosing(rawWindow *glfw.Window) {
+	window.CallClosing()
 }
 
 func (window *OpenGlWindow) onFramebufferResize(rawWindow *glfw.Window, width int, height int) {

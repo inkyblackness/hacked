@@ -31,7 +31,7 @@ func (app *Application) InitializeWindow(window opengl.Window) (err error) {
 	return
 }
 
-func (app *Application) windowClosing() {
+func (app *Application) onWindowClosed() {
 	if app.guiContext != nil {
 		app.guiContext.Destroy()
 		app.guiContext = nil
@@ -39,7 +39,8 @@ func (app *Application) windowClosing() {
 }
 
 func (app *Application) initWindowCallbacks() {
-	app.window.OnClosing(app.windowClosing)
+	app.window.OnClosing(app.onWindowClosing)
+	app.window.OnClosed(app.onWindowClosed)
 
 	app.window.OnMouseMove(app.onMouseMove)
 	app.window.OnMouseScroll(app.onMouseScroll)
@@ -54,7 +55,15 @@ func (app *Application) render() {
 
 	app.gl.Clear(opengl.COLOR_BUFFER_BIT)
 
-	imgui.ShowDemoWindow(nil)
+	if imgui.BeginMainMenuBar() {
+		if imgui.BeginMenu("File") {
+			if imgui.MenuItem("Exit") {
+				app.window.SetCloseRequest(true)
+			}
+			imgui.EndMenu()
+		}
+	}
+	imgui.EndMainMenuBar()
 
 	app.guiContext.Render()
 }
@@ -66,6 +75,10 @@ func (app *Application) initOpenGl() {
 func (app *Application) initGui() (err error) {
 	app.guiContext, err = gui.NewContext(app.window)
 	return
+}
+
+func (app *Application) onWindowClosing() {
+
 }
 
 func (app *Application) onMouseMove(x, y float32) {

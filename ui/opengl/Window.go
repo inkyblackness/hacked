@@ -4,8 +4,11 @@ import (
 	"github.com/inkyblackness/hacked/ui/input"
 )
 
-// ClosingCallback is the function to clean up resources when the window is being closed.
+// ClosingCallback is the function to handle close requests by the user.
 type ClosingCallback func()
+
+// ClosedCallback is the function to clean up resources when the window is being closed.
+type ClosedCallback func()
 
 // RenderCallback is the function to receive render events. When the callback
 // returns, the window will swap the internal buffer.
@@ -40,8 +43,13 @@ type ModifierCallback func(modifier input.Modifier)
 
 // Window represents an OpenGL render surface.
 type Window interface {
-	// OnClosing registers a callback function which shall be called when the window is being closed.
+	// OnClosing registers a callback function which shall be called when the user requests to close the window.
 	OnClosing(callback ClosingCallback)
+	// OnClosed registers a callback function which shall be called when the window is being closed.
+	OnClosed(callback ClosedCallback)
+	// SetCloseRequest notifies the window system whether the window shall be closed.
+	// It can be called during the callback of OnClosing() to abort a close request by the user.
+	SetCloseRequest(shouldClose bool)
 
 	// OpenGl returns the OpenGL API wrapper for this window.
 	OpenGl() OpenGl

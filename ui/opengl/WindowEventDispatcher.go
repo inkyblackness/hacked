@@ -19,6 +19,7 @@ func (def *keyDeferrer) Modifier(modifier input.Modifier) {
 // WindowEventDispatcher implements the common, basic functionality of WindowEventDispatcher.
 type WindowEventDispatcher struct {
 	CallClosing           ClosingCallback
+	CallClosed            ClosedCallback
 	CallRender            RenderCallback
 	CallResize            ResizeCallback
 	CallOnMouseMove       MouseMoveCallback
@@ -34,6 +35,7 @@ type WindowEventDispatcher struct {
 func NullWindowEventDispatcher() WindowEventDispatcher {
 	return WindowEventDispatcher{
 		CallClosing:           func() {},
+		CallClosed:            func() {},
 		CallRender:            func() {},
 		CallResize:            func(int, int) {},
 		CallOnMouseMove:       func(float32, float32) {},
@@ -54,6 +56,11 @@ func (window *WindowEventDispatcher) StickyKeyListener() input.StickyKeyListener
 // OnClosing implements the WindowEventDispatcher interface.
 func (window *WindowEventDispatcher) OnClosing(callback ClosingCallback) {
 	window.CallClosing = callback
+}
+
+// OnClosed implements the WindowEventDispatcher interface.
+func (window *WindowEventDispatcher) OnClosed(callback ClosedCallback) {
+	window.CallClosed = callback
 }
 
 // OnRender implements the WindowEventDispatcher interface.
