@@ -37,7 +37,8 @@ const (
 // Buffer Types
 // nolint: golint
 const (
-	ARRAY_BUFFER uint32 = 0x8892
+	ARRAY_BUFFER         uint32 = 0x8892
+	ELEMENT_ARRAY_BUFFER        = 0x8893
 )
 
 // Draw Types
@@ -51,8 +52,29 @@ const (
 // Features
 // nolint: golint
 const (
-	BLEND      uint32 = 0x0BE2
-	DEPTH_TEST        = 0x0B71
+	BLEND        uint32 = 0x0BE2
+	DEPTH_TEST          = 0x0B71
+	CULL_FACE           = 0x0B44
+	SCISSOR_TEST        = 0x0C11
+
+	ACTIVE_TEXTURE               = 0x84E0
+	CURRENT_PROGRAM              = 0x8B8D
+	TEXTURE_BINDING_2D           = 0x8069
+	SAMPLER_BINDING              = 0x8919
+	ARRAY_BUFFER_BINDING         = 0x8894
+	ELEMENT_ARRAY_BUFFER_BINDING = 0x8895
+	VERTEX_ARRAY_BINDING         = 0x85B5
+	POLYGON_MODE                 = 0x0B40
+	VIEWPORT                     = 0x0BA2
+	SCISSOR_BOX                  = 0x0C10
+	BLEND_SRC_RGB                = 0x80C9
+	BLEND_DST_RGB                = 0x80C8
+	BLEND_SRC_ALPHA              = 0x80CB
+	BLEND_DST_ALPHA              = 0x80CA
+	BLEND_EQUATION_RGB           = 0x8009
+	BLEND_EQUATION_ALPHA         = 0x883D
+	FRONT_AND_BACK               = 0x0408
+	FILL                         = 0x1B02
 )
 
 // Alpha constants
@@ -61,6 +83,8 @@ const (
 	SRC_ALPHA           uint32 = 0x0302
 	ONE_MINUS_SRC_ALPHA        = 0x0303
 	ONE_MINUS_SRC_COLOR        = 0x0301
+
+	FUNC_ADD = 0x8006
 )
 
 // Data Types

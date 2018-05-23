@@ -52,7 +52,14 @@ func (debugging *debuggingOpenGl) BindBuffer(target uint32, buffer uint32) {
 	debugging.recordExit("BindBuffer")
 }
 
-// BindTexture implements the opengl.OpenGl interface.
+// BindSampler implements the OpenGl interface.
+func (debugging *debuggingOpenGl) BindSampler(unit uint32, sampler uint32) {
+	debugging.recordEntry("BindSampler", unit, sampler)
+	debugging.gl.BindSampler(unit, sampler)
+	debugging.recordExit("BindSampler")
+}
+
+// BindTexture implements the OpenGl interface.
 func (debugging *debuggingOpenGl) BindTexture(target uint32, texture uint32) {
 	debugging.recordEntry("BindTexture", target, texture)
 	debugging.gl.BindTexture(target, texture)
@@ -66,11 +73,32 @@ func (debugging *debuggingOpenGl) BindVertexArray(array uint32) {
 	debugging.recordExit("BindVertexArray")
 }
 
+// BlendEquation implements the OpenGl interface.
+func (debugging *debuggingOpenGl) BlendEquation(mode uint32) {
+	debugging.recordEntry("BlendEquation", mode)
+	debugging.gl.BlendEquation(mode)
+	debugging.recordExit("BlendEquation")
+}
+
+// BlendEquationSeparate implements the OpenGl interface.
+func (debugging *debuggingOpenGl) BlendEquationSeparate(modeRGB uint32, modeAlpha uint32) {
+	debugging.recordEntry("BlendEquationSeparate", modeRGB, modeAlpha)
+	debugging.gl.BlendEquationSeparate(modeRGB, modeAlpha)
+	debugging.recordExit("BlendEquationSeparate")
+}
+
 // BlendFunc implements the OpenGl interface.
 func (debugging *debuggingOpenGl) BlendFunc(sfactor uint32, dfactor uint32) {
 	debugging.recordEntry("BlendFunc", sfactor, dfactor)
 	debugging.gl.BlendFunc(sfactor, dfactor)
 	debugging.recordExit("BlendFunc")
+}
+
+// BlendFuncSeparate implements the OpenGl interface.
+func (debugging *debuggingOpenGl) BlendFuncSeparate(srcRGB uint32, dstRGB uint32, srcAlpha uint32, dstAlpha uint32) {
+	debugging.recordEntry("BlendFuncSeparate", srcRGB, dstRGB, srcAlpha, dstAlpha)
+	debugging.gl.BlendFuncSeparate(srcRGB, dstRGB, srcAlpha, dstAlpha)
+	debugging.recordExit("BlendFuncSeparate")
 }
 
 // BufferData implements the OpenGl interface.
@@ -166,6 +194,13 @@ func (debugging *debuggingOpenGl) DrawArrays(mode uint32, first int32, count int
 	debugging.recordExit("DrawArrays")
 }
 
+// DrawElements implements the OpenGl interface.
+func (debugging *debuggingOpenGl) DrawElements(mode uint32, count int32, elementType uint32, indices uintptr) {
+	debugging.recordEntry("DrawElements", mode, count, elementType, indices)
+	debugging.gl.DrawElements(mode, count, elementType, indices)
+	debugging.recordExit("DrawElements")
+}
+
 // Enable implements the OpenGl interface.
 func (debugging *debuggingOpenGl) Enable(cap uint32) {
 	debugging.recordEntry("Enable", cap)
@@ -227,6 +262,13 @@ func (debugging *debuggingOpenGl) GetError() uint32 {
 	return result
 }
 
+// GetIntegerv implements the OpenGl interface.
+func (debugging *debuggingOpenGl) GetIntegerv(name uint32, data *int32) {
+	debugging.recordEntry("GetIntegerv", name, data)
+	debugging.gl.GetIntegerv(name, data)
+	debugging.recordExit("GetIntegerv")
+}
+
 // GetProgramInfoLog implements the OpenGl interface.
 func (debugging *debuggingOpenGl) GetProgramInfoLog(program uint32) string {
 	debugging.recordEntry("GetProgramInfoLog", program)
@@ -267,6 +309,14 @@ func (debugging *debuggingOpenGl) GetUniformLocation(program uint32, name string
 	return result
 }
 
+// IsEnabled implements the OpenGl interface.
+func (debugging *debuggingOpenGl) IsEnabled(cap uint32) bool {
+	debugging.recordEntry("IsEnabled", cap)
+	result := debugging.gl.IsEnabled(cap)
+	debugging.recordExit("IsEnabled", result)
+	return result
+}
+
 // LinkProgram implements the OpenGl interface.
 func (debugging *debuggingOpenGl) LinkProgram(program uint32) {
 	debugging.recordEntry("LinkProgram", program)
@@ -281,11 +331,25 @@ func (debugging *debuggingOpenGl) PixelStorei(name uint32, param int32) {
 	debugging.recordExit("PixelStorei")
 }
 
+// PolygonMode implements the OpenGl interface.
+func (debugging *debuggingOpenGl) PolygonMode(face uint32, mode uint32) {
+	debugging.recordEntry("PolygonMode", face, mode)
+	debugging.gl.PolygonMode(face, mode)
+	debugging.recordExit("PolygonMode")
+}
+
 // ReadPixels implements the OpenGl interface.
 func (debugging *debuggingOpenGl) ReadPixels(x int32, y int32, width int32, height int32, format uint32, pixelType uint32, pixels interface{}) {
 	debugging.recordEntry("ReadPixels", x, y, width, height, format, pixelType, pixels)
 	debugging.gl.ReadPixels(x, y, width, height, format, pixelType, pixels)
 	debugging.recordExit("ReadPixels")
+}
+
+// Scissor implements the OpenGl interface.
+func (debugging *debuggingOpenGl) Scissor(x, y int32, width, height int32) {
+	debugging.recordEntry("Scissor", x, y, width, height)
+	debugging.gl.Scissor(x, y, width, height)
+	debugging.recordExit("Scissor")
 }
 
 // ShaderSource implements the OpenGl interface.

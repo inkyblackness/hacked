@@ -8,9 +8,13 @@ type OpenGl interface {
 
 	BindAttribLocation(program uint32, index uint32, name string)
 	BindBuffer(target uint32, buffer uint32)
+	BindSampler(unit uint32, sampler uint32)
 	BindTexture(target uint32, texture uint32)
 	BindVertexArray(array uint32)
+	BlendEquation(mode uint32)
+	BlendEquationSeparate(modeRGB uint32, modeAlpha uint32)
 	BlendFunc(sfactor uint32, dfactor uint32)
+	BlendFuncSeparate(srcRGB uint32, dstRGB uint32, srcAlpha uint32, dstAlpha uint32)
 	BufferData(target uint32, size int, data interface{}, usage uint32)
 
 	Clear(mask uint32)
@@ -29,6 +33,7 @@ type OpenGl interface {
 	Disable(cap uint32)
 
 	DrawArrays(mode uint32, first int32, count int32)
+	DrawElements(mode uint32, count int32, elementType uint32, indices uintptr)
 
 	Enable(cap uint32)
 	EnableVertexAttribArray(index uint32)
@@ -40,18 +45,23 @@ type OpenGl interface {
 
 	GetAttribLocation(program uint32, name string) int32
 	GetError() uint32
+	GetIntegerv(name uint32, data *int32)
 	GetShaderInfoLog(shader uint32) string
 	GetShaderParameter(shader uint32, param uint32) int32
 	GetProgramInfoLog(program uint32) string
 	GetProgramParameter(program uint32, param uint32) int32
 	GetUniformLocation(program uint32, name string) int32
 
+	IsEnabled(cap uint32) bool
+
 	LinkProgram(program uint32)
 
 	PixelStorei(name uint32, param int32)
+	PolygonMode(face uint32, mode uint32)
 
 	ReadPixels(x int32, y int32, width int32, height int32, format uint32, pixelType uint32, pixels interface{})
 
+	Scissor(x, y int32, width, height int32)
 	ShaderSource(shader uint32, source string)
 
 	TexImage2D(target uint32, level int32, internalFormat uint32, width int32, height int32,

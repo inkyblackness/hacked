@@ -42,6 +42,11 @@ func (native *OpenGl) BindBuffer(target uint32, buffer uint32) {
 	gl.BindBuffer(target, buffer)
 }
 
+// BindSampler implements the opengl.OpenGl interface.
+func (native *OpenGl) BindSampler(unit uint32, sampler uint32) {
+	gl.BindSampler(unit, sampler)
+}
+
 // BindTexture implements the opengl.OpenGl interface.
 func (native *OpenGl) BindTexture(target uint32, texture uint32) {
 	gl.BindTexture(target, texture)
@@ -52,14 +57,34 @@ func (native *OpenGl) BindVertexArray(array uint32) {
 	gl.BindVertexArray(array)
 }
 
-// BlendFunc implements the OpenGl interface.
+// BlendEquation implements the opengl.OpenGl interface.
+func (native *OpenGl) BlendEquation(mode uint32) {
+	gl.BlendEquation(mode)
+}
+
+// BlendEquationSeparate implements the opengl.OpenGl interface.
+func (native *OpenGl) BlendEquationSeparate(modeRGB uint32, modeAlpha uint32) {
+	gl.BlendEquationSeparate(modeRGB, modeAlpha)
+}
+
+// BlendFunc implements the opengl.OpenGl interface.
 func (native *OpenGl) BlendFunc(sfactor uint32, dfactor uint32) {
 	gl.BlendFunc(sfactor, dfactor)
 }
 
+// BlendFuncSeparate implements the opengl.OpenGl interface.
+func (native *OpenGl) BlendFuncSeparate(srcRGB uint32, dstRGB uint32, srcAlpha uint32, dstAlpha uint32) {
+	gl.BlendFuncSeparate(srcRGB, dstRGB, srcAlpha, dstAlpha)
+}
+
 // BufferData implements the opengl.OpenGl interface.
 func (native *OpenGl) BufferData(target uint32, size int, data interface{}, usage uint32) {
-	gl.BufferData(target, size, gl.Ptr(data), usage)
+	dataPtr, isPtr := data.(unsafe.Pointer)
+	if isPtr {
+		gl.BufferData(target, size, dataPtr, usage)
+	} else {
+		gl.BufferData(target, size, gl.Ptr(data), usage)
+	}
 }
 
 // Clear implements the opengl.OpenGl interface.
@@ -122,6 +147,11 @@ func (native *OpenGl) DrawArrays(mode uint32, first int32, count int32) {
 	gl.DrawArrays(mode, first, count)
 }
 
+// DrawElements implements the opengl.OpenGl interface.
+func (native *OpenGl) DrawElements(mode uint32, count int32, elementType uint32, indices uintptr) {
+	gl.DrawElements(mode, count, elementType, unsafe.Pointer(indices))
+}
+
 // Enable implements the opengl.OpenGl interface.
 func (native *OpenGl) Enable(cap uint32) {
 	gl.Enable(cap)
@@ -168,6 +198,11 @@ func (native *OpenGl) GetError() uint32 {
 	return gl.GetError()
 }
 
+// GetIntegerv implements the opengl.OpenGl interface.
+func (native *OpenGl) GetIntegerv(name uint32, data *int32) {
+	gl.GetIntegerv(name, data)
+}
+
 // GetProgramInfoLog implements the opengl.OpenGl interface.
 func (native *OpenGl) GetProgramInfoLog(program uint32) string {
 	logLength := native.GetProgramParameter(program, gl.INFO_LOG_LENGTH)
@@ -203,6 +238,11 @@ func (native *OpenGl) GetUniformLocation(program uint32, name string) int32 {
 	return gl.GetUniformLocation(program, gl.Str(name+"\x00"))
 }
 
+// IsEnabled implements the OpenGl interface.
+func (native *OpenGl) IsEnabled(cap uint32) bool {
+	return gl.IsEnabled(cap)
+}
+
 // LinkProgram implements the opengl.OpenGl interface.
 func (native *OpenGl) LinkProgram(program uint32) {
 	gl.LinkProgram(program)
@@ -213,9 +253,19 @@ func (native *OpenGl) PixelStorei(name uint32, param int32) {
 	gl.PixelStorei(name, param)
 }
 
+// PolygonMode implements the opengl.OpenGl interface.
+func (native *OpenGl) PolygonMode(face uint32, mode uint32) {
+	gl.PolygonMode(face, mode)
+}
+
 // ReadPixels implements the opengl.OpenGl interface.
 func (native *OpenGl) ReadPixels(x int32, y int32, width int32, height int32, format uint32, pixelType uint32, pixels interface{}) {
 	gl.ReadPixels(x, y, width, height, format, pixelType, gl.Ptr(pixels))
+}
+
+// Scissor implements the opengl.OpenGl interface.
+func (native *OpenGl) Scissor(x, y int32, width, height int32) {
+	gl.Scissor(x, y, width, height)
 }
 
 // ShaderSource implements the opengl.OpenGl interface.
