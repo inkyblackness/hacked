@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/go-gl/gl/v3.2-core/gl"
+	"unsafe"
 )
 
 // OpenGl wraps the native GL API into a common interface.
@@ -207,6 +208,11 @@ func (native *OpenGl) LinkProgram(program uint32) {
 	gl.LinkProgram(program)
 }
 
+// PixelStorei implements the OpenGl interface.
+func (native *OpenGl) PixelStorei(name uint32, param int32) {
+	gl.PixelStorei(name, param)
+}
+
 // ReadPixels implements the opengl.OpenGl interface.
 func (native *OpenGl) ReadPixels(x int32, y int32, width int32, height int32, format uint32, pixelType uint32, pixels interface{}) {
 	gl.ReadPixels(x, y, width, height, format, pixelType, gl.Ptr(pixels))
@@ -223,7 +229,12 @@ func (native *OpenGl) ShaderSource(shader uint32, source string) {
 // TexImage2D implements the opengl.OpenGl interface.
 func (native *OpenGl) TexImage2D(target uint32, level int32, internalFormat uint32, width int32, height int32,
 	border int32, format uint32, xtype uint32, pixels interface{}) {
-	gl.TexImage2D(target, level, int32(internalFormat), width, height, border, format, xtype, gl.Ptr(pixels))
+	ptr, isPointer := pixels.(unsafe.Pointer)
+	if isPointer {
+		gl.TexImage2D(target, level, int32(internalFormat), width, height, border, format, xtype, ptr)
+	} else {
+		gl.TexImage2D(target, level, int32(internalFormat), width, height, border, format, xtype, gl.Ptr(pixels))
+	}
 }
 
 // TexParameteri implements the opengl.OpenGl interface.

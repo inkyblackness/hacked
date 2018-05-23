@@ -274,6 +274,13 @@ func (debugging *debuggingOpenGl) LinkProgram(program uint32) {
 	debugging.recordExit("LinkProgram")
 }
 
+// PixelStorei implements the OpenGl interface.
+func (debugging *debuggingOpenGl) PixelStorei(name uint32, param int32) {
+	debugging.recordEntry("PixelStorei", name, param)
+	debugging.gl.PixelStorei(name, param)
+	debugging.recordExit("PixelStorei")
+}
+
 // ReadPixels implements the OpenGl interface.
 func (debugging *debuggingOpenGl) ReadPixels(x int32, y int32, width int32, height int32, format uint32, pixelType uint32, pixels interface{}) {
 	debugging.recordEntry("ReadPixels", x, y, width, height, format, pixelType, pixels)

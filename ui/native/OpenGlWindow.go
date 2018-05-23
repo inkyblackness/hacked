@@ -72,6 +72,7 @@ func (window *OpenGlWindow) ShouldClose() bool {
 
 // Close closes the window and releases its resources.
 func (window *OpenGlWindow) Close() {
+	window.CallClosing()
 	window.glfwWindow.Destroy()
 	glfw.Terminate()
 }

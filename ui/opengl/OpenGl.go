@@ -48,6 +48,8 @@ type OpenGl interface {
 
 	LinkProgram(program uint32)
 
+	PixelStorei(name uint32, param int32)
+
 	ReadPixels(x int32, y int32, width int32, height int32, format uint32, pixelType uint32, pixels interface{})
 
 	ShaderSource(shader uint32, source string)
