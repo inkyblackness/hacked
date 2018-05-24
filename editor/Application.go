@@ -74,6 +74,11 @@ func (app *Application) initOpenGl() {
 
 func (app *Application) initGui() (err error) {
 	app.guiContext, err = gui.NewContext(app.window)
+	if err != nil {
+		return
+	}
+	app.initGuiStyle()
+
 	return
 }
 
@@ -103,4 +108,45 @@ func (app *Application) reportButtonChange(buttonMask uint32, down bool) {
 			app.guiContext.MouseButtonChanged(buttonIndex, down)
 		}
 	}
+}
+
+func (app *Application) initGuiStyle() {
+	color := func(r, g, b byte, alpha float32) imgui.Vec4 {
+		return imgui.Vec4{X: float32(r) / 255.0, Y: float32(g) / 255.0, Z: float32(b) / 255.0, W: alpha}
+	}
+	colorDoubleFull := func(alpha float32) imgui.Vec4 { return color(0xC4, 0x38, 0x9F, alpha) }
+	colorDoubleDark := func(alpha float32) imgui.Vec4 { return color(0x31, 0x01, 0x38, alpha) }
+
+	colorTripleFull := func(alpha float32) imgui.Vec4 { return color(0x21, 0xFF, 0x43, alpha) }
+	colorTripleDark := func(alpha float32) imgui.Vec4 { return color(0x06, 0xCC, 0x94, alpha) }
+	colorTripleLight := func(alpha float32) imgui.Vec4 { return color(0x51, 0x99, 0x58, alpha) }
+
+	style := imgui.CurrentStyle()
+	style.SetColor(imgui.StyleColorText, colorTripleFull(1.0))
+	style.SetColor(imgui.StyleColorTextDisabled, colorTripleDark(1.0))
+
+	style.SetColor(imgui.StyleColorWindowBg, colorDoubleDark(0.80))
+	style.SetColor(imgui.StyleColorPopupBg, colorDoubleDark(0.75))
+
+	style.SetColor(imgui.StyleColorTitleBgActive, colorTripleLight(1.0))
+	style.SetColor(imgui.StyleColorFrameBg, colorTripleLight(0.54))
+
+	style.SetColor(imgui.StyleColorFrameBgHovered, colorTripleDark(0.4))
+	style.SetColor(imgui.StyleColorFrameBgActive, colorTripleDark(0.67))
+	style.SetColor(imgui.StyleColorCheckMark, colorTripleDark(1.0))
+	style.SetColor(imgui.StyleColorSliderGrabActive, colorTripleDark(1.0))
+	style.SetColor(imgui.StyleColorButton, colorTripleDark(0.4))
+	style.SetColor(imgui.StyleColorButtonHovered, colorTripleDark(1.0))
+	style.SetColor(imgui.StyleColorHeader, colorTripleLight(0.70))
+	style.SetColor(imgui.StyleColorHeaderHovered, colorTripleDark(0.8))
+	style.SetColor(imgui.StyleColorHeaderActive, colorTripleDark(1.0))
+	style.SetColor(imgui.StyleColorResizeGrip, colorTripleDark(0.25))
+	style.SetColor(imgui.StyleColorResizeGripHovered, colorTripleDark(0.67))
+	style.SetColor(imgui.StyleColorResizeGripActive, colorTripleDark(0.95))
+	style.SetColor(imgui.StyleColorTextSelectedBg, colorTripleDark(0.35))
+
+	style.SetColor(imgui.StyleColorSliderGrab, colorDoubleFull(1.0))
+	style.SetColor(imgui.StyleColorButtonActive, colorDoubleFull(1.0))
+	style.SetColor(imgui.StyleColorSeparatorHovered, colorDoubleFull(0.78))
+	style.SetColor(imgui.StyleColorSeparatorActive, colorTripleLight(1.0))
 }
