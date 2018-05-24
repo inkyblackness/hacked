@@ -13,6 +13,8 @@ type Application struct {
 	window opengl.Window
 	gl     opengl.OpenGl
 
+	// GuiScale is applied when the window is initialized.
+	GuiScale   float32
 	guiContext *gui.Context
 }
 
@@ -77,6 +79,7 @@ func (app *Application) initGui() (err error) {
 	if err != nil {
 		return
 	}
+	app.initGuiScaling()
 	app.initGuiStyle()
 
 	return
@@ -108,6 +111,17 @@ func (app *Application) reportButtonChange(buttonMask uint32, down bool) {
 			app.guiContext.MouseButtonChanged(buttonIndex, down)
 		}
 	}
+}
+
+func (app *Application) initGuiScaling() {
+	if app.GuiScale < 0.5 {
+		app.GuiScale = 1.0
+	} else if app.GuiScale > 10.0 {
+		app.GuiScale = 10.0
+	}
+
+	imgui.CurrentStyle().ScaleAllSizes(app.GuiScale)
+	imgui.CurrentIO().SetFontGlobalScale(app.GuiScale)
 }
 
 func (app *Application) initGuiStyle() {
