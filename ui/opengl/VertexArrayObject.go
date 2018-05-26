@@ -1,7 +1,7 @@
 package opengl
 
 // AttributeSetter is a callback function for a VertexArrayObject.
-type AttributeSetter func(OpenGl)
+type AttributeSetter func(OpenGL)
 
 // VertexArrayObject registers common vertex properties which are pre-set
 // before regular rendering loops.
@@ -9,19 +9,19 @@ type AttributeSetter func(OpenGl)
 // either buffered (using a VAO - vertex array object), or replayed for
 // every render call.
 type VertexArrayObject struct {
-	gl      OpenGl
+	gl      OpenGL
 	program uint32
 	handle  uint32
 	setter  AttributeSetter
 }
 
 // NewVertexArrayObject returns a new instance.
-func NewVertexArrayObject(gl OpenGl, program uint32) *VertexArrayObject {
+func NewVertexArrayObject(gl OpenGL, program uint32) *VertexArrayObject {
 	vao := &VertexArrayObject{
 		gl:      gl,
 		program: program,
 		handle:  gl.GenVertexArrays(1)[0],
-		setter:  func(OpenGl) {}}
+		setter:  func(OpenGL) {}}
 
 	return vao
 }

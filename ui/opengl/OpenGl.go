@@ -1,8 +1,8 @@
 package opengl
 
-// OpenGl describes an Open GL interface usable for all environments of this
+// OpenGL describes an Open GL interface usable for all environments of this
 // application.
-type OpenGl interface {
+type OpenGL interface {
 	ActiveTexture(texture uint32)
 	AttachShader(program uint32, shader uint32)
 

@@ -1,18 +1,18 @@
 package opengl
 
-type debuggingOpenGl struct {
-	gl OpenGl
+type debuggingOpenGL struct {
+	gl OpenGL
 
 	onEntry DebuggingEntryFunc
 	onExit  DebuggingExitFunc
 	onError DebuggingErrorFunc
 }
 
-func (debugging *debuggingOpenGl) recordEntry(name string, param ...interface{}) {
+func (debugging *debuggingOpenGL) recordEntry(name string, param ...interface{}) {
 	debugging.onEntry(name, param...)
 }
 
-func (debugging *debuggingOpenGl) recordExit(name string, result ...interface{}) {
+func (debugging *debuggingOpenGL) recordExit(name string, result ...interface{}) {
 	var errorCodes []uint32
 
 	for errorCode := debugging.gl.GetError(); errorCode != NO_ERROR; errorCode = debugging.gl.GetError() {
@@ -24,393 +24,393 @@ func (debugging *debuggingOpenGl) recordExit(name string, result ...interface{})
 	}
 }
 
-// ActiveTexture implements the opengl.OpenGl interface.
-func (debugging *debuggingOpenGl) ActiveTexture(texture uint32) {
+// ActiveTexture implements the opengl.OpenGL interface.
+func (debugging *debuggingOpenGL) ActiveTexture(texture uint32) {
 	debugging.recordEntry("ActiveTexture", texture)
 	debugging.gl.ActiveTexture(texture)
 	debugging.recordExit("ActiveTexture")
 }
 
-// AttachShader implements the OpenGl interface.
-func (debugging *debuggingOpenGl) AttachShader(program uint32, shader uint32) {
+// AttachShader implements the OpenGL interface.
+func (debugging *debuggingOpenGL) AttachShader(program uint32, shader uint32) {
 	debugging.recordEntry("AttachShader", program, shader)
 	debugging.gl.AttachShader(program, shader)
 	debugging.recordExit("AttachShader")
 }
 
-// BindAttribLocation implements the OpenGl interface.
-func (debugging *debuggingOpenGl) BindAttribLocation(program uint32, index uint32, name string) {
+// BindAttribLocation implements the OpenGL interface.
+func (debugging *debuggingOpenGL) BindAttribLocation(program uint32, index uint32, name string) {
 	debugging.recordEntry("BindAttribLocation", program, index, name)
 	debugging.gl.BindAttribLocation(program, index, name)
 	debugging.recordExit("BindAttribLocation")
 }
 
-// BindBuffer implements the OpenGl interface.
-func (debugging *debuggingOpenGl) BindBuffer(target uint32, buffer uint32) {
+// BindBuffer implements the OpenGL interface.
+func (debugging *debuggingOpenGL) BindBuffer(target uint32, buffer uint32) {
 	debugging.recordEntry("BindBuffer", target, buffer)
 	debugging.gl.BindBuffer(target, buffer)
 	debugging.recordExit("BindBuffer")
 }
 
-// BindSampler implements the OpenGl interface.
-func (debugging *debuggingOpenGl) BindSampler(unit uint32, sampler uint32) {
+// BindSampler implements the OpenGL interface.
+func (debugging *debuggingOpenGL) BindSampler(unit uint32, sampler uint32) {
 	debugging.recordEntry("BindSampler", unit, sampler)
 	debugging.gl.BindSampler(unit, sampler)
 	debugging.recordExit("BindSampler")
 }
 
-// BindTexture implements the OpenGl interface.
-func (debugging *debuggingOpenGl) BindTexture(target uint32, texture uint32) {
+// BindTexture implements the OpenGL interface.
+func (debugging *debuggingOpenGL) BindTexture(target uint32, texture uint32) {
 	debugging.recordEntry("BindTexture", target, texture)
 	debugging.gl.BindTexture(target, texture)
 	debugging.recordExit("BindTexture")
 }
 
-// BindVertexArray implements the OpenGl interface.
-func (debugging *debuggingOpenGl) BindVertexArray(array uint32) {
+// BindVertexArray implements the OpenGL interface.
+func (debugging *debuggingOpenGL) BindVertexArray(array uint32) {
 	debugging.recordEntry("BindVertexArray", array)
 	debugging.gl.BindVertexArray(array)
 	debugging.recordExit("BindVertexArray")
 }
 
-// BlendEquation implements the OpenGl interface.
-func (debugging *debuggingOpenGl) BlendEquation(mode uint32) {
+// BlendEquation implements the OpenGL interface.
+func (debugging *debuggingOpenGL) BlendEquation(mode uint32) {
 	debugging.recordEntry("BlendEquation", mode)
 	debugging.gl.BlendEquation(mode)
 	debugging.recordExit("BlendEquation")
 }
 
-// BlendEquationSeparate implements the OpenGl interface.
-func (debugging *debuggingOpenGl) BlendEquationSeparate(modeRGB uint32, modeAlpha uint32) {
+// BlendEquationSeparate implements the OpenGL interface.
+func (debugging *debuggingOpenGL) BlendEquationSeparate(modeRGB uint32, modeAlpha uint32) {
 	debugging.recordEntry("BlendEquationSeparate", modeRGB, modeAlpha)
 	debugging.gl.BlendEquationSeparate(modeRGB, modeAlpha)
 	debugging.recordExit("BlendEquationSeparate")
 }
 
-// BlendFunc implements the OpenGl interface.
-func (debugging *debuggingOpenGl) BlendFunc(sfactor uint32, dfactor uint32) {
+// BlendFunc implements the OpenGL interface.
+func (debugging *debuggingOpenGL) BlendFunc(sfactor uint32, dfactor uint32) {
 	debugging.recordEntry("BlendFunc", sfactor, dfactor)
 	debugging.gl.BlendFunc(sfactor, dfactor)
 	debugging.recordExit("BlendFunc")
 }
 
-// BlendFuncSeparate implements the OpenGl interface.
-func (debugging *debuggingOpenGl) BlendFuncSeparate(srcRGB uint32, dstRGB uint32, srcAlpha uint32, dstAlpha uint32) {
+// BlendFuncSeparate implements the OpenGL interface.
+func (debugging *debuggingOpenGL) BlendFuncSeparate(srcRGB uint32, dstRGB uint32, srcAlpha uint32, dstAlpha uint32) {
 	debugging.recordEntry("BlendFuncSeparate", srcRGB, dstRGB, srcAlpha, dstAlpha)
 	debugging.gl.BlendFuncSeparate(srcRGB, dstRGB, srcAlpha, dstAlpha)
 	debugging.recordExit("BlendFuncSeparate")
 }
 
-// BufferData implements the OpenGl interface.
-func (debugging *debuggingOpenGl) BufferData(target uint32, size int, data interface{}, usage uint32) {
+// BufferData implements the OpenGL interface.
+func (debugging *debuggingOpenGL) BufferData(target uint32, size int, data interface{}, usage uint32) {
 	debugging.recordEntry("BufferData", target, size, data, usage)
 	debugging.gl.BufferData(target, size, data, usage)
 	debugging.recordExit("BufferData")
 }
 
-// Clear implements the OpenGl interface.
-func (debugging *debuggingOpenGl) Clear(mask uint32) {
+// Clear implements the OpenGL interface.
+func (debugging *debuggingOpenGL) Clear(mask uint32) {
 	debugging.recordEntry("Clear", mask)
 	debugging.gl.Clear(mask)
 	debugging.recordExit("Clear")
 }
 
-// ClearColor implements the OpenGl interface.
-func (debugging *debuggingOpenGl) ClearColor(red float32, green float32, blue float32, alpha float32) {
+// ClearColor implements the OpenGL interface.
+func (debugging *debuggingOpenGL) ClearColor(red float32, green float32, blue float32, alpha float32) {
 	debugging.recordEntry("ClearColor", red, green, blue, alpha)
 	debugging.gl.ClearColor(red, green, blue, alpha)
 	debugging.recordExit("ClearColor")
 }
 
-// CompileShader implements the OpenGl interface.
-func (debugging *debuggingOpenGl) CompileShader(shader uint32) {
+// CompileShader implements the OpenGL interface.
+func (debugging *debuggingOpenGL) CompileShader(shader uint32) {
 	debugging.recordEntry("CompileShader", shader)
 	debugging.gl.CompileShader(shader)
 	debugging.recordExit("CompileShader")
 }
 
-// CreateProgram implements the OpenGl interface.
-func (debugging *debuggingOpenGl) CreateProgram() uint32 {
+// CreateProgram implements the OpenGL interface.
+func (debugging *debuggingOpenGL) CreateProgram() uint32 {
 	debugging.recordEntry("CreateProgram")
 	result := debugging.gl.CreateProgram()
 	debugging.recordExit("CreateProgram", result)
 	return result
 }
 
-// CreateShader implements the OpenGl interface.
-func (debugging *debuggingOpenGl) CreateShader(shaderType uint32) uint32 {
+// CreateShader implements the OpenGL interface.
+func (debugging *debuggingOpenGL) CreateShader(shaderType uint32) uint32 {
 	debugging.recordEntry("CreateShader", shaderType)
 	result := debugging.gl.CreateShader(shaderType)
 	debugging.recordExit("CreateShader", result)
 	return result
 }
 
-// DeleteBuffers implements the OpenGl interface.
-func (debugging *debuggingOpenGl) DeleteBuffers(buffers []uint32) {
+// DeleteBuffers implements the OpenGL interface.
+func (debugging *debuggingOpenGL) DeleteBuffers(buffers []uint32) {
 	debugging.recordEntry("DeleteBuffers", buffers)
 	debugging.gl.DeleteBuffers(buffers)
 	debugging.recordExit("DeleteBuffers")
 }
 
-// DeleteProgram implements the OpenGl interface.
-func (debugging *debuggingOpenGl) DeleteProgram(program uint32) {
+// DeleteProgram implements the OpenGL interface.
+func (debugging *debuggingOpenGL) DeleteProgram(program uint32) {
 	debugging.recordEntry("DeleteProgram", program)
 	debugging.gl.DeleteProgram(program)
 	debugging.recordExit("DeleteProgram")
 }
 
-// DeleteShader implements the OpenGl interface.
-func (debugging *debuggingOpenGl) DeleteShader(shader uint32) {
+// DeleteShader implements the OpenGL interface.
+func (debugging *debuggingOpenGL) DeleteShader(shader uint32) {
 	debugging.recordEntry("DeleteShader", shader)
 	debugging.gl.DeleteShader(shader)
 	debugging.recordExit("DeleteShader")
 }
 
-// DeleteTextures implements the OpenGl interface.
-func (debugging *debuggingOpenGl) DeleteTextures(textures []uint32) {
+// DeleteTextures implements the OpenGL interface.
+func (debugging *debuggingOpenGL) DeleteTextures(textures []uint32) {
 	debugging.recordEntry("DeleteTextures", textures)
 	debugging.gl.DeleteTextures(textures)
 	debugging.recordExit("DeleteTextures")
 }
 
-// DeleteVertexArrays implements the OpenGl interface.
-func (debugging *debuggingOpenGl) DeleteVertexArrays(arrays []uint32) {
+// DeleteVertexArrays implements the OpenGL interface.
+func (debugging *debuggingOpenGL) DeleteVertexArrays(arrays []uint32) {
 	debugging.recordEntry("DeleteVertexArrays", arrays)
 	debugging.gl.DeleteVertexArrays(arrays)
 	debugging.recordExit("DeleteVertexArrays")
 }
 
-// Disable implements the OpenGl interface.
-func (debugging *debuggingOpenGl) Disable(cap uint32) {
+// Disable implements the OpenGL interface.
+func (debugging *debuggingOpenGL) Disable(cap uint32) {
 	debugging.recordEntry("Disable", cap)
 	debugging.gl.Disable(cap)
 	debugging.recordExit("Disable")
 }
 
-// DrawArrays implements the OpenGl interface.
-func (debugging *debuggingOpenGl) DrawArrays(mode uint32, first int32, count int32) {
+// DrawArrays implements the OpenGL interface.
+func (debugging *debuggingOpenGL) DrawArrays(mode uint32, first int32, count int32) {
 	debugging.recordEntry("DrawArrays", first, count)
 	debugging.gl.DrawArrays(mode, first, count)
 	debugging.recordExit("DrawArrays")
 }
 
-// DrawElements implements the OpenGl interface.
-func (debugging *debuggingOpenGl) DrawElements(mode uint32, count int32, elementType uint32, indices uintptr) {
+// DrawElements implements the OpenGL interface.
+func (debugging *debuggingOpenGL) DrawElements(mode uint32, count int32, elementType uint32, indices uintptr) {
 	debugging.recordEntry("DrawElements", mode, count, elementType, indices)
 	debugging.gl.DrawElements(mode, count, elementType, indices)
 	debugging.recordExit("DrawElements")
 }
 
-// Enable implements the OpenGl interface.
-func (debugging *debuggingOpenGl) Enable(cap uint32) {
+// Enable implements the OpenGL interface.
+func (debugging *debuggingOpenGL) Enable(cap uint32) {
 	debugging.recordEntry("Enable", cap)
 	debugging.gl.Enable(cap)
 	debugging.recordExit("Enable")
 }
 
-// EnableVertexAttribArray implements the OpenGl interface.
-func (debugging *debuggingOpenGl) EnableVertexAttribArray(index uint32) {
+// EnableVertexAttribArray implements the OpenGL interface.
+func (debugging *debuggingOpenGL) EnableVertexAttribArray(index uint32) {
 	debugging.recordEntry("EnableVertexAttribArray", index)
 	debugging.gl.EnableVertexAttribArray(index)
 	debugging.recordExit("EnableVertexAttribArray")
 }
 
-// GenerateMipmap implements the opengl.OpenGl interface.
-func (debugging *debuggingOpenGl) GenerateMipmap(target uint32) {
+// GenerateMipmap implements the opengl.OpenGL interface.
+func (debugging *debuggingOpenGL) GenerateMipmap(target uint32) {
 	debugging.recordEntry("GenerateMipmap", target)
 	debugging.gl.GenerateMipmap(target)
 	debugging.recordExit("GenerateMipmap")
 }
 
-// GenBuffers implements the OpenGl interface.
-func (debugging *debuggingOpenGl) GenBuffers(n int32) []uint32 {
+// GenBuffers implements the OpenGL interface.
+func (debugging *debuggingOpenGL) GenBuffers(n int32) []uint32 {
 	debugging.recordEntry("GenBuffers", n)
 	result := debugging.gl.GenBuffers(n)
 	debugging.recordExit("GenBuffers", result)
 	return result
 }
 
-// GenTextures implements the opengl.OpenGl interface.
-func (debugging *debuggingOpenGl) GenTextures(n int32) []uint32 {
+// GenTextures implements the opengl.OpenGL interface.
+func (debugging *debuggingOpenGL) GenTextures(n int32) []uint32 {
 	debugging.recordEntry("GenTextures", n)
 	result := debugging.gl.GenTextures(n)
 	debugging.recordExit("GenTextures", result)
 	return result
 }
 
-// GenVertexArrays implements the OpenGl interface.
-func (debugging *debuggingOpenGl) GenVertexArrays(n int32) []uint32 {
+// GenVertexArrays implements the OpenGL interface.
+func (debugging *debuggingOpenGL) GenVertexArrays(n int32) []uint32 {
 	debugging.recordEntry("GenVertexArrays", n)
 	result := debugging.gl.GenVertexArrays(n)
 	debugging.recordExit("GenVertexArrays", result)
 	return result
 }
 
-// GetAttribLocation implements the OpenGl interface.
-func (debugging *debuggingOpenGl) GetAttribLocation(program uint32, name string) int32 {
+// GetAttribLocation implements the OpenGL interface.
+func (debugging *debuggingOpenGL) GetAttribLocation(program uint32, name string) int32 {
 	debugging.recordEntry("GetAttribLocation", program, name)
 	result := debugging.gl.GetAttribLocation(program, name)
 	debugging.recordExit("GetAttribLocation", result)
 	return result
 }
 
-// GetError implements the OpenGl interface.
-func (debugging *debuggingOpenGl) GetError() uint32 {
+// GetError implements the OpenGL interface.
+func (debugging *debuggingOpenGL) GetError() uint32 {
 	debugging.recordEntry("GetError")
 	result := debugging.gl.GetError()
 	debugging.recordExit("GetError", result)
 	return result
 }
 
-// GetIntegerv implements the OpenGl interface.
-func (debugging *debuggingOpenGl) GetIntegerv(name uint32, data *int32) {
+// GetIntegerv implements the OpenGL interface.
+func (debugging *debuggingOpenGL) GetIntegerv(name uint32, data *int32) {
 	debugging.recordEntry("GetIntegerv", name, data)
 	debugging.gl.GetIntegerv(name, data)
 	debugging.recordExit("GetIntegerv")
 }
 
-// GetProgramInfoLog implements the OpenGl interface.
-func (debugging *debuggingOpenGl) GetProgramInfoLog(program uint32) string {
+// GetProgramInfoLog implements the OpenGL interface.
+func (debugging *debuggingOpenGL) GetProgramInfoLog(program uint32) string {
 	debugging.recordEntry("GetProgramInfoLog", program)
 	result := debugging.gl.GetProgramInfoLog(program)
 	debugging.recordExit("GetProgramInfoLog", result)
 	return result
 }
 
-// GetProgramParameter implements the OpenGl interface.
-func (debugging *debuggingOpenGl) GetProgramParameter(program uint32, param uint32) int32 {
+// GetProgramParameter implements the OpenGL interface.
+func (debugging *debuggingOpenGL) GetProgramParameter(program uint32, param uint32) int32 {
 	debugging.recordEntry("GetProgramParameter", program, param)
 	result := debugging.gl.GetProgramParameter(program, param)
 	debugging.recordExit("GetProgramParameter", result)
 	return result
 }
 
-// GetShaderInfoLog implements the OpenGl interface.
-func (debugging *debuggingOpenGl) GetShaderInfoLog(shader uint32) string {
+// GetShaderInfoLog implements the OpenGL interface.
+func (debugging *debuggingOpenGL) GetShaderInfoLog(shader uint32) string {
 	debugging.recordEntry("GetShaderInfoLog", shader)
 	result := debugging.gl.GetShaderInfoLog(shader)
 	debugging.recordExit("GetShaderInfoLog", result)
 	return result
 }
 
-// GetShaderParameter implements the OpenGl interface.
-func (debugging *debuggingOpenGl) GetShaderParameter(shader uint32, param uint32) int32 {
+// GetShaderParameter implements the OpenGL interface.
+func (debugging *debuggingOpenGL) GetShaderParameter(shader uint32, param uint32) int32 {
 	debugging.recordEntry("GetShaderParameter", shader, param)
 	result := debugging.gl.GetShaderParameter(shader, param)
 	debugging.recordExit("GetShaderParameter", result)
 	return result
 }
 
-// GetUniformLocation implements the OpenGl interface.
-func (debugging *debuggingOpenGl) GetUniformLocation(program uint32, name string) int32 {
+// GetUniformLocation implements the OpenGL interface.
+func (debugging *debuggingOpenGL) GetUniformLocation(program uint32, name string) int32 {
 	debugging.recordEntry("GetUniformLocation", program, name)
 	result := debugging.gl.GetUniformLocation(program, name)
 	debugging.recordExit("GetUniformLocation", result)
 	return result
 }
 
-// IsEnabled implements the OpenGl interface.
-func (debugging *debuggingOpenGl) IsEnabled(cap uint32) bool {
+// IsEnabled implements the OpenGL interface.
+func (debugging *debuggingOpenGL) IsEnabled(cap uint32) bool {
 	debugging.recordEntry("IsEnabled", cap)
 	result := debugging.gl.IsEnabled(cap)
 	debugging.recordExit("IsEnabled", result)
 	return result
 }
 
-// LinkProgram implements the OpenGl interface.
-func (debugging *debuggingOpenGl) LinkProgram(program uint32) {
+// LinkProgram implements the OpenGL interface.
+func (debugging *debuggingOpenGL) LinkProgram(program uint32) {
 	debugging.recordEntry("LinkProgram", program)
 	debugging.gl.LinkProgram(program)
 	debugging.recordExit("LinkProgram")
 }
 
-// PixelStorei implements the OpenGl interface.
-func (debugging *debuggingOpenGl) PixelStorei(name uint32, param int32) {
+// PixelStorei implements the OpenGL interface.
+func (debugging *debuggingOpenGL) PixelStorei(name uint32, param int32) {
 	debugging.recordEntry("PixelStorei", name, param)
 	debugging.gl.PixelStorei(name, param)
 	debugging.recordExit("PixelStorei")
 }
 
-// PolygonMode implements the OpenGl interface.
-func (debugging *debuggingOpenGl) PolygonMode(face uint32, mode uint32) {
+// PolygonMode implements the OpenGL interface.
+func (debugging *debuggingOpenGL) PolygonMode(face uint32, mode uint32) {
 	debugging.recordEntry("PolygonMode", face, mode)
 	debugging.gl.PolygonMode(face, mode)
 	debugging.recordExit("PolygonMode")
 }
 
-// ReadPixels implements the OpenGl interface.
-func (debugging *debuggingOpenGl) ReadPixels(x int32, y int32, width int32, height int32, format uint32, pixelType uint32, pixels interface{}) {
+// ReadPixels implements the OpenGL interface.
+func (debugging *debuggingOpenGL) ReadPixels(x int32, y int32, width int32, height int32, format uint32, pixelType uint32, pixels interface{}) {
 	debugging.recordEntry("ReadPixels", x, y, width, height, format, pixelType, pixels)
 	debugging.gl.ReadPixels(x, y, width, height, format, pixelType, pixels)
 	debugging.recordExit("ReadPixels")
 }
 
-// Scissor implements the OpenGl interface.
-func (debugging *debuggingOpenGl) Scissor(x, y int32, width, height int32) {
+// Scissor implements the OpenGL interface.
+func (debugging *debuggingOpenGL) Scissor(x, y int32, width, height int32) {
 	debugging.recordEntry("Scissor", x, y, width, height)
 	debugging.gl.Scissor(x, y, width, height)
 	debugging.recordExit("Scissor")
 }
 
-// ShaderSource implements the OpenGl interface.
-func (debugging *debuggingOpenGl) ShaderSource(shader uint32, source string) {
+// ShaderSource implements the OpenGL interface.
+func (debugging *debuggingOpenGL) ShaderSource(shader uint32, source string) {
 	debugging.recordEntry("ShaderSource", shader, source)
 	debugging.gl.ShaderSource(shader, source)
 	debugging.recordExit("ShaderSource")
 }
 
-// TexImage2D implements the opengl.OpenGl interface.
-func (debugging *debuggingOpenGl) TexImage2D(target uint32, level int32, internalFormat uint32, width int32, height int32,
+// TexImage2D implements the opengl.OpenGL interface.
+func (debugging *debuggingOpenGL) TexImage2D(target uint32, level int32, internalFormat uint32, width int32, height int32,
 	border int32, format uint32, xtype uint32, pixels interface{}) {
 	debugging.recordEntry("TexImage2D", target, level, internalFormat, width, height, border, format, xtype, pixels)
 	debugging.gl.TexImage2D(target, level, internalFormat, width, height, border, format, xtype, pixels)
 	debugging.recordExit("TexImage2D")
 }
 
-// TexParameteri implements the opengl.OpenGl interface.
-func (debugging *debuggingOpenGl) TexParameteri(target uint32, pname uint32, param int32) {
+// TexParameteri implements the opengl.OpenGL interface.
+func (debugging *debuggingOpenGL) TexParameteri(target uint32, pname uint32, param int32) {
 	debugging.recordEntry("TexParameteri", target, pname, param)
 	debugging.gl.TexParameteri(target, pname, param)
 	debugging.recordExit("TexParameteri")
 }
 
-// Uniform1i implements the opengl.OpenGl interface.
-func (debugging *debuggingOpenGl) Uniform1i(location int32, value int32) {
+// Uniform1i implements the opengl.OpenGL interface.
+func (debugging *debuggingOpenGL) Uniform1i(location int32, value int32) {
 	debugging.recordEntry("Uniform1i", location, value)
 	debugging.gl.Uniform1i(location, value)
 	debugging.recordExit("Uniform1i")
 }
 
-// Uniform4fv implements the opengl.OpenGl interface.
-func (debugging *debuggingOpenGl) Uniform4fv(location int32, value *[4]float32) {
+// Uniform4fv implements the opengl.OpenGL interface.
+func (debugging *debuggingOpenGL) Uniform4fv(location int32, value *[4]float32) {
 	debugging.recordEntry("Uniform4fv", location, value)
 	debugging.gl.Uniform4fv(location, value)
 	debugging.recordExit("Uniform4fv")
 }
 
-// UniformMatrix4fv implements the OpenGl interface.
-func (debugging *debuggingOpenGl) UniformMatrix4fv(location int32, transpose bool, value *[16]float32) {
+// UniformMatrix4fv implements the OpenGL interface.
+func (debugging *debuggingOpenGL) UniformMatrix4fv(location int32, transpose bool, value *[16]float32) {
 	debugging.recordEntry("UniformMatrix4fv", location, transpose, value)
 	debugging.gl.UniformMatrix4fv(location, transpose, value)
 	debugging.recordExit("UniformMatrix4fv")
 }
 
-// UseProgram implements the OpenGl interface.
-func (debugging *debuggingOpenGl) UseProgram(program uint32) {
+// UseProgram implements the OpenGL interface.
+func (debugging *debuggingOpenGL) UseProgram(program uint32) {
 	debugging.recordEntry("UseProgram", program)
 	debugging.gl.UseProgram(program)
 	debugging.recordExit("UseProgram")
 }
 
-// VertexAttribOffset implements the OpenGl interface.
-func (debugging *debuggingOpenGl) VertexAttribOffset(index uint32, size int32, attribType uint32, normalized bool, stride int32, offset int) {
+// VertexAttribOffset implements the OpenGL interface.
+func (debugging *debuggingOpenGL) VertexAttribOffset(index uint32, size int32, attribType uint32, normalized bool, stride int32, offset int) {
 	debugging.recordEntry("VertexAttribOffset", index, size, attribType, normalized, stride, offset)
 	debugging.gl.VertexAttribOffset(index, size, attribType, normalized, stride, offset)
 	debugging.recordExit("VertexAttribOffset")
 }
 
-// Viewport implements the OpenGl interface.
-func (debugging *debuggingOpenGl) Viewport(x int32, y int32, width int32, height int32) {
+// Viewport implements the OpenGL interface.
+func (debugging *debuggingOpenGL) Viewport(x int32, y int32, width int32, height int32) {
 	debugging.recordEntry("Viewport", x, y, width, height)
 	debugging.gl.Viewport(x, y, width, height)
 	debugging.recordExit("Viewport")

@@ -14,23 +14,23 @@ var buttonsByIndex = map[glfw.MouseButton]uint32{
 	glfw.MouseButton1: input.MousePrimary,
 	glfw.MouseButton2: input.MouseSecondary}
 
-// OpenGlWindow represents a native OpenGL surface.
-type OpenGlWindow struct {
+// OpenGLWindow represents a native OpenGL surface.
+type OpenGLWindow struct {
 	opengl.WindowEventDispatcher
 
 	keyBuffer *input.StickyKeyBuffer
 
 	glfwWindow *glfw.Window
-	glWrapper  *OpenGl
+	glWrapper  *OpenGL
 
 	framesPerSecond float64
 	frameTime       time.Duration
 	nextRenderTick  time.Time
 }
 
-// NewOpenGlWindow tries to initialize the OpenGL environment and returns a
+// NewOpenGLWindow tries to initialize the OpenGL environment and returns a
 // new window instance.
-func NewOpenGlWindow(title string, framesPerSecond float64) (window *OpenGlWindow, err error) {
+func NewOpenGLWindow(title string, framesPerSecond float64) (window *OpenGLWindow, err error) {
 	if err = glfw.Init(); err == nil {
 		glfw.WindowHint(glfw.Resizable, 1)
 		glfw.WindowHint(glfw.Decorated, 1)
@@ -44,10 +44,10 @@ func NewOpenGlWindow(title string, framesPerSecond float64) (window *OpenGlWindo
 		if err == nil {
 			glfwWindow.MakeContextCurrent()
 
-			window = &OpenGlWindow{
+			window = &OpenGLWindow{
 				WindowEventDispatcher: opengl.NullWindowEventDispatcher(),
 				glfwWindow:            glfwWindow,
-				glWrapper:             NewOpenGl(),
+				glWrapper:             NewOpenGL(),
 				framesPerSecond:       framesPerSecond,
 				frameTime:             time.Duration(int64(float64(time.Second) / framesPerSecond)),
 				nextRenderTick:        time.Now()}
@@ -67,19 +67,19 @@ func NewOpenGlWindow(title string, framesPerSecond float64) (window *OpenGlWindo
 }
 
 // ShouldClose returns true if the user requested the window to close.
-func (window *OpenGlWindow) ShouldClose() bool {
+func (window *OpenGLWindow) ShouldClose() bool {
 	return window.glfwWindow.ShouldClose()
 }
 
 // Close closes the window and releases its resources.
-func (window *OpenGlWindow) Close() {
+func (window *OpenGLWindow) Close() {
 	window.CallClosed()
 	window.glfwWindow.Destroy()
 	glfw.Terminate()
 }
 
 // Update must be called from within the main thread as often as possible.
-func (window *OpenGlWindow) Update() {
+func (window *OpenGLWindow) Update() {
 	glfw.PollEvents()
 
 	now := time.Now()
@@ -99,18 +99,18 @@ func (window *OpenGlWindow) Update() {
 	}
 }
 
-// OpenGl returns the OpenGL API.
-func (window *OpenGlWindow) OpenGl() opengl.OpenGl {
+// OpenGL returns the OpenGL API.
+func (window *OpenGLWindow) OpenGL() opengl.OpenGL {
 	return window.glWrapper
 }
 
 // Size returns the dimension of the frame buffer of this window.
-func (window *OpenGlWindow) Size() (width int, height int) {
+func (window *OpenGLWindow) Size() (width int, height int) {
 	return window.glfwWindow.GetFramebufferSize()
 }
 
 // SetCursorVisible toggles the visibility of the cursor.
-func (window *OpenGlWindow) SetCursorVisible(visible bool) {
+func (window *OpenGLWindow) SetCursorVisible(visible bool) {
 	if visible {
 		window.glfwWindow.SetInputMode(glfw.CursorMode, glfw.CursorNormal)
 	} else {
@@ -119,7 +119,7 @@ func (window *OpenGlWindow) SetCursorVisible(visible bool) {
 }
 
 // SetFullScreen toggles the windowed mode.
-func (window *OpenGlWindow) SetFullScreen(on bool) {
+func (window *OpenGLWindow) SetFullScreen(on bool) {
 	if on {
 		monitor := glfw.GetPrimaryMonitor()
 		videoMode := monitor.GetVideoMode()
@@ -130,23 +130,23 @@ func (window *OpenGlWindow) SetFullScreen(on bool) {
 }
 
 // SetCloseRequest sets the should-close property of the window.
-func (window *OpenGlWindow) SetCloseRequest(shouldClose bool) {
+func (window *OpenGLWindow) SetCloseRequest(shouldClose bool) {
 	window.glfwWindow.SetShouldClose(shouldClose)
 }
 
-func (window *OpenGlWindow) onClosing(rawWindow *glfw.Window) {
+func (window *OpenGLWindow) onClosing(rawWindow *glfw.Window) {
 	window.CallClosing()
 }
 
-func (window *OpenGlWindow) onFramebufferResize(rawWindow *glfw.Window, width int, height int) {
+func (window *OpenGLWindow) onFramebufferResize(rawWindow *glfw.Window, width int, height int) {
 	window.CallResize(width, height)
 }
 
-func (window *OpenGlWindow) onCursorPos(rawWindow *glfw.Window, x float64, y float64) {
+func (window *OpenGLWindow) onCursorPos(rawWindow *glfw.Window, x float64, y float64) {
 	window.CallOnMouseMove(float32(x), float32(y))
 }
 
-func (window *OpenGlWindow) onMouseButton(rawWindow *glfw.Window, rawButton glfw.MouseButton, action glfw.Action, mods glfw.ModifierKey) {
+func (window *OpenGLWindow) onMouseButton(rawWindow *glfw.Window, rawButton glfw.MouseButton, action glfw.Action, mods glfw.ModifierKey) {
 	button, knownButton := buttonsByIndex[rawButton]
 
 	if knownButton {
@@ -160,11 +160,11 @@ func (window *OpenGlWindow) onMouseButton(rawWindow *glfw.Window, rawButton glfw
 	}
 }
 
-func (window *OpenGlWindow) onMouseScroll(rawWindow *glfw.Window, dx float64, dy float64) {
+func (window *OpenGLWindow) onMouseScroll(rawWindow *glfw.Window, dx float64, dy float64) {
 	window.CallOnMouseScroll(float32(dx), float32(dy)*-1.0)
 }
 
-func (window *OpenGlWindow) onKey(rawWindow *glfw.Window, glfwKey glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+func (window *OpenGLWindow) onKey(rawWindow *glfw.Window, glfwKey glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
 	modifier := window.mapModifier(mods)
 	key, knownKey := keyMap[glfwKey]
 
@@ -185,11 +185,11 @@ func (window *OpenGlWindow) onKey(rawWindow *glfw.Window, glfwKey glfw.Key, scan
 	}
 }
 
-func (window *OpenGlWindow) onChar(rawWindow *glfw.Window, char rune) {
+func (window *OpenGLWindow) onChar(rawWindow *glfw.Window, char rune) {
 	window.CallCharCallback(char)
 }
 
-func (window *OpenGlWindow) mapModifier(mods glfw.ModifierKey) input.Modifier {
+func (window *OpenGLWindow) mapModifier(mods glfw.ModifierKey) input.Modifier {
 	modifier := input.ModNone
 
 	if (mods & glfw.ModControl) != 0 {

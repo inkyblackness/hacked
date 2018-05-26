@@ -11,7 +11,7 @@ import (
 // It is set up by the main method.
 type Application struct {
 	window opengl.Window
-	gl     opengl.OpenGl
+	gl     opengl.OpenGL
 
 	// GuiScale is applied when the window is initialized.
 	GuiScale   float32
@@ -21,10 +21,10 @@ type Application struct {
 // InitializeWindow takes the given window and attaches the callbacks.
 func (app *Application) InitializeWindow(window opengl.Window) (err error) {
 	app.window = window
-	app.gl = window.OpenGl()
+	app.gl = window.OpenGL()
 
 	app.initWindowCallbacks()
-	app.initOpenGl()
+	app.initOpenGL()
 	err = app.initGui()
 	if err != nil {
 		return
@@ -70,7 +70,7 @@ func (app *Application) render() {
 	app.guiContext.Render()
 }
 
-func (app *Application) initOpenGl() {
+func (app *Application) initOpenGL() {
 	app.gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 }
 

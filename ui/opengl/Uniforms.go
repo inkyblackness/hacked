@@ -11,7 +11,7 @@ type UniformLocation int32
 type Matrix4Uniform UniformLocation
 
 // Set stores the provided matrix as the current uniform value.
-func (location Matrix4Uniform) Set(gl OpenGl, matrix *mgl.Mat4) {
+func (location Matrix4Uniform) Set(gl OpenGL, matrix *mgl.Mat4) {
 	matrixArray := (*[16]float32)(matrix)
 	gl.UniformMatrix4fv(int32(location), false, matrixArray)
 }
@@ -20,6 +20,6 @@ func (location Matrix4Uniform) Set(gl OpenGl, matrix *mgl.Mat4) {
 type Vector4Uniform UniformLocation
 
 // Set stores the provided 4-dimensional vector as the current uniform value.
-func (location Vector4Uniform) Set(gl OpenGl, value *[4]float32) {
+func (location Vector4Uniform) Set(gl OpenGL, value *[4]float32) {
 	gl.Uniform4fv(int32(location), value)
 }

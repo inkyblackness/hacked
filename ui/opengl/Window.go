@@ -51,8 +51,8 @@ type Window interface {
 	// It can be called during the callback of OnClosing() to abort a close request by the user.
 	SetCloseRequest(shouldClose bool)
 
-	// OpenGl returns the OpenGL API wrapper for this window.
-	OpenGl() OpenGl
+	// OpenGL returns the OpenGL API wrapper for this window.
+	OpenGL() OpenGL
 	// OnRender registers a callback function which shall be called to update the scene.
 	OnRender(callback RenderCallback)
 

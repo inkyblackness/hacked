@@ -10,18 +10,18 @@ type DebuggingExitFunc func(name string, result ...interface{})
 // DebuggingErrorFunc is a function which is called if a previous OpenGL call caused an error state.
 type DebuggingErrorFunc func(name string, errorCodes []uint32)
 
-// DebugBuilder is a builder for an OpenGl implementation for debugging.
+// DebugBuilder is a builder for an OpenGL implementation for debugging.
 type DebugBuilder struct {
-	wrapped OpenGl
+	wrapped OpenGL
 
 	onEntry DebuggingEntryFunc
 	onExit  DebuggingExitFunc
 	onError DebuggingErrorFunc
 }
 
-// NewDebugBuilder wraps the provided OpenGl instance and returns a new builder
+// NewDebugBuilder wraps the provided OpenGL instance and returns a new builder
 // instance.
-func NewDebugBuilder(wrapped OpenGl) *DebugBuilder {
+func NewDebugBuilder(wrapped OpenGL) *DebugBuilder {
 	builder := &DebugBuilder{
 		wrapped: wrapped,
 		onEntry: func(string, ...interface{}) {},
@@ -31,10 +31,10 @@ func NewDebugBuilder(wrapped OpenGl) *DebugBuilder {
 	return builder
 }
 
-// Build creates a new instance of the debugging OpenGl implementation.
+// Build creates a new instance of the debugging OpenGL implementation.
 // The builder can be resused to create another instance with different parameters.
-func (builder *DebugBuilder) Build() OpenGl {
-	opengl := &debuggingOpenGl{
+func (builder *DebugBuilder) Build() OpenGL {
+	opengl := &debuggingOpenGL{
 		gl: builder.wrapped,
 
 		onEntry: builder.onEntry,

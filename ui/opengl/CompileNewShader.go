@@ -3,7 +3,7 @@ package opengl
 import "fmt"
 
 // CompileNewShader creates a shader of given type and compiles the provided source.
-func CompileNewShader(gl OpenGl, shaderType uint32, source string) (shader uint32, err error) {
+func CompileNewShader(gl OpenGL, shaderType uint32, source string) (shader uint32, err error) {
 	shader = gl.CreateShader(shaderType)
 
 	gl.ShaderSource(shader, source)

@@ -3,7 +3,7 @@ package opengl
 import "fmt"
 
 // LinkNewProgram creates a new shader program based on the provided shaders.
-func LinkNewProgram(gl OpenGl, shaders ...uint32) (program uint32, err error) {
+func LinkNewProgram(gl OpenGL, shaders ...uint32) (program uint32, err error) {
 	program = gl.CreateProgram()
 
 	for _, shader := range shaders {
@@ -21,7 +21,7 @@ func LinkNewProgram(gl OpenGl, shaders ...uint32) (program uint32, err error) {
 }
 
 // LinkNewStandardProgram creates a new shader based on two shader sources.
-func LinkNewStandardProgram(gl OpenGl, vertexShaderSource, fragmentShaderSource string) (program uint32, err error) {
+func LinkNewStandardProgram(gl OpenGL, vertexShaderSource, fragmentShaderSource string) (program uint32, err error) {
 	vertexShader, vertexErr := CompileNewShader(gl, VERTEX_SHADER, vertexShaderSource)
 	defer gl.DeleteShader(vertexShader)
 	fragmentShader, fragmentErr := CompileNewShader(gl, FRAGMENT_SHADER, fragmentShaderSource)

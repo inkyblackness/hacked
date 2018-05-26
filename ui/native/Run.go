@@ -14,8 +14,8 @@ import (
 func Run(initializer func(opengl.Window) error, title string, framesPerSecond float64, deferrer <-chan func()) (err error) {
 	runtime.LockOSThread()
 
-	var window *OpenGlWindow
-	window, err = NewOpenGlWindow(title, framesPerSecond)
+	var window *OpenGLWindow
+	window, err = NewOpenGLWindow(title, framesPerSecond)
 	if err != nil {
 		return
 	}

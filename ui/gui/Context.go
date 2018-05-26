@@ -47,7 +47,7 @@ func NewContext(window opengl.Window) (context *Context, err error) {
 
 // Destroy cleans up the resources of the graphical user interface.
 func (context *Context) Destroy() {
-	context.destroyDeviceObjects(context.window.OpenGl())
+	context.destroyDeviceObjects(context.window.OpenGL())
 	context.imguiContext.Destroy()
 }
 
@@ -91,7 +91,7 @@ func (context *Context) Render() {
 }
 
 func (context *Context) createDeviceObjects() (err error) {
-	gl := context.window.OpenGl()
+	gl := context.window.OpenGL()
 	glslVersion := "#version 150"
 
 	vertexShaderSource := glslVersion + `
@@ -138,7 +138,7 @@ void main()
 	return
 }
 
-func (context *Context) createFontsTexture(gl opengl.OpenGl) {
+func (context *Context) createFontsTexture(gl opengl.OpenGL) {
 	io := imgui.CurrentIO()
 	image := io.Fonts().TextureDataAlpha8()
 
@@ -155,7 +155,7 @@ func (context *Context) createFontsTexture(gl opengl.OpenGl) {
 	gl.BindTexture(opengl.TEXTURE_2D, 0)
 }
 
-func (context *Context) destroyDeviceObjects(gl opengl.OpenGl) {
+func (context *Context) destroyDeviceObjects(gl opengl.OpenGL) {
 	if context.vboHandle != 0 {
 		gl.DeleteBuffers([]uint32{context.vboHandle})
 	}
@@ -178,7 +178,7 @@ func (context *Context) destroyDeviceObjects(gl opengl.OpenGl) {
 }
 
 func (context *Context) renderDrawData(drawData imgui.DrawData) {
-	gl := context.window.OpenGl()
+	gl := context.window.OpenGL()
 
 	displayWidth, displayHeight := context.window.Size()
 
