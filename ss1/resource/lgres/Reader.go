@@ -67,8 +67,8 @@ func (reader *Reader) IDs() []resource.ID {
 // Resource returns a reader for the specified resource.
 // An error is returned if either the ID is not known, or the resource could not be prepared.
 func (reader *Reader) Resource(id resource.ID) (retrievedResource *resource.Resource, err error) {
-	if retrievedResource, existing := reader.cache[id.Value()]; existing {
-		return retrievedResource, nil
+	if cachedResource, existing := reader.cache[id.Value()]; existing {
+		return cachedResource, nil
 	}
 	resourceStartOffset, entry := reader.findEntry(id.Value())
 	if entry == nil {

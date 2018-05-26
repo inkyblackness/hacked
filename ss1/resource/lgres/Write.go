@@ -44,11 +44,7 @@ func Write(target io.WriteSeeker, source resource.Provider) error {
 		}
 	}
 
-	finishErr := writer.Finish()
-	if finishErr != nil {
-		return finishErr
-	}
-	return nil
+	return writer.Finish()
 }
 
 func copyBlocks(source resource.BlockProvider, nextWriter func() io.Writer) error {
