@@ -1,12 +1,12 @@
 package world_test
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
 
-	"fmt"
-	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"

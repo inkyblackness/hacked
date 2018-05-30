@@ -396,6 +396,7 @@ func (suite *ManifestSuite) storing(id int, blocks [][]byte) func(*resource.Stor
 		})
 	}
 }
+
 func (suite *ManifestSuite) thenModifiedResourcesShouldBe(expected []int) {
 	identified := make([]resource.ID, len(expected))
 	for index, id := range expected {
