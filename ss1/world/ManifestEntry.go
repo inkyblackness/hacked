@@ -2,7 +2,7 @@ package world
 
 import "github.com/inkyblackness/hacked/ss1/resource"
 
-// ManifestEntry describes a set of localized from under a collective identifier.
+// ManifestEntry describes a set of localized resources under a collective identifier.
 type ManifestEntry struct {
 	ID        string
 	Resources []LocalizedResources
@@ -22,7 +22,7 @@ func (entry ManifestEntry) filter(lang Language, id resource.ID) resource.List {
 	return list
 }
 
-// LocalizedResources produces a selector to retrieve from for a specific language from this entry.
+// LocalizedResources produces a selector to retrieve resources for a specific language from this entry.
 func (entry ManifestEntry) LocalizedResources(lang Language) ResourceSelector {
 	return ResourceSelector{
 		from: &entry,

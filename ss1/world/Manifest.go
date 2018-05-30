@@ -3,11 +3,7 @@ package world
 import (
 	"errors"
 
-	"bytes"
-	"crypto/md5" // nolint: gas
-	"encoding/binary"
 	"github.com/inkyblackness/hacked/ss1/resource"
-	"io"
 )
 
 type resourceHash []byte
@@ -23,15 +19,20 @@ func (marker idMarkerMap) toList() []resource.ID {
 	return result
 }
 
-// ManifestModificationCallback is a callback function to notify a change in the manifest.
-type ManifestModificationCallback func(modifiedIDs []resource.ID, failedIDs []resource.ID)
-
 // Manifest contains all the data and information of concrete things in a world.
 type Manifest struct {
-	// Modified is called whenever the final view on the manifest changes.
-	Modified ManifestModificationCallback
+	resourceChangeNotifier ResourceChangeNotifier
+	entries                []*ManifestEntry
+}
 
-	entries []*ManifestEntry
+// NewManifest returns a new instance that notifies changes to the provided callback.
+func NewManifest(modified ResourceModificationCallback) *Manifest {
+	var manifest Manifest
+
+	manifest.resourceChangeNotifier.Callback = modified
+	manifest.resourceChangeNotifier.Localizer = &manifest
+
+	return &manifest
 }
 
 var errIndexOutOfBounds = errors.New("index is out of bounds")
@@ -51,7 +52,7 @@ func (manifest Manifest) Entry(at int) (*ManifestEntry, error) {
 }
 
 // InsertEntry puts the provided entry at the specified index.
-// Any entry at the identified index, and all those after that, are moved.
+// Any entry at the identified index, and all those after that, are moved by one.
 func (manifest *Manifest) InsertEntry(at int, entry *ManifestEntry) error {
 	oldLen := len(manifest.entries)
 	if (at < 0) || (at > oldLen) {
@@ -117,18 +118,6 @@ func (manifest *Manifest) MoveEntry(to, from int) error {
 	return nil
 }
 
-func (manifest *Manifest) changeAndNotify(modifier func(), affectedIDs ...[]resource.ID) {
-	var flattenedIDs []resource.ID
-	for _, idList := range affectedIDs {
-		flattenedIDs = append(flattenedIDs, idList...)
-	}
-	oldHashes, _ := manifest.hashAll(flattenedIDs)
-	modifier()
-	newHashes, failedIDs := manifest.hashAll(flattenedIDs)
-	modifiedResourceIDs := manifest.modifiedIDs(oldHashes, newHashes)
-	manifest.Modified(modifiedResourceIDs, failedIDs)
-}
-
 func (manifest Manifest) filter(lang Language, id resource.ID) resource.List {
 	var list resource.List
 	for _, entry := range manifest.entries {
@@ -137,7 +126,7 @@ func (manifest Manifest) filter(lang Language, id resource.ID) resource.List {
 	return list
 }
 
-// LocalizedResources produces a selector to retrieve from for a specific language from the manifest.
+// LocalizedResources produces a selector to retrieve resources for a specific language from the manifest.
 // The returned selector has the strategy to merge the typical compound resource lists, such
 // as the small textures, or string lookups. It is based on StandardResourceViewStrategy().
 func (manifest *Manifest) LocalizedResources(lang Language) ResourceSelector {
@@ -156,70 +145,6 @@ func (manifest *Manifest) listIDs(entry *ManifestEntry) (ids []resource.ID) {
 	return
 }
 
-func (manifest *Manifest) hashAll(ids []resource.ID) (hashes resourceHashSnapshot, failedIDs []resource.ID) {
-	failedMap := make(idMarkerMap)
-	hashes = make(resourceHashSnapshot)
-	for _, lang := range Languages() {
-		hashByResourceID := make(resourceHashes)
-		hashes[lang] = hashByResourceID
-		selector := manifest.LocalizedResources(lang)
-
-		for _, id := range ids {
-			hash, hashErr := manifest.hashResource(&selector, id)
-			if hashErr == nil {
-				hashByResourceID[id] = hash
-			} else {
-				failedMap[id] = true
-			}
-		}
-	}
-	failedIDs = failedMap.toList()
-	return
-}
-
-func (manifest *Manifest) hashResource(selector *ResourceSelector, id resource.ID) (resourceHash, error) {
-	view, viewErr := selector.Select(id)
-	if viewErr != nil {
-		return nil, viewErr
-	}
-	hasher := md5.New() // nolint: gas
-	blocks := view.BlockCount()
-	for index := 0; index < blocks; index++ {
-		blockReader, blockErr := view.Block(index)
-		if blockErr != nil {
-			return nil, blockErr
-		}
-		written, hashErr := io.Copy(hasher, blockReader)
-		if hashErr != nil {
-			return nil, hashErr
-		}
-		binary.Write(hasher, binary.LittleEndian, &written) // nolint: errcheck
-	}
-	binary.Write(hasher, binary.LittleEndian, int64(blocks))      // nolint: errcheck
-	binary.Write(hasher, binary.LittleEndian, view.Compound())    // nolint: errcheck
-	binary.Write(hasher, binary.LittleEndian, view.ContentType()) // nolint: errcheck
-	binary.Write(hasher, binary.LittleEndian, view.Compressed())  // nolint: errcheck
-
-	return hasher.Sum(nil), nil
-}
-
-func (manifest *Manifest) modifiedIDs(oldHashes resourceHashSnapshot, newHashes resourceHashSnapshot) []resource.ID {
-	modifiedIDs := make(idMarkerMap)
-	for _, lang := range Languages() {
-		oldHashesByResourceID := oldHashes[lang]
-		newHashesByResourceID := newHashes[lang]
-
-		for newID, newHash := range newHashesByResourceID {
-			oldHash, oldExisting := oldHashesByResourceID[newID]
-			if !oldExisting || !bytes.Equal(newHash, oldHash) {
-				modifiedIDs[newID] = true
-			}
-		}
-		for oldID := range oldHashesByResourceID {
-			if _, newExisting := newHashesByResourceID[oldID]; !newExisting {
-				modifiedIDs[oldID] = true
-			}
-		}
-	}
-	return modifiedIDs.toList()
+func (manifest *Manifest) changeAndNotify(modifier func(), affectedIDs ...[]resource.ID) {
+	manifest.resourceChangeNotifier.ModifyAndNotify(modifier, affectedIDs...)
 }

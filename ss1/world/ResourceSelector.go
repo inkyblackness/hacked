@@ -6,7 +6,7 @@ type resourceFilter interface {
 	filter(lang Language, id resource.ID) resource.List
 }
 
-// ResourceSelector provides a merged view of from according to a language.
+// ResourceSelector provides a merged view of resources according to a language.
 type ResourceSelector struct {
 	lang Language
 	from resourceFilter

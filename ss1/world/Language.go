@@ -4,7 +4,7 @@ package world
 type Language byte
 
 const (
-	// LangAny identifies language agnostic from.
+	// LangAny identifies language agnostic resources.
 	LangAny Language = 0xFF
 	// LangDefault identifies the default language, typically English - unless modded.
 	LangDefault Language = 0

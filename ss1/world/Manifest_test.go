@@ -27,8 +27,7 @@ func TestManifestSuite(t *testing.T) {
 }
 
 func (suite *ManifestSuite) SetupTest() {
-	suite.manifest = new(world.Manifest)
-	suite.manifest.Modified = suite.onManifestModified
+	suite.manifest = world.NewManifest(suite.onManifestModified)
 	suite.selector = nil
 
 	suite.lastModifiedIDs = nil
