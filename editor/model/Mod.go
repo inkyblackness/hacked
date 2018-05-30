@@ -8,6 +8,7 @@ import (
 type identifiedResources map[resource.ID]*resource.Resource
 
 // Mod is the central object for a game-mod.
+//
 // It is based on a "static" world and adds its own changes. The world data itself is not static, it is merely the
 // unchangeable background for the mod. Changes to the mod are kept in a separate layer, which can be loaded and saved.
 type Mod struct {
@@ -82,6 +83,13 @@ func (mod *Mod) Modify(modifier func(*ModTransaction)) {
 }
 
 func (mod Mod) worldChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) {
+	// It would be great to also check whether the mod hides any of these changes.
+	// Sadly, this is not possible:
+	// a) At the point of this callback, we can't do a check on the previous state anymore.
+	// b) Even when changing the world only within a modification enclosure of our own notifier, we can't determine
+	//    the list of changed IDs before actually changing them. (Specifying ALL IDs is not a good idea due to performance.)
+	// As a result, simply forward this list. I don't even expect any big performance gain through such a filter.
+	// This would only be relevant to "full conversion" mods AND a change in a big list in the world. Hardly the case.
 	mod.resourcesChanged(modifiedIDs, failedIDs)
 }
 
