@@ -15,6 +15,7 @@ import (
 type ManifestSuite struct {
 	suite.Suite
 	manifest *world.Manifest
+	selector *world.ResourceSelector
 }
 
 func TestManifestSuite(t *testing.T) {
@@ -24,6 +25,7 @@ func TestManifestSuite(t *testing.T) {
 func (suite *ManifestSuite) SetupTest() {
 	suite.manifest = new(world.Manifest)
 	suite.manifest.Modified = suite.onManifestModified
+	suite.selector = nil
 }
 
 func (suite *ManifestSuite) TestEntriesCanBeAdded() {
@@ -141,6 +143,18 @@ func (suite *ManifestSuite) TestMoveEntryReturnsErrorOnInvalidInput() {
 	assert.Error(suite.T(), suite.manifest.MoveEntry(3, 1), "Error expected moving to index beyond limit")
 }
 
+func (suite *ManifestSuite) TestLocalizedResourcesCanBeRetrieved() {
+	suite.givenEntryWasInserted(0, "id1")
+	suite.givenEntryHasAt(0, suite.someLocalizedResources(world.LangAny, func(store *resource.Store) {
+		store.Put(resource.ID(0x1234), &resource.Resource{
+			BlockProvider: resource.MemoryBlockProvider{{0xAA}},
+		})
+	}))
+	suite.givenEntryWasInserted(1, "id2")
+	suite.whenResourcesAreQueriedFor(world.LangAny)
+	suite.thenResourcesCanBeSelected(0x1234)
+}
+
 func (suite *ManifestSuite) onManifestModified(modifiedIDs []resource.ID, failedIDs []resource.ID) {
 
 }
@@ -153,6 +167,11 @@ func (suite *ManifestSuite) aSimpleEntry(id string) *world.ManifestEntry {
 
 func (suite *ManifestSuite) givenEntryWasInserted(at int, id string) {
 	suite.whenEntryIsInserted(at, id)
+}
+
+func (suite *ManifestSuite) givenEntryHasAt(at int, resources world.LocalizedResources) {
+	entry, _ := suite.manifest.Entry(at)
+	entry.Resources = append(entry.Resources, resources)
 }
 
 func (suite *ManifestSuite) whenEntryIsInserted(at int, id string) {
@@ -173,6 +192,11 @@ func (suite *ManifestSuite) whenEntryIsReplaced(at int, id string) {
 func (suite *ManifestSuite) whenEntryIsMoved(to int, from int) {
 	err := suite.manifest.MoveEntry(to, from)
 	require.Nil(suite.T(), err, fmt.Sprintf("No error expected moving entry to %d from %d", to, from))
+}
+
+func (suite *ManifestSuite) whenResourcesAreQueriedFor(lang world.Language) {
+	selector := suite.manifest.LocalizedResources(lang)
+	suite.selector = &selector
 }
 
 func (suite *ManifestSuite) thenEntryCountShouldBe(expected int) {
@@ -196,4 +220,20 @@ func (suite *ManifestSuite) thenEntryOrderShouldBe(expected ...string) {
 		currentIDs[index] = entry.ID
 	}
 	assert.Equal(suite.T(), expected, currentIDs, "IDs don't not match")
+}
+
+func (suite *ManifestSuite) someLocalizedResources(lang world.Language, modifier func(*resource.Store)) world.LocalizedResources {
+	store := resource.NewProviderBackedStore(resource.NullProvider())
+	modifier(store)
+	return world.LocalizedResources{
+		ID:       "unnamed",
+		Language: lang,
+		Provider: store,
+	}
+}
+
+func (suite *ManifestSuite) thenResourcesCanBeSelected(id int) {
+	view, err := suite.selector.Select(resource.ID(id))
+	assert.Nil(suite.T(), err, "No error expected")
+	assert.NotNil(suite.T(), view, "View expected")
 }

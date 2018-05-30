@@ -9,3 +9,15 @@ type ResourceViewStrategy interface {
 	// Examples are the small game textures and the list of object names.
 	IsCompoundList(id resource.ID) bool
 }
+
+// StandardResourceViewStrategy returns a strategy that is typical for the game.
+func StandardResourceViewStrategy() ResourceViewStrategy {
+	return defaultResources{}
+}
+
+type defaultResources struct{}
+
+func (def defaultResources) IsCompoundList(id resource.ID) bool {
+	isGameTextureList := (id == resource.ID(0x004C)) || (id == resource.ID(0x004D))
+	return isGameTextureList
+}

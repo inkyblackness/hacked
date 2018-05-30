@@ -91,7 +91,21 @@ func (manifest *Manifest) MoveEntry(to, from int) error {
 	return nil
 }
 
+func (manifest Manifest) filter(lang Language, id resource.ID) resource.List {
+	var list resource.List
+	for _, entry := range manifest.entries {
+		list = list.Joined(entry.filter(lang, id))
+	}
+	return list
+}
+
 // LocalizedResources produces a selector to retrieve from for a specific language from the manifest.
-func (manifest *Manifest) LocalizedResources(lang Language) *ResourceSelector {
-	return nil
+// The returned selector has the strategy to merge the typical compound resource lists, such
+// as the small textures, or string lookups. It is based on StandardResourceViewStrategy().
+func (manifest *Manifest) LocalizedResources(lang Language) ResourceSelector {
+	return ResourceSelector{
+		lang: lang,
+		from: manifest,
+		As:   StandardResourceViewStrategy(),
+	}
 }
