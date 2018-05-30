@@ -13,3 +13,8 @@ const (
 	// LangGerman identifies the German language.
 	LangGerman Language = 2
 )
+
+// Languages returns a slice of all human languages. Does not include "Any" selector.
+func Languages() []Language {
+	return []Language{LangDefault, LangFrench, LangGerman}
+}
