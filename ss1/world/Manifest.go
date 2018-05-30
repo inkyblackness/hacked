@@ -118,10 +118,11 @@ func (manifest *Manifest) MoveEntry(to, from int) error {
 	return nil
 }
 
-func (manifest Manifest) filter(lang Language, id resource.ID) resource.List {
+// Filter finds all resources in the world that match the given parameters.
+func (manifest Manifest) Filter(lang Language, id resource.ID) resource.List {
 	var list resource.List
 	for _, entry := range manifest.entries {
-		list = list.Joined(entry.filter(lang, id))
+		list = list.Joined(entry.Filter(lang, id))
 	}
 	return list
 }
@@ -131,8 +132,8 @@ func (manifest Manifest) filter(lang Language, id resource.ID) resource.List {
 // as the small textures, or string lookups. It is based on StandardResourceViewStrategy().
 func (manifest *Manifest) LocalizedResources(lang Language) ResourceSelector {
 	return ResourceSelector{
-		lang: lang,
-		from: manifest,
+		Lang: lang,
+		From: manifest,
 		As:   StandardResourceViewStrategy(),
 	}
 }

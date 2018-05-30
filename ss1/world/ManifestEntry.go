@@ -10,10 +10,11 @@ type ManifestEntry struct {
 	// TODO: add texture properties and object properties.
 }
 
-func (entry ManifestEntry) filter(lang Language, id resource.ID) resource.List {
+// Filter returns all resources that match the given parameters.
+func (entry ManifestEntry) Filter(lang Language, id resource.ID) resource.List {
 	var list resource.List
 	for _, localized := range entry.Resources {
-		if (localized.Language == LangAny) || (localized.Language == lang) {
+		if localized.Language.Includes(lang) {
 			if res, err := localized.Provider.Resource(id); err == nil {
 				list = list.With(res)
 			}
@@ -25,7 +26,7 @@ func (entry ManifestEntry) filter(lang Language, id resource.ID) resource.List {
 // LocalizedResources produces a selector to retrieve resources for a specific language from this entry.
 func (entry ManifestEntry) LocalizedResources(lang Language) ResourceSelector {
 	return ResourceSelector{
-		from: &entry,
-		lang: lang,
+		From: &entry,
+		Lang: lang,
 	}
 }

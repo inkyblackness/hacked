@@ -18,3 +18,9 @@ const (
 func Languages() []Language {
 	return []Language{LangDefault, LangFrench, LangGerman}
 }
+
+// Includes returns true if the language includes the provided one.
+// This is not symmetrical. While "Any" includes "German", "German" does not include "Any".
+func (lang Language) Includes(other Language) bool {
+	return (lang == LangAny) || (lang == other)
+}
