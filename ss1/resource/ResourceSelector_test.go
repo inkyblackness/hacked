@@ -1,25 +1,25 @@
-package world_test
+package resource_test
 
 import (
+	"fmt"
+	"io/ioutil"
 	"testing"
 
-	"github.com/inkyblackness/hacked/ss1/world"
-
-	"fmt"
 	"github.com/inkyblackness/hacked/ss1/resource"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"io/ioutil"
 )
 
 type ResourceSelectorSuite struct {
 	suite.Suite
-	entry *world.ManifestEntry
-	view  world.ResourceView
+
+	resources []*resource.Resource
+	view      resource.ResourceView
 
 	isCompoundList bool
-	viewStrategy   world.ResourceViewStrategy
+	viewStrategy   resource.ResourceViewStrategy
 }
 
 func TestResourceSelectorSuite(t *testing.T) {
@@ -27,7 +27,7 @@ func TestResourceSelectorSuite(t *testing.T) {
 }
 
 func (suite *ResourceSelectorSuite) SetupTest() {
-	suite.entry = new(world.ManifestEntry)
+	suite.resources = nil
 	suite.view = nil
 	suite.isCompoundList = false
 	suite.viewStrategy = nil
@@ -149,19 +149,19 @@ func (suite *ResourceSelectorSuite) givenResource(blocks [][]byte) {
 }
 
 func (suite *ResourceSelectorSuite) givenSpecificResource(modifier func(*resource.Resource)) {
-	store := resource.NewProviderBackedStore(resource.NullProvider())
 	res := &resource.Resource{}
 	modifier(res)
-	store.Put(resource.ID(1000), res)
-	suite.entry.Resources = append(suite.entry.Resources, world.LocalizedResources{
-		Language: world.LangAny,
-		Provider: store,
-	})
+	suite.resources = append(suite.resources, res)
 }
 
 func (suite *ResourceSelectorSuite) whenInstanceIsCreated() {
-	selector := suite.entry.LocalizedResources(world.LangAny)
-	selector.As = suite.viewStrategy
+
+	selector := resource.ResourceSelector{
+		Lang: resource.LangAny,
+		From: suite,
+		As:   suite.viewStrategy,
+	}
+
 	var err error
 	suite.view, err = selector.Select(resource.ID(1000))
 	require.Nil(suite.T(), err, "No error expected creating view for %v", 1000)
@@ -188,4 +188,8 @@ func (suite *ResourceSelectorSuite) thenResourceShouldHaveMeta(compound bool, co
 func (suite *ResourceSelectorSuite) IsCompoundList(id resource.ID) bool {
 	assert.Equal(suite.T(), resource.ID(1000), id, "Unknown resource queried")
 	return suite.isCompoundList
+}
+
+func (suite *ResourceSelectorSuite) Filter(lang resource.Language, id resource.ID) resource.List {
+	return resource.List(suite.resources)
 }

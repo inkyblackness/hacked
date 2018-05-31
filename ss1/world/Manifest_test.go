@@ -2,6 +2,7 @@ package world_test
 
 import (
 	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -10,13 +11,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"sort"
 )
 
 type ManifestSuite struct {
 	suite.Suite
 	manifest *world.Manifest
-	selector *world.ResourceSelector
+	selector *resource.ResourceSelector
 
 	lastModifiedIDs []resource.ID
 	lastFailedIDs   []resource.ID
@@ -151,16 +151,16 @@ func (suite *ManifestSuite) TestMoveEntryReturnsErrorOnInvalidInput() {
 
 func (suite *ManifestSuite) TestLocalizedResourcesCanBeRetrieved() {
 	suite.givenEntryWasInsertedWith(0, "id1",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x1234, [][]byte{{0xAA}})))
 	suite.givenEntryWasInserted(1, "id2")
-	suite.whenResourcesAreQueriedFor(world.LangAny)
+	suite.whenResourcesAreQueriedFor(resource.LangAny)
 	suite.thenResourcesCanBeSelected(0x1234)
 }
 
 func (suite *ManifestSuite) TestModifiedCallbackOnInsertFromEmptyListsNewIDs() {
 	suite.whenEntryIsInsertedWith(0, "id1",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x1000, [][]byte{{0x11}}),
 			suite.storing(0x2000, [][]byte{{0x22}})))
 	suite.thenModifiedResourcesShouldBe([]int{0x1000, 0x2000})
@@ -168,10 +168,10 @@ func (suite *ManifestSuite) TestModifiedCallbackOnInsertFromEmptyListsNewIDs() {
 
 func (suite *ManifestSuite) TestModifiedCallbackOnInsertWithNewOnesListsNewIDs() {
 	suite.givenEntryWasInsertedWith(0, "id1",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xAA}})))
 	suite.whenEntryIsInsertedWith(1, "id2",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0900, [][]byte{{0x11}}),
 			suite.storing(0x0A00, [][]byte{{0x22}})))
 	suite.thenModifiedResourcesShouldBe([]int{0x0900, 0x0A00})
@@ -179,30 +179,30 @@ func (suite *ManifestSuite) TestModifiedCallbackOnInsertWithNewOnesListsNewIDs()
 
 func (suite *ManifestSuite) TestModifiedCallbackOnInsertIgnoresIdenticalData() {
 	suite.givenEntryWasInsertedWith(0, "id1",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xAA}})))
 	suite.whenEntryIsInsertedWith(1, "id2",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xAA}})))
 	suite.thenModifiedResourcesShouldBe([]int{})
 }
 
 func (suite *ManifestSuite) TestModifiedCallbackOnInsertWithChangedData() {
 	suite.givenEntryWasInsertedWith(0, "id1",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xAA}})))
 	suite.whenEntryIsInsertedWith(1, "id2",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xBB}})))
 	suite.thenModifiedResourcesShouldBe([]int{0x0800})
 }
 
 func (suite *ManifestSuite) TestModifiedCallbackOnRemoveWithLostIDs() {
 	suite.givenEntryWasInsertedWith(0, "id1",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xAA}})))
 	suite.givenEntryWasInsertedWith(1, "id1",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0900, [][]byte{{0xBB}})))
 	suite.whenEntryIsRemoved(0)
 	suite.thenModifiedResourcesShouldBe([]int{0x0800})
@@ -210,10 +210,10 @@ func (suite *ManifestSuite) TestModifiedCallbackOnRemoveWithLostIDs() {
 
 func (suite *ManifestSuite) TestModifiedCallbackOnRemoveIgnoresIdenticalData_RemovedBefore() {
 	suite.givenEntryWasInsertedWith(0, "id1",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xAA}, {0xBB}})))
 	suite.givenEntryWasInsertedWith(1, "id2",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xAA}, {0xBB}})))
 	suite.whenEntryIsRemoved(0)
 	suite.thenModifiedResourcesShouldBe([]int{})
@@ -221,10 +221,10 @@ func (suite *ManifestSuite) TestModifiedCallbackOnRemoveIgnoresIdenticalData_Rem
 
 func (suite *ManifestSuite) TestModifiedCallbackOnRemoveIgnoresIdenticalData_RemovedAfter() {
 	suite.givenEntryWasInsertedWith(0, "id1",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xAA}, {0xBB}})))
 	suite.givenEntryWasInsertedWith(1, "id2",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xAA}, {0xBB}})))
 	suite.whenEntryIsRemoved(1)
 	suite.thenModifiedResourcesShouldBe([]int{})
@@ -232,10 +232,10 @@ func (suite *ManifestSuite) TestModifiedCallbackOnRemoveIgnoresIdenticalData_Rem
 
 func (suite *ManifestSuite) TestModifiedCallbackOnRemoveWithChangedData() {
 	suite.givenEntryWasInsertedWith(0, "id1",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xAA}})))
 	suite.givenEntryWasInsertedWith(1, "id2",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xBB}})))
 	suite.whenEntryIsRemoved(1)
 	suite.thenModifiedResourcesShouldBe([]int{0x0800})
@@ -243,43 +243,43 @@ func (suite *ManifestSuite) TestModifiedCallbackOnRemoveWithChangedData() {
 
 func (suite *ManifestSuite) TestModifiedCallbackOnReplaceWithChangedData() {
 	suite.givenEntryWasInsertedWith(0, "id1",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xAA}})))
 	suite.whenEntryIsReplacedWith(0, "id2",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xBB}})))
 	suite.thenModifiedResourcesShouldBe([]int{0x0800})
 }
 
 func (suite *ManifestSuite) TestModifiedCallbackWithEmptyListOnIdenticalData() {
 	suite.givenEntryWasInsertedWith(0, "id1",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xAA}})))
 	suite.whenEntryIsReplacedWith(0, "id2",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xAA}})))
 	suite.thenModifiedResourcesShouldBe([]int{})
 }
 
 func (suite *ManifestSuite) TestModifiedCallbackWithChangedIDsOnReplace() {
 	suite.givenEntryWasInsertedWith(0, "id1",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xAA}})))
 	suite.whenEntryIsReplacedWith(0, "id2",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0900, [][]byte{{0xAA}})))
 	suite.thenModifiedResourcesShouldBe([]int{0x0800, 0x0900})
 }
 
 func (suite *ManifestSuite) TestModifiedCallbackWithChangedIDsOnMove() {
 	suite.givenEntryWasInsertedWith(0, "id1",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xAA}})))
 	suite.givenEntryWasInsertedWith(1, "id2",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xBB}})))
 	suite.givenEntryWasInsertedWith(2, "id3",
-		suite.someLocalizedResources(world.LangAny,
+		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0900, [][]byte{{0x11}})))
 	suite.whenEntryIsMoved(2, 0)
 	suite.thenModifiedResourcesShouldBe([]int{0x0800})
@@ -294,13 +294,13 @@ func (suite *ManifestSuite) givenEntryWasInserted(at int, id string) {
 	suite.whenEntryIsInserted(at, id)
 }
 
-func (suite *ManifestSuite) givenEntryWasInsertedWith(at int, id string, res ...world.LocalizedResources) {
+func (suite *ManifestSuite) givenEntryWasInsertedWith(at int, id string, res ...resource.LocalizedResources) {
 	suite.whenEntryIsInsertedWith(at, id, res...)
 	suite.lastModifiedIDs = nil
 	suite.lastFailedIDs = nil
 }
 
-func (suite *ManifestSuite) whenEntryIsInsertedWith(at int, id string, res ...world.LocalizedResources) {
+func (suite *ManifestSuite) whenEntryIsInsertedWith(at int, id string, res ...resource.LocalizedResources) {
 	err := suite.manifest.InsertEntry(at, suite.anEntryWithResources(id, res...))
 	require.Nil(suite.T(), err, fmt.Sprintf("No error expected inserting entry at %d", at))
 }
@@ -320,7 +320,7 @@ func (suite *ManifestSuite) whenEntryIsReplaced(at int, id string) {
 	require.Nil(suite.T(), err, fmt.Sprintf("No error expected replacing entry at %d", at))
 }
 
-func (suite *ManifestSuite) whenEntryIsReplacedWith(at int, id string, res ...world.LocalizedResources) {
+func (suite *ManifestSuite) whenEntryIsReplacedWith(at int, id string, res ...resource.LocalizedResources) {
 	err := suite.manifest.ReplaceEntry(at, suite.anEntryWithResources(id, res...))
 	require.Nil(suite.T(), err, fmt.Sprintf("No error expected replacing entry at %d", at))
 }
@@ -330,7 +330,7 @@ func (suite *ManifestSuite) whenEntryIsMoved(to int, from int) {
 	require.Nil(suite.T(), err, fmt.Sprintf("No error expected moving entry to %d from %d", to, from))
 }
 
-func (suite *ManifestSuite) whenResourcesAreQueriedFor(lang world.Language) {
+func (suite *ManifestSuite) whenResourcesAreQueriedFor(lang resource.Language) {
 	selector := suite.manifest.LocalizedResources(lang)
 	suite.selector = &selector
 }
@@ -370,19 +370,19 @@ func (suite *ManifestSuite) aSimpleEntry(id string) *world.ManifestEntry {
 	}
 }
 
-func (suite *ManifestSuite) someLocalizedResources(lang world.Language, modifiers ...func(*resource.Store)) world.LocalizedResources {
+func (suite *ManifestSuite) someLocalizedResources(lang resource.Language, modifiers ...func(*resource.Store)) resource.LocalizedResources {
 	store := resource.NewProviderBackedStore(resource.NullProvider())
 	for _, modifier := range modifiers {
 		modifier(store)
 	}
-	return world.LocalizedResources{
+	return resource.LocalizedResources{
 		ID:       "unnamed",
 		Language: lang,
 		Provider: store,
 	}
 }
 
-func (suite *ManifestSuite) anEntryWithResources(id string, res ...world.LocalizedResources) *world.ManifestEntry {
+func (suite *ManifestSuite) anEntryWithResources(id string, res ...resource.LocalizedResources) *world.ManifestEntry {
 	return &world.ManifestEntry{
 		ID:        id,
 		Resources: res,

@@ -1,9 +1,7 @@
-package world
+package resource
 
 import (
 	"io"
-
-	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
 // ResourceView is a read-only view on a selected resource.
@@ -15,7 +13,7 @@ type ResourceView interface {
 	Compound() bool
 
 	// ContentType describes how the block data shall be interpreted.
-	ContentType() resource.ContentType
+	ContentType() ContentType
 
 	// Compressed tells whether the data shall be serialized in compressed form.
 	Compressed() bool

@@ -15,7 +15,7 @@ import (
 type ManifestEntrySuite struct {
 	suite.Suite
 	entry  *world.ManifestEntry
-	finder world.ResourceSelector
+	finder resource.ResourceSelector
 }
 
 func TestManifestEntrySuite(t *testing.T) {
@@ -27,55 +27,55 @@ func (suite *ManifestEntrySuite) SetupTest() {
 }
 
 func (suite *ManifestEntrySuite) TestResourceReturnsErrorIfNothingFound() {
-	suite.whenViewingResource(world.LangAny)
+	suite.whenViewingResource(resource.LangAny)
 	suite.thenResourceViewShouldNotBeAvailable(1234)
 }
 
 func (suite *ManifestEntrySuite) TestResourceReturnsViewIfMatched() {
-	suite.givenLocalizedResources(world.LangAny, 1000, [][]byte{{0x01}})
-	suite.whenViewingResource(world.LangAny)
+	suite.givenLocalizedResources(resource.LangAny, 1000, [][]byte{{0x01}})
+	suite.whenViewingResource(resource.LangAny)
 	suite.thenResourceViewShouldBeAvailable(1000)
 }
 
 func (suite *ManifestEntrySuite) TestResourceConsidersResourcesWithLanguageAnyWhenLookingForSpecific() {
-	suite.givenLocalizedResources(world.LangAny, 1000, [][]byte{{0x01}})
-	suite.whenViewingResource(world.LangDefault)
+	suite.givenLocalizedResources(resource.LangAny, 1000, [][]byte{{0x01}})
+	suite.whenViewingResource(resource.LangDefault)
 	suite.thenResourceViewShouldBeAvailable(1000)
 }
 
 func (suite *ManifestEntrySuite) TestResourceConsidersResourcesWithSpecificLanguage() {
-	suite.givenLocalizedResources(world.LangFrench, 1000, [][]byte{{0x01}})
-	suite.whenViewingResource(world.LangFrench)
+	suite.givenLocalizedResources(resource.LangFrench, 1000, [][]byte{{0x01}})
+	suite.whenViewingResource(resource.LangFrench)
 	suite.thenResourceViewShouldBeAvailable(1000)
 }
 
 func (suite *ManifestEntrySuite) TestResourceIgnoresResourcesWithSpecificLanguageWhenLookingForAny() {
-	suite.givenLocalizedResources(world.LangFrench, 1000, [][]byte{{0x01}})
-	suite.whenViewingResource(world.LangAny)
+	suite.givenLocalizedResources(resource.LangFrench, 1000, [][]byte{{0x01}})
+	suite.whenViewingResource(resource.LangAny)
 	suite.thenResourceViewShouldNotBeAvailable(1000)
 }
 
 func (suite *ManifestEntrySuite) TestResourceIgnoresResourcesWithSpecificLanguageWhenLookingForDifferentLanguage() {
-	suite.givenLocalizedResources(world.LangFrench, 1000, [][]byte{{0x01}})
-	suite.whenViewingResource(world.LangDefault)
+	suite.givenLocalizedResources(resource.LangFrench, 1000, [][]byte{{0x01}})
+	suite.whenViewingResource(resource.LangDefault)
 	suite.thenResourceViewShouldNotBeAvailable(1000)
 
-	suite.whenViewingResource(world.LangGerman)
+	suite.whenViewingResource(resource.LangGerman)
 	suite.thenResourceViewShouldNotBeAvailable(1000)
 }
 
-func (suite *ManifestEntrySuite) givenLocalizedResources(lang world.Language, id int, blocks [][]byte) {
+func (suite *ManifestEntrySuite) givenLocalizedResources(lang resource.Language, id int, blocks [][]byte) {
 	store := resource.NewProviderBackedStore(resource.NullProvider())
 	store.Put(resource.ID(id), &resource.Resource{
 		BlockProvider: resource.MemoryBlockProvider(blocks),
 	})
-	suite.entry.Resources = append(suite.entry.Resources, world.LocalizedResources{
+	suite.entry.Resources = append(suite.entry.Resources, resource.LocalizedResources{
 		Language: lang,
 		Provider: store,
 	})
 }
 
-func (suite *ManifestEntrySuite) whenViewingResource(lang world.Language) {
+func (suite *ManifestEntrySuite) whenViewingResource(lang resource.Language) {
 	suite.finder = suite.entry.LocalizedResources(lang)
 }
 

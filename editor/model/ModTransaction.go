@@ -2,7 +2,6 @@ package model
 
 import (
 	"github.com/inkyblackness/hacked/ss1/resource"
-	"github.com/inkyblackness/hacked/ss1/world"
 )
 
 type modAction func(mod *Mod)
@@ -36,10 +35,10 @@ func (trans *ModTransaction) SetResource(id resource.ID,
 		res.Compressed = compressed
 	}
 	trans.actions = append(trans.actions, func(mod *Mod) {
-		for _, lang := range world.Languages() {
+		for _, lang := range resource.Languages() {
 			setResource(mod.ensureResource(lang, id))
 		}
-		setResource(mod.ensureResource(world.LangAny, id))
+		setResource(mod.ensureResource(resource.LangAny, id))
 	})
 	trans.modifiedIDs[id] = true
 }
@@ -52,7 +51,7 @@ func (trans *ModTransaction) SetResource(id resource.ID,
 //
 // If the block data is empty (or nil), then the block is cleared.
 // If the resource is a compound list, then the underlying data will become visible again.
-func (trans *ModTransaction) SetResourceBlock(lang world.Language, id resource.ID, index int, data []byte) {
+func (trans *ModTransaction) SetResourceBlock(lang resource.Language, id resource.ID, index int, data []byte) {
 	trans.actions = append(trans.actions, func(mod *Mod) {
 		res := mod.ensureResource(lang, id)
 		res.SetBlock(index, data)
@@ -63,7 +62,7 @@ func (trans *ModTransaction) SetResourceBlock(lang world.Language, id resource.I
 // DelResource removes a resource from the mod in the given language.
 //
 // After the deletion, all the underlying data of the world will become visible again.
-func (trans *ModTransaction) DelResource(lang world.Language, id resource.ID) {
+func (trans *ModTransaction) DelResource(lang resource.Language, id resource.ID) {
 	trans.actions = append(trans.actions, func(mod *Mod) {
 		mod.delResource(lang, id)
 	})

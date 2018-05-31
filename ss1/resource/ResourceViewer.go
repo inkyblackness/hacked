@@ -1,20 +1,18 @@
-package world
+package resource
 
 import (
 	"io"
-
-	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
 type resourceViewer struct {
-	res *resource.Resource
+	res *Resource
 }
 
 func (viewer resourceViewer) Compound() bool {
 	return viewer.res.Compound
 }
 
-func (viewer resourceViewer) ContentType() resource.ContentType {
+func (viewer resourceViewer) ContentType() ContentType {
 	return viewer.res.ContentType
 }
 

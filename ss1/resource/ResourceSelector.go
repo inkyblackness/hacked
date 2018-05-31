@@ -1,10 +1,8 @@
-package world
-
-import "github.com/inkyblackness/hacked/ss1/resource"
+package resource
 
 // ResourceFilter filters for language and id to produce a list of matching resources.
 type ResourceFilter interface {
-	Filter(lang Language, id resource.ID) resource.List
+	Filter(lang Language, id ID) List
 }
 
 // ResourceSelector provides a merged view of resources according to a language.
@@ -21,10 +19,10 @@ type ResourceSelector struct {
 }
 
 // Select provides a collected view on one resource.
-func (merger ResourceSelector) Select(id resource.ID) (view ResourceView, err error) {
+func (merger ResourceSelector) Select(id ID) (view ResourceView, err error) {
 	list := merger.From.Filter(merger.Lang, id)
 	if len(list) == 0 {
-		return nil, resource.ErrResourceDoesNotExist(id)
+		return nil, ErrResourceDoesNotExist(id)
 	}
 	if (merger.As == nil) || !merger.As.IsCompoundList(id) {
 		view = &resourceViewer{list[len(list)-1]}

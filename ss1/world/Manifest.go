@@ -6,27 +6,14 @@ import (
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
-type resourceHash []byte
-type resourceHashes map[resource.ID]resourceHash
-type resourceHashSnapshot map[Language]resourceHashes
-type idMarkerMap map[resource.ID]bool
-
-func (marker idMarkerMap) toList() []resource.ID {
-	result := make([]resource.ID, 0, len(marker))
-	for id := range marker {
-		result = append(result, id)
-	}
-	return result
-}
-
 // Manifest contains all the data and information of concrete things in a world.
 type Manifest struct {
-	resourceChangeNotifier ResourceChangeNotifier
+	resourceChangeNotifier resource.ResourceChangeNotifier
 	entries                []*ManifestEntry
 }
 
 // NewManifest returns a new instance that notifies changes to the provided callback.
-func NewManifest(modified ResourceModificationCallback) *Manifest {
+func NewManifest(modified resource.ResourceModificationCallback) *Manifest {
 	var manifest Manifest
 
 	manifest.resourceChangeNotifier.Callback = modified
@@ -119,10 +106,10 @@ func (manifest *Manifest) MoveEntry(to, from int) error {
 }
 
 // Filter finds all resources in the world that match the given parameters.
-func (manifest Manifest) Filter(lang Language, id resource.ID) resource.List {
+func (manifest Manifest) Filter(lang resource.Language, id resource.ID) resource.List {
 	var list resource.List
 	for _, entry := range manifest.entries {
-		list = list.Joined(entry.Filter(lang, id))
+		list = list.Joined(entry.Resources.Filter(lang, id))
 	}
 	return list
 }
@@ -130,11 +117,11 @@ func (manifest Manifest) Filter(lang Language, id resource.ID) resource.List {
 // LocalizedResources produces a selector to retrieve resources for a specific language from the manifest.
 // The returned selector has the strategy to merge the typical compound resource lists, such
 // as the small textures, or string lookups. It is based on StandardResourceViewStrategy().
-func (manifest *Manifest) LocalizedResources(lang Language) ResourceSelector {
-	return ResourceSelector{
+func (manifest *Manifest) LocalizedResources(lang resource.Language) resource.ResourceSelector {
+	return resource.ResourceSelector{
 		Lang: lang,
 		From: manifest,
-		As:   StandardResourceViewStrategy(),
+		As:   ResourceViewStrategy(),
 	}
 }
 

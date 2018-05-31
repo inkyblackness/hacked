@@ -1,9 +1,7 @@
-package world
+package resource
 
 import (
 	"strings"
-
-	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
 // LocalizedResources associates a language with a resource provider under a specific identifier.
@@ -13,7 +11,7 @@ type LocalizedResources struct {
 	// Language specifies for which language the provider has resources.
 	Language Language
 	// Provider is the actual container of the resources.
-	Provider resource.Provider
+	Provider Provider
 }
 
 type languageSpecificFilenames struct {
@@ -50,7 +48,7 @@ var localizedFilenames = map[Language]languageSpecificFilenames{
 
 // LocalizeResources creates an instance of LocalizedResources based on a filename and a provider.
 // The given filename is taken as an ID, as well as a hint to identify the language.
-func LocalizeResourcesByFilename(provider resource.Provider, filename string) (res LocalizedResources) {
+func LocalizeResourcesByFilename(provider Provider, filename string) (res LocalizedResources) {
 	res.ID = filename
 	res.Provider = provider
 	res.Language = LangAny

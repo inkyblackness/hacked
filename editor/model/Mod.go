@@ -13,23 +13,23 @@ type identifiedResources map[resource.ID]*resource.Resource
 // unchangeable background for the mod. Changes to the mod are kept in a separate layer, which can be loaded and saved.
 type Mod struct {
 	worldManifest    *world.Manifest
-	resourcesChanged world.ResourceModificationCallback
+	resourcesChanged resource.ResourceModificationCallback
 
-	localizedResources map[world.Language]identifiedResources
+	localizedResources map[resource.Language]identifiedResources
 }
 
 // NewMod returns a new instance.
-func NewMod(resourcesChanged world.ResourceModificationCallback) *Mod {
+func NewMod(resourcesChanged resource.ResourceModificationCallback) *Mod {
 	var mod *Mod
 	mod = &Mod{
 		resourcesChanged:   resourcesChanged,
-		localizedResources: make(map[world.Language]identifiedResources),
+		localizedResources: make(map[resource.Language]identifiedResources),
 	}
 	mod.worldManifest = world.NewManifest(mod.worldChanged)
-	for _, lang := range world.Languages() {
+	for _, lang := range resource.Languages() {
 		mod.localizedResources[lang] = make(identifiedResources)
 	}
-	mod.localizedResources[world.LangAny] = make(identifiedResources)
+	mod.localizedResources[resource.LangAny] = make(identifiedResources)
 
 	return mod
 }
@@ -41,12 +41,12 @@ func (mod Mod) World() *world.Manifest {
 }
 
 // Filter returns a list of resources that match the given parameters.
-func (mod Mod) Filter(lang world.Language, id resource.ID) resource.List {
+func (mod Mod) Filter(lang resource.Language, id resource.ID) resource.List {
 	list := mod.worldManifest.Filter(lang, id)
-	if res, resExists := mod.localizedResources[world.LangAny][id]; resExists {
+	if res, resExists := mod.localizedResources[resource.LangAny][id]; resExists {
 		list = list.With(res)
 	}
-	for _, worldLang := range world.Languages() {
+	for _, worldLang := range resource.Languages() {
 		if worldLang.Includes(lang) {
 			if res, resExists := mod.localizedResources[lang][id]; resExists {
 				list = list.With(res)
@@ -57,18 +57,18 @@ func (mod Mod) Filter(lang world.Language, id resource.ID) resource.List {
 }
 
 // LocalizedResources returns a resource selector for a specific language.
-func (mod Mod) LocalizedResources(lang world.Language) world.ResourceSelector {
-	return world.ResourceSelector{
+func (mod Mod) LocalizedResources(lang resource.Language) resource.ResourceSelector {
+	return resource.ResourceSelector{
 		Lang: lang,
 		From: mod,
-		As:   world.StandardResourceViewStrategy(),
+		As:   world.ResourceViewStrategy(),
 	}
 }
 
 // Modify requests to change the mod. The provided function will be called to collect all changes.
 // After the modifier completes, all the requests will be applied and any changes notified.
 func (mod *Mod) Modify(modifier func(*ModTransaction)) {
-	notifier := world.ResourceChangeNotifier{
+	notifier := resource.ResourceChangeNotifier{
 		Callback:  mod.resourcesChanged,
 		Localizer: mod,
 	}
@@ -93,7 +93,7 @@ func (mod Mod) worldChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) 
 	mod.resourcesChanged(modifiedIDs, failedIDs)
 }
 
-func (mod *Mod) ensureResource(lang world.Language, id resource.ID) *resource.Resource {
+func (mod *Mod) ensureResource(lang resource.Language, id resource.ID) *resource.Resource {
 	res, resExists := mod.localizedResources[lang][id]
 	if !resExists {
 		res = mod.newResource(lang, id)
@@ -102,7 +102,7 @@ func (mod *Mod) ensureResource(lang world.Language, id resource.ID) *resource.Re
 	return res
 }
 
-func (mod *Mod) newResource(lang world.Language, id resource.ID) *resource.Resource {
+func (mod *Mod) newResource(lang resource.Language, id resource.ID) *resource.Resource {
 	// TODO: if not even existing, create based on defaults
 	compound := false
 	contentType := resource.Text
@@ -124,13 +124,13 @@ func (mod *Mod) newResource(lang world.Language, id resource.ID) *resource.Resou
 	}
 }
 
-func (mod *Mod) delResource(lang world.Language, id resource.ID) {
-	for _, worldLang := range world.Languages() {
+func (mod *Mod) delResource(lang resource.Language, id resource.ID) {
+	for _, worldLang := range resource.Languages() {
 		if lang.Includes(worldLang) {
 			delete(mod.localizedResources[worldLang], id)
 		}
 	}
-	if lang.Includes(world.LangAny) {
-		delete(mod.localizedResources[world.LangAny], id)
+	if lang.Includes(resource.LangAny) {
+		delete(mod.localizedResources[resource.LangAny], id)
 	}
 }

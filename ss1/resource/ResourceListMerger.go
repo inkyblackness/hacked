@@ -1,13 +1,11 @@
-package world
+package resource
 
 import (
 	"io"
-
-	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
 type resourceListMerger struct {
-	list resource.List
+	list List
 }
 
 // Compound indicates whether the resource is a compound one, which can contain zero, one, or more blocks.
@@ -17,7 +15,7 @@ func (view resourceListMerger) Compound() bool {
 }
 
 // ContentType specifies how the data in the resource shall be interpreted.
-func (view resourceListMerger) ContentType() resource.ContentType {
+func (view resourceListMerger) ContentType() ContentType {
 	return view.list[0].ContentType
 }
 

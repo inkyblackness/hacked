@@ -1,16 +1,27 @@
-package world
+package resource
 
 import (
 	"bytes"
 	"crypto/md5" // nolint: gas
 	"encoding/binary"
 	"io"
-
-	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
+type resourceHash []byte
+type resourceHashes map[ID]resourceHash
+type resourceHashSnapshot map[Language]resourceHashes
+type idMarkerMap map[ID]bool
+
+func (marker idMarkerMap) toList() []ID {
+	result := make([]ID, 0, len(marker))
+	for id := range marker {
+		result = append(result, id)
+	}
+	return result
+}
+
 // ResourceModificationCallback is a callback function to notify a change in resources.
-type ResourceModificationCallback func(modifiedIDs []resource.ID, failedIDs []resource.ID)
+type ResourceModificationCallback func(modifiedIDs []ID, failedIDs []ID)
 
 // ResourceLocalizer provides selectors to resources for specific languages.
 type ResourceLocalizer interface {
@@ -32,8 +43,8 @@ type ResourceChangeNotifier struct {
 // Any change is then reported to the callback, listing all IDs that have different hashes.
 //
 // Hashing the resources considers all languages, as well as the meta-information of the resources.
-func (notifier ResourceChangeNotifier) ModifyAndNotify(modifier func(), affectedIDs ...[]resource.ID) {
-	var flattenedIDs []resource.ID
+func (notifier ResourceChangeNotifier) ModifyAndNotify(modifier func(), affectedIDs ...[]ID) {
+	var flattenedIDs []ID
 	for _, idList := range affectedIDs {
 		flattenedIDs = append(flattenedIDs, idList...)
 	}
@@ -44,7 +55,7 @@ func (notifier ResourceChangeNotifier) ModifyAndNotify(modifier func(), affected
 	notifier.Callback(modifiedResourceIDs, failedIDs)
 }
 
-func (notifier ResourceChangeNotifier) hashAll(ids []resource.ID) (hashes resourceHashSnapshot, failedIDs []resource.ID) {
+func (notifier ResourceChangeNotifier) hashAll(ids []ID) (hashes resourceHashSnapshot, failedIDs []ID) {
 	failedMap := make(idMarkerMap)
 	hashes = make(resourceHashSnapshot)
 	for _, lang := range Languages() {
@@ -65,7 +76,7 @@ func (notifier ResourceChangeNotifier) hashAll(ids []resource.ID) (hashes resour
 	return
 }
 
-func (notifier ResourceChangeNotifier) hashResource(selector *ResourceSelector, id resource.ID) (resourceHash, error) {
+func (notifier ResourceChangeNotifier) hashResource(selector *ResourceSelector, id ID) (resourceHash, error) {
 	view, viewErr := selector.Select(id)
 	if viewErr != nil {
 		return nil, viewErr
@@ -91,7 +102,7 @@ func (notifier ResourceChangeNotifier) hashResource(selector *ResourceSelector, 
 	return hasher.Sum(nil), nil
 }
 
-func (notifier ResourceChangeNotifier) modifiedIDs(oldHashes resourceHashSnapshot, newHashes resourceHashSnapshot) []resource.ID {
+func (notifier ResourceChangeNotifier) modifiedIDs(oldHashes resourceHashSnapshot, newHashes resourceHashSnapshot) []ID {
 	modifiedIDs := make(idMarkerMap)
 	for _, lang := range Languages() {
 		oldHashesByResourceID := oldHashes[lang]
