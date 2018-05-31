@@ -16,7 +16,7 @@ import (
 type ManifestSuite struct {
 	suite.Suite
 	manifest *world.Manifest
-	selector *resource.ResourceSelector
+	selector *resource.Selector
 
 	lastModifiedIDs []resource.ID
 	lastFailedIDs   []resource.ID

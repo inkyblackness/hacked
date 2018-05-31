@@ -1,33 +1,33 @@
 package resource
 
-// ResourceFilter filters for language and id to produce a list of matching resources.
-type ResourceFilter interface {
+// Filter filters for language and id to produce a list of matching resources.
+type Filter interface {
 	Filter(lang Language, id ID) List
 }
 
-// ResourceSelector provides a merged view of resources according to a language.
-type ResourceSelector struct {
+// Selector provides a merged view of resources according to a language.
+type Selector struct {
 	// Lang specifies the language to filter by.
 	Lang Language
 
 	// From specifies from where the resources shall be taken.
-	From ResourceFilter
+	From Filter
 
 	// As defines how the found resources should be viewed in case more than one matches.
 	// By default, the last resource will be used.
-	As ResourceViewStrategy
+	As ViewStrategy
 }
 
 // Select provides a collected view on one resource.
-func (merger ResourceSelector) Select(id ID) (view ResourceView, err error) {
+func (merger Selector) Select(id ID) (view View, err error) {
 	list := merger.From.Filter(merger.Lang, id)
 	if len(list) == 0 {
 		return nil, ErrResourceDoesNotExist(id)
 	}
 	if (merger.As == nil) || !merger.As.IsCompoundList(id) {
-		view = &resourceViewer{list[len(list)-1]}
+		view = &simpleView{list[len(list)-1]}
 	} else {
-		view = &resourceListMerger{list}
+		view = &listMerger{list}
 	}
 
 	return view, nil

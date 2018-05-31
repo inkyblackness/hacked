@@ -1,7 +1,7 @@
 package resource
 
 // LocalizedResourcesList is a collection of localized resources.
-// it exists to provide a typical implementation of a ResourceSelector.
+// it exists to provide a typical implementation of a Selector.
 type LocalizedResourcesList []LocalizedResources
 
 // Filter returns all resources that match the given parameters.

@@ -8,12 +8,12 @@ import (
 
 // Manifest contains all the data and information of concrete things in a world.
 type Manifest struct {
-	resourceChangeNotifier resource.ResourceChangeNotifier
+	resourceChangeNotifier resource.ChangeNotifier
 	entries                []*ManifestEntry
 }
 
 // NewManifest returns a new instance that notifies changes to the provided callback.
-func NewManifest(modified resource.ResourceModificationCallback) *Manifest {
+func NewManifest(modified resource.ModificationCallback) *Manifest {
 	var manifest Manifest
 
 	manifest.resourceChangeNotifier.Callback = modified
@@ -117,8 +117,8 @@ func (manifest Manifest) Filter(lang resource.Language, id resource.ID) resource
 // LocalizedResources produces a selector to retrieve resources for a specific language from the manifest.
 // The returned selector has the strategy to merge the typical compound resource lists, such
 // as the small textures, or string lookups. It is based on StandardResourceViewStrategy().
-func (manifest *Manifest) LocalizedResources(lang resource.Language) resource.ResourceSelector {
-	return resource.ResourceSelector{
+func (manifest *Manifest) LocalizedResources(lang resource.Language) resource.Selector {
+	return resource.Selector{
 		Lang: lang,
 		From: manifest,
 		As:   ResourceViewStrategy(),

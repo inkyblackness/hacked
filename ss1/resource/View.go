@@ -4,8 +4,8 @@ import (
 	"io"
 )
 
-// ResourceView is a read-only view on a selected resource.
-type ResourceView interface {
+// View is a read-only view on a selected resource.
+type View interface {
 
 	// Compound tells whether the resource should be serialized with a directory.
 	// Compound resources can have zero, one, or more blocks.

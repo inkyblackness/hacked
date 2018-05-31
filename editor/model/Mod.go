@@ -13,13 +13,13 @@ type identifiedResources map[resource.ID]*resource.Resource
 // unchangeable background for the mod. Changes to the mod are kept in a separate layer, which can be loaded and saved.
 type Mod struct {
 	worldManifest    *world.Manifest
-	resourcesChanged resource.ResourceModificationCallback
+	resourcesChanged resource.ModificationCallback
 
 	localizedResources map[resource.Language]identifiedResources
 }
 
 // NewMod returns a new instance.
-func NewMod(resourcesChanged resource.ResourceModificationCallback) *Mod {
+func NewMod(resourcesChanged resource.ModificationCallback) *Mod {
 	var mod *Mod
 	mod = &Mod{
 		resourcesChanged:   resourcesChanged,
@@ -57,8 +57,8 @@ func (mod Mod) Filter(lang resource.Language, id resource.ID) resource.List {
 }
 
 // LocalizedResources returns a resource selector for a specific language.
-func (mod Mod) LocalizedResources(lang resource.Language) resource.ResourceSelector {
-	return resource.ResourceSelector{
+func (mod Mod) LocalizedResources(lang resource.Language) resource.Selector {
+	return resource.Selector{
 		Lang: lang,
 		From: mod,
 		As:   world.ResourceViewStrategy(),
@@ -68,7 +68,7 @@ func (mod Mod) LocalizedResources(lang resource.Language) resource.ResourceSelec
 // Modify requests to change the mod. The provided function will be called to collect all changes.
 // After the modifier completes, all the requests will be applied and any changes notified.
 func (mod *Mod) Modify(modifier func(*ModTransaction)) {
-	notifier := resource.ResourceChangeNotifier{
+	notifier := resource.ChangeNotifier{
 		Callback:  mod.resourcesChanged,
 		Localizer: mod,
 	}

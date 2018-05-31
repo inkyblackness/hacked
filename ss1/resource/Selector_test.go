@@ -16,10 +16,10 @@ type ResourceSelectorSuite struct {
 	suite.Suite
 
 	resources []*resource.Resource
-	view      resource.ResourceView
+	view      resource.View
 
 	isCompoundList bool
-	viewStrategy   resource.ResourceViewStrategy
+	viewStrategy   resource.ViewStrategy
 }
 
 func TestResourceSelectorSuite(t *testing.T) {
@@ -156,7 +156,7 @@ func (suite *ResourceSelectorSuite) givenSpecificResource(modifier func(*resourc
 
 func (suite *ResourceSelectorSuite) whenInstanceIsCreated() {
 
-	selector := resource.ResourceSelector{
+	selector := resource.Selector{
 		Lang: resource.LangAny,
 		From: suite,
 		As:   suite.viewStrategy,

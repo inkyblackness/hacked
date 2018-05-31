@@ -11,8 +11,8 @@ type ManifestEntry struct {
 }
 
 // LocalizedResources produces a selector to retrieve resources for a specific language from this entry.
-func (entry ManifestEntry) LocalizedResources(lang resource.Language) resource.ResourceSelector {
-	return resource.ResourceSelector{
+func (entry ManifestEntry) LocalizedResources(lang resource.Language) resource.Selector {
+	return resource.Selector{
 		From: entry.Resources,
 		Lang: lang,
 	}

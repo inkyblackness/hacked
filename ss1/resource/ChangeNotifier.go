@@ -20,22 +20,22 @@ func (marker idMarkerMap) toList() []ID {
 	return result
 }
 
-// ResourceModificationCallback is a callback function to notify a change in resources.
-type ResourceModificationCallback func(modifiedIDs []ID, failedIDs []ID)
+// ModificationCallback is a callback function to notify a change in resources.
+type ModificationCallback func(modifiedIDs []ID, failedIDs []ID)
 
-// ResourceLocalizer provides selectors to resources for specific languages.
-type ResourceLocalizer interface {
-	LocalizedResources(lang Language) ResourceSelector
+// Localizer provides selectors to resources for specific languages.
+type Localizer interface {
+	LocalizedResources(lang Language) Selector
 }
 
-// ResourceChangeNotifier is a utility that assists in detecting changes in modifying resources.
+// ChangeNotifier is a utility that assists in detecting changes in modifying resources.
 // A callback is called for any resource identifier that refers to resources that are different after a modification.
 //
 // Use this utility in combination to resource lists where resources can be overwritten by other entries.
 // Changes in order, or content, affects how a resource is resolved.
-type ResourceChangeNotifier struct {
-	Localizer ResourceLocalizer
-	Callback  ResourceModificationCallback
+type ChangeNotifier struct {
+	Localizer Localizer
+	Callback  ModificationCallback
 }
 
 // ModifyAndNotify must be called with a range of affected IDs that will change during the call of the modifier.
@@ -43,7 +43,7 @@ type ResourceChangeNotifier struct {
 // Any change is then reported to the callback, listing all IDs that have different hashes.
 //
 // Hashing the resources considers all languages, as well as the meta-information of the resources.
-func (notifier ResourceChangeNotifier) ModifyAndNotify(modifier func(), affectedIDs ...[]ID) {
+func (notifier ChangeNotifier) ModifyAndNotify(modifier func(), affectedIDs ...[]ID) {
 	var flattenedIDs []ID
 	for _, idList := range affectedIDs {
 		flattenedIDs = append(flattenedIDs, idList...)
@@ -55,7 +55,7 @@ func (notifier ResourceChangeNotifier) ModifyAndNotify(modifier func(), affected
 	notifier.Callback(modifiedResourceIDs, failedIDs)
 }
 
-func (notifier ResourceChangeNotifier) hashAll(ids []ID) (hashes resourceHashSnapshot, failedIDs []ID) {
+func (notifier ChangeNotifier) hashAll(ids []ID) (hashes resourceHashSnapshot, failedIDs []ID) {
 	failedMap := make(idMarkerMap)
 	hashes = make(resourceHashSnapshot)
 	for _, lang := range Languages() {
@@ -76,7 +76,7 @@ func (notifier ResourceChangeNotifier) hashAll(ids []ID) (hashes resourceHashSna
 	return
 }
 
-func (notifier ResourceChangeNotifier) hashResource(selector *ResourceSelector, id ID) (resourceHash, error) {
+func (notifier ChangeNotifier) hashResource(selector *Selector, id ID) (resourceHash, error) {
 	view, viewErr := selector.Select(id)
 	if viewErr != nil {
 		return nil, viewErr
@@ -102,7 +102,7 @@ func (notifier ResourceChangeNotifier) hashResource(selector *ResourceSelector, 
 	return hasher.Sum(nil), nil
 }
 
-func (notifier ResourceChangeNotifier) modifiedIDs(oldHashes resourceHashSnapshot, newHashes resourceHashSnapshot) []ID {
+func (notifier ChangeNotifier) modifiedIDs(oldHashes resourceHashSnapshot, newHashes resourceHashSnapshot) []ID {
 	modifiedIDs := make(idMarkerMap)
 	for _, lang := range Languages() {
 		oldHashesByResourceID := oldHashes[lang]

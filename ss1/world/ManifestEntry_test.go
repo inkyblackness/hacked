@@ -15,7 +15,7 @@ import (
 type ManifestEntrySuite struct {
 	suite.Suite
 	entry  *world.ManifestEntry
-	finder resource.ResourceSelector
+	finder resource.Selector
 }
 
 func TestManifestEntrySuite(t *testing.T) {
@@ -88,5 +88,5 @@ func (suite *ManifestEntrySuite) thenResourceViewShouldNotBeAvailable(id int) {
 func (suite *ManifestEntrySuite) thenResourceViewShouldBeAvailable(id int) {
 	view, err := suite.finder.Select(resource.ID(id))
 	require.Nil(suite.T(), err, fmt.Sprintf("No error expected finding resource %v", id))
-	assert.NotNil(suite.T(), view, fmt.Sprintf("ResourceView expected for resource %v", id))
+	assert.NotNil(suite.T(), view, fmt.Sprintf("View expected for resource %v", id))
 }

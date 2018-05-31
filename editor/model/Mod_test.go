@@ -19,7 +19,7 @@ type ModSuite struct {
 	suite.Suite
 	mod *model.Mod
 
-	selector *resource.ResourceSelector
+	selector *resource.Selector
 
 	lastModifiedIDs []resource.ID
 	lastFailedIDs   []resource.ID
