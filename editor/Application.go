@@ -64,8 +64,13 @@ func (app *Application) render() {
 			}
 			imgui.EndMenu()
 		}
+		imgui.EndMainMenuBar()
 	}
-	imgui.EndMainMenuBar()
+
+	if imgui.Begin("Project") {
+
+	}
+	imgui.End()
 
 	app.guiContext.Render()
 }
