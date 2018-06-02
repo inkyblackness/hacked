@@ -67,10 +67,25 @@ func (app *Application) render() {
 		imgui.EndMainMenuBar()
 	}
 
+	imgui.SetNextWindowSizeV(imgui.Vec2{400 * app.GuiScale, 300 * app.GuiScale}, imgui.ConditionOnce)
 	if imgui.Begin("Project") {
-
+		imgui.TextUnformatted("Static World Data")
+		imgui.BeginChildV("ManifestEntries", imgui.Vec2{-100 * app.GuiScale, 0}, true, 0)
+		for _, text := range []string{"a", "b", "c"} {
+			imgui.Selectable(text)
+		}
+		imgui.EndChild()
+		imgui.SameLine()
+		imgui.BeginGroup()
+		imgui.ButtonV("Add...", imgui.Vec2{-1, 0})
+		imgui.ButtonV("Up", imgui.Vec2{-1, 0})
+		imgui.ButtonV("Down", imgui.Vec2{-1, 0})
+		imgui.ButtonV("Remove...", imgui.Vec2{-1, 0})
+		imgui.EndGroup()
 	}
 	imgui.End()
+
+	imgui.ShowDemoWindow(nil)
 
 	app.guiContext.Render()
 }
