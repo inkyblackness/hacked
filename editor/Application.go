@@ -1,6 +1,11 @@
 package editor
 
 import (
+	"github.com/inkyblackness/hacked/editor/cmd"
+	"github.com/inkyblackness/hacked/editor/model"
+	"github.com/inkyblackness/hacked/editor/project"
+	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/hacked/ui/input"
 	"github.com/inkyblackness/hacked/ui/opengl"
@@ -16,6 +21,11 @@ type Application struct {
 	// GuiScale is applied when the window is initialized.
 	GuiScale   float32
 	guiContext *gui.Context
+
+	mod      *model.Mod
+	cmdStack cmd.Stack
+
+	projectView *project.View
 }
 
 // InitializeWindow takes the given window and attaches the callbacks.
@@ -30,6 +40,9 @@ func (app *Application) InitializeWindow(window opengl.Window) (err error) {
 		return
 	}
 
+	app.initModel()
+	app.initView()
+
 	return
 }
 
@@ -43,6 +56,8 @@ func (app *Application) onWindowClosed() {
 func (app *Application) initWindowCallbacks() {
 	app.window.OnClosing(app.onWindowClosing)
 	app.window.OnClosed(app.onWindowClosed)
+
+	app.window.OnKey(app.onKey)
 
 	app.window.OnMouseMove(app.onMouseMove)
 	app.window.OnMouseScroll(app.onMouseScroll)
@@ -67,23 +82,7 @@ func (app *Application) render() {
 		imgui.EndMainMenuBar()
 	}
 
-	imgui.SetNextWindowSizeV(imgui.Vec2{400 * app.GuiScale, 300 * app.GuiScale}, imgui.ConditionOnce)
-	if imgui.Begin("Project") {
-		imgui.TextUnformatted("Static World Data")
-		imgui.BeginChildV("ManifestEntries", imgui.Vec2{-100 * app.GuiScale, 0}, true, 0)
-		for _, text := range []string{"a", "b", "c"} {
-			imgui.Selectable(text)
-		}
-		imgui.EndChild()
-		imgui.SameLine()
-		imgui.BeginGroup()
-		imgui.ButtonV("Add...", imgui.Vec2{-1, 0})
-		imgui.ButtonV("Up", imgui.Vec2{-1, 0})
-		imgui.ButtonV("Down", imgui.Vec2{-1, 0})
-		imgui.ButtonV("Remove...", imgui.Vec2{-1, 0})
-		imgui.EndGroup()
-	}
-	imgui.End()
+	app.projectView.Render()
 
 	imgui.ShowDemoWindow(nil)
 
@@ -107,6 +106,14 @@ func (app *Application) initGui() (err error) {
 
 func (app *Application) onWindowClosing() {
 
+}
+
+func (app *Application) onKey(key input.Key, modifier input.Modifier) {
+	if (key == input.KeyUndo) && app.cmdStack.CanUndo() {
+		app.cmdStack.Undo()
+	} else if (key == input.KeyRedo) && app.cmdStack.CanRedo() {
+		app.cmdStack.Redo()
+	}
 }
 
 func (app *Application) onMouseMove(x, y float32) {
@@ -183,4 +190,30 @@ func (app *Application) initGuiStyle() {
 	style.SetColor(imgui.StyleColorButtonActive, colorDoubleFull(1.0))
 	style.SetColor(imgui.StyleColorSeparatorHovered, colorDoubleFull(0.78))
 	style.SetColor(imgui.StyleColorSeparatorActive, colorTripleLight(1.0))
+}
+
+func (app *Application) initModel() {
+	app.mod = model.NewMod(app.resourcesChanged)
+
+	manifest := app.mod.World()
+	manifest.InsertEntry(0, &world.ManifestEntry{
+		ID:        "/something/somewhere/there",
+		Resources: nil,
+	})
+	manifest.InsertEntry(1, &world.ManifestEntry{
+		ID:        "/something/other/there",
+		Resources: nil,
+	})
+	manifest.InsertEntry(2, &world.ManifestEntry{
+		ID:        "/completely/different",
+		Resources: nil,
+	})
+}
+
+func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) {
+
+}
+
+func (app *Application) initView() {
+	app.projectView = project.NewView(app.mod, app.GuiScale, &app.cmdStack)
 }
