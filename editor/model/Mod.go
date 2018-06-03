@@ -20,8 +20,7 @@ type Mod struct {
 
 // NewMod returns a new instance.
 func NewMod(resourcesChanged resource.ModificationCallback) *Mod {
-	var mod *Mod
-	mod = &Mod{
+	mod := &Mod{
 		resourcesChanged:   resourcesChanged,
 		localizedResources: make(map[resource.Language]identifiedResources),
 	}
