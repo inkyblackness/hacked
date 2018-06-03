@@ -10,17 +10,17 @@ import (
 type View struct {
 	mod       *model.Mod
 	guiScale  float32
-	performer cmd.Performer
+	commander cmd.Commander
 
 	model viewModel
 }
 
 // NewView creates a new instance for the project display.
-func NewView(mod *model.Mod, guiScale float32, performer cmd.Performer) *View {
+func NewView(mod *model.Mod, guiScale float32, commander cmd.Commander) *View {
 	return &View{
 		mod:       mod,
 		guiScale:  guiScale,
-		performer: performer,
+		commander: commander,
 
 		model: freshViewModel(),
 	}
@@ -94,5 +94,5 @@ func (view *View) requestMoveManifestEntry(to, from int) {
 		to:    to,
 		from:  from,
 	}
-	view.performer.Perform(command)
+	view.commander.Queue(command)
 }

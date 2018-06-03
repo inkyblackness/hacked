@@ -1,6 +1,8 @@
 package editor
 
 import (
+	"fmt"
+
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/project"
@@ -22,10 +24,13 @@ type Application struct {
 	GuiScale   float32
 	guiContext *gui.Context
 
+	cmdStack *cmd.Stack
 	mod      *model.Mod
-	cmdStack cmd.Stack
 
 	projectView *project.View
+
+	failureMessage string
+	failurePending bool
 }
 
 // InitializeWindow takes the given window and attaches the callbacks.
@@ -79,12 +84,22 @@ func (app *Application) render() {
 			}
 			imgui.EndMenu()
 		}
+		/*
+			if imgui.BeginMenu("About") {
+				if imgui.MenuItem("Error") {
+					app.onFailure("Test", "No info", errors.New("dummy error"))
+				}
+				imgui.EndMenu()
+			}
+		*/
 		imgui.EndMainMenuBar()
 	}
 
 	app.projectView.Render()
 
-	imgui.ShowDemoWindow(nil)
+	//imgui.ShowDemoWindow(nil)
+
+	app.handleFailure()
 
 	app.guiContext.Render()
 }
@@ -109,10 +124,30 @@ func (app *Application) onWindowClosing() {
 }
 
 func (app *Application) onKey(key input.Key, modifier input.Modifier) {
-	if (key == input.KeyUndo) && app.cmdStack.CanUndo() {
-		app.cmdStack.Undo()
-	} else if (key == input.KeyRedo) && app.cmdStack.CanRedo() {
-		app.cmdStack.Redo()
+	if key == input.KeyUndo {
+		app.tryUndo()
+	} else if key == input.KeyRedo {
+		app.tryRedo()
+	}
+}
+
+func (app *Application) tryUndo() {
+	if !app.cmdStack.CanUndo() {
+		return
+	}
+	err := app.cmdStack.Undo()
+	if err != nil {
+		app.onFailure("Undo", "", err)
+	}
+}
+
+func (app *Application) tryRedo() {
+	if !app.cmdStack.CanRedo() {
+		return
+	}
+	err := app.cmdStack.Redo()
+	if err != nil {
+		app.onFailure("Redo", "", err)
 	}
 }
 
@@ -193,6 +228,7 @@ func (app *Application) initGuiStyle() {
 }
 
 func (app *Application) initModel() {
+	app.cmdStack = new(cmd.Stack)
 	app.mod = model.NewMod(app.resourcesChanged)
 
 	manifest := app.mod.World()
@@ -215,5 +251,54 @@ func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []
 }
 
 func (app *Application) initView() {
-	app.projectView = project.NewView(app.mod, app.GuiScale, &app.cmdStack)
+	app.projectView = project.NewView(app.mod, app.GuiScale, app)
+}
+
+// Queue requests to perform the given command.
+func (app *Application) Queue(command cmd.Command) {
+	err := app.cmdStack.Perform(command)
+	if err != nil {
+		app.onFailure("Command", "", err)
+	}
+}
+
+func (app *Application) onFailure(source string, details string, err error) {
+	app.failurePending = true
+	app.failureMessage = fmt.Sprintf("Source: %v\nDetails: %v\nError: %v", source, details, err)
+}
+
+func (app *Application) handleFailure() {
+	if app.failurePending {
+		imgui.OpenPopup("Failure Message")
+		app.failurePending = false
+	}
+	if imgui.BeginPopupModal("Failure Message") {
+		imgui.TextUnformatted(`
+Something went wrong. This is bad and I am sorry.
+
+You have the option to "Ignore" this and hope for the best.
+This action also clears the undo/redo buffer.
+
+Or you can simply "Exit" the application and then restart it.
+This action loses any pending changes.
+
+Perhaps you can make something with the details of the error below.
+If you can reproduce this, please make a screenshot and
+report it with details on how to reproduce it on the
+http://www.systemshock.org forums. Thank you!
+`)
+		imgui.Separator()
+		imgui.TextUnformatted(app.failureMessage)
+		imgui.Separator()
+		if imgui.Button("Ignore") {
+			app.failureMessage = ""
+			app.cmdStack = new(cmd.Stack)
+			imgui.CloseCurrentPopup()
+		}
+		imgui.SameLine()
+		if imgui.Button("Exit") {
+			app.window.SetCloseRequest(true)
+		}
+		imgui.EndPopup()
+	}
 }
