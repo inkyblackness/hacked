@@ -7,7 +7,6 @@ import (
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/project"
 	"github.com/inkyblackness/hacked/ss1/resource"
-	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/hacked/ui/input"
 	"github.com/inkyblackness/hacked/ui/opengl"
@@ -235,20 +234,6 @@ func (app *Application) initGuiStyle() {
 func (app *Application) initModel() {
 	app.cmdStack = new(cmd.Stack)
 	app.mod = model.NewMod(app.resourcesChanged)
-
-	manifest := app.mod.World()
-	manifest.InsertEntry(0, &world.ManifestEntry{
-		ID:        "/something/somewhere/there",
-		Resources: nil,
-	})
-	manifest.InsertEntry(1, &world.ManifestEntry{
-		ID:        "/something/other/there",
-		Resources: nil,
-	})
-	manifest.InsertEntry(2, &world.ManifestEntry{
-		ID:        "/completely/different",
-		Resources: nil,
-	})
 }
 
 func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) {

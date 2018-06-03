@@ -3,6 +3,7 @@ package project
 import (
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/model"
+	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/imgui-go"
 )
 
@@ -115,6 +116,20 @@ func (view *View) requestMoveManifestEntry(to, from int) {
 	}
 	view.commander.Queue(command)
 }
+
+func (view *View) requestAddManifestEntry(entry *world.ManifestEntry) {
+	at := view.model.selectedManifestEntry + 1
+	command := listManifestEntryCommand{
+		keeper: view.mod.World(),
+		model:  &view.model,
+
+		at:    at,
+		entry: entry,
+		adder: true,
+	}
+	view.commander.Queue(command)
+}
+
 func (view *View) requestRemoveManifestEntry() {
 	manifest := view.mod.World()
 	at := view.model.selectedManifestEntry
@@ -131,6 +146,7 @@ func (view *View) requestRemoveManifestEntry() {
 
 		at:    view.model.selectedManifestEntry,
 		entry: entry,
+		adder: false,
 	}
 	view.commander.Queue(command)
 }
