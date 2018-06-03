@@ -64,6 +64,13 @@ func (suite *MoveManifestEntryCommandSuite) TestCommandUpdatesViewModelOfTarget(
 	suite.thenCurrentlySelectedItemShouldBe(20)
 }
 
+func (suite *MoveManifestEntryCommandSuite) TestCommandRestoresFocus() {
+	suite.givenCurrentlySelectedItemIs(10)
+	suite.givenParameters(20, 10)
+	suite.whenCommandIsDone()
+	suite.thenRestoreFocusShouldBe(true)
+}
+
 func (suite *MoveManifestEntryCommandSuite) TestCommandReturnsErrorIfMoverDoes() {
 	suite.mover.nextError = errors.New("some error")
 	suite.whenCommandIsDone()
@@ -102,4 +109,8 @@ func (suite *MoveManifestEntryCommandSuite) thenMoverShouldHaveBeenCalledWith(to
 
 func (suite *MoveManifestEntryCommandSuite) thenCurrentlySelectedItemShouldBe(expected int) {
 	assert.Equal(suite.T(), expected, suite.model.selectedManifestEntry, "SELECTED mismatch")
+}
+
+func (suite *MoveManifestEntryCommandSuite) thenRestoreFocusShouldBe(expected bool) {
+	assert.Equal(suite.T(), expected, suite.model.restoreFocus, "focus not as expected")
 }

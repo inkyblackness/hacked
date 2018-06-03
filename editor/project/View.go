@@ -28,6 +28,10 @@ func NewView(mod *model.Mod, guiScale float32, commander cmd.Commander) *View {
 
 // Render requests to render the view.
 func (view *View) Render() {
+	if view.model.restoreFocus {
+		imgui.SetNextWindowFocus()
+		view.model.restoreFocus = false
+	}
 	imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 300 * view.guiScale}, imgui.ConditionOnce)
 	if imgui.Begin("Project") {
 		imgui.TextUnformatted("Mod Location")

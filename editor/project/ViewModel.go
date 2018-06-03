@@ -1,6 +1,7 @@
 package project
 
 type viewModel struct {
+	restoreFocus          bool
 	selectedManifestEntry int
 }
 

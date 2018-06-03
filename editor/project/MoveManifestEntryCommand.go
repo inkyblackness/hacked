@@ -25,5 +25,6 @@ func (cmd moveManifestEntryCommand) move(target, source int) error {
 		return err
 	}
 	cmd.model.selectedManifestEntry = target
+	cmd.model.restoreFocus = true
 	return nil
 }
