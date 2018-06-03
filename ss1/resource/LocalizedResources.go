@@ -46,7 +46,7 @@ var localizedFilenames = map[Language]languageSpecificFilenames{
 	},
 }
 
-// LocalizeResources creates an instance of LocalizedResources based on a filename and a provider.
+// LocalizeResourcesByFilename creates an instance of LocalizedResources based on a filename and a provider.
 // The given filename is taken as an ID, as well as a hint to identify the language.
 func LocalizeResourcesByFilename(provider Provider, filename string) (res LocalizedResources) {
 	res.ID = filename

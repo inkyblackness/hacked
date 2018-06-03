@@ -2,7 +2,7 @@ package world
 
 import "github.com/inkyblackness/hacked/ss1/resource"
 
-// ViewStrategy returns a strategy that is typical for the game.
+// ResourceViewStrategy returns a strategy that is typical for the game.
 func ResourceViewStrategy() resource.ViewStrategy {
 	return defaultResources{}
 }
