@@ -41,6 +41,7 @@ Typically, you would use the main "data" directory of the game
 
 type fileStaging struct {
 	failedFiles int
+	savegames   map[string]resource.Provider
 	resources   map[string]resource.Provider
 }
 
@@ -71,7 +72,11 @@ func (staging *fileStaging) stage(name string, enterDir bool) {
 
 		reader, err := lgres.ReaderFrom(bytes.NewReader(fileData))
 		if err == nil {
-			staging.resources[name] = reader
+			if resource.IsSavegame(reader) {
+				staging.savegames[name] = reader
+			} else {
+				staging.resources[name] = reader
+			}
 		}
 
 		if err != nil {
@@ -83,6 +88,7 @@ func (staging *fileStaging) stage(name string, enterDir bool) {
 func (state addManifestEntryWaitingState) HandleFiles(names []string) {
 	staging := fileStaging{
 		resources: make(map[string]resource.Provider),
+		savegames: make(map[string]resource.Provider),
 	}
 
 	for _, name := range names {
@@ -102,7 +108,7 @@ func (state addManifestEntryWaitingState) HandleFiles(names []string) {
 		state.view.fileState = &idlePopupState{}
 	} else {
 		// TODO: add failed state, notifying failure
-		fmt.Printf("Failed...%d files\n", staging.failedFiles)
+		fmt.Printf("Failed...%d files (%d savegames)\n", staging.failedFiles, len(staging.savegames))
 		state.view.fileState = &idlePopupState{}
 	}
 }
