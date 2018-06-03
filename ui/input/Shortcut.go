@@ -1,5 +1,7 @@
 package input
 
+import "strings"
+
 type shortcut struct {
 	keyName  string
 	modifier Modifier
@@ -18,8 +20,9 @@ var shortcuts = []shortcut{
 // ResolveShortcut tries to map the given name and modifier combination to a
 // known (common) shortcut key. For instance, Ctrl+C is KeyCopy.
 func ResolveShortcut(keyName string, modifier Modifier) (key Key, knownKey bool) {
+	lowercaseName := strings.ToLower(keyName)
 	for _, entry := range shortcuts {
-		if (entry.keyName == keyName) && (entry.modifier == modifier) {
+		if (entry.keyName == lowercaseName) && (entry.modifier == modifier) {
 			knownKey = true
 			key = entry.key
 		}
