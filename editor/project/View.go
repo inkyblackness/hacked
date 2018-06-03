@@ -66,11 +66,8 @@ func (view *View) Render() {
 		if imgui.ButtonV("Down", imgui.Vec2{X: -1, Y: 0}) {
 			view.requestMoveManifestEntryDown()
 		}
-		if imgui.ButtonV("Remove...", imgui.Vec2{X: -1, Y: 0}) && view.model.selectedManifestEntry >= 0 {
-			manifest.RemoveEntry(view.model.selectedManifestEntry)
-			if (view.model.selectedManifestEntry > 0) || (entries == 1) {
-				view.model.selectedManifestEntry--
-			}
+		if imgui.ButtonV("Remove", imgui.Vec2{X: -1, Y: 0}) {
+			view.requestRemoveManifestEntry()
 		}
 		imgui.EndGroup()
 	}
@@ -97,6 +94,26 @@ func (view *View) requestMoveManifestEntry(to, from int) {
 		model: &view.model,
 		to:    to,
 		from:  from,
+	}
+	view.commander.Queue(command)
+}
+
+func (view *View) requestRemoveManifestEntry() {
+	manifest := view.mod.World()
+	at := view.model.selectedManifestEntry
+	if (at < 0) || (at >= manifest.EntryCount()) {
+		return
+	}
+	entry, err := manifest.Entry(at)
+	if err != nil {
+		return
+	}
+	command := listManifestEntryCommand{
+		keeper: view.mod.World(),
+		model:  &view.model,
+
+		at:    view.model.selectedManifestEntry,
+		entry: entry,
 	}
 	view.commander.Queue(command)
 }
