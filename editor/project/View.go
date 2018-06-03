@@ -13,6 +13,8 @@ type View struct {
 	commander cmd.Commander
 
 	model viewModel
+
+	fileState popupState
 }
 
 // NewView creates a new instance for the project display.
@@ -22,7 +24,8 @@ func NewView(mod *model.Mod, guiScale float32, commander cmd.Commander) *View {
 		guiScale:  guiScale,
 		commander: commander,
 
-		model: freshViewModel(),
+		model:     freshViewModel(),
+		fileState: &idlePopupState{},
 	}
 }
 
@@ -59,7 +62,9 @@ func (view *View) Render() {
 		imgui.EndChild()
 		imgui.SameLine()
 		imgui.BeginGroup()
-		imgui.ButtonV("Add...", imgui.Vec2{X: -1, Y: 0})
+		if imgui.ButtonV("Add...", imgui.Vec2{X: -1, Y: 0}) {
+			view.startAddingManifestEntry()
+		}
 		if imgui.ButtonV("Up", imgui.Vec2{X: -1, Y: 0}) {
 			view.requestMoveManifestEntryUp()
 		}
@@ -72,6 +77,14 @@ func (view *View) Render() {
 		imgui.EndGroup()
 	}
 	imgui.End()
+
+	view.fileState.Render()
+}
+
+func (view *View) startAddingManifestEntry() {
+	view.fileState = &addManifestEntryStartState{
+		view: view,
+	}
 }
 
 func (view *View) requestMoveManifestEntryUp() {
@@ -97,7 +110,6 @@ func (view *View) requestMoveManifestEntry(to, from int) {
 	}
 	view.commander.Queue(command)
 }
-
 func (view *View) requestRemoveManifestEntry() {
 	manifest := view.mod.World()
 	at := view.model.selectedManifestEntry

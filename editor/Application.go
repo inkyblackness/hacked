@@ -273,8 +273,7 @@ func (app *Application) handleFailure() {
 		app.failurePending = false
 	}
 	if imgui.BeginPopupModal("Failure Message") {
-		imgui.TextUnformatted(`
-Something went wrong. This is bad and I am sorry.
+		imgui.TextUnformatted(`Something went wrong. This is bad and I am sorry.
 
 You have the option to "Ignore" this and hope for the best.
 This action also clears the undo/redo buffer.
