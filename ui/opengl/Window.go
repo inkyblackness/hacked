@@ -41,6 +41,9 @@ type KeyCallback func(key input.Key, modifier input.Modifier)
 // ModifierCallback is called when the currently active modifier changed.
 type ModifierCallback func(modifier input.Modifier)
 
+// FileDropCallback is called when one or more files were dropped into the window.
+type FileDropCallback func(filePaths []string)
+
 // Window represents an OpenGL render surface.
 type Window interface {
 	// OnClosing registers a callback function which shall be called when the user requests to close the window.
@@ -81,4 +84,7 @@ type Window interface {
 	OnModifier(callback ModifierCallback)
 	// OnCharCallback registers a callback function for typed characters.
 	OnCharCallback(callback CharCallback)
+
+	// OnFileDropCallback registers a callback function for dropped files.
+	OnFileDropCallback(callback FileDropCallback)
 }

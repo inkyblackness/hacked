@@ -1,6 +1,8 @@
 package project
 
-import "github.com/inkyblackness/imgui-go"
+import (
+	"github.com/inkyblackness/imgui-go"
+)
 
 type addManifestEntryWaitingState struct {
 	view *View

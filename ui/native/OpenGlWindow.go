@@ -60,6 +60,7 @@ func NewOpenGLWindow(title string, framesPerSecond float64) (window *OpenGLWindo
 			glfwWindow.SetFramebufferSizeCallback(window.onFramebufferResize)
 			glfwWindow.SetKeyCallback(window.onKey)
 			glfwWindow.SetCharCallback(window.onChar)
+			glfwWindow.SetDropCallback(window.onDrop)
 			glfwWindow.SetCloseCallback(window.onClosing)
 		}
 	}
@@ -206,4 +207,8 @@ func (window *OpenGLWindow) mapModifier(mods glfw.ModifierKey) input.Modifier {
 	}
 
 	return modifier
+}
+
+func (window *OpenGLWindow) onDrop(rawWindow *glfw.Window, filePaths []string) {
+	window.CallFileDropCallback(filePaths)
 }

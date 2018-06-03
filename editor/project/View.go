@@ -81,6 +81,11 @@ func (view *View) Render() {
 	view.fileState.Render()
 }
 
+// HandleFiles is called when the user wants to add the given files to the library.
+func (view *View) HandleFiles(names []string) {
+	view.fileState.HandleFiles(names)
+}
+
 func (view *View) startAddingManifestEntry() {
 	view.fileState = &addManifestEntryStartState{
 		view: view,

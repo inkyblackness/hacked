@@ -29,6 +29,7 @@ type WindowEventDispatcher struct {
 	CallModifier          ModifierCallback
 	CallKey               KeyCallback
 	CallCharCallback      CharCallback
+	CallFileDropCallback  FileDropCallback
 }
 
 // NullWindowEventDispatcher returns an initialized instance with empty callbacks.
@@ -44,7 +45,9 @@ func NullWindowEventDispatcher() WindowEventDispatcher {
 		CallOnMouseScroll:     func(float32, float32) {},
 		CallKey:               func(input.Key, input.Modifier) {},
 		CallModifier:          func(input.Modifier) {},
-		CallCharCallback:      func(rune) {}}
+		CallCharCallback:      func(rune) {},
+		CallFileDropCallback:  func([]string) {},
+	}
 }
 
 // StickyKeyListener returns an instance of a listener acting as an adapter
@@ -106,4 +109,9 @@ func (window *WindowEventDispatcher) OnModifier(callback ModifierCallback) {
 // OnCharCallback implements the WindowEventDispatcher interface
 func (window *WindowEventDispatcher) OnCharCallback(callback CharCallback) {
 	window.CallCharCallback = callback
+}
+
+// OnFileDropCallback implements the WindowEventDispatcher interface
+func (window *WindowEventDispatcher) OnFileDropCallback(callback FileDropCallback) {
+	window.CallFileDropCallback = callback
 }

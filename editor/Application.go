@@ -61,6 +61,7 @@ func (app *Application) onWindowClosed() {
 func (app *Application) initWindowCallbacks() {
 	app.window.OnClosing(app.onWindowClosing)
 	app.window.OnClosed(app.onWindowClosed)
+	app.window.OnFileDropCallback(app.onFilesDropped)
 
 	app.window.OnKey(app.onKey)
 
@@ -121,6 +122,10 @@ func (app *Application) initGui() (err error) {
 
 func (app *Application) onWindowClosing() {
 
+}
+
+func (app *Application) onFilesDropped(names []string) {
+	app.projectView.HandleFiles(names)
 }
 
 func (app *Application) onKey(key input.Key, modifier input.Modifier) {
