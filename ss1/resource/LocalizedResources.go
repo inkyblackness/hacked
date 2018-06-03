@@ -22,7 +22,11 @@ type languageSpecificFilenames struct {
 }
 
 func (spec languageSpecificFilenames) hasFilename(filename string) bool {
-	return spec.cybstrng == filename
+	lowercase := strings.ToLower(filename)
+	return (spec.cybstrng == lowercase) ||
+		(spec.mfdart == lowercase) ||
+		(spec.citalog == lowercase) ||
+		(spec.citbark == lowercase)
 }
 
 var localizedFilenames = map[Language]languageSpecificFilenames{
