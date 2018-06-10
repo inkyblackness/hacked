@@ -91,6 +91,51 @@ func (suite *DispatcherSuite) TestDeregistrationKeepsOtherHandlersAlive() {
 	assert.NotNil(suite.T(), receivedD, "Call expected via D")
 }
 
+func (suite *DispatcherSuite) TestDeregistrationOfHandlerDuringDispatchIsConsidered() {
+	type testedEvent struct{ key int }
+	eventA := testedEvent{123}
+	calls := 0
+	handler := func(e testedEvent) { calls++ }
+	deregisteringHandler := func(e testedEvent) { suite.dispatcher.UnregisterHandler(reflect.TypeOf(eventA), handler) }
+	otherHandlerCalledTimes := 0
+	otherHandler := func(e testedEvent) { otherHandlerCalledTimes++ }
+	suite.givenRegisteredHandler(reflect.TypeOf(eventA), handler, handler, deregisteringHandler, handler, handler, otherHandler)
+	suite.whenEventIsDispatched(eventA)
+	assert.Equal(suite.T(), 2, calls, "More calls than expected")
+	assert.Equal(suite.T(), 1, otherHandlerCalledTimes, "Handler list is wrong")
+}
+
+func (suite *DispatcherSuite) TestRegistrationOfHandlerDuringDispatchIsIgnored() {
+	type testedEvent struct{ key int }
+	eventA := testedEvent{123}
+	var received *testedEvent
+	handler := func(e testedEvent) { received = &e }
+	registeringHandler := func(e testedEvent) { suite.dispatcher.RegisterHandler(reflect.TypeOf(eventA), handler) }
+	dummyHandler := func(e testedEvent) {}
+	suite.givenRegisteredHandler(reflect.TypeOf(eventA), registeringHandler, dummyHandler)
+	suite.givenHandlerWasUnregistered(reflect.TypeOf(eventA), dummyHandler) // in case same array was reused through cap
+	suite.whenEventIsDispatched(eventA)
+	require.Nil(suite.T(), received, "No call expected")
+}
+
+func (suite *DispatcherSuite) TestEventCanNotBeDispatchedDuringDispatch() {
+	type testedEvent struct{ key int }
+	eventA := testedEvent{123}
+	eventB := testedEvent{456}
+	calls := 0
+	handler := func(e testedEvent) {
+		calls++
+		if calls == 1 {
+			assert.Panics(suite.T(), func() {
+				suite.dispatcher.Event(eventB)
+			}, "panic expected")
+		}
+	}
+	suite.givenRegisteredHandler(reflect.TypeOf(eventA), handler)
+	suite.whenEventIsDispatched(eventA)
+	assert.Equal(suite.T(), 1, calls, "Only one call expected")
+}
+
 func (suite *DispatcherSuite) givenRegisteredHandler(t reflect.Type, handlers ...interface{}) {
 	for _, handler := range handlers {
 		require.NotPanics(suite.T(), func() {

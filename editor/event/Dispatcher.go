@@ -1,17 +1,34 @@
 package event
 
-import "reflect"
+import (
+	"reflect"
+)
+
+type pendingHandlerAction struct {
+	add bool
+	val reflect.Value
+}
+
+// TODO: keep proper add/remove order
+
+type handlerEntry struct {
+	dispatching bool
+	list        []reflect.Value
+
+	toAdd []reflect.Value
+	toRem []reflect.Value
+}
 
 // Dispatcher is a distributor of events to registered handlers.
 // A handler is a event-type-specific function that takes the concrete type of an event as a parameter.
 type Dispatcher struct {
-	handlers map[reflect.Type][]reflect.Value
+	handlers map[reflect.Type]*handlerEntry
 }
 
 // NewDispatcher returns a new instance.
 func NewDispatcher() *Dispatcher {
 	return &Dispatcher{
-		handlers: make(map[reflect.Type][]reflect.Value),
+		handlers: make(map[reflect.Type]*handlerEntry),
 	}
 }
 
@@ -33,34 +50,74 @@ func (dispatcher *Dispatcher) RegisterHandler(eType reflect.Type, handlerFunc in
 		panic("handler does not take given type as argument")
 	}
 
-	handlerList := append(dispatcher.handlers[eType], reflect.ValueOf(handlerFunc))
-	dispatcher.handlers[eType] = handlerList
+	entry, existing := dispatcher.handlers[eType]
+	if !existing {
+		entry = &handlerEntry{}
+		dispatcher.handlers[eType] = entry
+	}
+	handlerValue := reflect.ValueOf(handlerFunc)
+	if !entry.dispatching {
+		entry.list = append(entry.list, handlerValue)
+	} else {
+		entry.toAdd = append(entry.toAdd, handlerValue)
+	}
 }
 
 // UnregisterHandler removes a handler that was previously registered.
 // If there was no registration done, this call is ignored.
 func (dispatcher *Dispatcher) UnregisterHandler(eType reflect.Type, handler interface{}) {
 	handlerValue := reflect.ValueOf(handler)
-	handlerList := dispatcher.handlers[eType]
-	listLen := len(handlerList)
-	removed := 0
-	for i := listLen - 1; i >= 0; i-- {
-		if handlerList[i] == handlerValue {
-			removed++
-			copy(handlerList[i:listLen-removed], handlerList[i+1:listLen-removed+1])
-		}
-	}
-	if removed > 0 {
-		dispatcher.handlers[eType] = handlerList[:listLen-removed]
+	entry := dispatcher.handlers[eType]
+	if !entry.dispatching {
+		dispatcher.removeHandlerFromList(entry, handlerValue)
+	} else {
+		entry.toRem = append(entry.toRem, handlerValue)
 	}
 }
 
 // Event dispatches the given event to all currently registered handlers.
 func (dispatcher *Dispatcher) Event(e Event) {
-	args := []reflect.Value{reflect.ValueOf(e)}
-	eType := reflect.TypeOf(e)
-	handlerList := dispatcher.handlers[eType]
-	for _, handler := range handlerList {
-		handler.Call(args)
+	entry := dispatcher.handlers[reflect.TypeOf(e)]
+	if entry.dispatching {
+		panic("event distribution during event of same type not supported.")
 	}
+	args := []reflect.Value{reflect.ValueOf(e)}
+	entry.dispatching = true
+	for _, handler := range entry.list {
+		if dispatcher.isHandlerStillRegistered(entry, handler) {
+			handler.Call(args)
+		}
+	}
+	if len(entry.toAdd) > 0 {
+		entry.list = append(entry.list, entry.toAdd...)
+		entry.toAdd = nil
+	}
+	for _, handler := range entry.toRem {
+		dispatcher.removeHandlerFromList(entry, handler)
+	}
+	entry.toRem = nil
+	entry.dispatching = false
+}
+
+func (dispatcher *Dispatcher) removeHandlerFromList(entry *handlerEntry, handlerValue reflect.Value) {
+	listLen := len(entry.list)
+	removed := 0
+	for i := listLen - 1; i >= 0; i-- {
+		if entry.list[i] == handlerValue {
+			removed++
+			copy(entry.list[i:listLen-removed], entry.list[i+1:listLen-removed+1])
+		}
+	}
+	if removed > 0 {
+		entry.list = entry.list[:listLen-removed]
+	}
+}
+
+func (dispatcher *Dispatcher) isHandlerStillRegistered(entry *handlerEntry, handler reflect.Value) bool {
+	for _, pending := range entry.toRem {
+		if pending == handler {
+			return false
+		}
+	}
+	return true
 }
