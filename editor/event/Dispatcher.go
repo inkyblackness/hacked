@@ -9,14 +9,11 @@ type pendingHandlerAction struct {
 	val reflect.Value
 }
 
-// TODO: keep proper add/remove order
-
 type handlerEntry struct {
 	dispatching bool
 	list        []reflect.Value
 
-	toAdd []reflect.Value
-	toRem []reflect.Value
+	pending []pendingHandlerAction
 }
 
 // Dispatcher is a distributor of events to registered handlers.
@@ -35,6 +32,8 @@ func NewDispatcher() *Dispatcher {
 // RegisterHandler must be called with a concrete structural type (implementing the Event interface),
 // and a function that takes one argument that is of the given type.
 // This function panics if this is not fulfilled.
+// The same handler function can be registered several times for the same type.
+// It will be called for each registration.
 func (dispatcher *Dispatcher) RegisterHandler(eType reflect.Type, handlerFunc interface{}) {
 	if eType.Kind() != reflect.Struct {
 		panic("event type must be a structure")
@@ -59,19 +58,20 @@ func (dispatcher *Dispatcher) RegisterHandler(eType reflect.Type, handlerFunc in
 	if !entry.dispatching {
 		entry.list = append(entry.list, handlerValue)
 	} else {
-		entry.toAdd = append(entry.toAdd, handlerValue)
+		entry.pending = append(entry.pending, pendingHandlerAction{add: true, val: handlerValue})
 	}
 }
 
 // UnregisterHandler removes a handler that was previously registered.
 // If there was no registration done, this call is ignored.
+// If the same handler was registered multiple times, all registrations are removed.
 func (dispatcher *Dispatcher) UnregisterHandler(eType reflect.Type, handler interface{}) {
 	handlerValue := reflect.ValueOf(handler)
 	entry := dispatcher.handlers[eType]
 	if !entry.dispatching {
 		dispatcher.removeHandlerFromList(entry, handlerValue)
 	} else {
-		entry.toRem = append(entry.toRem, handlerValue)
+		entry.pending = append(entry.pending, pendingHandlerAction{add: false, val: handlerValue})
 	}
 }
 
@@ -88,14 +88,14 @@ func (dispatcher *Dispatcher) Event(e Event) {
 			handler.Call(args)
 		}
 	}
-	if len(entry.toAdd) > 0 {
-		entry.list = append(entry.list, entry.toAdd...)
-		entry.toAdd = nil
+	for _, pending := range entry.pending {
+		if pending.add {
+			entry.list = append(entry.list, pending.val)
+		} else {
+			dispatcher.removeHandlerFromList(entry, pending.val)
+		}
 	}
-	for _, handler := range entry.toRem {
-		dispatcher.removeHandlerFromList(entry, handler)
-	}
-	entry.toRem = nil
+	entry.pending = nil
 	entry.dispatching = false
 }
 
@@ -114,8 +114,8 @@ func (dispatcher *Dispatcher) removeHandlerFromList(entry *handlerEntry, handler
 }
 
 func (dispatcher *Dispatcher) isHandlerStillRegistered(entry *handlerEntry, handler reflect.Value) bool {
-	for _, pending := range entry.toRem {
-		if pending == handler {
+	for _, pending := range entry.pending {
+		if !pending.add && (pending.val == handler) {
 			return false
 		}
 	}
