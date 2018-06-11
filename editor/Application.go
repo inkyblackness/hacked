@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/inkyblackness/hacked/editor/cmd"
+	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/project"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -22,6 +23,9 @@ type Application struct {
 	// GuiScale is applied when the window is initialized.
 	GuiScale   float32
 	guiContext *gui.Context
+
+	eventQueue      event.Queue
+	eventDispatcher *event.Dispatcher
 
 	cmdStack *cmd.Stack
 	mod      *model.Mod
@@ -73,6 +77,7 @@ func (app *Application) initWindowCallbacks() {
 }
 
 func (app *Application) render() {
+	app.dispatchEvents()
 	app.guiContext.NewFrame()
 
 	app.gl.Clear(opengl.COLOR_BUFFER_BIT)
@@ -232,6 +237,7 @@ func (app *Application) initGuiStyle() {
 }
 
 func (app *Application) initModel() {
+	app.eventDispatcher = event.NewDispatcher()
 	app.cmdStack = new(cmd.Stack)
 	app.mod = model.NewMod(app.resourcesChanged)
 }
@@ -249,6 +255,12 @@ func (app *Application) Queue(command cmd.Command) {
 	err := app.cmdStack.Perform(command)
 	if err != nil {
 		app.onFailure("Command", "", err)
+	}
+}
+
+func (app *Application) dispatchEvents() {
+	for iteration := 0; (iteration < 100) && !app.eventQueue.IsEmpty(); iteration++ {
+		app.eventQueue.ForwardTo(app.eventDispatcher)
 	}
 }
 
