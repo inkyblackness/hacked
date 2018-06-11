@@ -34,7 +34,10 @@ func NewDispatcher() *Dispatcher {
 // This function panics if this is not fulfilled.
 // The same handler function can be registered several times for the same type.
 // It will be called for each registration.
-func (dispatcher *Dispatcher) RegisterHandler(eType reflect.Type, handlerFunc interface{}) {
+//
+// The returned function can be used to unregister the handler again. It is a closure over
+// UnregisterHandler(eType, handlerFunc).
+func (dispatcher *Dispatcher) RegisterHandler(eType reflect.Type, handlerFunc interface{}) func() {
 	if eType.Kind() != reflect.Struct {
 		panic("event type must be a structure")
 	}
@@ -60,13 +63,15 @@ func (dispatcher *Dispatcher) RegisterHandler(eType reflect.Type, handlerFunc in
 	} else {
 		entry.pending = append(entry.pending, pendingHandlerAction{add: true, val: handlerValue})
 	}
+
+	return func() { dispatcher.UnregisterHandler(eType, handlerFunc) }
 }
 
 // UnregisterHandler removes a handler that was previously registered.
 // If there was no registration done, this call is ignored.
 // If the same handler was registered multiple times, all registrations are removed.
-func (dispatcher *Dispatcher) UnregisterHandler(eType reflect.Type, handler interface{}) {
-	handlerValue := reflect.ValueOf(handler)
+func (dispatcher *Dispatcher) UnregisterHandler(eType reflect.Type, handlerFunc interface{}) {
+	handlerValue := reflect.ValueOf(handlerFunc)
 	entry := dispatcher.handlers[eType]
 	if !entry.dispatching {
 		dispatcher.removeHandlerFromList(entry, handlerValue)

@@ -184,6 +184,17 @@ func (suite *DispatcherSuite) TestRegistrationAndDeregistrationCanBeStackedAndSt
 	assert.Equal(suite.T(), 1, calls, "One call expected as there was one additional registration")
 }
 
+func (suite *DispatcherSuite) TestRegistrationReturnsDeregisterShortcut() {
+	type testedEvent struct{ key int }
+	eventA := testedEvent{123}
+	calls := 0
+	handler := func(e testedEvent) { calls++ }
+	unreg := suite.dispatcher.RegisterHandler(reflect.TypeOf(eventA), handler)
+	unreg()
+	suite.whenEventIsDispatched(eventA)
+	assert.Equal(suite.T(), 0, calls, "No call expected")
+}
+
 func (suite *DispatcherSuite) givenRegisteredHandler(t reflect.Type, handlers ...interface{}) {
 	for _, handler := range handlers {
 		require.NotPanics(suite.T(), func() {
