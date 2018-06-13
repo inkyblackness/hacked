@@ -7,6 +7,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/project"
+	"github.com/inkyblackness/hacked/editor/texts"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/hacked/ui/input"
@@ -27,10 +28,12 @@ type Application struct {
 	eventQueue      event.Queue
 	eventDispatcher *event.Dispatcher
 
-	cmdStack *cmd.Stack
-	mod      *model.Mod
+	cmdStack         *cmd.Stack
+	mod              *model.Mod
+	textLinesAdapter *texts.TextLinesAdapter
 
-	projectView *project.View
+	projectView   *project.View
+	textLinesView *texts.TextLinesView
 
 	failureMessage string
 	failurePending bool
@@ -89,6 +92,13 @@ func (app *Application) render() {
 			}
 			imgui.EndMenu()
 		}
+		if imgui.BeginMenu("Window") {
+			textsShown := app.textLinesView.WindowOpen()
+			if imgui.MenuItemV("Texts", "", *textsShown, true) {
+				*textsShown = !*textsShown
+			}
+			imgui.EndMenu()
+		}
 		/*
 			if imgui.BeginMenu("About") {
 				if imgui.MenuItem("Error") {
@@ -101,8 +111,9 @@ func (app *Application) render() {
 	}
 
 	app.projectView.Render()
+	app.textLinesView.Render()
 
-	//imgui.ShowDemoWindow(nil)
+	// imgui.ShowDemoWindow(nil)
 
 	app.handleFailure()
 
@@ -240,6 +251,8 @@ func (app *Application) initModel() {
 	app.eventDispatcher = event.NewDispatcher()
 	app.cmdStack = new(cmd.Stack)
 	app.mod = model.NewMod(app.resourcesChanged)
+
+	app.textLinesAdapter = texts.NewTextLinesAdapter(app.mod)
 }
 
 func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) {
@@ -248,6 +261,7 @@ func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []
 
 func (app *Application) initView() {
 	app.projectView = project.NewView(app.mod, app.GuiScale, app)
+	app.textLinesView = texts.NewTextLinesView(app.textLinesAdapter, app.GuiScale, app)
 }
 
 // Queue requests to perform the given command.
