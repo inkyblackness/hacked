@@ -256,7 +256,7 @@ func (app *Application) initModel() {
 }
 
 func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) {
-
+	app.textLinesAdapter.InvalidateResources(modifiedIDs)
 }
 
 func (app *Application) initView() {
