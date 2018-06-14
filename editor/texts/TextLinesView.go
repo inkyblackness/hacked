@@ -71,5 +71,12 @@ func (view *TextLinesView) renderContent() {
 	}
 
 	text := view.adapter.Line(view.model.currentKey)
-	imgui.TextUnformatted(text)
+	imgui.BeginChildV("Text", imgui.Vec2{X: 0.0, Y: -imgui.TextLineHeightWithSpacing() * view.guiScale}, true, imgui.WindowFlagsAlwaysAutoResize)
+	imgui.PushTextWrapPos()
+	imgui.Text(text)
+	imgui.PopTextWrapPos()
+	imgui.EndChild()
+
+	imgui.Button("To Clipboard")
+	imgui.Button("From Clipboard")
 }
