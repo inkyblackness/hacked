@@ -48,6 +48,7 @@ func (view *TextLinesView) Render() {
 }
 
 func (view *TextLinesView) renderContent() {
+	imgui.PushItemWidth(-100 * view.guiScale)
 	if imgui.BeginCombo("Language", view.model.currentKey.Lang.String()) {
 		languages := resource.Languages()
 		for _, lang := range languages {
@@ -69,14 +70,21 @@ func (view *TextLinesView) renderContent() {
 	if imgui.SliderInt("Index", &index, 0, 255) {
 		view.model.currentKey.Index = int(index)
 	}
+	imgui.PopItemWidth()
 
 	text := view.adapter.Line(view.model.currentKey)
-	imgui.BeginChildV("Text", imgui.Vec2{X: 0.0, Y: -imgui.TextLineHeightWithSpacing() * view.guiScale}, true, imgui.WindowFlagsAlwaysAutoResize)
+	imgui.BeginChildV("Text", imgui.Vec2{X: -100 * view.guiScale, Y: 0}, true, 0)
 	imgui.PushTextWrapPos()
 	imgui.Text(text)
 	imgui.PopTextWrapPos()
 	imgui.EndChild()
 
-	imgui.Button("To Clipboard")
-	imgui.Button("From Clipboard")
+	imgui.SameLine()
+
+	imgui.BeginGroup()
+	imgui.ButtonV("-> Clip", imgui.Vec2{X: -1, Y: 0})
+	imgui.ButtonV("<- Clip", imgui.Vec2{X: -1, Y: 0})
+	imgui.ButtonV("Clear", imgui.Vec2{X: -1, Y: 0})
+	imgui.ButtonV("Remove", imgui.Vec2{X: -1, Y: 0})
+	imgui.EndGroup()
 }
