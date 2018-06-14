@@ -39,10 +39,12 @@ func (view *View) Render() {
 	imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 300 * view.guiScale}, imgui.ConditionOnce)
 	if imgui.Begin("Project") {
 		imgui.Text("Mod Location")
-		imgui.BeginChildV("ModLocation", imgui.Vec2{X: -200*view.guiScale - 10*view.guiScale, Y: imgui.TextLineHeight() * view.guiScale}, true,
+		imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 1, Y: 0})
+		imgui.BeginChildV("ModLocation", imgui.Vec2{X: -200*view.guiScale - 10*view.guiScale, Y: imgui.TextLineHeight() * 1.5}, true,
 			imgui.WindowFlagsNoScrollbar|imgui.WindowFlagsNoScrollWithMouse)
 		imgui.Text("some/long/path/that/should/be/cut/at/a/point")
 		imgui.EndChild()
+		imgui.PopStyleVar()
 		imgui.BeginGroup()
 		imgui.SameLine()
 		imgui.ButtonV("Save", imgui.Vec2{X: 100 * view.guiScale, Y: 0})
