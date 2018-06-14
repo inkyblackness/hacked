@@ -19,6 +19,8 @@ type languageSpecificFilenames struct {
 	mfdart   string
 	citalog  string
 	citbark  string
+	lowintr  string
+	svgaintr string
 }
 
 func (spec languageSpecificFilenames) hasFilename(filename string) bool {
@@ -26,7 +28,9 @@ func (spec languageSpecificFilenames) hasFilename(filename string) bool {
 	return (spec.cybstrng == lowercase) ||
 		(spec.mfdart == lowercase) ||
 		(spec.citalog == lowercase) ||
-		(spec.citbark == lowercase)
+		(spec.citbark == lowercase) ||
+		(spec.lowintr == lowercase) ||
+		(spec.svgaintr == lowercase)
 }
 
 var localizedFilenames = map[Language]languageSpecificFilenames{
@@ -35,18 +39,24 @@ var localizedFilenames = map[Language]languageSpecificFilenames{
 		mfdart:   "mfdart.res",
 		citalog:  "citalog.res",
 		citbark:  "citbark.res",
+		lowintr:  "lowintr.res",
+		svgaintr: "svgaintr.res",
 	},
 	LangFrench: {
 		cybstrng: "frnstrng.res",
 		mfdart:   "mfdfrn.res",
 		citalog:  "frnalog.res",
 		citbark:  "frnbark.res",
+		lowintr:  "lofrintr.res",
+		svgaintr: "svfrintr.res",
 	},
 	LangGerman: {
 		cybstrng: "gerstrng.res",
 		mfdart:   "mfdger.res",
 		citalog:  "geralog.res",
 		citbark:  "gerbark.res",
+		lowintr:  "logeintr.res",
+		svgaintr: "svgeintr.res",
 	},
 }
 
