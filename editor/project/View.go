@@ -38,10 +38,10 @@ func (view *View) Render() {
 	}
 	imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 300 * view.guiScale}, imgui.ConditionOnce)
 	if imgui.Begin("Project") {
-		imgui.TextUnformatted("Mod Location")
+		imgui.Text("Mod Location")
 		imgui.BeginChildV("ModLocation", imgui.Vec2{X: -200*view.guiScale - 10*view.guiScale, Y: imgui.TextLineHeight() * view.guiScale}, true,
 			imgui.WindowFlagsNoScrollbar|imgui.WindowFlagsNoScrollWithMouse)
-		imgui.TextUnformatted("some/long/path/that/should/be/cut/at/a/point")
+		imgui.Text("some/long/path/that/should/be/cut/at/a/point")
 		imgui.EndChild()
 		imgui.BeginGroup()
 		imgui.SameLine()
@@ -50,7 +50,7 @@ func (view *View) Render() {
 		imgui.ButtonV("Load...", imgui.Vec2{X: 100 * view.guiScale, Y: 0})
 		imgui.EndGroup()
 
-		imgui.TextUnformatted("Static World Data")
+		imgui.Text("Static World Data")
 		imgui.BeginChildV("ManifestEntries", imgui.Vec2{X: -100 * view.guiScale, Y: 0}, true, 0)
 		manifest := view.mod.World()
 		entries := manifest.EntryCount()

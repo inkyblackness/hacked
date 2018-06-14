@@ -289,7 +289,7 @@ func (app *Application) handleFailure() {
 		app.failurePending = false
 	}
 	if imgui.BeginPopupModal("Failure Message") {
-		imgui.TextUnformatted(`Something went wrong. This is bad and I am sorry.
+		imgui.Text(`Something went wrong. This is bad and I am sorry.
 
 You have the option to "Ignore" this and hope for the best.
 This action also clears the undo/redo buffer.
@@ -303,7 +303,7 @@ report it with details on how to reproduce it on the
 http://www.systemshock.org forums. Thank you!
 `)
 		imgui.Separator()
-		imgui.TextUnformatted(app.failureMessage)
+		imgui.Text(app.failureMessage)
 		imgui.Separator()
 		if imgui.Button("Ignore") {
 			app.failureMessage = ""
