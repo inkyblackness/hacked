@@ -1,6 +1,9 @@
 package texts
 
-import "github.com/inkyblackness/hacked/ss1/resource"
+import (
+	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world/ids"
+)
 
 type viewModel struct {
 	windowOpen   bool
@@ -10,6 +13,6 @@ type viewModel struct {
 
 func freshViewModel() viewModel {
 	return viewModel{
-		currentKey: resource.KeyOf(0x0867, resource.LangDefault, 0),
+		currentKey: resource.KeyOf(ids.TrapMessages, resource.LangDefault, 0),
 	}
 }

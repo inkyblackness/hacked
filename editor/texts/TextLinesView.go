@@ -1,13 +1,17 @@
 package texts
 
 import (
+	"bytes"
+
 	"github.com/inkyblackness/hacked/editor/cmd"
+	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/imgui-go"
 )
 
 // TextLinesView provides edit controls for simple text lines.
 type TextLinesView struct {
+	mod       *model.Mod
 	adapter   *TextLinesAdapter
 	guiScale  float32
 	commander cmd.Commander
@@ -16,8 +20,9 @@ type TextLinesView struct {
 }
 
 // NewTextLinesView returns a new instance.
-func NewTextLinesView(adapter *TextLinesAdapter, guiScale float32, commander cmd.Commander) *TextLinesView {
+func NewTextLinesView(mod *model.Mod, adapter *TextLinesAdapter, guiScale float32, commander cmd.Commander) *TextLinesView {
 	view := &TextLinesView{
+		mod:       mod,
 		adapter:   adapter,
 		guiScale:  guiScale,
 		commander: commander,
@@ -84,7 +89,27 @@ func (view *TextLinesView) renderContent() {
 	imgui.BeginGroup()
 	imgui.ButtonV("-> Clip", imgui.Vec2{X: -1, Y: 0})
 	imgui.ButtonV("<- Clip", imgui.Vec2{X: -1, Y: 0})
-	imgui.ButtonV("Clear", imgui.Vec2{X: -1, Y: 0})
-	imgui.ButtonV("Remove", imgui.Vec2{X: -1, Y: 0})
+	if imgui.ButtonV("Clear", imgui.Vec2{X: -1, Y: 0}) {
+		raw := view.mod.ModifiedBlock(view.model.currentKey)
+		if !bytes.Equal(raw, []byte{0x00}) {
+			view.requestSetTextLine(raw, []byte{0x00})
+		}
+	}
+	if imgui.ButtonV("Remove", imgui.Vec2{X: -1, Y: 0}) {
+		raw := view.mod.ModifiedBlock(view.model.currentKey)
+		if len(raw) > 0 {
+			view.requestSetTextLine(raw, nil)
+		}
+	}
 	imgui.EndGroup()
+}
+
+func (view *TextLinesView) requestSetTextLine(old []byte, new []byte) {
+	command := setTextLineCommand{
+		key:   view.model.currentKey,
+		model: &view.model,
+		old:   old,
+		new:   new,
+	}
+	view.commander.Queue(command)
 }
