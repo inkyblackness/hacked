@@ -10,6 +10,7 @@ import (
 type TextLinesAdapter struct {
 	mod *model.Mod
 
+	cp        text.Codepage
 	lineCache *text.LineCache
 }
 
@@ -18,6 +19,7 @@ func NewTextLinesAdapter(mod *model.Mod) *TextLinesAdapter {
 	cp := text.DefaultCodepage()
 	adapter := &TextLinesAdapter{
 		mod:       mod,
+		cp:        cp,
 		lineCache: text.NewLineCache(cp, mod),
 	}
 	return adapter
@@ -26,6 +28,11 @@ func NewTextLinesAdapter(mod *model.Mod) *TextLinesAdapter {
 // InvalidateResources marks all identified resources as to-be newly loaded.
 func (adapter *TextLinesAdapter) InvalidateResources(ids []resource.ID) {
 	adapter.lineCache.InvalidateResources(ids)
+}
+
+// Codepage returns the codepage in use.
+func (adapter *TextLinesAdapter) Codepage() text.Codepage {
+	return adapter.cp
 }
 
 // Line retrieves the text line of given key. Returns an empty string if not found.

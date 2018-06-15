@@ -18,8 +18,9 @@ import (
 // Application is the root object of the graphical editor.
 // It is set up by the main method.
 type Application struct {
-	window opengl.Window
-	gl     opengl.OpenGL
+	window    opengl.Window
+	clipboard clipboardAdapter
+	gl        opengl.OpenGL
 
 	// GuiScale is applied when the window is initialized.
 	GuiScale   float32
@@ -42,6 +43,7 @@ type Application struct {
 // InitializeWindow takes the given window and attaches the callbacks.
 func (app *Application) InitializeWindow(window opengl.Window) (err error) {
 	app.window = window
+	app.clipboard.window = window
 	app.gl = window.OpenGL()
 
 	app.initWindowCallbacks()
@@ -268,7 +270,7 @@ func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []
 
 func (app *Application) initView() {
 	app.projectView = project.NewView(app.mod, app.GuiScale, app)
-	app.textLinesView = texts.NewTextLinesView(app.mod, app.textLinesAdapter, app.GuiScale, app)
+	app.textLinesView = texts.NewTextLinesView(app.mod, app.textLinesAdapter, app.clipboard, app.GuiScale, app)
 }
 
 // Queue requests to perform the given command.

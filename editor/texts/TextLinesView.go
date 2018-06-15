@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/inkyblackness/hacked/editor/cmd"
+	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/imgui-go"
@@ -13,6 +14,7 @@ import (
 type TextLinesView struct {
 	mod       *model.Mod
 	adapter   *TextLinesAdapter
+	clipboard external.Clipboard
 	guiScale  float32
 	commander cmd.Commander
 
@@ -20,10 +22,11 @@ type TextLinesView struct {
 }
 
 // NewTextLinesView returns a new instance.
-func NewTextLinesView(mod *model.Mod, adapter *TextLinesAdapter, guiScale float32, commander cmd.Commander) *TextLinesView {
+func NewTextLinesView(mod *model.Mod, adapter *TextLinesAdapter, clipboard external.Clipboard, guiScale float32, commander cmd.Commander) *TextLinesView {
 	view := &TextLinesView{
 		mod:       mod,
 		adapter:   adapter,
+		clipboard: clipboard,
 		guiScale:  guiScale,
 		commander: commander,
 
@@ -80,28 +83,63 @@ func (view *TextLinesView) renderContent() {
 	text := view.adapter.Line(view.model.currentKey)
 	imgui.BeginChildV("Text", imgui.Vec2{X: -100 * view.guiScale, Y: 0}, true, 0)
 	imgui.PushTextWrapPos()
-	imgui.Text(text)
+	if len(text) == 0 {
+		imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1.0, Y: 1.0, Z: 1.0, W: 0.5})
+		imgui.Text("(empty)")
+		imgui.PopStyleColor()
+	} else {
+		imgui.Text(text)
+	}
 	imgui.PopTextWrapPos()
 	imgui.EndChild()
 
 	imgui.SameLine()
 
 	imgui.BeginGroup()
-	imgui.ButtonV("-> Clip", imgui.Vec2{X: -1, Y: 0})
-	imgui.ButtonV("<- Clip", imgui.Vec2{X: -1, Y: 0})
+	if imgui.ButtonV("-> Clip", imgui.Vec2{X: -1, Y: 0}) {
+		view.copyTextToClipboard(text)
+	}
+	if imgui.ButtonV("<- Clip", imgui.Vec2{X: -1, Y: 0}) {
+		view.setTextFromClipboard()
+	}
 	if imgui.ButtonV("Clear", imgui.Vec2{X: -1, Y: 0}) {
-		raw := view.mod.ModifiedBlock(view.model.currentKey)
-		if !bytes.Equal(raw, []byte{0x00}) {
-			view.requestSetTextLine(raw, []byte{0x00})
-		}
+		view.clearTextLine()
 	}
 	if imgui.ButtonV("Remove", imgui.Vec2{X: -1, Y: 0}) {
-		raw := view.mod.ModifiedBlock(view.model.currentKey)
-		if len(raw) > 0 {
-			view.requestSetTextLine(raw, nil)
-		}
+		view.removeTextLine()
 	}
 	imgui.EndGroup()
+}
+
+func (view TextLinesView) copyTextToClipboard(text string) {
+	if len(text) > 0 {
+		view.clipboard.SetString(text)
+	}
+}
+
+func (view *TextLinesView) setTextFromClipboard() {
+	text, err := view.clipboard.String()
+	if err != nil {
+		return
+	}
+
+	old := view.mod.ModifiedBlock(view.model.currentKey)
+	new := view.adapter.Codepage().Encode(text)
+	view.requestSetTextLine(old, new)
+}
+
+func (view *TextLinesView) clearTextLine() {
+	raw := view.mod.ModifiedBlock(view.model.currentKey)
+	if !bytes.Equal(raw, []byte{0x00}) {
+		view.requestSetTextLine(raw, []byte{0x00})
+	}
+}
+
+func (view *TextLinesView) removeTextLine() {
+	raw := view.mod.ModifiedBlock(view.model.currentKey)
+	if len(raw) > 0 {
+		view.requestSetTextLine(raw, nil)
+	}
 }
 
 func (view *TextLinesView) requestSetTextLine(old []byte, new []byte) {
