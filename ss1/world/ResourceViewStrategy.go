@@ -1,6 +1,9 @@
 package world
 
-import "github.com/inkyblackness/hacked/ss1/resource"
+import (
+	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world/ids"
+)
 
 // ResourceViewStrategy returns a strategy that is typical for the game.
 func ResourceViewStrategy() resource.ViewStrategy {
@@ -11,6 +14,7 @@ type defaultResources struct{}
 
 func (def defaultResources) IsCompoundList(id resource.ID) bool {
 	// TODO: extend & finalize these lists
-	isGameTextureList := (id == resource.ID(0x004C)) || (id == resource.ID(0x004D))
-	return isGameTextureList
+	isGameTextureList := (id == ids.IconTextures) || (id == ids.SmallTextures)
+	isTextLinesList := id == ids.TrapMessages
+	return isGameTextureList || isTextLinesList
 }
