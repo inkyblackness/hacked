@@ -79,6 +79,16 @@ func (window *OpenGLWindow) Close() {
 	glfw.Terminate()
 }
 
+// ClipboardString returns the current value of the clipboard, if it is compatible with UTF-8.
+func (window OpenGLWindow) ClipboardString() (string, error) {
+	return window.glfwWindow.GetClipboardString()
+}
+
+// SetClipboardString sets the current value of the clipboard as UTF-8 string.
+func (window OpenGLWindow) SetClipboardString(value string) {
+	window.glfwWindow.SetClipboardString(value)
+}
+
 // Update must be called from within the main thread as often as possible.
 func (window *OpenGLWindow) Update() {
 	glfw.PollEvents()

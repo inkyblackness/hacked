@@ -46,6 +46,11 @@ type FileDropCallback func(filePaths []string)
 
 // Window represents an OpenGL render surface.
 type Window interface {
+	// ClipboardString returns the current value of the clipboard, if it is compatible with UTF-8.
+	ClipboardString() (string, error)
+	// SetClipboardString sets the current value of the clipboard as UTF-8 string.
+	SetClipboardString(value string)
+
 	// OnClosing registers a callback function which shall be called when the user requests to close the window.
 	OnClosing(callback ClosingCallback)
 	// OnClosed registers a callback function which shall be called when the window is being closed.
