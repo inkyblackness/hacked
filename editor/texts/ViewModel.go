@@ -13,6 +13,6 @@ type viewModel struct {
 
 func freshViewModel() viewModel {
 	return viewModel{
-		currentKey: resource.KeyOf(ids.TrapMessages, resource.LangDefault, 0),
+		currentKey: resource.KeyOf(ids.TrapMessageTexts, resource.LangDefault, 0),
 	}
 }

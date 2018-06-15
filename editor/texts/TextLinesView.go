@@ -7,8 +7,26 @@ import (
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/imgui-go"
 )
+
+type textLineInfo struct {
+	id    resource.ID
+	title string
+}
+
+var knownTextLineTypes = []textLineInfo{
+	{ids.TrapMessageTexts, "Trap Messages"},
+	{ids.WordTexts, "Words"},
+	{ids.LogCategoryTexts, "Log Categories"},
+	{ids.VariousMessageTexts, "Various Messages"},
+	{ids.ScreenMessageTexts, "Screen Messages"},
+	{ids.InfoNodeMessageTexts, "Info Node Message Texts (8/5/6)"},
+	{ids.AccessCardNameTexts, "Access Card Names"},
+	{ids.DataletMessageTexts, "Datalet Messages (8/5/8)"},
+	{ids.PanelNameTexts, "Panel Names"},
+}
 
 // TextLinesView provides edit controls for simple text lines.
 type TextLinesView struct {
@@ -19,6 +37,8 @@ type TextLinesView struct {
 	commander cmd.Commander
 
 	model viewModel
+
+	textTypeTitleByID map[resource.ID]string
 }
 
 // NewTextLinesView returns a new instance.
@@ -31,6 +51,11 @@ func NewTextLinesView(mod *model.Mod, adapter *TextLinesAdapter, clipboard exter
 		commander: commander,
 
 		model: freshViewModel(),
+
+		textTypeTitleByID: make(map[resource.ID]string),
+	}
+	for _, info := range knownTextLineTypes {
+		view.textTypeTitleByID[info.id] = info.title
 	}
 	return view
 }
@@ -58,6 +83,14 @@ func (view *TextLinesView) Render() {
 
 func (view *TextLinesView) renderContent() {
 	imgui.PushItemWidth(-100 * view.guiScale)
+	if imgui.BeginCombo("Text Type", view.textTypeTitleByID[view.model.currentKey.ID]) {
+		for _, info := range knownTextLineTypes {
+			if imgui.SelectableV(info.title, info.id == view.model.currentKey.ID, 0, imgui.Vec2{}) {
+				view.model.currentKey.ID = info.id
+			}
+		}
+		imgui.EndCombo()
+	}
 	if imgui.BeginCombo("Language", view.model.currentKey.Lang.String()) {
 		languages := resource.Languages()
 		for _, lang := range languages {
