@@ -20,12 +20,12 @@ type TestCommand struct {
 	task         func()
 }
 
-func (cmd *TestCommand) Do() error {
+func (cmd *TestCommand) Do(trans cmd.Transaction) error {
 	cmd.executed++
 	return cmd.run()
 }
 
-func (cmd *TestCommand) Undo() error {
+func (cmd *TestCommand) Undo(trans cmd.Transaction) error {
 	cmd.reverted++
 	return cmd.run()
 }
@@ -182,7 +182,7 @@ func (suite *StackSuite) TestPerformPanicsIfStackIsInUse() {
 			times++
 
 			assert.Panics(suite.T(), func() {
-				suite.stack.Perform(suite.aCommand(name + "-nested"))
+				suite.stack.Perform(suite.aCommand(name+"-nested"), nil)
 			}, "Perform during function <"+name+"> should panic")
 		}
 	}
@@ -198,7 +198,7 @@ func (suite *StackSuite) TestUndoPanicsIfStackIsInUse() {
 			times++
 
 			assert.Panics(suite.T(), func() {
-				suite.stack.Undo()
+				suite.stack.Undo(nil)
 			}, "Undo during function <"+name+"> should panic")
 		}
 	}
@@ -214,7 +214,7 @@ func (suite *StackSuite) TestRedoPanicsIfStackIsInUse() {
 			times++
 
 			assert.Panics(suite.T(), func() {
-				suite.stack.Undo()
+				suite.stack.Undo(nil)
 			}, "Redo during function <"+name+"> should panic")
 		}
 	}
@@ -242,13 +242,13 @@ func (suite *StackSuite) givenCommandWasPerformed(name string) {
 
 func (suite *StackSuite) givenUndoWasCalledTimes(times int) {
 	for i := 0; i < times; i++ {
-		suite.stack.Undo()
+		suite.stack.Undo(nil)
 	}
 }
 
 func (suite *StackSuite) givenRedoWasCalledTimes(times int) {
 	for i := 0; i < times; i++ {
-		suite.stack.Redo()
+		suite.stack.Redo(nil)
 	}
 }
 
@@ -262,15 +262,15 @@ func (suite *StackSuite) givenCommandExecutes(name string, task func()) {
 }
 
 func (suite *StackSuite) whenUndoing() {
-	suite.stack.Undo()
+	suite.stack.Undo(nil)
 }
 
 func (suite *StackSuite) whenRedoing() {
-	suite.stack.Redo()
+	suite.stack.Redo(nil)
 }
 
 func (suite *StackSuite) whenPerforming(command cmd.Command) {
-	suite.stack.Perform(command)
+	suite.stack.Perform(command, nil)
 }
 
 func (suite *StackSuite) thenStackShouldSupportRedo() {
@@ -310,7 +310,7 @@ func (suite *StackSuite) thenCommandShouldHaveBeenRevertedTimes(name string, exp
 }
 
 func (suite *StackSuite) thenPerformShouldReturnError(cmd cmd.Command, expected error) {
-	result := suite.stack.Perform(cmd)
+	result := suite.stack.Perform(cmd, nil)
 	assert.Equal(suite.T(), expected, result)
 }
 

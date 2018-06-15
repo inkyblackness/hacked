@@ -126,11 +126,11 @@ func (suite *ListManifestEntryCommandSuite) givenParameters(at int, entry *world
 }
 
 func (suite *ListManifestEntryCommandSuite) whenCommandIsDone() {
-	suite.lastError = suite.instance.Do()
+	suite.lastError = suite.instance.Do(nil)
 }
 
 func (suite *ListManifestEntryCommandSuite) whenCommandIsUndone() {
-	suite.lastError = suite.instance.Undo()
+	suite.lastError = suite.instance.Undo(nil)
 }
 
 func (suite *ListManifestEntryCommandSuite) thenLastErrorShouldBeNil() {

@@ -1,5 +1,7 @@
 package project
 
+import "github.com/inkyblackness/hacked/editor/cmd"
+
 type manifestEntryMover interface {
 	MoveEntry(to, from int) error
 }
@@ -11,11 +13,11 @@ type moveManifestEntryCommand struct {
 	to    int
 }
 
-func (cmd moveManifestEntryCommand) Do() error {
+func (cmd moveManifestEntryCommand) Do(trans cmd.Transaction) error {
 	return cmd.move(cmd.to, cmd.from)
 }
 
-func (cmd moveManifestEntryCommand) Undo() error {
+func (cmd moveManifestEntryCommand) Undo(trans cmd.Transaction) error {
 	return cmd.move(cmd.from, cmd.to)
 }
 

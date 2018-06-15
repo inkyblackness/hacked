@@ -19,11 +19,11 @@ type Stack struct {
 // Perform executes the given command and puts it on the stack
 // if the command was successful.
 // This function also clears the list of commands to be redone.
-func (stack *Stack) Perform(cmd Command) error {
+func (stack *Stack) Perform(cmd Command, trans Transaction) error {
 	stack.lock("Perform")
 	defer stack.unlock()
 
-	err := cmd.Do()
+	err := cmd.Do(trans)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func (stack *Stack) CanUndo() bool {
 // If there is no further command to undo, nothing happens.
 // An error is returned if the command failed. In this case, the stack is
 // unchanged and a further attempt to undo will try the same command again.
-func (stack *Stack) Undo() error {
+func (stack *Stack) Undo(trans Transaction) error {
 	stack.lock("Undo")
 	defer stack.unlock()
 
@@ -49,7 +49,7 @@ func (stack *Stack) Undo() error {
 		return nil
 	}
 	entry := stack.undoList
-	err := entry.cmd.Undo()
+	err := entry.cmd.Undo(trans)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func (stack *Stack) CanRedo() bool {
 // If there is no further command to redo, nothing happens.
 // An error is returned if the command failed. In this case, the stack is
 // unchanged and a further attempt to redo will try the same command again.
-func (stack *Stack) Redo() error {
+func (stack *Stack) Redo(trans Transaction) error {
 	stack.lock("Redo")
 	defer stack.unlock()
 
@@ -76,7 +76,7 @@ func (stack *Stack) Redo() error {
 		return nil
 	}
 	entry := stack.redoList
-	err := entry.cmd.Do()
+	err := entry.cmd.Do(trans)
 	if err != nil {
 		return err
 	}

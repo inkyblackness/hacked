@@ -87,11 +87,11 @@ func (suite *MoveManifestEntryCommandSuite) givenCurrentlySelectedItemIs(index i
 }
 
 func (suite *MoveManifestEntryCommandSuite) whenCommandIsDone() {
-	suite.lastError = suite.instance.Do()
+	suite.lastError = suite.instance.Do(nil)
 }
 
 func (suite *MoveManifestEntryCommandSuite) whenCommandIsUndone() {
-	suite.lastError = suite.instance.Undo()
+	suite.lastError = suite.instance.Undo(nil)
 }
 
 func (suite *MoveManifestEntryCommandSuite) thenLastErrorShouldBeNil() {

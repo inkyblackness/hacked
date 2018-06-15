@@ -1,6 +1,9 @@
 package project
 
-import "github.com/inkyblackness/hacked/ss1/world"
+import (
+	"github.com/inkyblackness/hacked/editor/cmd"
+	"github.com/inkyblackness/hacked/ss1/world"
+)
 
 type manifestEntryKeeper interface {
 	RemoveEntry(at int) error
@@ -17,11 +20,11 @@ type listManifestEntryCommand struct {
 	adder bool
 }
 
-func (cmd listManifestEntryCommand) Do() error {
+func (cmd listManifestEntryCommand) Do(trans cmd.Transaction) error {
 	return cmd.perform(true)
 }
 
-func (cmd listManifestEntryCommand) Undo() error {
+func (cmd listManifestEntryCommand) Undo(trans cmd.Transaction) error {
 	return cmd.perform(false)
 }
 

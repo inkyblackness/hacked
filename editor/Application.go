@@ -155,7 +155,7 @@ func (app *Application) tryUndo() {
 	if !app.cmdStack.CanUndo() {
 		return
 	}
-	err := app.cmdStack.Undo()
+	err := app.modifyModByCommand(app.cmdStack.Undo)
 	if err != nil {
 		app.onFailure("Undo", "", err)
 	}
@@ -165,10 +165,17 @@ func (app *Application) tryRedo() {
 	if !app.cmdStack.CanRedo() {
 		return
 	}
-	err := app.cmdStack.Redo()
+	err := app.modifyModByCommand(app.cmdStack.Redo)
 	if err != nil {
 		app.onFailure("Redo", "", err)
 	}
+}
+
+func (app *Application) modifyModByCommand(modifier func(cmd.Transaction) error) (err error) {
+	app.mod.Modify(func(trans *model.ModTransaction) {
+		err = modifier(trans)
+	})
+	return
 }
 
 func (app *Application) onMouseMove(x, y float32) {
@@ -261,12 +268,14 @@ func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []
 
 func (app *Application) initView() {
 	app.projectView = project.NewView(app.mod, app.GuiScale, app)
-	app.textLinesView = texts.NewTextLinesView(app.textLinesAdapter, app.GuiScale, app)
+	app.textLinesView = texts.NewTextLinesView(app.mod, app.textLinesAdapter, app.GuiScale, app)
 }
 
 // Queue requests to perform the given command.
 func (app *Application) Queue(command cmd.Command) {
-	err := app.cmdStack.Perform(command)
+	err := app.modifyModByCommand(func(trans cmd.Transaction) error {
+		return app.cmdStack.Perform(command, trans)
+	})
 	if err != nil {
 		app.onFailure("Command", "", err)
 	}
