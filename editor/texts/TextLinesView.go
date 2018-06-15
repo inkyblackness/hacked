@@ -40,6 +40,7 @@ func (view *TextLinesView) WindowOpen() *bool {
 	return &view.model.windowOpen
 }
 
+// Render renders the view.
 func (view *TextLinesView) Render() {
 	if view.model.restoreFocus {
 		imgui.SetNextWindowFocus()
@@ -123,9 +124,9 @@ func (view *TextLinesView) setTextFromClipboard() {
 		return
 	}
 
-	old := view.mod.ModifiedBlock(view.model.currentKey)
-	new := view.adapter.Codepage().Encode(text)
-	view.requestSetTextLine(old, new)
+	oldData := view.mod.ModifiedBlock(view.model.currentKey)
+	newData := view.adapter.Codepage().Encode(text)
+	view.requestSetTextLine(oldData, newData)
 }
 
 func (view *TextLinesView) clearTextLine() {
@@ -142,12 +143,12 @@ func (view *TextLinesView) removeTextLine() {
 	}
 }
 
-func (view *TextLinesView) requestSetTextLine(old []byte, new []byte) {
+func (view *TextLinesView) requestSetTextLine(oldData []byte, newData []byte) {
 	command := setTextLineCommand{
-		key:   view.model.currentKey,
-		model: &view.model,
-		old:   old,
-		new:   new,
+		key:     view.model.currentKey,
+		model:   &view.model,
+		oldData: oldData,
+		newData: newData,
 	}
 	view.commander.Queue(command)
 }

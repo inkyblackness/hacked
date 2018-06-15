@@ -167,9 +167,9 @@ func (suite *ModSuite) TestModifiedResourceCanBeRetrieved() {
 		trans.SetResourceBlock(resource.LangAny, 0x0800, 1, []byte{0xCC})
 	})
 
-	resource := suite.mod.ModifiedResource(resource.LangAny, 0x0800)
-	require.NotNil(suite.T(), resource, "Resource expected")
-	assert.Equal(suite.T(), 2, resource.BlockCount(), "Two blocks expected")
+	res := suite.mod.ModifiedResource(resource.LangAny, 0x0800)
+	require.NotNil(suite.T(), res, "Resource expected")
+	assert.Equal(suite.T(), 2, res.BlockCount(), "Two blocks expected")
 }
 
 func (suite *ModSuite) TestModifiedBlocksCanBeRetrieved() {

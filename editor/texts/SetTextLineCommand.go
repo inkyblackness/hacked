@@ -10,16 +10,16 @@ type setTextLineCommand struct {
 
 	key resource.Key
 
-	old []byte
-	new []byte
+	oldData []byte
+	newData []byte
 }
 
 func (cmd setTextLineCommand) Do(trans cmd.Transaction) error {
-	return cmd.perform(trans, cmd.new)
+	return cmd.perform(trans, cmd.newData)
 }
 
 func (cmd setTextLineCommand) Undo(trans cmd.Transaction) error {
-	return cmd.perform(trans, cmd.old)
+	return cmd.perform(trans, cmd.oldData)
 }
 
 func (cmd setTextLineCommand) perform(trans cmd.Transaction, data []byte) error {

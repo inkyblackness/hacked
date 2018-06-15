@@ -27,7 +27,7 @@ func (state *addManifestEntryWaitingState) Render() {
 			imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 0, Z: 0, W: 1})
 			imgui.Text("Previous attempt failed, no usable data detected.\nPlease check and try again.")
 			imgui.PopStyleColor()
-			if time.Now().Sub(state.failureTime).Seconds() > 5 {
+			if time.Since(state.failureTime).Seconds() > 5 {
 				state.failureTime = time.Time{}
 			}
 		}
@@ -63,7 +63,7 @@ func (staging *fileStaging) stage(name string, enterDir bool) {
 	if err != nil {
 		return
 	}
-	defer file.Close()
+	defer file.Close() // nolint: errcheck
 
 	if fileInfo.IsDir() {
 		if enterDir {
