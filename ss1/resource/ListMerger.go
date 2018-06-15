@@ -1,6 +1,8 @@
 package resource
 
 import (
+	"bytes"
+	"fmt"
 	"io"
 )
 
@@ -39,6 +41,11 @@ func (view listMerger) BlockCount() (max int) {
 // The view returns the block from the first resource that has a non-empty block.
 // The resources are checked from last-to-first.
 func (view listMerger) Block(index int) (reader io.Reader, err error) {
+	blockCount := view.BlockCount()
+	if (index < 0) || (index >= blockCount) {
+		return nil, fmt.Errorf("block index wrong: %v/%v", index, blockCount)
+	}
+
 	for layer := len(view.list) - 1; (layer >= 0) && (reader == nil); layer-- {
 		tempReader, tempErr := view.list[layer].Block(index)
 		if tempErr == nil {
@@ -48,6 +55,9 @@ func (view listMerger) Block(index int) (reader io.Reader, err error) {
 				reader, err = view.list[layer].Block(index)
 			}
 		}
+	}
+	if (reader == nil) && (err == nil) {
+		reader = bytes.NewBuffer(nil)
 	}
 	return
 }
