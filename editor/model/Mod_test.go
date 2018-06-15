@@ -161,6 +161,27 @@ func (suite *ModSuite) TestDeletionIsNotified() {
 	suite.thenModifiedResourcesShouldBe(0x0800)
 }
 
+func (suite *ModSuite) TestModifiedResourceCanBeRetrieved() {
+	suite.whenModifyingBy(func(trans *model.ModTransaction) {
+		trans.SetResourceBlock(resource.LangAny, 0x0800, 0, []byte{0xBB})
+		trans.SetResourceBlock(resource.LangAny, 0x0800, 1, []byte{0xCC})
+	})
+
+	resource := suite.mod.ModifiedResource(resource.LangAny, 0x0800)
+	require.NotNil(suite.T(), resource, "Resource expected")
+	assert.Equal(suite.T(), 2, resource.BlockCount(), "Two blocks expected")
+}
+
+func (suite *ModSuite) TestModifiedBlocksCanBeRetrieved() {
+	suite.whenModifyingBy(func(trans *model.ModTransaction) {
+		trans.SetResourceBlock(resource.LangAny, 0x0800, 0, []byte{0xBB})
+		trans.SetResourceBlock(resource.LangAny, 0x0800, 1, []byte{0xCC})
+	})
+
+	assert.Equal(suite.T(), []byte{0xBB}, suite.mod.ModifiedBlock(resource.KeyOf(0x0800, resource.LangAny, 0)))
+	assert.Equal(suite.T(), []byte{0xCC}, suite.mod.ModifiedBlock(resource.KeyOf(0x0800, resource.LangAny, 1)))
+}
+
 func (suite *ModSuite) givenWorldHas(res ...resource.LocalizedResources) {
 	suite.whenWorldIsExtendedWith(res...)
 	suite.lastModifiedIDs = nil

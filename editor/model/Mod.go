@@ -1,6 +1,8 @@
 package model
 
 import (
+	"io/ioutil"
+
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
 )
@@ -37,6 +39,34 @@ func NewMod(resourcesChanged resource.ModificationCallback) *Mod {
 // being forwarded.
 func (mod Mod) World() *world.Manifest {
 	return mod.worldManifest
+}
+
+// ModifiedResource retrieves the resource of given language and ID.
+// There is no fallback lookup, it will return the exact resource stored under the provided identifier.
+// Returns nil if the resource does not exist.
+func (mod Mod) ModifiedResource(lang resource.Language, id resource.ID) *resource.Resource {
+	return mod.localizedResources[lang][id]
+}
+
+// ModifiedBlock retrieves the specific block identified by given key.
+// Returns nil if the block (or resource) is not modified.
+func (mod Mod) ModifiedBlock(key resource.Key) (data []byte) {
+	res := mod.ModifiedResource(key.Lang, key.ID)
+	if res == nil {
+		return
+	}
+	if key.Index >= res.BlockCount() {
+		return
+	}
+	reader, err := res.Block(key.Index)
+	if err != nil {
+		return
+	}
+	data, err = ioutil.ReadAll(reader)
+	if err != nil {
+		return nil
+	}
+	return
 }
 
 // Filter returns a list of resources that match the given parameters.
