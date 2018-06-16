@@ -30,9 +30,10 @@ type Application struct {
 	eventQueue      event.Queue
 	eventDispatcher *event.Dispatcher
 
-	cmdStack  *cmd.Stack
-	mod       *model.Mod
-	textCache *text.LineCache
+	cmdStack      *cmd.Stack
+	mod           *model.Mod
+	cp            text.Codepage
+	textLineCache *text.Cache
 
 	projectView   *project.View
 	textLinesView *texts.TextLinesView
@@ -262,16 +263,17 @@ func (app *Application) initModel() {
 	app.cmdStack = new(cmd.Stack)
 	app.mod = model.NewMod(app.resourcesChanged)
 
-	app.textCache = text.NewLineCache(text.DefaultCodepage(), app.mod)
+	app.cp = text.DefaultCodepage()
+	app.textLineCache = text.NewLineCache(app.cp, app.mod)
 }
 
 func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) {
-	app.textCache.InvalidateResources(modifiedIDs)
+	app.textLineCache.InvalidateResources(modifiedIDs)
 }
 
 func (app *Application) initView() {
 	app.projectView = project.NewView(app.mod, app.GuiScale, app)
-	app.textLinesView = texts.NewTextLinesView(app.mod, app.textCache, app.clipboard, app.GuiScale, app)
+	app.textLinesView = texts.NewTextLinesView(app.mod, app.textLineCache, app.cp, app.clipboard, app.GuiScale, app)
 }
 
 // Queue requests to perform the given command.

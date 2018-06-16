@@ -32,7 +32,8 @@ var knownTextLineTypes = []textLineInfo{
 // TextLinesView provides edit controls for simple text lines.
 type TextLinesView struct {
 	mod       *model.Mod
-	cache     *text.LineCache
+	cache     *text.Cache
+	cp        text.Codepage
 	clipboard external.Clipboard
 	guiScale  float32
 	commander cmd.Commander
@@ -43,10 +44,12 @@ type TextLinesView struct {
 }
 
 // NewTextLinesView returns a new instance.
-func NewTextLinesView(mod *model.Mod, cache *text.LineCache, clipboard external.Clipboard, guiScale float32, commander cmd.Commander) *TextLinesView {
+func NewTextLinesView(mod *model.Mod, cache *text.Cache, cp text.Codepage,
+	clipboard external.Clipboard, guiScale float32, commander cmd.Commander) *TextLinesView {
 	view := &TextLinesView{
 		mod:       mod,
 		cache:     cache,
+		cp:        cp,
 		clipboard: clipboard,
 		guiScale:  guiScale,
 		commander: commander,
@@ -115,7 +118,7 @@ func (view *TextLinesView) renderContent() {
 	}
 	imgui.PopItemWidth()
 
-	currentValue, cacheErr := view.cache.Line(view.model.currentKey)
+	currentValue, cacheErr := view.cache.Text(view.model.currentKey)
 	if cacheErr != nil {
 		currentValue = ""
 	}
@@ -162,7 +165,7 @@ func (view *TextLinesView) setTextFromClipboard() {
 	}
 
 	oldData := view.mod.ModifiedBlock(view.model.currentKey)
-	newData := view.cache.Codepage.Encode(value)
+	newData := view.cp.Encode(value)
 	view.requestSetTextLine(oldData, newData)
 }
 
