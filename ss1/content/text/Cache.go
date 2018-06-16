@@ -29,8 +29,14 @@ func newCache(cp Codepage, localizer resource.Localizer, reader textReader) *Cac
 	return cache
 }
 
+// NewLineCache returns a cache for single-block texts.
 func NewLineCache(cp Codepage, localizer resource.Localizer) *Cache {
 	return newCache(cp, localizer, readLine)
+}
+
+// NewPageCache returns a cache for resource-based texts.
+func NewPageCache(cp Codepage, localizer resource.Localizer) *Cache {
+	return newCache(cp, localizer, readPage)
 }
 
 func readLine(selector resource.Selector, key resource.Key, cp Codepage) (string, error) {
@@ -52,6 +58,30 @@ func readLine(selector resource.Selector, key resource.Key, cp Codepage) (string
 	return cp.Decode(raw), nil
 }
 
+func readPage(selector resource.Selector, key resource.Key, cp Codepage) (string, error) {
+	view, err := selector.Select(key.ID.Plus(key.Index))
+	if err != nil {
+		return "", err
+	}
+	if view.ContentType() != resource.Text {
+		return "", errors.New("resource is not a text")
+	}
+	blockCount := view.BlockCount()
+	value := ""
+	for block := 0; block < blockCount; block++ {
+		reader, err := view.Block(block)
+		if err != nil {
+			return "", err
+		}
+		raw, err := ioutil.ReadAll(reader)
+		if err != nil {
+			return "", err
+		}
+		value += cp.Decode(raw)
+	}
+	return value, nil
+}
+
 // InvalidateResources lets the cache remove any texts from resources that are specified in the given slice.
 func (cache *Cache) InvalidateResources(ids []resource.ID) {
 	for _, id := range ids {
@@ -70,22 +100,10 @@ func (cache *Cache) Text(key resource.Key) (string, error) {
 		return value, nil
 	}
 	selector := cache.localizer.LocalizedResources(key.Lang)
-	view, err := selector.Select(key.ID)
+	value, err := cache.reader(selector, key, cache.cp)
 	if err != nil {
 		return "", err
 	}
-	if view.ContentType() != resource.Text {
-		return "", errors.New("resource is not a text")
-	}
-	reader, err := view.Block(key.Index)
-	if err != nil {
-		return "", err
-	}
-	raw, err := ioutil.ReadAll(reader)
-	if err != nil {
-		return "", err
-	}
-	value = cache.cp.Decode(raw)
 	cache.texts[key] = value
 	return value, nil
 }

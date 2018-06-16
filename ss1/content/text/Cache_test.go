@@ -37,8 +37,22 @@ func (suite *CacheSuite) TestTextReturnsValueIfOKForLineCache() {
 	suite.thenTextShouldReturn("test", resource.KeyOf(0x1000, resource.LangGerman, 0))
 }
 
+func (suite *CacheSuite) TestTextReturnsValueIfOKForPageCache() {
+	suite.givenAPageCache()
+	suite.whenResourcesAre(
+		suite.someLocalizedResources(resource.LangGerman,
+			suite.storing(0x1000, "this is", " separated", " over lines")))
+	suite.thenTextShouldReturn("this is separated over lines", resource.KeyOf(0x1000, resource.LangGerman, 0))
+}
+
 func (suite *CacheSuite) TestTextReturnsErrorIfResourceNotExistingForLineCache() {
 	suite.givenALineCache()
+	suite.whenResourcesAre()
+	suite.thenTextShouldReturnError(resource.KeyOf(0x1000, resource.LangGerman, 0))
+}
+
+func (suite *CacheSuite) TestTextReturnsErrorIfResourceNotExistingForPageCache() {
+	suite.givenAPageCache()
 	suite.whenResourcesAre()
 	suite.thenTextShouldReturnError(resource.KeyOf(0x1000, resource.LangGerman, 0))
 }
@@ -93,8 +107,19 @@ func (suite *CacheSuite) TestTextReturnsErrorIfResourceIsNotATextForLineCache() 
 	suite.thenTextShouldReturnError(resource.KeyOf(0x1000, resource.LangDefault, 0))
 }
 
+func (suite *CacheSuite) TestTextReturnsErrorIfResourceIsNotATextForPageCache() {
+	suite.givenAPageCache()
+	suite.whenResourcesAre(suite.someLocalizedResources(resource.LangDefault,
+		suite.storingNonText(0x1000)))
+	suite.thenTextShouldReturnError(resource.KeyOf(0x1000, resource.LangDefault, 0))
+}
+
 func (suite *CacheSuite) givenALineCache() {
 	suite.instance = text.NewLineCache(suite.cp, suite)
+}
+
+func (suite *CacheSuite) givenAPageCache() {
+	suite.instance = text.NewPageCache(suite.cp, suite)
 }
 
 func (suite *CacheSuite) givenResourcesAre(resources ...resource.LocalizedResources) {
