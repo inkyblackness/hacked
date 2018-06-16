@@ -172,14 +172,23 @@ func (suite *ModSuite) TestModifiedResourceCanBeRetrieved() {
 	assert.Equal(suite.T(), 2, res.BlockCount(), "Two blocks expected")
 }
 
-func (suite *ModSuite) TestModifiedBlocksCanBeRetrieved() {
+func (suite *ModSuite) TestModifiedBlocksCanBeRetrievedSingle() {
 	suite.whenModifyingBy(func(trans *model.ModTransaction) {
 		trans.SetResourceBlock(resource.LangAny, 0x0800, 0, []byte{0xBB})
 		trans.SetResourceBlock(resource.LangAny, 0x0800, 1, []byte{0xCC})
 	})
 
-	assert.Equal(suite.T(), []byte{0xBB}, suite.mod.ModifiedBlock(resource.KeyOf(0x0800, resource.LangAny, 0)))
-	assert.Equal(suite.T(), []byte{0xCC}, suite.mod.ModifiedBlock(resource.KeyOf(0x0800, resource.LangAny, 1)))
+	assert.Equal(suite.T(), []byte{0xBB}, suite.mod.ModifiedBlock(resource.LangAny, 0x0800, 0))
+	assert.Equal(suite.T(), []byte{0xCC}, suite.mod.ModifiedBlock(resource.LangAny, 0x0800, 1))
+}
+
+func (suite *ModSuite) TestModifiedBlocksCanBeRetrievedBulk() {
+	suite.whenModifyingBy(func(trans *model.ModTransaction) {
+		trans.SetResourceBlock(resource.LangAny, 0x0800, 0, []byte{0xBB})
+		trans.SetResourceBlock(resource.LangAny, 0x0800, 1, []byte{0xCC})
+	})
+
+	assert.Equal(suite.T(), [][]byte{{0xBB}, {0xCC}}, suite.mod.ModifiedBlocks(resource.LangAny, 0x0800))
 }
 
 func (suite *ModSuite) givenWorldHas(res ...resource.LocalizedResources) {

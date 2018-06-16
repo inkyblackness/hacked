@@ -271,6 +271,7 @@ func (app *Application) initModel() {
 
 func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) {
 	app.textLineCache.InvalidateResources(modifiedIDs)
+	app.textPageCache.InvalidateResources(modifiedIDs)
 }
 
 func (app *Application) initView() {

@@ -15,7 +15,7 @@ import (
 type ResourceSelectorSuite struct {
 	suite.Suite
 
-	resources []*resource.Resource
+	resources []resource.View
 	view      resource.View
 
 	isCompoundList bool
@@ -151,7 +151,7 @@ func (suite *ResourceSelectorSuite) givenResource(blocks [][]byte) {
 func (suite *ResourceSelectorSuite) givenSpecificResource(modifier func(*resource.Resource)) {
 	res := &resource.Resource{}
 	modifier(res)
-	suite.resources = append(suite.resources, res)
+	suite.resources = append(suite.resources, res.ToView())
 }
 
 func (suite *ResourceSelectorSuite) whenInstanceIsCreated() {

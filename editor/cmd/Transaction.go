@@ -18,6 +18,10 @@ type Transaction interface {
 	// If the resource is a compound list, then the underlying data will become visible again.
 	SetResourceBlock(lang resource.Language, id resource.ID, index int, data []byte)
 
+	// SetResourceBlocks sets the entire list of block data of a resource.
+	// This method is primarily meant for compound non-list resources (e.g. text pages).
+	SetResourceBlocks(lang resource.Language, id resource.ID, data [][]byte)
+
 	// DelResource removes a resource from the mod in the given language.
 	//
 	// After the deletion, all the underlying data of the world will become visible again.

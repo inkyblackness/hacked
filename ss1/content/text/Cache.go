@@ -7,6 +7,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
+type keyResolver func(resource.Key) resource.Key
 type textReader func(resource.Selector, resource.Key, Codepage) (string, error)
 
 // Cache retrieves texts from a localizer and keeps them decoded until they are invalidated.
@@ -15,28 +16,32 @@ type Cache struct {
 	localizer resource.Localizer
 	reader    textReader
 
-	texts map[resource.Key]string
+	keyResolver keyResolver
+	texts       map[resource.Key]string
 }
 
-func newCache(cp Codepage, localizer resource.Localizer, reader textReader) *Cache {
+func newCache(cp Codepage, localizer resource.Localizer, keyResolver keyResolver, reader textReader) *Cache {
 	cache := &Cache{
 		cp:        cp,
 		localizer: localizer,
 		reader:    reader,
 
-		texts: make(map[resource.Key]string),
+		keyResolver: keyResolver,
+		texts:       make(map[resource.Key]string),
 	}
 	return cache
 }
 
 // NewLineCache returns a cache for single-block texts.
 func NewLineCache(cp Codepage, localizer resource.Localizer) *Cache {
-	return newCache(cp, localizer, readLine)
+	return newCache(cp, localizer, func(key resource.Key) resource.Key { return key }, readLine)
 }
 
 // NewPageCache returns a cache for resource-based texts.
 func NewPageCache(cp Codepage, localizer resource.Localizer) *Cache {
-	return newCache(cp, localizer, readPage)
+	return newCache(cp, localizer, func(key resource.Key) resource.Key {
+		return resource.KeyOf(key.ID.Plus(key.Index), key.Lang, 0)
+	}, readPage)
 }
 
 func readLine(selector resource.Selector, key resource.Key, cp Codepage) (string, error) {
@@ -95,7 +100,8 @@ func (cache *Cache) InvalidateResources(ids []resource.ID) {
 
 // Text retrieves and caches the text of given key.
 func (cache *Cache) Text(key resource.Key) (string, error) {
-	value, existing := cache.texts[key]
+	cacheKey := cache.keyResolver(key)
+	value, existing := cache.texts[cacheKey]
 	if existing {
 		return value, nil
 	}
@@ -104,6 +110,6 @@ func (cache *Cache) Text(key resource.Key) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	cache.texts[key] = value
+	cache.texts[cacheKey] = value
 	return value, nil
 }

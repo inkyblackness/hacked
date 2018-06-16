@@ -13,17 +13,17 @@ type listMerger struct {
 // Compound indicates whether the resource is a compound one, which can contain zero, one, or more blocks.
 // Simple resources always contain exactly one block.
 func (view listMerger) Compound() bool {
-	return view.list[0].Compound
+	return view.list[0].Compound()
 }
 
 // ContentType specifies how the data in the resource shall be interpreted.
 func (view listMerger) ContentType() ContentType {
-	return view.list[0].ContentType
+	return view.list[0].ContentType()
 }
 
 // Compressed indicates whether the data should be compressed when serialized.
 func (view listMerger) Compressed() bool {
-	return view.list[0].Compressed
+	return view.list[0].Compressed()
 }
 
 // BlockCount returns the maximum count of all resources.

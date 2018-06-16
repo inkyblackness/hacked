@@ -43,7 +43,7 @@ func (suite *ListMergerSuite) whenEntryStores(blocks ...[]byte) {
 		Compound:      len(blocks) != 1,
 		BlockProvider: MemoryBlockProvider(blocks),
 	}
-	suite.merger.list = append(suite.merger.list, resource)
+	suite.merger.list = append(suite.merger.list, resource.ToView())
 }
 
 func (suite *ListMergerSuite) thenBlockShouldReturnFor(index int, expected []byte) {

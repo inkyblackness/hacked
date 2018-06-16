@@ -25,7 +25,7 @@ func (merger Selector) Select(id ID) (view View, err error) {
 		return nil, ErrResourceDoesNotExist(id)
 	}
 	if (merger.As == nil) || !merger.As.IsCompoundList(id) {
-		view = &simpleView{list[len(list)-1]}
+		view = list[len(list)-1]
 	} else {
 		view = &listMerger{list}
 	}

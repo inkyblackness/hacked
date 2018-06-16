@@ -171,7 +171,12 @@ func (view TextLinesView) currentText() string {
 
 func (view TextLinesView) currentModification() (data [][]byte, isList bool) {
 	info, _ := ids.Info(view.model.currentKey.ID)
-	return [][]byte{view.mod.ModifiedBlock(view.model.currentKey)}, info.List
+	if info.List {
+		data = [][]byte{view.mod.ModifiedBlock(view.model.currentKey.Lang, view.model.currentKey.ID, view.model.currentKey.Index)}
+	} else {
+		data = view.mod.ModifiedBlocks(view.model.currentKey.Lang, view.model.currentKey.ID.Plus(view.model.currentKey.Index))
+	}
+	return data, info.List
 }
 
 func (view TextLinesView) copyTextToClipboard(text string) {
@@ -225,5 +230,11 @@ func (view *TextLinesView) requestSetTextLine(oldData []byte, newData []byte) {
 }
 
 func (view *TextLinesView) requestSetTextPage(oldData [][]byte, newData [][]byte) {
-	// TODO command
+	command := setTextPageCommand{
+		key:     view.model.currentKey,
+		model:   &view.model,
+		oldData: oldData,
+		newData: newData,
+	}
+	view.commander.Queue(command)
 }

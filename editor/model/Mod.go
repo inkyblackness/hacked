@@ -1,13 +1,11 @@
 package model
 
 import (
-	"io/ioutil"
-
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
 )
 
-type identifiedResources map[resource.ID]*resource.Resource
+type identifiedResources map[resource.ID]*modifiedResource
 
 // Mod is the central object for a game-mod.
 //
@@ -44,29 +42,31 @@ func (mod Mod) World() *world.Manifest {
 // ModifiedResource retrieves the resource of given language and ID.
 // There is no fallback lookup, it will return the exact resource stored under the provided identifier.
 // Returns nil if the resource does not exist.
-func (mod Mod) ModifiedResource(lang resource.Language, id resource.ID) *resource.Resource {
+func (mod Mod) ModifiedResource(lang resource.Language, id resource.ID) resource.View {
 	return mod.localizedResources[lang][id]
 }
 
-// ModifiedBlock retrieves the specific block identified by given key.
-// Returns nil if the block (or resource) is not modified.
-func (mod Mod) ModifiedBlock(key resource.Key) (data []byte) {
-	res := mod.ModifiedResource(key.Lang, key.ID)
+// ModifiedBlock retrieves the specific block identified by given parameter.
+// Returns empty slice if the block (or resource) is not modified.
+func (mod Mod) ModifiedBlock(lang resource.Language, id resource.ID, index int) (data []byte) {
+	res := mod.localizedResources[lang][id]
 	if res == nil {
 		return
 	}
-	if key.Index >= res.BlockCount() {
-		return
-	}
-	reader, err := res.Block(key.Index)
-	if err != nil {
-		return
-	}
-	data, err = ioutil.ReadAll(reader)
-	if err != nil {
+	return res.blocks[index]
+}
+
+// ModifiedBlocks returns all blocks of the modified resource.
+func (mod Mod) ModifiedBlocks(lang resource.Language, id resource.ID) [][]byte {
+	res := mod.localizedResources[lang][id]
+	if res == nil {
 		return nil
 	}
-	return
+	data := make([][]byte, res.blockCount)
+	for index := 0; index < res.blockCount; index++ {
+		data[index] = res.blocks[index]
+	}
+	return data
 }
 
 // Filter returns a list of resources that match the given parameters.
@@ -122,7 +122,7 @@ func (mod Mod) worldChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) 
 	mod.resourcesChanged(modifiedIDs, failedIDs)
 }
 
-func (mod *Mod) ensureResource(lang resource.Language, id resource.ID) *resource.Resource {
+func (mod *Mod) ensureResource(lang resource.Language, id resource.ID) *modifiedResource {
 	res, resExists := mod.localizedResources[lang][id]
 	if !resExists {
 		res = mod.newResource(lang, id)
@@ -131,7 +131,7 @@ func (mod *Mod) ensureResource(lang resource.Language, id resource.ID) *resource
 	return res
 }
 
-func (mod *Mod) newResource(lang resource.Language, id resource.ID) *resource.Resource {
+func (mod *Mod) newResource(lang resource.Language, id resource.ID) *modifiedResource {
 	// TODO: if not even existing, create based on defaults
 	compound := false
 	contentType := resource.Text
@@ -140,16 +140,16 @@ func (mod *Mod) newResource(lang resource.Language, id resource.ID) *resource.Re
 	list := mod.worldManifest.Filter(lang, id)
 	if len(list) > 0 {
 		existing := list[0]
-		compound = existing.Compound
-		contentType = existing.ContentType
-		compressed = existing.Compressed
+		compound = existing.Compound()
+		contentType = existing.ContentType()
+		compressed = existing.Compressed()
 	}
 
-	return &resource.Resource{
-		Compound:      compound,
-		ContentType:   contentType,
-		Compressed:    compressed,
-		BlockProvider: resource.MemoryBlockProvider(nil),
+	return &modifiedResource{
+		compound:    compound,
+		contentType: contentType,
+		compressed:  compressed,
+		blocks:      make(map[int][]byte),
 	}
 }
 

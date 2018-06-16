@@ -29,10 +29,10 @@ type ModTransaction struct {
 // new resources.
 func (trans *ModTransaction) SetResource(id resource.ID,
 	compound bool, contentType resource.ContentType, compressed bool) {
-	setResource := func(res *resource.Resource) {
-		res.Compound = compound
-		res.ContentType = contentType
-		res.Compressed = compressed
+	setResource := func(res *modifiedResource) {
+		res.compound = compound
+		res.contentType = contentType
+		res.compressed = compressed
 	}
 	trans.actions = append(trans.actions, func(mod *Mod) {
 		for _, lang := range resource.Languages() {
@@ -54,7 +54,17 @@ func (trans *ModTransaction) SetResource(id resource.ID,
 func (trans *ModTransaction) SetResourceBlock(lang resource.Language, id resource.ID, index int, data []byte) {
 	trans.actions = append(trans.actions, func(mod *Mod) {
 		res := mod.ensureResource(lang, id)
-		res.SetBlock(index, data)
+		res.setBlock(index, data)
+	})
+	trans.modifiedIDs[id] = true
+}
+
+// SetResourceBlocks sets the entire list of block data of a resource.
+// This method is primarily meant for compound non-list resources (e.g. text pages).
+func (trans *ModTransaction) SetResourceBlocks(lang resource.Language, id resource.ID, data [][]byte) {
+	trans.actions = append(trans.actions, func(mod *Mod) {
+		res := mod.ensureResource(lang, id)
+		res.setBlocks(data)
 	})
 	trans.modifiedIDs[id] = true
 }

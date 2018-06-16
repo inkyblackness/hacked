@@ -80,3 +80,8 @@ func (res *Resource) ensureBlockMap() {
 		res.blocks = make(map[int][]byte)
 	}
 }
+
+// ToView returns a view of this resource.
+func (res Resource) ToView() View {
+	return simpleView{&res}
+}
