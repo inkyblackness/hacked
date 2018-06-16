@@ -49,29 +49,3 @@ func TestResourceBlockReturnsErrorForDefaultObject(t *testing.T) {
 	verifyBlockError(t, res, 0)
 	verifyBlockError(t, res, 1)
 }
-
-func TestResourceCanBeExtendedWithBlocks(t *testing.T) {
-	var res resource.Resource
-
-	res.SetBlock(0, []byte{0x10})
-	res.SetBlock(2, []byte{0x20, 0x20})
-	assert.Equal(t, 3, res.BlockCount())
-	verifyBlockContent(t, res, 0, []byte{0x10})
-	verifyBlockContent(t, res, 1, []byte{})
-	verifyBlockContent(t, res, 2, []byte{0x20, 0x20})
-}
-
-func TestResourceDefaultsToProviderWhenNoExtensionOverridesIt(t *testing.T) {
-	res := &resource.Resource{BlockProvider: resource.MemoryBlockProvider([][]byte{{0x01}, {0x02, 0x02}})}
-
-	res.SetBlock(0, []byte{0xA0})
-	assert.Equal(t, 2, res.BlockCount())
-	verifyBlockContent(t, res, 0, []byte{0xA0})
-	verifyBlockContent(t, res, 1, []byte{0x02, 0x02})
-}
-
-func TestResourcePanicsForNegativeBlockIndex(t *testing.T) {
-	var res resource.Resource
-
-	assert.Panics(t, func() { res.SetBlock(-1, []byte{}) }, "Panic expected")
-}
