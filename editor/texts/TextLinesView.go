@@ -115,18 +115,18 @@ func (view *TextLinesView) renderContent() {
 	}
 	imgui.PopItemWidth()
 
-	text, cacheErr := view.cache.Line(view.model.currentKey)
+	currentValue, cacheErr := view.cache.Line(view.model.currentKey)
 	if cacheErr != nil {
-		text = ""
+		currentValue = ""
 	}
 	imgui.BeginChildV("Text", imgui.Vec2{X: -100 * view.guiScale, Y: 0}, true, 0)
 	imgui.PushTextWrapPos()
-	if len(text) == 0 {
+	if len(currentValue) == 0 {
 		imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1.0, Y: 1.0, Z: 1.0, W: 0.5})
 		imgui.Text("(empty)")
 		imgui.PopStyleColor()
 	} else {
-		imgui.Text(text)
+		imgui.Text(currentValue)
 	}
 	imgui.PopTextWrapPos()
 	imgui.EndChild()
@@ -135,7 +135,7 @@ func (view *TextLinesView) renderContent() {
 
 	imgui.BeginGroup()
 	if imgui.ButtonV("-> Clip", imgui.Vec2{X: -1, Y: 0}) {
-		view.copyTextToClipboard(text)
+		view.copyTextToClipboard(currentValue)
 	}
 	if imgui.ButtonV("<- Clip", imgui.Vec2{X: -1, Y: 0}) {
 		view.setTextFromClipboard()
@@ -156,13 +156,13 @@ func (view TextLinesView) copyTextToClipboard(text string) {
 }
 
 func (view *TextLinesView) setTextFromClipboard() {
-	text, err := view.clipboard.String()
+	value, err := view.clipboard.String()
 	if err != nil {
 		return
 	}
 
 	oldData := view.mod.ModifiedBlock(view.model.currentKey)
-	newData := view.cache.Codepage.Encode(text)
+	newData := view.cache.Codepage.Encode(value)
 	view.requestSetTextLine(oldData, newData)
 }
 
