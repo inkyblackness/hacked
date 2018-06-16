@@ -34,6 +34,7 @@ type Application struct {
 	mod           *model.Mod
 	cp            text.Codepage
 	textLineCache *text.Cache
+	textPageCache *text.Cache
 
 	projectView   *project.View
 	textLinesView *texts.TextLinesView
@@ -265,6 +266,7 @@ func (app *Application) initModel() {
 
 	app.cp = text.DefaultCodepage()
 	app.textLineCache = text.NewLineCache(app.cp, app.mod)
+	app.textPageCache = text.NewPageCache(app.cp, app.mod)
 }
 
 func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) {
@@ -273,7 +275,7 @@ func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []
 
 func (app *Application) initView() {
 	app.projectView = project.NewView(app.mod, app.GuiScale, app)
-	app.textLinesView = texts.NewTextLinesView(app.mod, app.textLineCache, app.cp, app.clipboard, app.GuiScale, app)
+	app.textLinesView = texts.NewTextLinesView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.clipboard, app.GuiScale, app)
 }
 
 // Queue requests to perform the given command.

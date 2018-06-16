@@ -26,14 +26,17 @@ var knownTextLineTypes = []textLineInfo{
 	{ids.InfoNodeMessageTexts, "Info Node Message Texts (8/5/6)"},
 	{ids.AccessCardNameTexts, "Access Card Names"},
 	{ids.DataletMessageTexts, "Datalet Messages (8/5/8)"},
+	{ids.PaperTextsStart, "Papers"},
 	{ids.PanelNameTexts, "Panel Names"},
 }
 
 // TextLinesView provides edit controls for simple text lines.
 type TextLinesView struct {
 	mod       *model.Mod
-	cache     *text.Cache
+	lineCache *text.Cache
+	pageCache *text.Cache
 	cp        text.Codepage
+
 	clipboard external.Clipboard
 	guiScale  float32
 	commander cmd.Commander
@@ -44,12 +47,14 @@ type TextLinesView struct {
 }
 
 // NewTextLinesView returns a new instance.
-func NewTextLinesView(mod *model.Mod, cache *text.Cache, cp text.Codepage,
+func NewTextLinesView(mod *model.Mod, lineCache *text.Cache, pageCache *text.Cache, cp text.Codepage,
 	clipboard external.Clipboard, guiScale float32, commander cmd.Commander) *TextLinesView {
 	view := &TextLinesView{
 		mod:       mod,
-		cache:     cache,
+		lineCache: lineCache,
+		pageCache: pageCache,
 		cp:        cp,
+
 		clipboard: clipboard,
 		guiScale:  guiScale,
 		commander: commander,
@@ -118,18 +123,15 @@ func (view *TextLinesView) renderContent() {
 	}
 	imgui.PopItemWidth()
 
-	currentValue, cacheErr := view.cache.Text(view.model.currentKey)
-	if cacheErr != nil {
-		currentValue = ""
-	}
+	currentText := view.currentText()
 	imgui.BeginChildV("Text", imgui.Vec2{X: -100 * view.guiScale, Y: 0}, true, 0)
 	imgui.PushTextWrapPos()
-	if len(currentValue) == 0 {
+	if len(currentText) == 0 {
 		imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1.0, Y: 1.0, Z: 1.0, W: 0.5})
 		imgui.Text("(empty)")
 		imgui.PopStyleColor()
 	} else {
-		imgui.Text(currentValue)
+		imgui.Text(currentText)
 	}
 	imgui.PopTextWrapPos()
 	imgui.EndChild()
@@ -138,7 +140,7 @@ func (view *TextLinesView) renderContent() {
 
 	imgui.BeginGroup()
 	if imgui.ButtonV("-> Clip", imgui.Vec2{X: -1, Y: 0}) {
-		view.copyTextToClipboard(currentValue)
+		view.copyTextToClipboard(currentText)
 	}
 	if imgui.ButtonV("<- Clip", imgui.Vec2{X: -1, Y: 0}) {
 		view.setTextFromClipboard()
@@ -150,6 +152,21 @@ func (view *TextLinesView) renderContent() {
 		view.removeTextLine()
 	}
 	imgui.EndGroup()
+}
+
+func (view TextLinesView) currentText() string {
+	var cache *text.Cache
+	resourceInfo, existing := ids.Info(view.model.currentKey.ID)
+	if !existing || resourceInfo.List {
+		cache = view.lineCache
+	} else {
+		cache = view.pageCache
+	}
+	currentValue, cacheErr := cache.Text(view.model.currentKey)
+	if cacheErr != nil {
+		currentValue = ""
+	}
+	return currentValue
 }
 
 func (view TextLinesView) copyTextToClipboard(text string) {
