@@ -146,10 +146,10 @@ func (view *TextLinesView) renderContent() {
 		view.setTextFromClipboard()
 	}
 	if imgui.ButtonV("Clear", imgui.Vec2{X: -1, Y: 0}) {
-		view.clearTextLine()
+		view.clearText()
 	}
 	if imgui.ButtonV("Remove", imgui.Vec2{X: -1, Y: 0}) {
-		view.removeTextLine()
+		view.removeText()
 	}
 	imgui.EndGroup()
 }
@@ -169,6 +169,11 @@ func (view TextLinesView) currentText() string {
 	return currentValue
 }
 
+func (view TextLinesView) currentModification() (data [][]byte, isList bool) {
+	info, _ := ids.Info(view.model.currentKey.ID)
+	return [][]byte{view.mod.ModifiedBlock(view.model.currentKey)}, info.List
+}
+
 func (view TextLinesView) copyTextToClipboard(text string) {
 	if len(text) > 0 {
 		view.clipboard.SetString(text)
@@ -181,22 +186,31 @@ func (view *TextLinesView) setTextFromClipboard() {
 		return
 	}
 
-	oldData := view.mod.ModifiedBlock(view.model.currentKey)
+	oldData, isList := view.currentModification()
 	newData := view.cp.Encode(value)
-	view.requestSetTextLine(oldData, newData)
-}
-
-func (view *TextLinesView) clearTextLine() {
-	raw := view.mod.ModifiedBlock(view.model.currentKey)
-	if !bytes.Equal(raw, []byte{0x00}) {
-		view.requestSetTextLine(raw, []byte{0x00})
+	if isList {
+		view.requestSetTextLine(oldData[0], newData)
+	} else {
+		view.requestSetTextPage(oldData, [][]byte{newData})
 	}
 }
 
-func (view *TextLinesView) removeTextLine() {
-	raw := view.mod.ModifiedBlock(view.model.currentKey)
-	if len(raw) > 0 {
-		view.requestSetTextLine(raw, nil)
+func (view *TextLinesView) clearText() {
+	emptyLine := view.cp.Encode("")
+	currentModification, isList := view.currentModification()
+	if isList && !bytes.Equal(currentModification[0], emptyLine) {
+		view.requestSetTextLine(currentModification[0], emptyLine)
+	} else if !isList && ((len(currentModification) != 1) || !bytes.Equal(currentModification[0], []byte{0x00})) {
+		view.requestSetTextPage(currentModification, [][]byte{emptyLine})
+	}
+}
+
+func (view *TextLinesView) removeText() {
+	currentModification, isList := view.currentModification()
+	if isList && (len(currentModification[0]) > 0) {
+		view.requestSetTextLine(currentModification[0], nil)
+	} else if !isList && (len(currentModification) > 0) {
+		view.requestSetTextPage(currentModification, nil)
 	}
 }
 
@@ -208,4 +222,8 @@ func (view *TextLinesView) requestSetTextLine(oldData []byte, newData []byte) {
 		newData: newData,
 	}
 	view.commander.Queue(command)
+}
+
+func (view *TextLinesView) requestSetTextPage(oldData [][]byte, newData [][]byte) {
+	// TODO command
 }
