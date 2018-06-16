@@ -8,6 +8,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/project"
 	"github.com/inkyblackness/hacked/editor/texts"
+	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/hacked/ui/input"
@@ -29,9 +30,9 @@ type Application struct {
 	eventQueue      event.Queue
 	eventDispatcher *event.Dispatcher
 
-	cmdStack         *cmd.Stack
-	mod              *model.Mod
-	textLinesAdapter *texts.TextLinesAdapter
+	cmdStack  *cmd.Stack
+	mod       *model.Mod
+	textCache *text.LineCache
 
 	projectView   *project.View
 	textLinesView *texts.TextLinesView
@@ -261,16 +262,16 @@ func (app *Application) initModel() {
 	app.cmdStack = new(cmd.Stack)
 	app.mod = model.NewMod(app.resourcesChanged)
 
-	app.textLinesAdapter = texts.NewTextLinesAdapter(app.mod)
+	app.textCache = text.NewLineCache(text.DefaultCodepage(), app.mod)
 }
 
 func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) {
-	app.textLinesAdapter.InvalidateResources(modifiedIDs)
+	app.textCache.InvalidateResources(modifiedIDs)
 }
 
 func (app *Application) initView() {
 	app.projectView = project.NewView(app.mod, app.GuiScale, app)
-	app.textLinesView = texts.NewTextLinesView(app.mod, app.textLinesAdapter, app.clipboard, app.GuiScale, app)
+	app.textLinesView = texts.NewTextLinesView(app.mod, app.textCache, app.clipboard, app.GuiScale, app)
 }
 
 // Queue requests to perform the given command.

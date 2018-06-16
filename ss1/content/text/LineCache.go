@@ -9,7 +9,8 @@ import (
 
 // LineCache is a cache for keeping single-block text lines.
 type LineCache struct {
-	cp        Codepage
+	// Codepage is used to decode the strings.
+	Codepage  Codepage
 	localizer resource.Localizer
 
 	lines map[resource.Key]string
@@ -18,7 +19,7 @@ type LineCache struct {
 // NewLineCache returns a new instance.
 func NewLineCache(cp Codepage, localizer resource.Localizer) *LineCache {
 	cache := &LineCache{
-		cp:        cp,
+		Codepage:  cp,
 		localizer: localizer,
 
 		lines: make(map[resource.Key]string),
@@ -59,7 +60,7 @@ func (cache *LineCache) Line(key resource.Key) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	line = cache.cp.Decode(raw)
+	line = cache.Codepage.Decode(raw)
 	cache.lines[key] = line
 	return line, nil
 }

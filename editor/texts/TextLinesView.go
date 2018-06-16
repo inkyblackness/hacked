@@ -6,6 +6,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/model"
+	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/imgui-go"
@@ -31,7 +32,7 @@ var knownTextLineTypes = []textLineInfo{
 // TextLinesView provides edit controls for simple text lines.
 type TextLinesView struct {
 	mod       *model.Mod
-	adapter   *TextLinesAdapter
+	cache     *text.LineCache
 	clipboard external.Clipboard
 	guiScale  float32
 	commander cmd.Commander
@@ -42,10 +43,10 @@ type TextLinesView struct {
 }
 
 // NewTextLinesView returns a new instance.
-func NewTextLinesView(mod *model.Mod, adapter *TextLinesAdapter, clipboard external.Clipboard, guiScale float32, commander cmd.Commander) *TextLinesView {
+func NewTextLinesView(mod *model.Mod, cache *text.LineCache, clipboard external.Clipboard, guiScale float32, commander cmd.Commander) *TextLinesView {
 	view := &TextLinesView{
 		mod:       mod,
-		adapter:   adapter,
+		cache:     cache,
 		clipboard: clipboard,
 		guiScale:  guiScale,
 		commander: commander,
@@ -114,7 +115,10 @@ func (view *TextLinesView) renderContent() {
 	}
 	imgui.PopItemWidth()
 
-	text := view.adapter.Line(view.model.currentKey)
+	text, cacheErr := view.cache.Line(view.model.currentKey)
+	if cacheErr != nil {
+		text = ""
+	}
 	imgui.BeginChildV("Text", imgui.Vec2{X: -100 * view.guiScale, Y: 0}, true, 0)
 	imgui.PushTextWrapPos()
 	if len(text) == 0 {
@@ -158,7 +162,7 @@ func (view *TextLinesView) setTextFromClipboard() {
 	}
 
 	oldData := view.mod.ModifiedBlock(view.model.currentKey)
-	newData := view.adapter.Codepage().Encode(text)
+	newData := view.cache.Codepage.Encode(text)
 	view.requestSetTextLine(oldData, newData)
 }
 
