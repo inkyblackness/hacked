@@ -10,7 +10,7 @@ const (
 
 // Texts
 const (
-	PaperTexts           resource.ID = 0x003C
+	PaperTextsStart      resource.ID = 0x003C
 	TrapMessageTexts                 = 0x0867
 	WordTexts                        = 0x0868
 	PanelNameTexts                   = 0x0869
