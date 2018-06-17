@@ -3,6 +3,7 @@ package model
 import (
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
+	"github.com/inkyblackness/hacked/ss1/world/ids"
 )
 
 type identifiedResources map[resource.ID]*modifiedResource
@@ -132,9 +133,8 @@ func (mod *Mod) ensureResource(lang resource.Language, id resource.ID) *modified
 }
 
 func (mod *Mod) newResource(lang resource.Language, id resource.ID) *modifiedResource {
-	// TODO: if not even existing, create based on defaults
-	compound := false
-	contentType := resource.Text
+	compound := true
+	contentType := resource.ContentType(0xFF) // Default to something completely unknown.
 	compressed := false
 
 	list := mod.worldManifest.Filter(lang, id)
@@ -143,6 +143,10 @@ func (mod *Mod) newResource(lang resource.Language, id resource.ID) *modifiedRes
 		compound = existing.Compound()
 		contentType = existing.ContentType()
 		compressed = existing.Compressed()
+	} else if info, known := ids.Info(id); known {
+		compound = info.Compound
+		contentType = info.ContentType
+		compressed = info.Compressed
 	}
 
 	return &modifiedResource{
