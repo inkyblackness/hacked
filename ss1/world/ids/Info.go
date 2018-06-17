@@ -18,6 +18,8 @@ type ResourceInfo struct {
 
 	// List is set for compound resources that have an atomic resource per block.
 	List bool
+	// MaxCount describes how many resources can be stored at maximum.
+	MaxCount int
 }
 
 // Info returns the resource information for the identified resource.
@@ -38,18 +40,18 @@ func init() {
 var infoByID = map[resource.ID]ResourceInfo{}
 
 var infoList = []ResourceInfo{
-	{IconTextures, IconTextures.Plus(1), resource.Bitmap, true, false, true},
-	{SmallTextures, SmallTextures.Plus(1), resource.Bitmap, true, false, true},
+	{IconTextures, IconTextures.Plus(1), resource.Bitmap, true, false, true, 300},
+	{SmallTextures, SmallTextures.Plus(1), resource.Bitmap, true, false, true, 300},
 
-	{PaperTextsStart, PaperTextsStart.Plus(256), resource.Text, true, false, false},
+	{PaperTextsStart, PaperTextsStart.Plus(16), resource.Text, true, false, false, 16},
 
-	{TrapMessageTexts, TrapMessageTexts.Plus(1), resource.Text, true, false, true},
-	{WordTexts, WordTexts.Plus(1), resource.Text, true, false, true},
-	{PanelNameTexts, PanelNameTexts.Plus(1), resource.Text, true, false, true},
-	{LogCategoryTexts, LogCategoryTexts.Plus(1), resource.Text, true, false, true},
-	{VariousMessageTexts, VariousMessageTexts.Plus(1), resource.Text, true, false, true},
-	{ScreenMessageTexts, ScreenMessageTexts.Plus(1), resource.Text, true, false, true},
-	{InfoNodeMessageTexts, InfoNodeMessageTexts.Plus(1), resource.Text, true, false, true},
-	{AccessCardNameTexts, AccessCardNameTexts.Plus(1), resource.Text, true, false, true},
-	{DataletMessageTexts, DataletMessageTexts.Plus(1), resource.Text, true, false, true},
+	{TrapMessageTexts, TrapMessageTexts.Plus(1), resource.Text, true, false, true, 512},
+	{WordTexts, WordTexts.Plus(1), resource.Text, true, false, true, 512},
+	{PanelNameTexts, PanelNameTexts.Plus(1), resource.Text, true, false, true, 256},
+	{LogCategoryTexts, LogCategoryTexts.Plus(1), resource.Text, true, false, true, 16},
+	{VariousMessageTexts, VariousMessageTexts.Plus(1), resource.Text, true, false, true, 256},
+	{ScreenMessageTexts, ScreenMessageTexts.Plus(1), resource.Text, true, false, true, 120},
+	{InfoNodeMessageTexts, InfoNodeMessageTexts.Plus(1), resource.Text, true, false, true, 256},
+	{AccessCardNameTexts, AccessCardNameTexts.Plus(1), resource.Text, true, false, true, 32 * 2},
+	{DataletMessageTexts, DataletMessageTexts.Plus(1), resource.Text, true, false, true, 256},
 }

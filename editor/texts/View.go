@@ -96,6 +96,7 @@ func (view *View) renderContent() {
 		for _, info := range knownTextTypes {
 			if imgui.SelectableV(info.title, info.id == view.model.currentKey.ID, 0, imgui.Vec2{}) {
 				view.model.currentKey.ID = info.id
+				view.model.currentKey.Index = 0
 			}
 		}
 		imgui.EndCombo()
@@ -109,16 +110,17 @@ func (view *View) renderContent() {
 		}
 		imgui.EndCombo()
 	}
+	info, _ := ids.Info(view.model.currentKey.ID)
 	if imgui.Button("-") && view.model.currentKey.Index > 0 {
 		view.model.currentKey.Index--
 	}
 	imgui.SameLine()
-	if imgui.Button("+") && view.model.currentKey.Index < 255 {
+	if imgui.Button("+") && view.model.currentKey.Index < (info.MaxCount-1) {
 		view.model.currentKey.Index++
 	}
 	imgui.SameLine()
 	index := int32(view.model.currentKey.Index)
-	if imgui.SliderInt("Index", &index, 0, 255) {
+	if imgui.SliderInt("Index", &index, 0, int32(info.MaxCount-1)) {
 		view.model.currentKey.Index = int(index)
 	}
 	imgui.PopItemWidth()
