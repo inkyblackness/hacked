@@ -39,6 +39,7 @@ func (res modifiedResource) Block(index int) (io.Reader, error) {
 }
 
 func (res *modifiedResource) setBlocks(data [][]byte) {
+	res.blockCount = 0
 	res.blocks = make(map[int][]byte)
 	for index, blockData := range data {
 		res.setBlock(index, blockData)
