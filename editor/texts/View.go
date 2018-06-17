@@ -12,12 +12,12 @@ import (
 	"github.com/inkyblackness/imgui-go"
 )
 
-type textLineInfo struct {
+type textInfo struct {
 	id    resource.ID
 	title string
 }
 
-var knownTextLineTypes = []textLineInfo{
+var knownTextTypes = []textInfo{
 	{ids.TrapMessageTexts, "Trap Messages"},
 	{ids.WordTexts, "Words"},
 	{ids.LogCategoryTexts, "Log Categories"},
@@ -30,8 +30,8 @@ var knownTextLineTypes = []textLineInfo{
 	{ids.PanelNameTexts, "Panel Names"},
 }
 
-// TextLinesView provides edit controls for simple text lines.
-type TextLinesView struct {
+// View provides edit controls for texts.
+type View struct {
 	mod       *model.Mod
 	lineCache *text.Cache
 	pageCache *text.Cache
@@ -46,10 +46,10 @@ type TextLinesView struct {
 	textTypeTitleByID map[resource.ID]string
 }
 
-// NewTextLinesView returns a new instance.
-func NewTextLinesView(mod *model.Mod, lineCache *text.Cache, pageCache *text.Cache, cp text.Codepage,
-	clipboard external.Clipboard, guiScale float32, commander cmd.Commander) *TextLinesView {
-	view := &TextLinesView{
+// NewTextsView returns a new instance.
+func NewTextsView(mod *model.Mod, lineCache *text.Cache, pageCache *text.Cache, cp text.Codepage,
+	clipboard external.Clipboard, guiScale float32, commander cmd.Commander) *View {
+	view := &View{
 		mod:       mod,
 		lineCache: lineCache,
 		pageCache: pageCache,
@@ -63,19 +63,19 @@ func NewTextLinesView(mod *model.Mod, lineCache *text.Cache, pageCache *text.Cac
 
 		textTypeTitleByID: make(map[resource.ID]string),
 	}
-	for _, info := range knownTextLineTypes {
+	for _, info := range knownTextTypes {
 		view.textTypeTitleByID[info.id] = info.title
 	}
 	return view
 }
 
 // WindowOpen returns the flag address, to be used with the main menu.
-func (view *TextLinesView) WindowOpen() *bool {
+func (view *View) WindowOpen() *bool {
 	return &view.model.windowOpen
 }
 
 // Render renders the view.
-func (view *TextLinesView) Render() {
+func (view *View) Render() {
 	if view.model.restoreFocus {
 		imgui.SetNextWindowFocus()
 		view.model.restoreFocus = false
@@ -90,10 +90,10 @@ func (view *TextLinesView) Render() {
 	}
 }
 
-func (view *TextLinesView) renderContent() {
+func (view *View) renderContent() {
 	imgui.PushItemWidth(-100 * view.guiScale)
 	if imgui.BeginCombo("Text Type", view.textTypeTitleByID[view.model.currentKey.ID]) {
-		for _, info := range knownTextLineTypes {
+		for _, info := range knownTextTypes {
 			if imgui.SelectableV(info.title, info.id == view.model.currentKey.ID, 0, imgui.Vec2{}) {
 				view.model.currentKey.ID = info.id
 			}
@@ -154,7 +154,7 @@ func (view *TextLinesView) renderContent() {
 	imgui.EndGroup()
 }
 
-func (view TextLinesView) currentText() string {
+func (view View) currentText() string {
 	var cache *text.Cache
 	resourceInfo, existing := ids.Info(view.model.currentKey.ID)
 	if !existing || resourceInfo.List {
@@ -169,7 +169,7 @@ func (view TextLinesView) currentText() string {
 	return currentValue
 }
 
-func (view TextLinesView) currentModification() (data [][]byte, isList bool) {
+func (view View) currentModification() (data [][]byte, isList bool) {
 	info, _ := ids.Info(view.model.currentKey.ID)
 	if info.List {
 		data = [][]byte{view.mod.ModifiedBlock(view.model.currentKey.Lang, view.model.currentKey.ID, view.model.currentKey.Index)}
@@ -179,13 +179,13 @@ func (view TextLinesView) currentModification() (data [][]byte, isList bool) {
 	return data, info.List
 }
 
-func (view TextLinesView) copyTextToClipboard(text string) {
+func (view View) copyTextToClipboard(text string) {
 	if len(text) > 0 {
 		view.clipboard.SetString(text)
 	}
 }
 
-func (view *TextLinesView) setTextFromClipboard() {
+func (view *View) setTextFromClipboard() {
 	value, err := view.clipboard.String()
 	if err != nil {
 		return
@@ -200,7 +200,7 @@ func (view *TextLinesView) setTextFromClipboard() {
 	}
 }
 
-func (view *TextLinesView) clearText() {
+func (view *View) clearText() {
 	emptyLine := view.cp.Encode("")
 	currentModification, isList := view.currentModification()
 	if isList && !bytes.Equal(currentModification[0], emptyLine) {
@@ -210,7 +210,7 @@ func (view *TextLinesView) clearText() {
 	}
 }
 
-func (view *TextLinesView) removeText() {
+func (view *View) removeText() {
 	currentModification, isList := view.currentModification()
 	if isList && (len(currentModification[0]) > 0) {
 		view.requestSetTextLine(currentModification[0], nil)
@@ -219,7 +219,7 @@ func (view *TextLinesView) removeText() {
 	}
 }
 
-func (view *TextLinesView) requestSetTextLine(oldData []byte, newData []byte) {
+func (view *View) requestSetTextLine(oldData []byte, newData []byte) {
 	command := setTextLineCommand{
 		key:     view.model.currentKey,
 		model:   &view.model,
@@ -229,7 +229,7 @@ func (view *TextLinesView) requestSetTextLine(oldData []byte, newData []byte) {
 	view.commander.Queue(command)
 }
 
-func (view *TextLinesView) requestSetTextPage(oldData [][]byte, newData [][]byte) {
+func (view *View) requestSetTextPage(oldData [][]byte, newData [][]byte) {
 	command := setTextPageCommand{
 		key:     view.model.currentKey,
 		model:   &view.model,

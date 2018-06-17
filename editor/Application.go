@@ -36,8 +36,8 @@ type Application struct {
 	textLineCache *text.Cache
 	textPageCache *text.Cache
 
-	projectView   *project.View
-	textLinesView *texts.TextLinesView
+	projectView *project.View
+	textsView   *texts.View
 
 	failureMessage string
 	failurePending bool
@@ -98,7 +98,7 @@ func (app *Application) render() {
 			imgui.EndMenu()
 		}
 		if imgui.BeginMenu("Window") {
-			textsShown := app.textLinesView.WindowOpen()
+			textsShown := app.textsView.WindowOpen()
 			if imgui.MenuItemV("Texts", "", *textsShown, true) {
 				*textsShown = !*textsShown
 			}
@@ -116,7 +116,7 @@ func (app *Application) render() {
 	}
 
 	app.projectView.Render()
-	app.textLinesView.Render()
+	app.textsView.Render()
 
 	// imgui.ShowDemoWindow(nil)
 
@@ -276,7 +276,7 @@ func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []
 
 func (app *Application) initView() {
 	app.projectView = project.NewView(app.mod, app.GuiScale, app)
-	app.textLinesView = texts.NewTextLinesView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.clipboard, app.GuiScale, app)
+	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.clipboard, app.GuiScale, app)
 }
 
 // Queue requests to perform the given command.
