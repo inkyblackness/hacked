@@ -50,6 +50,11 @@ func (mod *Mod) SetPath(p string) {
 	mod.modPath = p
 }
 
+// ModifiedResources returns the current modification state.
+func (mod Mod) ModifiedResources() LocalizedResources {
+	return mod.localizedResources
+}
+
 // ModifiedResource retrieves the resource of given language and ID.
 // There is no fallback lookup, it will return the exact resource stored under the provided identifier.
 // Returns nil if the resource does not exist.
@@ -162,6 +167,8 @@ func (mod *Mod) newResource(lang resource.Language, id resource.ID) *MutableReso
 		contentType = info.ContentType
 		compressed = info.Compressed
 	}
+
+	// TODO determine filename
 
 	return &MutableResource{
 		compound:    compound,

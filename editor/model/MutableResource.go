@@ -21,9 +21,6 @@ type MutableResource struct {
 	blocks     map[int][]byte
 }
 
-// IdentifiedResources is a map of mutable resources by their identifier.
-type IdentifiedResources map[resource.ID]*MutableResource
-
 // LocalizedResources is a map of identified resources by language.
 type LocalizedResources map[resource.Language]IdentifiedResources
 
@@ -70,6 +67,11 @@ func readBlock(provider resource.BlockProvider, index int) []byte {
 		return nil
 	}
 	return data
+}
+
+// Filename returns the file this resource should be stored in.
+func (res MutableResource) Filename() string {
+	return res.filename
 }
 
 // Compound returns true if the resource holds zero, one, or more blocks.
