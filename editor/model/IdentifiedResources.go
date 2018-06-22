@@ -1,6 +1,8 @@
 package model
 
 import (
+	"sort"
+
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
@@ -13,7 +15,17 @@ func (res IdentifiedResources) IDs() []resource.ID {
 	for id := range res {
 		result = append(result, id)
 	}
-	// TODO sort by source sequence
+	sort.Slice(result, func(a, b int) bool {
+		idA := result[a]
+		idB := result[b]
+		entryA := res[idA]
+		entryB := res[idB]
+		if entryA.saveOrder == entryB.saveOrder {
+			return idA < idB
+		} else {
+			return entryA.saveOrder < entryB.saveOrder
+		}
+	})
 	return result
 }
 

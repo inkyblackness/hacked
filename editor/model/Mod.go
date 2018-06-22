@@ -1,6 +1,8 @@
 package model
 
 import (
+	"math"
+
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
@@ -165,7 +167,9 @@ func (mod *Mod) newResource(lang resource.Language, id resource.ID) *MutableReso
 	}
 
 	return &MutableResource{
-		filename:    filename,
+		filename:  filename,
+		saveOrder: math.MaxInt32,
+
 		compound:    compound,
 		contentType: contentType,
 		compressed:  compressed,

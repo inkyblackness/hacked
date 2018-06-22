@@ -11,7 +11,8 @@ import (
 
 // MutableResource describes a resource open for modification.
 type MutableResource struct {
-	filename string
+	filename  string
+	saveOrder int
 
 	compound    bool
 	contentType resource.ContentType
@@ -39,10 +40,12 @@ func NewLocalizedResources() LocalizedResources {
 func MutableResourcesFromProvider(filename string, provider resource.Provider) IdentifiedResources {
 	ids := provider.IDs()
 	mutables := make(IdentifiedResources)
-	for _, id := range ids {
+	for index, id := range ids {
 		res, _ := provider.Resource(id)
 		mutable := &MutableResource{
-			filename:    filename,
+			filename:  filename,
+			saveOrder: index,
+
 			compound:    res.Compound,
 			contentType: res.ContentType,
 			compressed:  res.Compressed,
