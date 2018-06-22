@@ -42,12 +42,21 @@ func (view *View) Render() {
 		imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 1, Y: 0})
 		imgui.BeginChildV("ModLocation", imgui.Vec2{X: -200*view.guiScale - 10*view.guiScale, Y: imgui.TextLineHeight() * 1.5}, true,
 			imgui.WindowFlagsNoScrollbar|imgui.WindowFlagsNoScrollWithMouse)
-		imgui.Text(view.mod.Path())
+		modPath := view.mod.Path()
+		if len(modPath) > 0 {
+			imgui.Text(modPath)
+		} else {
+			imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1.0, Y: 1.0, Z: 1.0, W: 0.5})
+			imgui.Text("(new mod)")
+			imgui.PopStyleColor()
+		}
 		imgui.EndChild()
 		imgui.PopStyleVar()
 		imgui.BeginGroup()
 		imgui.SameLine()
-		imgui.ButtonV("Save", imgui.Vec2{X: 100 * view.guiScale, Y: 0})
+		if imgui.ButtonV("Save", imgui.Vec2{X: 100 * view.guiScale, Y: 0}) {
+			view.startSavingMod()
+		}
 		imgui.SameLine()
 		if imgui.ButtonV("Load...", imgui.Vec2{X: 100 * view.guiScale, Y: 0}) {
 			view.startLoadingMod()
@@ -94,6 +103,17 @@ func (view *View) HandleFiles(names []string) {
 func (view *View) startLoadingMod() {
 	view.fileState = &loadModStartState{
 		view: view,
+	}
+}
+
+func (view *View) startSavingMod() {
+	modPath := view.mod.Path()
+	if len(modPath) > 0 {
+		view.requestSaveMod(modPath)
+	} else {
+		view.fileState = &saveModAsStartState{
+			view: view,
+		}
 	}
 }
 
@@ -170,4 +190,8 @@ func (view *View) requestLoadMod(modPath string, resources model.LocalizedResour
 	}
 	command.oldModPath, command.oldResources = view.mod.State()
 	view.commander.Queue(command)
+}
+
+func (view *View) requestSaveMod(modPath string) {
+
 }
