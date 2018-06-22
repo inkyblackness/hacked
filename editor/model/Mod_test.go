@@ -30,7 +30,7 @@ func TestModSuite(t *testing.T) {
 }
 
 func (suite *ModSuite) SetupTest() {
-	suite.mod = model.NewMod(suite.onResourcesModified)
+	suite.mod = model.NewMod(suite.onResourcesModified, func() {})
 
 	suite.selector = nil
 

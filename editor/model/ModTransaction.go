@@ -69,13 +69,3 @@ func (trans *ModTransaction) DelResource(lang resource.Language, id resource.ID)
 	})
 	trans.modifiedIDs.Add(id)
 }
-
-// SetState updates the mod to have a new state.
-func (trans *ModTransaction) SetState(modPath string, resources LocalizedResources, modifiedIDs []resource.ID) {
-	trans.actions = append(trans.actions, func(mod *Mod) {
-		mod.setState(modPath, resources)
-	})
-	for _, id := range modifiedIDs {
-		trans.modifiedIDs.Add(id)
-	}
-}

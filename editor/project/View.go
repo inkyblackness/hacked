@@ -182,14 +182,8 @@ func (view *View) requestRemoveManifestEntry() {
 }
 
 func (view *View) requestLoadMod(modPath string, resources model.LocalizedResources) {
-	command := loadModCommand{
-		model: &view.model,
-
-		newModPath:   modPath,
-		newResources: resources,
-	}
-	command.oldModPath, command.oldResources = view.mod.State()
-	view.commander.Queue(command)
+	view.mod.SetPath(modPath)
+	view.mod.Reset(resources)
 }
 
 func (view *View) requestSaveMod(modPath string) {

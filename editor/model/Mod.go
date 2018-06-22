@@ -6,6 +6,9 @@ import (
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 )
 
+// ModResetCallback is called when the mod was reset.
+type ModResetCallback func()
+
 // Mod is the central object for a game-mod.
 //
 // It is based on a "static" world and adds its own changes. The world data itself is not static, it is merely the
@@ -13,15 +16,17 @@ import (
 type Mod struct {
 	worldManifest    *world.Manifest
 	resourcesChanged resource.ModificationCallback
+	resetCallback    ModResetCallback
 
 	modPath            string
 	localizedResources LocalizedResources
 }
 
 // NewMod returns a new instance.
-func NewMod(resourcesChanged resource.ModificationCallback) *Mod {
+func NewMod(resourcesChanged resource.ModificationCallback, resetCallback ModResetCallback) *Mod {
 	mod := &Mod{
 		resourcesChanged:   resourcesChanged,
+		resetCallback:      resetCallback,
 		localizedResources: NewLocalizedResources(),
 	}
 	mod.worldManifest = world.NewManifest(mod.worldChanged)
@@ -35,14 +40,14 @@ func (mod Mod) World() *world.Manifest {
 	return mod.worldManifest
 }
 
-// State returns the current modification state, necessary for commands.
-func (mod Mod) State() (modPath string, res LocalizedResources) {
-	return mod.modPath, mod.localizedResources
-}
-
 // Path returns the path where the mod is loaded from/saved to.
 func (mod Mod) Path() string {
 	return mod.modPath
+}
+
+// SetPath sets the path where the mod is loaded from/saved to.
+func (mod *Mod) SetPath(p string) {
+	mod.modPath = p
 }
 
 // ModifiedResource retrieves the resource of given language and ID.
@@ -177,7 +182,20 @@ func (mod *Mod) delResource(lang resource.Language, id resource.ID) {
 	}
 }
 
-func (mod *Mod) setState(modPath string, newResources LocalizedResources) {
-	mod.modPath = modPath
+// Reset changes the mod to a new set of resources.
+func (mod *Mod) Reset(newResources LocalizedResources) {
+	modifiedIDs := make(resource.IDMarkerMap)
+	collectIDs := func(res LocalizedResources) {
+		for _, resMap := range res {
+			for id := range resMap {
+				modifiedIDs.Add(id)
+			}
+		}
+	}
+	collectIDs(mod.localizedResources)
+	collectIDs(newResources)
+
 	mod.localizedResources = newResources
+	mod.resetCallback()
+	mod.resourcesChanged(modifiedIDs.ToList(), nil)
 }

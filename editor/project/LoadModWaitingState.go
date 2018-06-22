@@ -31,6 +31,7 @@ of the mod you want to work on into the editor window.
 If you want to modify the main game files,
 use the main "data" directory of the game.
 `)
+		imgui.Text("This action will clear the undo/redo buffer\nand you will lose any unsaved changes.")
 		imgui.Separator()
 		if imgui.Button("Cancel") {
 			state.view.fileState = &idlePopupState{}

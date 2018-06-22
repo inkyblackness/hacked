@@ -262,7 +262,7 @@ func (app *Application) initGuiStyle() {
 func (app *Application) initModel() {
 	app.eventDispatcher = event.NewDispatcher()
 	app.cmdStack = new(cmd.Stack)
-	app.mod = model.NewMod(app.resourcesChanged)
+	app.mod = model.NewMod(app.resourcesChanged, app.modReset)
 
 	app.cp = text.DefaultCodepage()
 	app.textLineCache = text.NewLineCache(app.cp, app.mod)
@@ -272,6 +272,10 @@ func (app *Application) initModel() {
 func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) {
 	app.textLineCache.InvalidateResources(modifiedIDs)
 	app.textPageCache.InvalidateResources(modifiedIDs)
+}
+
+func (app *Application) modReset() {
+	app.cmdStack = new(cmd.Stack)
 }
 
 func (app *Application) initView() {
