@@ -189,6 +189,10 @@ func (view *View) requestLoadMod(modPath string, resources model.LocalizedResour
 func (view *View) requestSaveMod(modPath string) {
 	err := saveModResourcesTo(view.mod.ModifiedResources(), modPath)
 	if err != nil {
-		// TODO: open another state
+		view.fileState = &saveModFailedState{
+			view: view,
+		}
+	} else {
+		view.mod.SetPath(modPath)
 	}
 }
