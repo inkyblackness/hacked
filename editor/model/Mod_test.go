@@ -141,9 +141,9 @@ func (suite *ModSuite) TestAdditionsAreNotified() {
 func (suite *ModSuite) TestModificationsToIdenticalDataAreNotNotified() {
 	suite.givenWorldHas(
 		suite.someLocalizedResources(resource.LangAny,
-			suite.storing(0x0800, [][]byte{{0xAA}})))
+			suite.storing(0x004C, [][]byte{{0xAA}})))
 	suite.whenModifyingBy(func(trans *model.ModTransaction) {
-		trans.SetResourceBlock(resource.LangAny, 0x0800, 0, []byte{0xAA})
+		trans.SetResourceBlock(resource.LangAny, 0x004C, 0, []byte{0xAA})
 	})
 	suite.thenModifiedResourcesShouldBe()
 }

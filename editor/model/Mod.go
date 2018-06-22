@@ -155,22 +155,17 @@ func (mod *Mod) newResource(lang resource.Language, id resource.ID) *MutableReso
 	compound := true
 	contentType := resource.ContentType(0xFF) // Default to something completely unknown.
 	compressed := false
+	filename := "unknown.res"
 
-	list := mod.worldManifest.Filter(lang, id)
-	if len(list) > 0 {
-		existing := list[0]
-		compound = existing.Compound()
-		contentType = existing.ContentType()
-		compressed = existing.Compressed()
-	} else if info, known := ids.Info(id); known {
+	if info, known := ids.Info(id); known {
 		compound = info.Compound
 		contentType = info.ContentType
 		compressed = info.Compressed
+		filename = info.ResFile.For(lang)
 	}
 
-	// TODO determine filename
-
 	return &MutableResource{
+		filename:    filename,
 		compound:    compound,
 		contentType: contentType,
 		compressed:  compressed,
