@@ -5,20 +5,11 @@ import (
 )
 
 type modAction func(mod *Mod)
-type idMarkerMap map[resource.ID]bool
-
-func (marker idMarkerMap) toList() []resource.ID {
-	result := make([]resource.ID, 0, len(marker))
-	for id := range marker {
-		result = append(result, id)
-	}
-	return result
-}
 
 // ModTransaction is used to modify a mod. It allows modifications of related resources in one atomic action.
 type ModTransaction struct {
 	actions     []modAction
-	modifiedIDs idMarkerMap
+	modifiedIDs resource.IDMarkerMap
 }
 
 // SetResource changes the meta information about a resource.
@@ -40,7 +31,7 @@ func (trans *ModTransaction) SetResource(id resource.ID,
 		}
 		setResource(mod.ensureResource(resource.LangAny, id))
 	})
-	trans.modifiedIDs[id] = true
+	trans.modifiedIDs.Add(id)
 }
 
 // SetResourceBlock changes the block data of a resource.
@@ -56,7 +47,7 @@ func (trans *ModTransaction) SetResourceBlock(lang resource.Language, id resourc
 		res := mod.ensureResource(lang, id)
 		res.setBlock(index, data)
 	})
-	trans.modifiedIDs[id] = true
+	trans.modifiedIDs.Add(id)
 }
 
 // SetResourceBlocks sets the entire list of block data of a resource.
@@ -66,7 +57,7 @@ func (trans *ModTransaction) SetResourceBlocks(lang resource.Language, id resour
 		res := mod.ensureResource(lang, id)
 		res.setBlocks(data)
 	})
-	trans.modifiedIDs[id] = true
+	trans.modifiedIDs.Add(id)
 }
 
 // DelResource removes a resource from the mod in the given language.
@@ -76,5 +67,15 @@ func (trans *ModTransaction) DelResource(lang resource.Language, id resource.ID)
 	trans.actions = append(trans.actions, func(mod *Mod) {
 		mod.delResource(lang, id)
 	})
-	trans.modifiedIDs[id] = true
+	trans.modifiedIDs.Add(id)
+}
+
+// SetState updates the mod to have a new state.
+func (trans *ModTransaction) SetState(modPath string, resources LocalizedResources, modifiedIDs []resource.ID) {
+	trans.actions = append(trans.actions, func(mod *Mod) {
+		mod.setState(modPath, resources)
+	})
+	for _, id := range modifiedIDs {
+		trans.modifiedIDs.Add(id)
+	}
 }

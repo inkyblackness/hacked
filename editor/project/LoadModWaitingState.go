@@ -52,7 +52,7 @@ func (state *loadModWaitingState) HandleFiles(names []string) {
 		staging.stage(name, true)
 	}
 	if len(staging.resources) > 0 {
-		res := make(model.LocalizedResources)
+		res := model.NewLocalizedResources()
 
 		for filename, provider := range staging.resources {
 			lang := resource.LocalizeFilename(filename)

@@ -22,13 +22,9 @@ type Mod struct {
 func NewMod(resourcesChanged resource.ModificationCallback) *Mod {
 	mod := &Mod{
 		resourcesChanged:   resourcesChanged,
-		localizedResources: make(LocalizedResources),
+		localizedResources: NewLocalizedResources(),
 	}
 	mod.worldManifest = world.NewManifest(mod.worldChanged)
-	for _, lang := range resource.Languages() {
-		mod.localizedResources[lang] = make(IdentifiedResources)
-	}
-	mod.localizedResources[resource.LangAny] = make(IdentifiedResources)
 
 	return mod
 }
@@ -37,6 +33,11 @@ func NewMod(resourcesChanged resource.ModificationCallback) *Mod {
 // being forwarded.
 func (mod Mod) World() *world.Manifest {
 	return mod.worldManifest
+}
+
+// State returns the current modification state, necessary for commands.
+func (mod Mod) State() (modPath string, res LocalizedResources) {
+	return mod.modPath, mod.localizedResources
 }
 
 // Path returns the path where the mod is loaded from/saved to.
@@ -102,29 +103,22 @@ func (mod Mod) LocalizedResources(lang resource.Language) resource.Selector {
 // Modify requests to change the mod. The provided function will be called to collect all changes.
 // After the modifier completes, all the requests will be applied and any changes notified.
 func (mod *Mod) Modify(modifier func(*ModTransaction)) {
+	var trans ModTransaction
+	trans.modifiedIDs = make(resource.IDMarkerMap)
+	modifier(&trans)
+	mod.modifyAndNotify(func() {
+		for _, action := range trans.actions {
+			action(mod)
+		}
+	}, trans.modifiedIDs.ToList())
+}
+
+func (mod *Mod) modifyAndNotify(modifier func(), modifiedIDs []resource.ID) {
 	notifier := resource.ChangeNotifier{
 		Callback:  mod.resourcesChanged,
 		Localizer: mod,
 	}
-	var trans ModTransaction
-	trans.modifiedIDs = make(idMarkerMap)
-	modifier(&trans)
-	notifier.ModifyAndNotify(func() {
-		for _, action := range trans.actions {
-			action(mod)
-		}
-	}, trans.modifiedIDs.toList())
-}
-
-// Replace switches the current
-func (mod *Mod) Replace(modPath string, newResources LocalizedResources) (oldPath string, oldResources LocalizedResources) {
-	oldPath = mod.modPath
-	oldResources = mod.localizedResources
-
-	// TODO: the command would need the old info beforehand.
-	// can it be that Mod is actually just a path and the mutable resources - and this class is something different?
-
-	return
+	notifier.ModifyAndNotify(modifier, modifiedIDs)
 }
 
 func (mod Mod) worldChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) {
@@ -181,4 +175,9 @@ func (mod *Mod) delResource(lang resource.Language, id resource.ID) {
 	if lang.Includes(resource.LangAny) {
 		delete(mod.localizedResources[resource.LangAny], id)
 	}
+}
+
+func (mod *Mod) setState(modPath string, newResources LocalizedResources) {
+	mod.modPath = modPath
+	mod.localizedResources = newResources
 }

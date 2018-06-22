@@ -10,9 +10,17 @@ import (
 type resourceHash []byte
 type resourceHashes map[ID]resourceHash
 type resourceHashSnapshot map[Language]resourceHashes
-type idMarkerMap map[ID]bool
 
-func (marker idMarkerMap) toList() []ID {
+// IDMarkerMap is used to collect IDs.
+type IDMarkerMap map[ID]interface{}
+
+// Add adds the given ID to the map.
+func (marker IDMarkerMap) Add(id ID) {
+	marker[id] = nil
+}
+
+// ToList converts the map to a de-duplicated list.
+func (marker IDMarkerMap) ToList() []ID {
 	result := make([]ID, 0, len(marker))
 	for id := range marker {
 		result = append(result, id)
@@ -56,7 +64,7 @@ func (notifier ChangeNotifier) ModifyAndNotify(modifier func(), affectedIDs ...[
 }
 
 func (notifier ChangeNotifier) hashAll(ids []ID) (hashes resourceHashSnapshot, failedIDs []ID) {
-	failedMap := make(idMarkerMap)
+	failedMap := make(IDMarkerMap)
 	hashes = make(resourceHashSnapshot)
 	for _, lang := range Languages() {
 		hashByResourceID := make(resourceHashes)
@@ -68,11 +76,11 @@ func (notifier ChangeNotifier) hashAll(ids []ID) (hashes resourceHashSnapshot, f
 			if hashErr == nil {
 				hashByResourceID[id] = hash
 			} else {
-				failedMap[id] = true
+				failedMap.Add(id)
 			}
 		}
 	}
-	failedIDs = failedMap.toList()
+	failedIDs = failedMap.ToList()
 	return
 }
 
@@ -103,7 +111,7 @@ func (notifier ChangeNotifier) hashResource(selector *Selector, id ID) (resource
 }
 
 func (notifier ChangeNotifier) modifiedIDs(oldHashes resourceHashSnapshot, newHashes resourceHashSnapshot) []ID {
-	modifiedIDs := make(idMarkerMap)
+	modifiedIDs := make(IDMarkerMap)
 	for _, lang := range Languages() {
 		oldHashesByResourceID := oldHashes[lang]
 		newHashesByResourceID := newHashes[lang]
@@ -111,14 +119,14 @@ func (notifier ChangeNotifier) modifiedIDs(oldHashes resourceHashSnapshot, newHa
 		for newID, newHash := range newHashesByResourceID {
 			oldHash, oldExisting := oldHashesByResourceID[newID]
 			if !oldExisting || !bytes.Equal(newHash, oldHash) {
-				modifiedIDs[newID] = true
+				modifiedIDs.Add(newID)
 			}
 		}
 		for oldID := range oldHashesByResourceID {
 			if _, newExisting := newHashesByResourceID[oldID]; !newExisting {
-				modifiedIDs[oldID] = true
+				modifiedIDs.Add(oldID)
 			}
 		}
 	}
-	return modifiedIDs.toList()
+	return modifiedIDs.ToList()
 }

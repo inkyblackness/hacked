@@ -1,6 +1,9 @@
 package cmd
 
-import "github.com/inkyblackness/hacked/ss1/resource"
+import (
+	"github.com/inkyblackness/hacked/editor/model"
+	"github.com/inkyblackness/hacked/ss1/resource"
+)
 
 // Transaction describes actions meant to modify resources.
 type Transaction interface {
@@ -26,4 +29,7 @@ type Transaction interface {
 	//
 	// After the deletion, all the underlying data of the world will become visible again.
 	DelResource(lang resource.Language, id resource.ID)
+
+	// SetState updates the mod to have a new state.
+	SetState(modPath string, resources model.LocalizedResources, modifiedIDs []resource.ID)
 }

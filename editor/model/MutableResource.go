@@ -27,11 +27,21 @@ type IdentifiedResources map[resource.ID]*MutableResource
 // LocalizedResources is a map of identified resources by language.
 type LocalizedResources map[resource.Language]IdentifiedResources
 
+// NewLocalizedResources returns a new instance, prepared for all language keys.
+func NewLocalizedResources() LocalizedResources {
+	res := make(LocalizedResources)
+	for _, lang := range resource.Languages() {
+		res[lang] = make(IdentifiedResources)
+	}
+	res[resource.LangAny] = make(IdentifiedResources)
+	return res
+}
+
 // MutableResourcesFromProvider returns MutableResource instances based on a provider.
 // This function retrieves all data from the provider.
-func MutableResourcesFromProvider(filename string, provider resource.Provider) map[resource.ID]*MutableResource {
+func MutableResourcesFromProvider(filename string, provider resource.Provider) IdentifiedResources {
 	ids := provider.IDs()
-	mutables := make(map[resource.ID]*MutableResource)
+	mutables := make(IdentifiedResources)
 	for _, id := range ids {
 		res, _ := provider.Resource(id)
 		mutable := &MutableResource{
@@ -39,6 +49,7 @@ func MutableResourcesFromProvider(filename string, provider resource.Provider) m
 			compound:    res.Compound,
 			contentType: res.ContentType,
 			compressed:  res.Compressed,
+			blocks:      make(map[int][]byte),
 		}
 		blockCount := res.BlockCount()
 		for blockIndex := 0; blockIndex < blockCount; blockIndex++ {

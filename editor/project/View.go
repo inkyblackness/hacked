@@ -42,7 +42,7 @@ func (view *View) Render() {
 		imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 1, Y: 0})
 		imgui.BeginChildV("ModLocation", imgui.Vec2{X: -200*view.guiScale - 10*view.guiScale, Y: imgui.TextLineHeight() * 1.5}, true,
 			imgui.WindowFlagsNoScrollbar|imgui.WindowFlagsNoScrollWithMouse)
-		imgui.Text("some/long/path/that/should/be/cut/at/a/point")
+		imgui.Text(view.mod.Path())
 		imgui.EndChild()
 		imgui.PopStyleVar()
 		imgui.BeginGroup()
@@ -162,5 +162,12 @@ func (view *View) requestRemoveManifestEntry() {
 }
 
 func (view *View) requestLoadMod(modPath string, resources model.LocalizedResources) {
+	command := loadModCommand{
+		model: &view.model,
 
+		newModPath:   modPath,
+		newResources: resources,
+	}
+	command.oldModPath, command.oldResources = view.mod.State()
+	view.commander.Queue(command)
 }
