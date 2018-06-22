@@ -109,7 +109,11 @@ func (state *addManifestEntryWaitingState) HandleFiles(names []string) {
 		}
 
 		for filename, provider := range staging.resources {
-			localized := resource.LocalizeResourcesByFilename(provider, filename)
+			localized := resource.LocalizedResources{
+				ID:       filename,
+				Language: lgres.LocalizeFilename(filename),
+				Provider: provider,
+			}
 			entry.Resources = append(entry.Resources, localized)
 		}
 

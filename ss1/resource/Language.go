@@ -14,6 +14,9 @@ const (
 	LangFrench Language = 1
 	// LangGerman identifies the German language.
 	LangGerman Language = 2
+
+	// LanguageCount specifies how many languages are supported.
+	LanguageCount = 3
 )
 
 func (lang Language) String() string {

@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 
 	"github.com/inkyblackness/hacked/ss1/resource"
-	"io/ioutil"
 )
 
 // MutableResource describes a resource open for modification.
