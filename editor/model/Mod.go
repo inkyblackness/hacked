@@ -6,8 +6,6 @@ import (
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 )
 
-type identifiedResources map[resource.ID]*modifiedResource
-
 // Mod is the central object for a game-mod.
 //
 // It is based on a "static" world and adds its own changes. The world data itself is not static, it is merely the
@@ -16,20 +14,21 @@ type Mod struct {
 	worldManifest    *world.Manifest
 	resourcesChanged resource.ModificationCallback
 
-	localizedResources map[resource.Language]identifiedResources
+	modPath            string
+	localizedResources LocalizedResources
 }
 
 // NewMod returns a new instance.
 func NewMod(resourcesChanged resource.ModificationCallback) *Mod {
 	mod := &Mod{
 		resourcesChanged:   resourcesChanged,
-		localizedResources: make(map[resource.Language]identifiedResources),
+		localizedResources: make(LocalizedResources),
 	}
 	mod.worldManifest = world.NewManifest(mod.worldChanged)
 	for _, lang := range resource.Languages() {
-		mod.localizedResources[lang] = make(identifiedResources)
+		mod.localizedResources[lang] = make(IdentifiedResources)
 	}
-	mod.localizedResources[resource.LangAny] = make(identifiedResources)
+	mod.localizedResources[resource.LangAny] = make(IdentifiedResources)
 
 	return mod
 }
@@ -38,6 +37,11 @@ func NewMod(resourcesChanged resource.ModificationCallback) *Mod {
 // being forwarded.
 func (mod Mod) World() *world.Manifest {
 	return mod.worldManifest
+}
+
+// Path returns the path where the mod is loaded from/saved to.
+func (mod Mod) Path() string {
+	return mod.modPath
 }
 
 // ModifiedResource retrieves the resource of given language and ID.
@@ -112,6 +116,17 @@ func (mod *Mod) Modify(modifier func(*ModTransaction)) {
 	}, trans.modifiedIDs.toList())
 }
 
+// Replace switches the current
+func (mod *Mod) Replace(modPath string, newResources LocalizedResources) (oldPath string, oldResources LocalizedResources) {
+	oldPath = mod.modPath
+	oldResources = mod.localizedResources
+
+	// TODO: the command would need the old info beforehand.
+	// can it be that Mod is actually just a path and the mutable resources - and this class is something different?
+
+	return
+}
+
 func (mod Mod) worldChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) {
 	// It would be great to also check whether the mod hides any of these changes.
 	// Sadly, this is not possible:
@@ -123,7 +138,7 @@ func (mod Mod) worldChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) 
 	mod.resourcesChanged(modifiedIDs, failedIDs)
 }
 
-func (mod *Mod) ensureResource(lang resource.Language, id resource.ID) *modifiedResource {
+func (mod *Mod) ensureResource(lang resource.Language, id resource.ID) *MutableResource {
 	res, resExists := mod.localizedResources[lang][id]
 	if !resExists {
 		res = mod.newResource(lang, id)
@@ -132,7 +147,7 @@ func (mod *Mod) ensureResource(lang resource.Language, id resource.ID) *modified
 	return res
 }
 
-func (mod *Mod) newResource(lang resource.Language, id resource.ID) *modifiedResource {
+func (mod *Mod) newResource(lang resource.Language, id resource.ID) *MutableResource {
 	compound := true
 	contentType := resource.ContentType(0xFF) // Default to something completely unknown.
 	compressed := false
@@ -149,7 +164,7 @@ func (mod *Mod) newResource(lang resource.Language, id resource.ID) *modifiedRes
 		compressed = info.Compressed
 	}
 
-	return &modifiedResource{
+	return &MutableResource{
 		compound:    compound,
 		contentType: contentType,
 		compressed:  compressed,

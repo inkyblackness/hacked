@@ -49,7 +49,9 @@ func (view *View) Render() {
 		imgui.SameLine()
 		imgui.ButtonV("Save", imgui.Vec2{X: 100 * view.guiScale, Y: 0})
 		imgui.SameLine()
-		imgui.ButtonV("Load...", imgui.Vec2{X: 100 * view.guiScale, Y: 0})
+		if imgui.ButtonV("Load...", imgui.Vec2{X: 100 * view.guiScale, Y: 0}) {
+			view.startLoadingMod()
+		}
 		imgui.EndGroup()
 
 		imgui.Text("Static World Data")
@@ -87,6 +89,12 @@ func (view *View) Render() {
 // HandleFiles is called when the user wants to add the given files to the library.
 func (view *View) HandleFiles(names []string) {
 	view.fileState.HandleFiles(names)
+}
+
+func (view *View) startLoadingMod() {
+	view.fileState = &loadModStartState{
+		view: view,
+	}
 }
 
 func (view *View) startAddingManifestEntry() {
@@ -151,4 +159,8 @@ func (view *View) requestRemoveManifestEntry() {
 		adder: false,
 	}
 	view.commander.Queue(command)
+}
+
+func (view *View) requestLoadMod(modPath string, resources model.LocalizedResources) {
+
 }

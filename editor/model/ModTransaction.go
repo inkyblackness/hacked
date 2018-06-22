@@ -29,7 +29,7 @@ type ModTransaction struct {
 // new resources.
 func (trans *ModTransaction) SetResource(id resource.ID,
 	compound bool, contentType resource.ContentType, compressed bool) {
-	setResource := func(res *modifiedResource) {
+	setResource := func(res *MutableResource) {
 		res.compound = compound
 		res.contentType = contentType
 		res.compressed = compressed
