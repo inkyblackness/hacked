@@ -9,14 +9,21 @@ import (
 	"github.com/inkyblackness/hacked/ui/native"
 )
 
+var version string
+
 func main() {
 	scale := flag.Float64("scale", 1.0, "factor for scaling the UI (0.5 .. 10.0). 1080p displays should use default. 4K most likely 2.0.")
 	flag.Parse()
 	var app editor.Application
 	app.GuiScale = float32(*scale)
+	if len(version) > 0 {
+		app.Version = version
+	} else {
+		app.Version = "(manual build)"
+	}
 	deferrer := make(chan func(), 100)
 
-	err := native.Run(app.InitializeWindow, "InkyBlackness - HackEd", 30.0, deferrer)
+	err := native.Run(app.InitializeWindow, "InkyBlackness - HackEd - "+app.Version, 30.0, deferrer)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to run application: %v\n", err)
 	}

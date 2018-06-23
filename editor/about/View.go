@@ -7,6 +7,7 @@ import (
 
 // View handles the about display.
 type View struct {
+	version   string
 	guiScale  float32
 	clipboard external.Clipboard
 
@@ -14,8 +15,9 @@ type View struct {
 }
 
 // NewView creates a new instance for the about display.
-func NewView(clipboard external.Clipboard, guiScale float32) *View {
+func NewView(clipboard external.Clipboard, guiScale float32, version string) *View {
 	return &View{
+		version:   version,
 		guiScale:  guiScale,
 		clipboard: clipboard,
 
@@ -52,7 +54,7 @@ func (view *View) renderContent() {
 		}
 	}
 
-	imgui.Text("InkyBlackness - HackEd")
+	imgui.Text("InkyBlackness - HackEd - " + view.version)
 	imgui.Separator()
 	urlLine("User guide", userguideUrl)
 	urlLine("Community", communityUrl)

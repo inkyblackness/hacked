@@ -20,6 +20,9 @@ import (
 // Application is the root object of the graphical editor.
 // It is set up by the main method.
 type Application struct {
+	// Version identifies the build of the application.
+	Version string
+
 	window    opengl.Window
 	clipboard clipboardAdapter
 	gl        opengl.OpenGL
@@ -261,7 +264,7 @@ func (app *Application) modReset() {
 func (app *Application) initView() {
 	app.projectView = project.NewView(app.mod, app.GuiScale, app)
 	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.clipboard, app.GuiScale, app)
-	app.aboutView = about.NewView(app.clipboard, app.GuiScale)
+	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 }
 
 // Queue requests to perform the given command.
@@ -329,6 +332,7 @@ If you can reproduce this, please make a screenshot and
 report it with details on how to reproduce it on the
 http://www.systemshock.org forums. Thank you!
 `)
+		imgui.Text("Version: " + app.Version)
 		imgui.Separator()
 		imgui.Text(app.failureMessage)
 		imgui.Separator()
