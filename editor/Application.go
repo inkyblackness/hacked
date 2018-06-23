@@ -3,6 +3,7 @@ package editor
 import (
 	"fmt"
 
+	"github.com/inkyblackness/hacked/editor/about"
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/model"
@@ -38,6 +39,7 @@ type Application struct {
 
 	projectView *project.View
 	textsView   *texts.View
+	aboutView   *about.View
 
 	failureMessage string
 	failurePending bool
@@ -90,30 +92,7 @@ func (app *Application) render() {
 
 	app.gl.Clear(opengl.COLOR_BUFFER_BIT)
 
-	if imgui.BeginMainMenuBar() {
-		if imgui.BeginMenu("File") {
-			if imgui.MenuItem("Exit") {
-				app.window.SetCloseRequest(true)
-			}
-			imgui.EndMenu()
-		}
-		if imgui.BeginMenu("Window") {
-			textsShown := app.textsView.WindowOpen()
-			if imgui.MenuItemV("Texts", "", *textsShown, true) {
-				*textsShown = !*textsShown
-			}
-			imgui.EndMenu()
-		}
-		/*
-			if imgui.BeginMenu("About") {
-				if imgui.MenuItem("Error") {
-					app.onFailure("Test", "No info", errors.New("dummy error"))
-				}
-				imgui.EndMenu()
-			}
-		*/
-		imgui.EndMainMenuBar()
-	}
+	app.renderMainMenu()
 
 	app.projectView.Render()
 	app.textsView.Render()
@@ -121,6 +100,7 @@ func (app *Application) render() {
 	// imgui.ShowDemoWindow(nil)
 
 	app.handleFailure()
+	app.aboutView.Render()
 
 	app.guiContext.Render()
 }
@@ -281,6 +261,7 @@ func (app *Application) modReset() {
 func (app *Application) initView() {
 	app.projectView = project.NewView(app.mod, app.GuiScale, app)
 	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.clipboard, app.GuiScale, app)
+	app.aboutView = about.NewView(app.clipboard, app.GuiScale)
 }
 
 // Queue requests to perform the given command.
@@ -302,6 +283,31 @@ func (app *Application) dispatchEvents() {
 func (app *Application) onFailure(source string, details string, err error) {
 	app.failurePending = true
 	app.failureMessage = fmt.Sprintf("Source: %v\nDetails: %v\nError: %v", source, details, err)
+}
+
+func (app *Application) renderMainMenu() {
+	if imgui.BeginMainMenuBar() {
+		if imgui.BeginMenu("File") {
+			if imgui.MenuItem("Exit") {
+				app.window.SetCloseRequest(true)
+			}
+			imgui.EndMenu()
+		}
+		if imgui.BeginMenu("Window") {
+			textsShown := app.textsView.WindowOpen()
+			if imgui.MenuItemV("Texts", "", *textsShown, true) {
+				*textsShown = !*textsShown
+			}
+			imgui.EndMenu()
+		}
+		if imgui.BeginMenu("Help") {
+			if imgui.MenuItem("About...") {
+				app.aboutView.Show()
+			}
+			imgui.EndMenu()
+		}
+		imgui.EndMainMenuBar()
+	}
 }
 
 func (app *Application) handleFailure() {
