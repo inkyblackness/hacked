@@ -1,4 +1,4 @@
-package lgres
+package ids
 
 import (
 	"strings"

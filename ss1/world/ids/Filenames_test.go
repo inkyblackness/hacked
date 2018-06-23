@@ -1,11 +1,11 @@
-package lgres_test
+package ids_test
 
 import (
 	"testing"
 
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world/ids"
 
-	"github.com/inkyblackness/hacked/ss1/resource/lgres"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -67,7 +67,7 @@ func TestLocalizedResources(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		result := lgres.LocalizeFilename(tc.filename)
+		result := ids.LocalizeFilename(tc.filename)
 		assert.Equal(t, tc.expected, result, "Wrong language for <"+tc.filename+">")
 	}
 }

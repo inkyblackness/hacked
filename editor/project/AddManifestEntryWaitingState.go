@@ -10,6 +10,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/resource/lgres"
 	"github.com/inkyblackness/hacked/ss1/world"
+	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/imgui-go"
 )
 
@@ -111,7 +112,7 @@ func (state *addManifestEntryWaitingState) HandleFiles(names []string) {
 		for filename, provider := range staging.resources {
 			localized := resource.LocalizedResources{
 				ID:       filename,
-				Language: lgres.LocalizeFilename(filename),
+				Language: ids.LocalizeFilename(filename),
 				Provider: provider,
 			}
 			entry.Resources = append(entry.Resources, localized)

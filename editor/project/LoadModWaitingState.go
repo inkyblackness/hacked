@@ -5,7 +5,7 @@ import (
 
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/ss1/resource"
-	"github.com/inkyblackness/hacked/ss1/resource/lgres"
+	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/imgui-go"
 )
 
@@ -57,7 +57,7 @@ func (state *loadModWaitingState) HandleFiles(names []string) {
 		res := model.NewLocalizedResources()
 
 		for filename, provider := range staging.resources {
-			lang := lgres.LocalizeFilename(filename)
+			lang := ids.LocalizeFilename(filename)
 			res[lang].Add(model.MutableResourcesFromProvider(filename, provider))
 		}
 
