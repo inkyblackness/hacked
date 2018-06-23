@@ -25,14 +25,14 @@ if [ $? -ne 0 ]; then
 else
    VERSION_RAW=$(echo "$VERSION" | cut -d'-' -f 1 | cut -d'v' -f 2)
 fi
+
 EXTRA=$(echo "$VERSION" | cut -d'-' -f 2)
-if [[ -z "$EXTRA" ]]; then
+if [[ "$VERSION" = "$EXTRA" ]]; then
    MAJOR=$(echo "$VERSION_RAW" | cut -d'.' -f 1)
    MINOR=$(echo "$VERSION_RAW" | cut -d'.' -f 2)
    PATCH=$(echo "$VERSION_RAW" | cut -d'.' -f 3)
 fi
 echo "Determined version: $VERSION ($MAJOR.$MINOR.$PATCH)"
-
 
 echo "Preparing build resources"
 mkdir -p $HACKED_BASE/_build/win_temp
