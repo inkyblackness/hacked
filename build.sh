@@ -14,22 +14,24 @@ mkdir -p $HACKED_BASE/_build/win/$FOLDER_NAME
 
 echo "Determining version"
 
-
 MAJOR=`date +%Y`
 MINOR=`date +%m`
 PATCH=`date +%d`
-VERSION=$(git describe exact-match --abbrev=0)
+VERSION=$(git describe --tags)
 if [ $? -ne 0 ]; then
-   echo "Not a tagged build, defaulting to revision for version"
+   echo "Could not determine tag, defaulting to revision for version"
    REV=$(git rev-parse --short HEAD)
    VERSION="rev$REV"
 else
-   VERSION_RAW=$(echo "$VERSION" | cut -d'v' -f 2)
+   VERSION_RAW=$(echo "$VERSION" | cut -d'-' -f 1 | cut -d'v' -f 2)
+fi
+EXTRA=$(echo "$VERSION" | cut -d'-' -f 2)
+if [[ -z "$EXTRA" ]]; then
    MAJOR=$(echo "$VERSION_RAW" | cut -d'.' -f 1)
    MINOR=$(echo "$VERSION_RAW" | cut -d'.' -f 2)
    PATCH=$(echo "$VERSION_RAW" | cut -d'.' -f 3)
 fi
-echo "Determined version: $VERSION"
+echo "Determined version: $VERSION ($MAJOR.$MINOR.$PATCH)"
 
 
 echo "Preparing build resources"
