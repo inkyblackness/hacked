@@ -58,11 +58,11 @@ func (state *loadModWaitingState) HandleFiles(names []string) {
 
 		for filename, provider := range staging.resources {
 			lang := lgres.LocalizeFilename(filename)
-			res[lang] = model.MutableResourcesFromProvider(filename, provider)
+			res[lang].Add(model.MutableResourcesFromProvider(filename, provider))
 		}
 
-		state.view.requestLoadMod(names[0], res)
 		state.view.fileState = &idlePopupState{}
+		state.view.requestLoadMod(names[0], res)
 	} else {
 		state.failureTime = time.Now()
 	}

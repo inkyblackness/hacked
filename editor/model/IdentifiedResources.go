@@ -9,6 +9,13 @@ import (
 // IdentifiedResources is a map of mutable resources by their identifier.
 type IdentifiedResources map[resource.ID]*MutableResource
 
+// Add puts the entries of the provided container into this container.
+func (res IdentifiedResources) Add(other IdentifiedResources) {
+	for id, entry := range other {
+		res[id] = entry
+	}
+}
+
 // IDs returns a list of all IDs in the map.
 func (res IdentifiedResources) IDs() []resource.ID {
 	result := make([]resource.ID, 0, len(res))
