@@ -55,10 +55,13 @@ func (state *loadModWaitingState) HandleFiles(names []string) {
 	}
 	if len(staging.resources) > 0 {
 		res := model.NewLocalizedResources()
+		blacklisted := ids.LowResVideos()
 
 		for filename, provider := range staging.resources {
-			lang := ids.LocalizeFilename(filename)
-			res[lang].Add(model.MutableResourcesFromProvider(filename, provider))
+			if !blacklisted.Matches(filename) {
+				lang := ids.LocalizeFilename(filename)
+				res[lang].Add(model.MutableResourcesFromProvider(filename, provider))
+			}
 		}
 
 		state.view.fileState = &idlePopupState{}

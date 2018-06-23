@@ -108,14 +108,17 @@ func (state *addManifestEntryWaitingState) HandleFiles(names []string) {
 		entry := &world.ManifestEntry{
 			ID: names[0],
 		}
+		blacklisted := ids.LowResVideos()
 
 		for filename, provider := range staging.resources {
-			localized := resource.LocalizedResources{
-				ID:       filename,
-				Language: ids.LocalizeFilename(filename),
-				Provider: provider,
+			if !blacklisted.Matches(filename) {
+				localized := resource.LocalizedResources{
+					ID:       filename,
+					Language: ids.LocalizeFilename(filename),
+					Provider: provider,
+				}
+				entry.Resources = append(entry.Resources, localized)
 			}
-			entry.Resources = append(entry.Resources, localized)
 		}
 
 		state.view.requestAddManifestEntry(entry)

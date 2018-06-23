@@ -27,6 +27,28 @@ var SvgaIntr = resource.I18nFile([resource.LanguageCount]string{"svgaintr.res", 
 // Texture contains all textures.
 var Texture = resource.AnyLanguage("texture.res")
 
+// LowDeth contains the low-res death video.
+var LowDeth = resource.AnyLanguage("lowdeth.res")
+
+// LowEnd contains the low-res end video.
+var LowEnd = resource.AnyLanguage("lowend.res")
+
+// SvgaDeth contains the high-res death video.
+var SvgaDeth = resource.AnyLanguage("svgadeth.res")
+
+// SvgaEnd contains the high-res end video.
+var SvgaEnd = resource.AnyLanguage("svgaend.res")
+
+// LowResVideos returns the filename descriptors of all low-res videos.
+func LowResVideos() resource.FilenameList {
+	return []resource.Filename{LowIntr, LowDeth, LowEnd}
+}
+
+// HighResVideos returns the filename descriptors of all high-res videos.
+func HighResVideos() resource.FilenameList {
+	return []resource.Filename{SvgaIntr, SvgaDeth, SvgaEnd}
+}
+
 // LocalizedFiles returns the filename descriptors of all files that are localized.
 func LocalizedFiles() []resource.Filename {
 	return []resource.Filename{CybStrng, MfdArt, CitALog, CitBark, LowIntr, SvgaIntr}
