@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/inkyblackness/hacked/editor/about"
+	"github.com/inkyblackness/hacked/editor/archive"
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/model"
@@ -41,6 +42,7 @@ type Application struct {
 	textPageCache *text.Cache
 
 	projectView *project.View
+	archiveView *archive.View
 	textsView   *texts.View
 	aboutView   *about.View
 
@@ -98,6 +100,7 @@ func (app *Application) render() {
 	app.renderMainMenu()
 
 	app.projectView.Render()
+	app.archiveView.Render()
 	app.textsView.Render()
 
 	// imgui.ShowDemoWindow(nil)
@@ -263,6 +266,7 @@ func (app *Application) modReset() {
 
 func (app *Application) initView() {
 	app.projectView = project.NewView(app.mod, app.GuiScale, app)
+	app.archiveView = archive.NewArchiveView(app.mod, app.GuiScale, app)
 	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 }
@@ -289,6 +293,12 @@ func (app *Application) onFailure(source string, details string, err error) {
 }
 
 func (app *Application) renderMainMenu() {
+	windowEntry := func(name string, isOpen *bool) {
+		if imgui.MenuItemV(name, "", *isOpen, true) {
+			*isOpen = !*isOpen
+		}
+	}
+
 	if imgui.BeginMainMenuBar() {
 		if imgui.BeginMenu("File") {
 			if imgui.MenuItem("Exit") {
@@ -297,10 +307,8 @@ func (app *Application) renderMainMenu() {
 			imgui.EndMenu()
 		}
 		if imgui.BeginMenu("Window") {
-			textsShown := app.textsView.WindowOpen()
-			if imgui.MenuItemV("Texts", "", *textsShown, true) {
-				*textsShown = !*textsShown
-			}
+			windowEntry("Archive", app.archiveView.WindowOpen())
+			windowEntry("Texts", app.textsView.WindowOpen())
 			imgui.EndMenu()
 		}
 		if imgui.BeginMenu("Help") {
