@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/inkyblackness/hacked/editor"
 	"github.com/inkyblackness/hacked/ui/native"
@@ -19,7 +20,7 @@ func main() {
 	if len(version) > 0 {
 		app.Version = version
 	} else {
-		app.Version = "(manual build)"
+		app.Version = fmt.Sprintf("(manual build %v)", time.Now().Format("2006-01-02"))
 	}
 	deferrer := make(chan func(), 100)
 
