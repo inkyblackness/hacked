@@ -9,7 +9,7 @@ import (
 // CybStrng contains all strings.
 var CybStrng = resource.I18nFile([resource.LanguageCount]string{"cybstrng.res", "frnstrng.res", "gerstrng.res"})
 
-// MfdArg contains all MFD graphics.
+// MfdArt contains all MFD graphics.
 var MfdArt = resource.I18nFile([resource.LanguageCount]string{"mfdart.res", "mfdfrn.res", "mfdger.res"})
 
 // CitALog contains all log audio.

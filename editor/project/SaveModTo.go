@@ -37,7 +37,7 @@ func saveResourcesTo(list model.IdentifiedResources, absFilename string) error {
 		return err
 	}
 	defer func() {
-		_ = file.Close()
+		_ = file.Close() // nolint: gas
 	}()
 	err = lgres.Write(file, list)
 	return err

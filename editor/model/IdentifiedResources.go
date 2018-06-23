@@ -29,9 +29,8 @@ func (res IdentifiedResources) IDs() []resource.ID {
 		entryB := res[idB]
 		if entryA.saveOrder == entryB.saveOrder {
 			return idA < idB
-		} else {
-			return entryA.saveOrder < entryB.saveOrder
 		}
+		return entryA.saveOrder < entryB.saveOrder
 	})
 	return result
 }
