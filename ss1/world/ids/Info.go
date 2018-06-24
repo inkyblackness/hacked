@@ -72,7 +72,7 @@ func init() {
 
 		register(levelInfo(lvl, lvlids.TileMap, true))
 		register(levelInfo(lvl, lvlids.Schedules, false))
-		register(levelInfo(lvl, lvlids.TextureMap, false))
+		register(levelInfo(lvl, lvlids.TextureAtlas, false))
 		register(levelInfo(lvl, lvlids.MasterObjectTable, true))
 		register(levelInfo(lvl, lvlids.ObjectCrossRefTable, true))
 		for class := 0; class < objprop.ClassCount; class++ {
@@ -86,7 +86,7 @@ func init() {
 		register(levelInfo(lvl, lvlids.TextureAnimations, true))
 		register(levelInfo(lvl, lvlids.SurveillanceSources, true))
 		register(levelInfo(lvl, lvlids.SurveillanceSurrogates, true))
-		register(levelInfo(lvl, lvlids.Variables, true))
+		register(levelInfo(lvl, lvlids.Parameters, true))
 		register(levelInfo(lvl, lvlids.MapNotes, true))
 		register(levelInfo(lvl, lvlids.MapNotesPointer, false))
 
@@ -97,7 +97,7 @@ func init() {
 		register(levelInfo(lvl, lvlids.LoopConfiguration, true))
 
 		register(levelInfo(lvl, lvlids.Unknown52, false))
-		register(levelInfo(lvl, lvlids.Unknown53, true))
+		register(levelInfo(lvl, lvlids.HeightSemaphores, true))
 	}
 }
 

@@ -18,7 +18,7 @@ const (
 
 	TileMap                  = 5
 	Schedules                = 6
-	TextureMap               = 7
+	TextureAtlas             = 7
 	MasterObjectTable        = 8
 	ObjectCrossRefTable      = 9
 	ObjectClassTablesStart   = 10
@@ -30,7 +30,7 @@ const (
 	TextureAnimations      = 42
 	SurveillanceSources    = 43
 	SurveillanceSurrogates = 44
-	Variables              = 45
+	Parameters             = 45
 	MapNotes               = 46
 	MapNotesPointer        = 47
 
@@ -40,6 +40,6 @@ const (
 
 	LoopConfiguration = 51
 
-	Unknown52 = 52
-	Unknown53 = 53
+	Unknown52        = 52
+	HeightSemaphores = 53
 )
