@@ -17,7 +17,7 @@ type Parameters struct {
 	FloorHazardOn        byte
 	CeilingHazardOn      byte
 
-	_ uint32
+	_ [4]byte
 	_ [3][27]byte
 }
 
