@@ -37,6 +37,11 @@ type ObjectMasterEntry struct {
 	Extra [4]byte
 }
 
+// Reset clears the entry and resets all members.
+func (entry *ObjectMasterEntry) Reset() {
+	*entry = ObjectMasterEntry{}
+}
+
 // ObjectMasterTable is a list of entries.
 type ObjectMasterTable []ObjectMasterEntry
 
@@ -49,5 +54,13 @@ func DefaultObjectMasterTable() ObjectMasterTable {
 
 // Reset wipes the entire table and initializes all links.
 func (table ObjectMasterTable) Reset() {
-	// TODO
+	tableLen := len(table)
+	for i := 0; i < tableLen; i++ {
+		entry := &table[i]
+		entry.Reset()
+		entry.Next = ObjectID(i + 1)
+	}
+	if tableLen > 0 {
+		table[tableLen-1].Next = 0
+	}
 }
