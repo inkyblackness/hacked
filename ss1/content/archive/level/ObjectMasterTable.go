@@ -3,14 +3,14 @@ package level
 import "github.com/inkyblackness/hacked/ss1/content/object"
 
 const (
-	// MasterObjectEntrySize describes the size, in bytes, of a MasterObjectEntry.
-	MasterObjectEntrySize = 27
+	// ObjectMasterEntrySize describes the size, in bytes, of a ObjectMasterEntry.
+	ObjectMasterEntrySize = 27
 
-	defaultMasterObjectEntryCount = 872
+	defaultObjectMasterEntryCount = 872
 )
 
-// MasterObjectEntry describes an object in the level.
-type MasterObjectEntry struct {
+// ObjectMasterEntry describes an object in the level.
+type ObjectMasterEntry struct {
 	InUse byte
 
 	Class    object.Class
@@ -37,17 +37,17 @@ type MasterObjectEntry struct {
 	Extra [4]byte
 }
 
-// MasterObjectTable is a list of entries.
-type MasterObjectTable []MasterObjectEntry
+// ObjectMasterTable is a list of entries.
+type ObjectMasterTable []ObjectMasterEntry
 
-// DefaultMasterObjectTable returns an initialized table with a default size.
-func DefaultMasterObjectTable() MasterObjectTable {
-	table := make(MasterObjectTable, defaultMasterObjectEntryCount)
+// DefaultObjectMasterTable returns an initialized table with a default size.
+func DefaultObjectMasterTable() ObjectMasterTable {
+	table := make(ObjectMasterTable, defaultObjectMasterEntryCount)
 	table.Reset()
 	return table
 }
 
 // Reset wipes the entire table and initializes all links.
-func (table MasterObjectTable) Reset() {
+func (table ObjectMasterTable) Reset() {
 	// TODO
 }

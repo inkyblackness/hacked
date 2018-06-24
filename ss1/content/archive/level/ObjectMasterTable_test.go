@@ -11,17 +11,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMasterObjectEntrySerializedSize(t *testing.T) {
-	var entry level.MasterObjectEntry
+func TestObjectMasterEntrySerializedSize(t *testing.T) {
+	var entry level.ObjectMasterEntry
 	size := binary.Size(&entry)
-	assert.Equal(t, level.MasterObjectEntrySize, size)
+	assert.Equal(t, level.ObjectMasterEntrySize, size)
 }
 
-func TestMasterObjectTableCanBeSerializedWithCoder(t *testing.T) {
-	table := level.MasterObjectTable([]level.MasterObjectEntry{{}, {}})
+func TestObjectMasterTableCanBeSerializedWithCoder(t *testing.T) {
+	table := level.ObjectMasterTable([]level.ObjectMasterEntry{{}, {}})
 	buf := bytes.NewBuffer(nil)
 	encoder := serial.NewEncoder(buf)
 	encoder.Code(table)
 	data := buf.Bytes()
-	assert.Equal(t, level.MasterObjectEntrySize*2, len(data))
+	assert.Equal(t, level.ObjectMasterEntrySize*2, len(data))
 }
