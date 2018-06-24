@@ -28,7 +28,21 @@ func (entry ObjectClassEntry) Code(coder serial.Coder) {
 	coder.Code(entry.Data)
 }
 
+// Reset sets all members of the entry to zero, including all bytes of the data array.
+func (entry *ObjectClassEntry) Reset() {
+	entry.ObjectID = 0
+	entry.Next = 0
+	entry.Prev = 0
+	for i := 0; i < len(entry.Data); i++ {
+		entry.Data[i] = 0
+	}
+}
+
 // ObjectClassTable is a list of entries.
+//
+// The first entry is reserved for internal use. For the reserved entry,
+// the Next field identifies the head of the free chain,
+// and the ObjectID field identifies the head of the used chain.
 type ObjectClassTable []ObjectClassEntry
 
 // DefaultObjectClassTable returns an initialized table for given object class.
@@ -51,7 +65,18 @@ func (table ObjectClassTable) AllocateData(size int) {
 // Reset wipes the entire table and initializes all links.
 // The bytes of the data members of each entry are reset to zero.
 func (table ObjectClassTable) Reset() {
-	// TODO
+	tableLen := len(table)
+	for i := 0; i < tableLen; i++ {
+		entry := &table[i]
+		entry.Reset()
+		if i > 0 {
+			entry.Prev = int16(i - 1)
+		}
+		entry.Next = int16(i + 1)
+		if int(entry.Next) >= tableLen {
+			entry.Next = 0
+		}
+	}
 }
 
 // Code serializes the table with the provided coder.

@@ -2,6 +2,8 @@ package level_test
 
 import (
 	"bytes"
+	"crypto/rand"
+	"fmt"
 	"testing"
 
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
@@ -38,4 +40,48 @@ func TestObjectClassTableCanAllocateData(t *testing.T) {
 	table.AllocateData(4)
 	assert.Equal(t, 4, len(table[0].Data))
 	assert.Equal(t, 4, len(table[1].Data))
+}
+
+func TestObjectClassTableResetClearsEntryData(t *testing.T) {
+	table := level.ObjectClassTable([]level.ObjectClassEntry{aRandomObjectClassEntry(), aRandomObjectClassEntry()})
+	table.Reset()
+
+	for index, entry := range table {
+		expected := make([]byte, len(entry.Data))
+		assert.Equal(t, expected, entry.Data, fmt.Sprintf("Data not zero for %d", index))
+	}
+}
+
+func TestObjectClassTableResetInitializesChainPointers(t *testing.T) {
+	table := level.ObjectClassTable([]level.ObjectClassEntry{aRandomObjectClassEntry(), aRandomObjectClassEntry(), aRandomObjectClassEntry()})
+	table.Reset()
+
+	start := table[0]
+	assert.Equal(t, int16(0), start.Prev, "start.Prev should be 0, there's no previous to start.")
+	assert.Equal(t, int16(1), start.Next, "start.Next should be 1, the first free entry.")
+	assert.Equal(t, level.ObjectID(0), start.ObjectID, "start.ObjectID should be 0, the list is empty.")
+	free0 := table[1]
+	assert.Equal(t, int16(0), free0.Prev, "free0.Prev should be 0, the start entry.")
+	assert.Equal(t, int16(2), free0.Next, "free0.Next should be 2, the second free entry.")
+	assert.Equal(t, level.ObjectID(0), free0.ObjectID, "free0.ObjectID should be 0, the entry is unused.")
+	free1 := table[2]
+	assert.Equal(t, int16(1), free1.Prev, "free1.Prev should be 1, the first free entry.")
+	assert.Equal(t, int16(0), free1.Next, "free1.Next should be 0, the start entry.")
+	assert.Equal(t, level.ObjectID(0), free1.ObjectID, "free0.ObjectID should be 0, the entry is unused.")
+}
+
+func TestDefaultObjectClassTable(t *testing.T) {
+	table := level.DefaultObjectClassTable(0)
+	assert.Equal(t, 16, len(table), "16 entries for class 0 expected")
+	assert.Equal(t, 2, len(table[0].Data), "2 bytes for class 0 data expected")
+	assert.Equal(t, int16(1), table[0].Next, "free list expected to be initialized")
+}
+
+func aRandomObjectClassEntry() level.ObjectClassEntry {
+	decoder := serial.NewDecoder(rand.Reader)
+	var dataSize byte
+	decoder.Code(&dataSize)
+	entry := level.NewObjectClassEntry(int(dataSize) + 1)
+	decoder.Code(&entry)
+	return entry
 }
