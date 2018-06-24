@@ -3,7 +3,7 @@ package ids
 import (
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
-	"github.com/inkyblackness/hacked/ss1/content/objprop"
+	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
@@ -75,7 +75,7 @@ func init() {
 		register(levelInfo(lvl, lvlids.TextureAtlas, false))
 		register(levelInfo(lvl, lvlids.MasterObjectTable, true))
 		register(levelInfo(lvl, lvlids.ObjectCrossRefTable, true))
-		for class := 0; class < objprop.ClassCount; class++ {
+		for class := 0; class < object.ClassCount; class++ {
 			register(levelInfo(lvl, lvlids.ObjectClassTablesStart+class, true))
 			register(levelInfo(lvl, lvlids.ObjectDefaultTablesStart+class, true))
 		}

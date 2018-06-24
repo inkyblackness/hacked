@@ -1,4 +1,4 @@
-package objprop
+package object
 
 // Class describes a general category of objects.
 type Class byte
