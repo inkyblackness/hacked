@@ -1,8 +1,10 @@
 package ids
 
 import (
+	"github.com/inkyblackness/hacked/ss1/content/archive"
+	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
+	"github.com/inkyblackness/hacked/ss1/content/objprop"
 	"github.com/inkyblackness/hacked/ss1/resource"
-	"github.com/inkyblackness/hacked/ss1/world/constants"
 )
 
 // ResourceInfo describes a group of resources with their default serialization properties.
@@ -44,8 +46,8 @@ func init() {
 	for _, info := range infoList {
 		register(info)
 	}
-	levelInfo := func(lvl int, lvlResID LevelResourceID, compressed bool) ResourceInfo {
-		resID := lvlResID.ForLevel(lvl)
+	levelInfo := func(lvl int, lvlResID int, compressed bool) ResourceInfo {
+		resID := LevelResourcesStart.Plus(lvl*lvlids.PerLevel + lvlResID)
 		return ResourceInfo{
 			StartID: resID,
 			EndID:   resID.Plus(1),
@@ -63,39 +65,39 @@ func init() {
 	// In the following, the compression flags were set if the vanilla archive had
 	// the respective resource compressed in at least one level.
 	// Most of them were compressed uniform across all levels, some had exceptions.
-	for lvl := 0; lvl < constants.MaxLevels; lvl++ {
-		register(levelInfo(lvl, LvlMapVersionNumber, false))
-		register(levelInfo(lvl, LvlObjectVersionNumber, false))
-		register(levelInfo(lvl, LvlInformation, true))
+	for lvl := 0; lvl < archive.MaxLevels; lvl++ {
+		register(levelInfo(lvl, lvlids.MapVersionNumber, false))
+		register(levelInfo(lvl, lvlids.ObjectVersionNumber, false))
+		register(levelInfo(lvl, lvlids.Information, true))
 
-		register(levelInfo(lvl, LvlTileMap, true))
-		register(levelInfo(lvl, LvlSchedules, false))
-		register(levelInfo(lvl, LvlTextureMap, false))
-		register(levelInfo(lvl, LvlMasterObjectTable, true))
-		register(levelInfo(lvl, LvlObjectCrossRefTable, true))
-		for class := LevelResourceID(0); class < constants.ObjectClasses; class++ {
-			register(levelInfo(lvl, LvlObjectClassTablesStart+class, true))
-			register(levelInfo(lvl, LvlObjectDefaultTablesStart+class, true))
+		register(levelInfo(lvl, lvlids.TileMap, true))
+		register(levelInfo(lvl, lvlids.Schedules, false))
+		register(levelInfo(lvl, lvlids.TextureMap, false))
+		register(levelInfo(lvl, lvlids.MasterObjectTable, true))
+		register(levelInfo(lvl, lvlids.ObjectCrossRefTable, true))
+		for class := 0; class < objprop.ClassCount; class++ {
+			register(levelInfo(lvl, lvlids.ObjectClassTablesStart+class, true))
+			register(levelInfo(lvl, lvlids.ObjectDefaultTablesStart+class, true))
 		}
 
-		register(levelInfo(lvl, LvlSavefileVersion, false))
-		register(levelInfo(lvl, LvlUnused41, false))
+		register(levelInfo(lvl, lvlids.SavefileVersion, false))
+		register(levelInfo(lvl, lvlids.Unused41, false))
 
-		register(levelInfo(lvl, LvlTextureAnimations, true))
-		register(levelInfo(lvl, LvlSurveillanceSources, true))
-		register(levelInfo(lvl, LvlSurveillanceSurrogates, true))
-		register(levelInfo(lvl, LvlVariables, true))
-		register(levelInfo(lvl, LvlMapNotes, true))
-		register(levelInfo(lvl, LvlMapNotesPointer, false))
+		register(levelInfo(lvl, lvlids.TextureAnimations, true))
+		register(levelInfo(lvl, lvlids.SurveillanceSources, true))
+		register(levelInfo(lvl, lvlids.SurveillanceSurrogates, true))
+		register(levelInfo(lvl, lvlids.Variables, true))
+		register(levelInfo(lvl, lvlids.MapNotes, true))
+		register(levelInfo(lvl, lvlids.MapNotesPointer, false))
 
-		register(levelInfo(lvl, LvlUnknown48, true))
-		register(levelInfo(lvl, LvlUnknown49, true))
-		register(levelInfo(lvl, LvlUnknown50, false))
+		register(levelInfo(lvl, lvlids.Unknown48, true))
+		register(levelInfo(lvl, lvlids.Unknown49, true))
+		register(levelInfo(lvl, lvlids.Unknown50, false))
 
-		register(levelInfo(lvl, LvlLoopConfiguration, true))
+		register(levelInfo(lvl, lvlids.LoopConfiguration, true))
 
-		register(levelInfo(lvl, LvlUnknown52, false))
-		register(levelInfo(lvl, LvlUnknown53, true))
+		register(levelInfo(lvl, lvlids.Unknown52, false))
+		register(levelInfo(lvl, lvlids.Unknown53, true))
 	}
 }
 
