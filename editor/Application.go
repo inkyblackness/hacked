@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/inkyblackness/hacked/editor/about"
-	"github.com/inkyblackness/hacked/editor/archive"
+	"github.com/inkyblackness/hacked/editor/archives"
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/model"
@@ -42,7 +42,7 @@ type Application struct {
 	textPageCache *text.Cache
 
 	projectView *project.View
-	archiveView *archive.View
+	archiveView *archives.View
 	textsView   *texts.View
 	aboutView   *about.View
 
@@ -266,7 +266,7 @@ func (app *Application) modReset() {
 
 func (app *Application) initView() {
 	app.projectView = project.NewView(app.mod, app.GuiScale, app)
-	app.archiveView = archive.NewArchiveView(app.mod, app.GuiScale, app)
+	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)
 	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 }

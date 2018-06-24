@@ -1,4 +1,4 @@
-package archive
+package archives
 
 type viewModel struct {
 	windowOpen   bool

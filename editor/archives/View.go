@@ -1,4 +1,4 @@
-package archive
+package archives
 
 import (
 	"github.com/inkyblackness/hacked/editor/cmd"
