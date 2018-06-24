@@ -12,9 +12,9 @@ type ObjectCrossReferenceEntry struct {
 	TileX int16
 	TileY int16
 
-	MasterObjectTableIndex int16
-	Next                   int16
-	NextTile               int16
+	ObjectID ObjectID
+	Next     int16
+	NextTile int16
 }
 
 // ObjectCrossReferenceTable is a list of entries.

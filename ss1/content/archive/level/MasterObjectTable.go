@@ -18,8 +18,8 @@ type MasterObjectEntry struct {
 
 	ClassTableIndex          int16
 	CrossReferenceTableIndex int16
-	Prev                     int16
-	Next                     int16
+	Next                     ObjectID
+	Prev                     ObjectID
 
 	X         Coordinate
 	Y         Coordinate
