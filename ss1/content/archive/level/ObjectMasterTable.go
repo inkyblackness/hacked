@@ -43,6 +43,9 @@ func (entry *ObjectMasterEntry) Reset() {
 }
 
 // ObjectMasterTable is a list of entries.
+// The first entry is reserved for internal use. For the reserved entry,
+// the Next field refers to the head of the single-linked free chain,
+// and the CrossReferenceTableIndex refers to the head of the double-linked used chain.
 type ObjectMasterTable []ObjectMasterEntry
 
 // DefaultObjectMasterTable returns an initialized table with a default size.

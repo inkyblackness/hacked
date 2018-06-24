@@ -23,6 +23,8 @@ func (entry *ObjectCrossReferenceEntry) Reset() {
 }
 
 // ObjectCrossReferenceTable is a list of entries.
+// The first entry is reserved for internal use. For the reserved entry,
+// The NextInTile member refers to the head of the single-linked free chain.
 type ObjectCrossReferenceTable []ObjectCrossReferenceEntry
 
 // DefaultObjectCrossReferenceTable returns an initialized table with a default size.
