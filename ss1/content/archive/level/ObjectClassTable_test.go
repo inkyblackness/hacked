@@ -57,17 +57,12 @@ func TestObjectClassTableResetInitializesChainPointers(t *testing.T) {
 	table.Reset()
 
 	start := table[0]
-	assert.Equal(t, int16(0), start.Prev, "start.Prev should be 0, there's no previous to start.")
 	assert.Equal(t, int16(1), start.Next, "start.Next should be 1, the first free entry.")
 	assert.Equal(t, level.ObjectID(0), start.ObjectID, "start.ObjectID should be 0, the list is empty.")
 	free0 := table[1]
-	assert.Equal(t, int16(0), free0.Prev, "free0.Prev should be 0, the start entry.")
 	assert.Equal(t, int16(2), free0.Next, "free0.Next should be 2, the second free entry.")
-	assert.Equal(t, level.ObjectID(0), free0.ObjectID, "free0.ObjectID should be 0, the entry is unused.")
 	free1 := table[2]
-	assert.Equal(t, int16(1), free1.Prev, "free1.Prev should be 1, the first free entry.")
 	assert.Equal(t, int16(0), free1.Next, "free1.Next should be 0, the start entry.")
-	assert.Equal(t, level.ObjectID(0), free1.ObjectID, "free0.ObjectID should be 0, the entry is unused.")
 }
 
 func TestDefaultObjectClassTable(t *testing.T) {

@@ -41,8 +41,8 @@ func (entry *ObjectClassEntry) Reset() {
 // ObjectClassTable is a list of entries.
 //
 // The first entry is reserved for internal use. For the reserved entry,
-// the Next field identifies the head of the free chain,
-// and the ObjectID field identifies the head of the used chain.
+// the Next field identifies the head of the single-linked free chain,
+// and the ObjectID field identifies the head of the double-linked used chain.
 type ObjectClassTable []ObjectClassEntry
 
 // DefaultObjectClassTable returns an initialized table for given object class.
@@ -69,13 +69,10 @@ func (table ObjectClassTable) Reset() {
 	for i := 0; i < tableLen; i++ {
 		entry := &table[i]
 		entry.Reset()
-		if i > 0 {
-			entry.Prev = int16(i - 1)
-		}
 		entry.Next = int16(i + 1)
-		if int(entry.Next) >= tableLen {
-			entry.Next = 0
-		}
+	}
+	if tableLen > 0 {
+		table[tableLen-1].Next = 0
 	}
 }
 
