@@ -1,3 +1,3 @@
 // Package ids contains constants for all necessary identifier used in the world.
-// This package contains resource identifier, filenames and other constants.
+// This package contains resource identifier, filenames and other constants necessary for storage.
 package ids

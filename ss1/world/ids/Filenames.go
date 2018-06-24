@@ -24,6 +24,9 @@ var LowIntr = resource.I18nFile([resource.LanguageCount]string{"lowintr.res", "l
 // SvgaIntr contains the high-res intro video.
 var SvgaIntr = resource.I18nFile([resource.LanguageCount]string{"svgaintr.res", "svfrintr.res", "svgeintr.res"})
 
+// Archive contains the game world.
+var Archive = resource.AnyLanguage("archive.dat")
+
 // Texture contains all textures.
 var Texture = resource.AnyLanguage("texture.res")
 

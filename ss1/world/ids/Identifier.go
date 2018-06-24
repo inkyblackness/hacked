@@ -21,3 +21,11 @@ const (
 	AccessCardNameTexts  resource.ID = 0x0879
 	DataletMessageTexts  resource.ID = 0x087A
 )
+
+// Archives
+const (
+	ArchiveName resource.ID = 0x0FA0
+	GameState   resource.ID = 0x0FA1
+
+	LevelResourcesStart resource.ID = 4000
+)
