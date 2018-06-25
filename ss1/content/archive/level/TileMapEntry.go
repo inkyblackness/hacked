@@ -27,7 +27,7 @@ type TileMapEntry struct {
 	LightDelta byte
 }
 
-// TileMap is a square set of tiles.
+// TileMap is a rectangular set of tiles.
 // The first index is the Y-axis, the second index the X-axis. This way the map can be serialized quicker.
 type TileMap [][]TileMapEntry
 
