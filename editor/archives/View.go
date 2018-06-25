@@ -106,9 +106,10 @@ func (view *View) hasLevelInMod(id int) bool {
 func (view *View) requestClearLevel(id int) {
 	if (id >= 0) && (id < archive.MaxLevels) {
 		command := setArchiveDataCommand{
-			model:   &view.model,
-			newData: make(map[resource.ID][]byte),
-			oldData: make(map[resource.ID][]byte),
+			model:         &view.model,
+			selectedLevel: id,
+			newData:       make(map[resource.ID][]byte),
+			oldData:       make(map[resource.ID][]byte),
 		}
 
 		if !view.hasGameStateInMod() {
@@ -144,11 +145,12 @@ func (view *View) requestClearLevel(id int) {
 }
 
 func (view *View) requestRemoveLevel(id int) {
-	if (id >= 0) && (id < archive.MaxLevels) {
+	if (id >= 0) && (id < archive.MaxLevels) && view.hasLevelInMod(id) {
 		command := setArchiveDataCommand{
-			model:   &view.model,
-			newData: make(map[resource.ID][]byte),
-			oldData: make(map[resource.ID][]byte),
+			model:         &view.model,
+			selectedLevel: id,
+			newData:       make(map[resource.ID][]byte),
+			oldData:       make(map[resource.ID][]byte),
 		}
 
 		levelIDBegin := ids.LevelResourcesStart.Plus(lvlids.PerLevel * id)
