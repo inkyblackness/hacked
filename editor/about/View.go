@@ -43,9 +43,9 @@ func (view *View) Render() {
 }
 
 func (view *View) renderContent() {
-	projectUrl := "https://inkyblackness.github.io"
-	communityUrl := "https://www.systemshock.org"
-	userguideUrl := "https://github.com/inkyblackness/hacked/wiki"
+	projectURL := "https://inkyblackness.github.io"
+	communityURL := "https://www.systemshock.org"
+	userguideURL := "https://github.com/inkyblackness/hacked/wiki"
 	urlLine := func(title, url string) {
 		imgui.Text(title + ": " + url)
 		imgui.SameLine()
@@ -56,9 +56,9 @@ func (view *View) renderContent() {
 
 	imgui.Text("InkyBlackness - HackEd - " + view.version)
 	imgui.Separator()
-	urlLine("User guide", userguideUrl)
-	urlLine("Community", communityUrl)
-	urlLine("Project", projectUrl)
+	urlLine("User guide", userguideURL)
+	urlLine("Community", communityURL)
+	urlLine("Project", projectURL)
 
 	if imgui.Button("OK") {
 		imgui.CloseCurrentPopup()

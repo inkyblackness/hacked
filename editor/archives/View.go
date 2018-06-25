@@ -61,16 +61,16 @@ func (view *View) Render() {
 
 func (view *View) renderContent() {
 	imgui.Text("Levels")
-	imgui.BeginChildV("Levels", imgui.Vec2{-100 * view.guiScale, 0}, true, 0)
+	imgui.BeginChildV("Levels", imgui.Vec2{X: -100 * view.guiScale, Y: 0}, true, 0)
 	for id := 0; id < archive.MaxLevels; id++ {
 		inMod := view.hasLevelInMod(id)
 		info := fmt.Sprintf("%d", id)
 		if !inMod {
 			if (id == world.StartingLevel) && view.hasGameStateInMod() {
 				// Starting level should really be in a new archive.
-				imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{1.0, 0.0, 0.0, 1.0})
+				imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1.0, Y: 0.0, Z: 0.0, W: 1.0})
 			} else {
-				imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{1.0, 1.0, 1.0, 0.8})
+				imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1.0, Y: 1.0, Z: 1.0, W: 0.8})
 			}
 			info += " (not in mod, read-only)"
 		}
@@ -84,11 +84,11 @@ func (view *View) renderContent() {
 	imgui.EndChild()
 	imgui.SameLine()
 	imgui.BeginGroup()
-	if imgui.ButtonV("Clear", imgui.Vec2{-1, 0}) {
+	if imgui.ButtonV("Clear", imgui.Vec2{X: -1, Y: 0}) {
 		view.requestClearLevel(view.model.selectedLevel)
 	}
 	if view.model.selectedLevel != world.StartingLevel {
-		if imgui.ButtonV("Remove", imgui.Vec2{-1, 0}) {
+		if imgui.ButtonV("Remove", imgui.Vec2{X: -1, Y: 0}) {
 			view.requestRemoveLevel(view.model.selectedLevel)
 		}
 	}
