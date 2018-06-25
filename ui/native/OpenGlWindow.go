@@ -172,7 +172,7 @@ func (window *OpenGLWindow) onMouseButton(rawWindow *glfw.Window, rawButton glfw
 }
 
 func (window *OpenGLWindow) onMouseScroll(rawWindow *glfw.Window, dx float64, dy float64) {
-	window.CallOnMouseScroll(float32(dx), float32(dy)*-1.0)
+	window.CallOnMouseScroll(float32(dx), float32(dy))
 }
 
 func (window *OpenGLWindow) onKey(rawWindow *glfw.Window, glfwKey glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {

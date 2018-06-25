@@ -61,6 +61,12 @@ func (context *Context) MouseButtonChanged(buttonIndex int, down bool) {
 	}
 }
 
+// IsUsingMouse returns true if the UI is using the mouse.
+// The application should not process mouse events in this case.
+func (context Context) IsUsingMouse() bool {
+	return imgui.CurrentIO().WantCaptureMouse()
+}
+
 // NewFrame must be called at the start of rendering.
 func (context *Context) NewFrame() {
 	io := imgui.CurrentIO()

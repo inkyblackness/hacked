@@ -7,6 +7,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/archives"
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/event"
+	"github.com/inkyblackness/hacked/editor/levels"
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/project"
 	"github.com/inkyblackness/hacked/editor/texts"
@@ -32,6 +33,9 @@ type Application struct {
 	GuiScale   float32
 	guiContext *gui.Context
 
+	lastMouseX float32
+	lastMouseY float32
+
 	eventQueue      event.Queue
 	eventDispatcher *event.Dispatcher
 
@@ -40,6 +44,8 @@ type Application struct {
 	cp            text.Codepage
 	textLineCache *text.Cache
 	textPageCache *text.Cache
+
+	mapDisplay *levels.MapDisplay
 
 	projectView *project.View
 	archiveView *archives.View
@@ -66,6 +72,8 @@ func (app *Application) InitializeWindow(window opengl.Window) (err error) {
 	app.initModel()
 	app.initView()
 
+	app.onWindowResize(app.window.Size())
+
 	return
 }
 
@@ -80,6 +88,8 @@ func (app *Application) initWindowCallbacks() {
 	app.window.OnClosing(app.onWindowClosing)
 	app.window.OnClosed(app.onWindowClosed)
 	app.window.OnFileDropCallback(app.onFilesDropped)
+
+	app.window.OnResize(app.onWindowResize)
 
 	app.window.OnKey(app.onKey)
 
@@ -97,6 +107,8 @@ func (app *Application) render() {
 
 	app.gl.Clear(opengl.COLOR_BUFFER_BIT)
 
+	app.mapDisplay.Render()
+
 	app.renderMainMenu()
 
 	app.projectView.Render()
@@ -112,6 +124,9 @@ func (app *Application) render() {
 }
 
 func (app *Application) initOpenGL() {
+	app.gl.Disable(opengl.DEPTH_TEST)
+	app.gl.Enable(opengl.BLEND)
+	app.gl.BlendFunc(opengl.SRC_ALPHA, opengl.ONE_MINUS_SRC_ALPHA)
 	app.gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 }
 
@@ -123,11 +138,18 @@ func (app *Application) initGui() (err error) {
 	app.initGuiScaling()
 	app.initGuiStyle()
 
+	app.mapDisplay = levels.NewMapDisplay(app.gl, app.GuiScale)
+
 	return
 }
 
 func (app *Application) onWindowClosing() {
 
+}
+
+func (app *Application) onWindowResize(width int, height int) {
+	app.mapDisplay.WindowResized(width, height)
+	app.gl.Viewport(0, 0, int32(width), int32(height))
 }
 
 func (app *Application) onFilesDropped(names []string) {
@@ -170,18 +192,32 @@ func (app *Application) modifyModByCommand(modifier func(cmd.Transaction) error)
 }
 
 func (app *Application) onMouseMove(x, y float32) {
+	app.lastMouseX = x
+	app.lastMouseY = y
 	app.guiContext.SetMousePosition(x, y)
+	if !app.guiContext.IsUsingMouse() {
+		app.mapDisplay.MouseMoved(x, y)
+	}
 }
 
 func (app *Application) onMouseScroll(dx, dy float32) {
-	app.guiContext.MouseScroll(dx, -dy)
+	if !app.guiContext.IsUsingMouse() {
+		app.mapDisplay.MouseScrolled(app.lastMouseX, app.lastMouseY, dx, dy)
+	}
+	app.guiContext.MouseScroll(dx, dy)
 }
 
 func (app *Application) onMouseButtonDown(buttonMask uint32, modifier input.Modifier) {
+	if !app.guiContext.IsUsingMouse() {
+		app.mapDisplay.MouseButtonDown(app.lastMouseX, app.lastMouseY, buttonMask)
+	}
 	app.reportButtonChange(buttonMask, true)
 }
 
 func (app *Application) onMouseButtonUp(buttonMask uint32, modifier input.Modifier) {
+	if !app.guiContext.IsUsingMouse() {
+		app.mapDisplay.MouseButtonUp(app.lastMouseX, app.lastMouseY, buttonMask)
+	}
 	app.reportButtonChange(buttonMask, false)
 }
 
