@@ -29,6 +29,10 @@ type Application struct {
 	clipboard clipboardAdapter
 	gl        opengl.OpenGL
 
+	// FontFile specifies the font to use.
+	FontFile string
+	// FontSize specifies the font size to use.
+	FontSize float32
 	// GuiScale is applied when the window is initialized.
 	GuiScale   float32
 	guiContext *gui.Context
@@ -131,11 +135,15 @@ func (app *Application) initOpenGL() {
 }
 
 func (app *Application) initGui() (err error) {
-	app.guiContext, err = gui.NewContext(app.window)
+	app.initGuiSizes()
+	param := gui.ContextParameters{
+		FontFile: app.FontFile,
+		FontSize: app.FontSize,
+	}
+	app.guiContext, err = gui.NewContext(app.window, param)
 	if err != nil {
 		return
 	}
-	app.initGuiScaling()
 	app.initGuiStyle()
 
 	app.mapDisplay = levels.NewMapDisplay(app.gl, app.GuiScale)
@@ -229,18 +237,26 @@ func (app *Application) reportButtonChange(buttonMask uint32, down bool) {
 	}
 }
 
-func (app *Application) initGuiScaling() {
+func (app *Application) initGuiSizes() {
 	if app.GuiScale < 0.5 {
 		app.GuiScale = 1.0
 	} else if app.GuiScale > 10.0 {
 		app.GuiScale = 10.0
 	}
 
-	imgui.CurrentStyle().ScaleAllSizes(app.GuiScale)
-	imgui.CurrentIO().SetFontGlobalScale(app.GuiScale)
+	if app.FontSize <= 0 {
+		app.FontSize = 16.0
+	}
+
+	app.FontSize *= app.GuiScale
 }
 
 func (app *Application) initGuiStyle() {
+	if len(app.FontFile) == 0 {
+		imgui.CurrentIO().SetFontGlobalScale(app.GuiScale)
+	}
+	imgui.CurrentStyle().ScaleAllSizes(app.GuiScale)
+
 	color := func(r, g, b byte, alpha float32) imgui.Vec4 {
 		return imgui.Vec4{X: float32(r) / 255.0, Y: float32(g) / 255.0, Z: float32(b) / 255.0, W: alpha}
 	}

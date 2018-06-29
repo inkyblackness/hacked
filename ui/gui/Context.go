@@ -1,11 +1,20 @@
 package gui
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/inkyblackness/hacked/ui/opengl"
 	"github.com/inkyblackness/imgui-go"
 )
+
+// ContextParameters describes how to create the context.
+type ContextParameters struct {
+	// FontFile is the filename of a .TTF file to load instead of using default.
+	FontFile string
+	// FontSize is the requested size of the font. Defaults to 12.
+	FontSize float32
+}
 
 // Context describes a scope for a graphical user interface.
 // It is based on ImGui.
@@ -30,13 +39,14 @@ type Context struct {
 }
 
 // NewContext initializes a new UI context based on the provided OpenGL window.
-func NewContext(window opengl.Window) (context *Context, err error) {
+func NewContext(window opengl.Window, param ContextParameters) (context *Context, err error) {
+	imgui.SetAssertHandler(nil)
 	context = &Context{
 		imguiContext: imgui.CreateContext(nil),
 		window:       window,
 	}
 
-	err = context.createDeviceObjects()
+	err = context.createDeviceObjects(param)
 	if err != nil {
 		context.Destroy()
 		context = nil
@@ -96,7 +106,7 @@ func (context *Context) Render() {
 	context.renderDrawData(imgui.RenderedDrawData())
 }
 
-func (context *Context) createDeviceObjects() (err error) {
+func (context *Context) createDeviceObjects(param ContextParameters) (err error) {
 	gl := context.window.OpenGL()
 	glslVersion := "#version 150"
 
@@ -139,14 +149,23 @@ void main()
 	context.vboHandle = buffers[0]
 	context.elementsHandle = buffers[1]
 
-	context.createFontsTexture(gl)
-
-	return
+	return context.createFontsTexture(gl, param)
 }
 
-func (context *Context) createFontsTexture(gl opengl.OpenGL) {
+func (context *Context) createFontsTexture(gl opengl.OpenGL, param ContextParameters) error {
 	io := imgui.CurrentIO()
-	image := io.Fonts().TextureDataAlpha8()
+	fontAtlas := io.Fonts()
+	if len(param.FontFile) > 0 {
+		fontSize := float32(16.0)
+		if param.FontSize > 0.0 {
+			fontSize = param.FontSize
+		}
+		font := fontAtlas.AddFontFromFileTTF(param.FontFile, fontSize)
+		if font == imgui.DefaultFont {
+			return fmt.Errorf("could not load font <%s>", param.FontFile)
+		}
+	}
+	image := fontAtlas.TextureDataAlpha8()
 
 	context.fontTexture = gl.GenTextures(1)[0]
 	gl.BindTexture(opengl.TEXTURE_2D, context.fontTexture)
@@ -159,6 +178,7 @@ func (context *Context) createFontsTexture(gl opengl.OpenGL) {
 	io.Fonts().SetTextureID(imgui.TextureID(context.fontTexture))
 
 	gl.BindTexture(opengl.TEXTURE_2D, 0)
+	return nil
 }
 
 func (context *Context) destroyDeviceObjects(gl opengl.OpenGL) {

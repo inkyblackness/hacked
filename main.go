@@ -14,8 +14,12 @@ var version string
 
 func main() {
 	scale := flag.Float64("scale", 1.0, "factor for scaling the UI (0.5 .. 10.0). 1080p displays should use default. 4K most likely 2.0.")
+	fontFile := flag.String("fontfile", "", "Path to font file (.TTF) to use instead of the default font. Useful for HiDPI displays.")
+	fontSize := flag.Float64("fontsize", 0.0, "Size of the font to use. If not specified, a default height will be used.")
 	flag.Parse()
 	var app editor.Application
+	app.FontFile = *fontFile
+	app.FontSize = float32(*fontSize)
 	app.GuiScale = float32(*scale)
 	if len(version) > 0 {
 		app.Version = version
