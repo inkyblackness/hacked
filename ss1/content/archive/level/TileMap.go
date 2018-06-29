@@ -27,6 +27,12 @@ type TileMapEntry struct {
 	LightDelta byte
 }
 
+// Reset puts the tile into an initial state.
+func (tile *TileMapEntry) Reset() {
+	*tile = TileMapEntry{}
+	tile.SubClip = 0xFF
+}
+
 // TileMap is a rectangular set of tiles.
 // The first index is the Y-axis, the second index the X-axis. This way the map can be serialized quicker.
 type TileMap [][]TileMapEntry
@@ -37,7 +43,7 @@ func NewTileMap(width, height int) TileMap {
 	for y := 0; y < height; y++ {
 		m[y] = make([]TileMapEntry, width)
 		for x := 0; x < width; x++ {
-			m[y][x].SubClip = 0xFF
+			m[y][x].Reset()
 		}
 	}
 	return m
