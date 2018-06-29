@@ -123,7 +123,7 @@ func (view *View) requestClearLevel(id int) {
 		}
 		if id == world.StartingLevel {
 			param.MapModifier = func(m level.TileMap) {
-				m.Tile(world.StartingTileX, world.StartingTileY).Type = level.Open
+				m.Tile(world.StartingTileX, world.StartingTileY).Type = level.TileTypeOpen
 			}
 		}
 
