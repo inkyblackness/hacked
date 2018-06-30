@@ -1,12 +1,16 @@
-package resource
+package world
 
-import "io/ioutil"
+import (
+	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world/ids"
+
+	"io/ioutil"
+)
 
 // IsSavegame returns true for resources that most likely identify a savegame.
 // A savegame is one that has a state resource (0x0FA1) and hacker's health is more than zero.
-func IsSavegame(provider Provider) bool {
-	stateID := ID(0x0FA1)
-	res, err := provider.Resource(stateID)
+func IsSavegame(provider resource.Provider) bool {
+	res, err := provider.Resource(ids.GameState)
 	if err != nil {
 		return false
 	}
