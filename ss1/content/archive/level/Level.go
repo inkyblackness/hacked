@@ -52,12 +52,12 @@ func (lvl *Level) InvalidateResources(ids []resource.ID) {
 }
 
 // MapGridInfo returns the information necessary to draw a 2D map.
-func (lvl *Level) MapGridInfo(x, y int) (TileType, WallHeights) {
+func (lvl *Level) MapGridInfo(x, y int) (TileType, TileSlopeControl, WallHeights) {
 	tile := lvl.tileMap.Tile(x, y)
 	if tile == nil {
-		return TileTypeSolid, WallHeights{}
+		return TileTypeSolid, TileSlopeControlCeilingInverted, WallHeights{}
 	}
-	return tile.Type, *lvl.wallHeightsMap.Tile(x, y)
+	return tile.Type, tile.Flags.SlopeControl(), *lvl.wallHeightsMap.Tile(x, y)
 }
 
 func (lvl *Level) onLevelResourceDataChanged(id int) {

@@ -2,6 +2,7 @@ package levels
 
 import (
 	"fmt"
+
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ui/opengl"
@@ -12,15 +13,14 @@ var mapTileGridVertexShaderSource = `
 precision mediump float;
 
 in vec3 vertexPosition;
+out float colorAlpha;
 
 uniform mat4 viewMatrix;
 uniform mat4 projectionMatrix;
 
-out float height;
-
 void main(void) {
 	gl_Position = projectionMatrix * viewMatrix * vec4(vertexPosition.xy, 0.0, 1.0);
-	height = vertexPosition.z;
+	colorAlpha = vertexPosition.z;
 }
 `
 
@@ -28,17 +28,18 @@ var mapTileGridFragmentShaderSource = `
 #version 150
 precision mediump float;
 
-in float height;
+uniform vec4 color;
+in float colorAlpha;
 out vec4 fragColor;
 
 void main(void) {
-	fragColor = vec4(0.0, 0.8, 0.0, height);
+	fragColor = vec4(color.rgb, color.a*colorAlpha);
 }
 `
 
-// WallMapper returns basic information to draw a 2D map.
-type WallMapper interface {
-	MapGridInfo(x, y int) (level.TileType, level.WallHeights)
+// TileMapper returns basic information to draw a 2D map.
+type TileMapper interface {
+	MapGridInfo(x, y int) (level.TileType, level.TileSlopeControl, level.WallHeights)
 }
 
 // MapGrid renders the grid of the map, based on calculated wall heights.
@@ -49,6 +50,7 @@ type MapGrid struct {
 	vao                     *opengl.VertexArrayObject
 	vertexPositionBuffer    uint32
 	vertexPositionAttrib    int32
+	colorUniform            opengl.Vector4Uniform
 	viewMatrixUniform       opengl.Matrix4Uniform
 	projectionMatrixUniform opengl.Matrix4Uniform
 }
@@ -67,6 +69,7 @@ func NewMapGrid(context *render.Context) *MapGrid {
 		vao:                     opengl.NewVertexArrayObject(gl, program),
 		vertexPositionBuffer:    gl.GenBuffers(1)[0],
 		vertexPositionAttrib:    gl.GetAttribLocation(program, "vertexPosition"),
+		colorUniform:            opengl.Vector4Uniform(gl.GetUniformLocation(program, "color")),
 		viewMatrixUniform:       opengl.Matrix4Uniform(gl.GetUniformLocation(program, "viewMatrix")),
 		projectionMatrixUniform: opengl.Matrix4Uniform(gl.GetUniformLocation(program, "projectionMatrix")),
 	}
@@ -90,12 +93,14 @@ func (grid *MapGrid) Dispose() {
 }
 
 // Render renders
-func (grid *MapGrid) Render(mapper WallMapper) {
+func (grid *MapGrid) Render(mapper TileMapper) {
 	gl := grid.context.OpenGL
 
 	grid.vao.OnShader(func() {
 		grid.viewMatrixUniform.Set(gl, grid.context.ViewMatrix)
 		grid.projectionMatrixUniform.Set(gl, &grid.context.ProjectionMatrix)
+		color := [4]float32{0.0, 0.8, 0.0, 1.0}
+		grid.colorUniform.Set(gl, &color)
 
 		gl.BindBuffer(opengl.ARRAY_BUFFER, grid.vertexPositionBuffer)
 
@@ -115,7 +120,7 @@ func (grid *MapGrid) Render(mapper WallMapper) {
 		for y := 0; y < 64; y++ {
 			for x := 0; x < 64; x++ {
 				vertices = vertices[0:0]
-				tileType, wallHeights := mapper.MapGridInfo(x, y)
+				tileType, _, wallHeights := mapper.MapGridInfo(x, y)
 
 				finePerFraction := fineCoordinatesPerTileSide / 3
 				left := float32(x) * fineCoordinatesPerTileSide
