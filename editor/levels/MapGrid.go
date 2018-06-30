@@ -99,28 +99,48 @@ func (grid *MapGrid) Render(mapper WallMapper) {
 
 		gl.BindBuffer(opengl.ARRAY_BUFFER, grid.vertexPositionBuffer)
 
-		vertices := make([]float32, 0, 6*2*3)
+		vertices := make([]float32, 0, ((4*3)+2)*2*3)
+		heightFactor := [32*2 + 1]float32{
+			0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+			0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+			0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+			0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+			0.0,
+			0.1, 0.2, 0.3, 0.3, 0.4, 0.4, 0.5, 0.7,
+			1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+			1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+			1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+		}
 		for y := 0; y < 64; y++ {
 			for x := 0; x < 64; x++ {
 				vertices = vertices[0:0]
 				tileType, wallHeights := mapper.MapGridInfo(x, y)
 
+				finePerFraction := fineCoordinatesPerTileSide / 3
 				left := float32(x) * fineCoordinatesPerTileSide
 				right := left + fineCoordinatesPerTileSide
 				bottom := float32(y) * fineCoordinatesPerTileSide
 				top := bottom + fineCoordinatesPerTileSide
 
-				if wallHeights.North[1] > 0 {
-					vertices = append(vertices, left, top, wallHeights.North[1], right, top, wallHeights.North[1])
+				for i, height := range wallHeights.North {
+					vertices = append(vertices,
+						left+finePerFraction*float32(i), top, heightFactor[int(height)+32],
+						left+finePerFraction*float32(i+1), top, heightFactor[int(height)+32])
 				}
-				if wallHeights.South[1] > 0 {
-					vertices = append(vertices, left, bottom, wallHeights.South[1], right, bottom, wallHeights.South[1])
+				for i, height := range wallHeights.South {
+					vertices = append(vertices,
+						right-finePerFraction*float32(i), bottom, heightFactor[int(height)+32],
+						right-finePerFraction*float32(i+1), bottom, heightFactor[int(height)+32])
 				}
-				if wallHeights.West[1] > 0 {
-					vertices = append(vertices, left, top, wallHeights.West[1], left, bottom, wallHeights.West[1])
+				for i, height := range wallHeights.East {
+					vertices = append(vertices,
+						right, top-finePerFraction*float32(i), heightFactor[int(height)+32],
+						right, top-finePerFraction*float32(i+1), heightFactor[int(height)+32])
 				}
-				if wallHeights.East[1] > 0 {
-					vertices = append(vertices, right, top, wallHeights.East[1], right, bottom, wallHeights.East[1])
+				for i, height := range wallHeights.West {
+					vertices = append(vertices,
+						left, bottom+finePerFraction*float32(i), heightFactor[int(height)+32],
+						left, bottom+finePerFraction*float32(i+1), heightFactor[int(height)+32])
 				}
 				if tileType == level.TileTypeDiagonalOpenNorthEast || tileType == level.TileTypeDiagonalOpenSouthWest {
 					vertices = append(vertices, left, top, 1.0, right, bottom, 1.0)
