@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTileTypeInfoSlopeFactorsSealTileWithMirror(t *testing.T) {
+func TestTileTypeInfoSlopeFactorsSealTileWithInversion(t *testing.T) {
 	tt := []level.TileType{
 		level.TileTypeSlopeSouthToNorth,
 		level.TileTypeSlopeWestToEast,
@@ -28,7 +28,7 @@ func TestTileTypeInfoSlopeFactorsSealTileWithMirror(t *testing.T) {
 	}
 	for _, tc := range tt {
 		info := tc.Info()
-		mirroredInfo := info.SlopeMirrorType.Info()
+		mirroredInfo := info.SlopeInvertedType.Info()
 		var factors level.SlopeFactors
 		for i := 0; i < 8; i++ {
 			factors[i] = info.SlopeFloorFactors[i] + mirroredInfo.SlopeFloorFactors[i]
@@ -42,7 +42,7 @@ func TestTileTypeInfoDefaultsToSolidEquivalent(t *testing.T) {
 	expected := level.TileTypeInfo{
 		SolidSides:        level.DirNorth.Plus(level.DirEast).Plus(level.DirSouth).Plus(level.DirWest),
 		SlopeFloorFactors: level.SlopeFactors{0, 0, 0, 0, 0, 0, 0, 0},
-		SlopeMirrorType:   tileType,
+		SlopeInvertedType: tileType,
 	}
 	assert.Equal(t, expected, tileType.Info())
 }

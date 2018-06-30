@@ -50,8 +50,16 @@ func NewTileMap(width, height int) TileMap {
 }
 
 // Tile returns a pointer to the tile within the map for given position.
+// Nil is returned for a coordinate outside the boundaries.
 func (m TileMap) Tile(x, y int) *TileMapEntry {
-	return &m[y][x]
+	if (x < 0) || (y < 0) || (y >= len(m)) {
+		return nil
+	}
+	row := m[y]
+	if x >= len(row) {
+		return nil
+	}
+	return &row[x]
 }
 
 // Code serializes the map.

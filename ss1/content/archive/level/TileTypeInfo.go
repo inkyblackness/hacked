@@ -1,41 +1,15 @@
 package level
 
-// Direction is an enumeration of cardinal and ordinal directions.
-// Cardinal directions describe sides, ordinal directions describe corners.
-type Direction byte
-
-// Plus is a shortcut for dir.AsMask().Plus(other).
-func (dir Direction) Plus(other Direction) DirectionMask {
-	return dir.AsMask().Plus(other)
-}
-
-// AsMask returns the direction as a mask
-func (dir Direction) AsMask() DirectionMask {
-	return DirectionMask(1 << dir)
-}
-
-// DirectionMask is a bitfield combination of directions.
-type DirectionMask byte
-
-// Plus adds the mask of the given direction to this mask and returns the result.
-func (mask DirectionMask) Plus(dir Direction) DirectionMask {
-	return mask | dir.AsMask()
-}
-
-// Direction constants
-const (
-	DirNorth Direction = iota
-	DirNorthEast
-	DirEast
-	DirSouthEast
-	DirSouth
-	DirSouthWest
-	DirWest
-	DirNorthWest
-)
-
 // SlopeFactors is a list of multipliers for each direction of a tile.
 type SlopeFactors [8]float32
+
+// Negated returns the factors multiplied by -1.
+func (factors SlopeFactors) Negated() SlopeFactors {
+	return SlopeFactors{
+		factors[0] * -1, factors[1] * -1, factors[2] * -1, factors[3] * -1,
+		factors[4] * -1, factors[5] * -1, factors[6] * -1, factors[7] * -1,
+	}
+}
 
 // TileTypeInfo is the meta information about a tile type.
 type TileTypeInfo struct {
@@ -45,9 +19,9 @@ type TileTypeInfo struct {
 	// SlopeFloorFactors defines how a slope affects the floor in each direction of a tile [0.0 .. 1.0].
 	SlopeFloorFactors SlopeFactors
 
-	// SlopeMirrorType is the type that mirrors the slope to form a solid tile if merged.
-	// Types that have no slope mirror themselves.
-	SlopeMirrorType TileType
+	// SlopeInvertedType is the type that inverts the slope to form a solid tile if merged (e.g. floor & ceiling).
+	// Types that have no slope invert themselves.
+	SlopeInvertedType TileType
 }
 
 var tileTypeInfoList = []TileTypeInfo{

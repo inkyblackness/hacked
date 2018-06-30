@@ -9,7 +9,7 @@ func (t TileType) Info() TileTypeInfo {
 		return tileTypeInfoList[t]
 	}
 	info := tileTypeInfoList[TileTypeSolid]
-	info.SlopeMirrorType = t
+	info.SlopeInvertedType = t
 	return info
 }
 
