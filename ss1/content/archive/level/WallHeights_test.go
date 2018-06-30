@@ -65,7 +65,15 @@ func (suite *WallHeightsSuite) TestCalculateFromSetsHeightDifferencesForFloorsRe
 	suite.givenTile(1, 2).typed(level.TileTypeOpen).floorAt(10)
 	suite.whenHeightsAreCalculatedFromMap()
 	suite.thenHeightShouldBeForTileAt(1, 1, level.DirNorth, 8, 9, 10)
-	suite.thenHeightShouldBeForTileAt(1, 2, level.DirSouth, -8, -9, -10)
+	suite.thenHeightShouldBeForTileAt(1, 2, level.DirSouth, -10, -9, -8)
+}
+
+func (suite *WallHeightsSuite) TestCalculateFromSetsHeightDifferencesForFloorsRespectingSlopeSameFloorHeight() {
+	suite.givenTile(1, 1).typed(level.TileTypeOpen).floorAt(0)
+	suite.givenTile(1, 2).typed(level.TileTypeSlopeEastToWest).floorAt(0).sloped(level.TileSlopeControlCeilingFlat, 4)
+	suite.whenHeightsAreCalculatedFromMap()
+	suite.thenHeightShouldBeForTileAt(1, 1, level.DirNorth, 4, 2, 0)
+	suite.thenHeightShouldBeForTileAt(1, 2, level.DirSouth, 0, -2, -4)
 }
 
 func (suite *WallHeightsSuite) TestCalculateFromConsidersCeilingHeightsIfWallingOff() {
@@ -90,6 +98,14 @@ func (suite *WallHeightsSuite) TestCalculateFromWithFloorCrossingOtherCeiling() 
 	suite.whenHeightsAreCalculatedFromMap()
 	suite.thenHeightShouldBeForTileAt(1, 1, level.DirNorth, 32, 32, 32)
 	suite.thenHeightShouldBeForTileAt(1, 2, level.DirSouth, 32, 32, 32)
+}
+
+func (suite *WallHeightsSuite) TestCalculateFromWithSameSlopes() {
+	suite.givenTile(1, 1).typed(level.TileTypeSlopeEastToWest).sloped(level.TileSlopeControlCeilingInverted, 8)
+	suite.givenTile(1, 2).typed(level.TileTypeSlopeEastToWest).sloped(level.TileSlopeControlCeilingInverted, 8)
+	suite.whenHeightsAreCalculatedFromMap()
+	suite.thenHeightShouldBeForTileAt(1, 1, level.DirNorth, 0, 0, 0)
+	suite.thenHeightShouldBeForTileAt(1, 2, level.DirSouth, 0, 0, 0)
 }
 
 func (suite *WallHeightsSuite) givenTile(x, y int) *WallHeightsSuite {

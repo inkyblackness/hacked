@@ -80,17 +80,17 @@ func (m *WallHeightsMap) calculateWallHeight(entry *TileMapEntry, entrySide Dire
 	entryFloorFactors := entrySlopeControl.FloorSlopeFactors(entry.Type)
 	entryCeilingFactors := entrySlopeControl.CeilingSlopeFactors(entry.Type)
 
-	sideHeights := func(side Direction, factors SlopeFactors, slopeHeight TileHeightUnit, absoluteHeight TileHeightUnit) [3]float32 {
+	sideHeights := func(side Direction, sideOffset int, factors SlopeFactors, slopeHeight TileHeightUnit, absoluteHeight TileHeightUnit) [3]float32 {
 		return [3]float32{
-			factors[side.Offset(-1)]*float32(slopeHeight) + float32(absoluteHeight),
+			factors[side.Offset(-sideOffset)]*float32(slopeHeight) + float32(absoluteHeight),
 			factors[side.Offset(0)]*float32(slopeHeight) + float32(absoluteHeight),
-			factors[side.Offset(+1)]*float32(slopeHeight) + float32(absoluteHeight),
+			factors[side.Offset(+sideOffset)]*float32(slopeHeight) + float32(absoluteHeight),
 		}
 	}
-	entryFloorSideHeights := sideHeights(entrySide, entryFloorFactors, entrySlopeHeight, entryFloorHeight)
-	entryCeilingSideHeights := sideHeights(entrySide, entryCeilingFactors.Negated(), entrySlopeHeight, entryCeilingHeight)
-	otherFloorSideHeights := sideHeights(otherSide, otherFloorFactors, otherSlopeHeight, otherFloorHeight)
-	otherCeilingSideHeights := sideHeights(otherSide, otherCeilingFactors.Negated(), otherSlopeHeight, otherCeilingHeight)
+	entryFloorSideHeights := sideHeights(entrySide, 1, entryFloorFactors, entrySlopeHeight, entryFloorHeight)
+	entryCeilingSideHeights := sideHeights(entrySide, 1, entryCeilingFactors.Negated(), entrySlopeHeight, entryCeilingHeight)
+	otherFloorSideHeights := sideHeights(otherSide, -1, otherFloorFactors, otherSlopeHeight, otherFloorHeight)
+	otherCeilingSideHeights := sideHeights(otherSide, -1, otherCeilingFactors.Negated(), otherSlopeHeight, otherCeilingHeight)
 
 	for i := 0; i < 3; i++ {
 		if (otherFloorSideHeights[i] == entryFloorSideHeights[i]) && (entryFloorSideHeights[i] == float32(TileHeightUnitMax)) {
