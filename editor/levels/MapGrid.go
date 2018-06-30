@@ -172,7 +172,6 @@ func (grid *MapGrid) Render(mapper TileMapper) {
 		grid.projectionMatrixUniform.Set(gl, &grid.context.ProjectionMatrix)
 		gl.BindBuffer(opengl.ARRAY_BUFFER, grid.vertexPositionBuffer)
 
-		vertices := make([]float32, 0, ((4*3)+2)*2*3)
 		// TODO: consider this table per height shift of the level
 		heightFactor := [32*2 + 1]float32{
 			0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -185,15 +184,15 @@ func (grid *MapGrid) Render(mapper TileMapper) {
 			1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
 			1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
 		}
+		var vertexBuffer [((4 * 3) + 2) * 2 * 3]float32
 		for y := 0; y < 64; y++ {
 			for x := 0; x < 64; x++ {
 				modelMatrix = mgl.Ident4().
 					Mul4(mgl.Translate3D((float32(x)+0.5)*fineCoordinatesPerTileSide, (float32(y)+0.5)*fineCoordinatesPerTileSide, 0.0)).
 					Mul4(mgl.Scale3D(fineCoordinatesPerTileSide, fineCoordinatesPerTileSide, 1.0))
-
 				grid.modelMatrixUniform.Set(gl, &modelMatrix)
 
-				vertices = vertices[0:0]
+				vertices := vertexBuffer[0:0]
 				tileType, slopeControl, wallHeights := mapper.MapGridInfo(x, y)
 
 				left := float32(-0.5)
@@ -229,11 +228,9 @@ func (grid *MapGrid) Render(mapper TileMapper) {
 					vertices = append(vertices, left, bottom, 1.0, right, top, 1.0)
 				}
 
-				if len(vertices) > 0 {
-					grid.colorUniform.Set(gl, &lineColor)
-					gl.BufferData(opengl.ARRAY_BUFFER, len(vertices)*4, vertices, opengl.STATIC_DRAW)
-					gl.DrawArrays(opengl.LINES, 0, int32(len(vertices)/3))
-				}
+				grid.colorUniform.Set(gl, &lineColor)
+				gl.BufferData(opengl.ARRAY_BUFFER, len(vertices)*4, vertices, opengl.STATIC_DRAW)
+				gl.DrawArrays(opengl.LINES, 0, int32(len(vertices)/3))
 
 				var floorTicks []int
 				var ceilingTicks []int
