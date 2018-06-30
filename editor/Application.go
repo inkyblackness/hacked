@@ -11,8 +11,11 @@ import (
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/project"
 	"github.com/inkyblackness/hacked/editor/texts"
+	"github.com/inkyblackness/hacked/ss1/content/archive"
+	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/hacked/ui/input"
 	"github.com/inkyblackness/hacked/ui/opengl"
@@ -51,10 +54,13 @@ type Application struct {
 
 	mapDisplay *levels.MapDisplay
 
-	projectView *project.View
-	archiveView *archives.View
-	textsView   *texts.View
-	aboutView   *about.View
+	levels [archive.MaxLevels]*level.Level
+
+	projectView      *project.View
+	archiveView      *archives.View
+	levelControlView *levels.ControlView
+	textsView        *texts.View
+	aboutView        *about.View
 
 	failureMessage string
 	failurePending bool
@@ -111,13 +117,14 @@ func (app *Application) render() {
 
 	app.gl.Clear(opengl.COLOR_BUFFER_BIT)
 
-	app.mapDisplay.Render()
-
 	app.renderMainMenu()
 
 	app.projectView.Render()
 	app.archiveView.Render()
+	app.levelControlView.Render()
 	app.textsView.Render()
+
+	app.mapDisplay.Render(app.levels[app.levelControlView.SelectedLevel()])
 
 	// imgui.ShowDemoWindow(nil)
 
@@ -305,11 +312,18 @@ func (app *Application) initModel() {
 	app.cp = text.DefaultCodepage()
 	app.textLineCache = text.NewLineCache(app.cp, app.mod)
 	app.textPageCache = text.NewPageCache(app.cp, app.mod)
+
+	for i := 0; i < archive.MaxLevels; i++ {
+		app.levels[i] = level.NewLevel(ids.LevelResourcesStart, i, app.mod)
+	}
 }
 
 func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) {
 	app.textLineCache.InvalidateResources(modifiedIDs)
 	app.textPageCache.InvalidateResources(modifiedIDs)
+	for _, level := range app.levels {
+		level.InvalidateResources(modifiedIDs)
+	}
 }
 
 func (app *Application) modReset() {
@@ -319,6 +333,7 @@ func (app *Application) modReset() {
 func (app *Application) initView() {
 	app.projectView = project.NewView(app.mod, app.GuiScale, app)
 	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)
+	app.levelControlView = levels.NewControlView(app.GuiScale)
 	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 }
@@ -360,6 +375,7 @@ func (app *Application) renderMainMenu() {
 		}
 		if imgui.BeginMenu("Window") {
 			windowEntry("Archive", app.archiveView.WindowOpen())
+			windowEntry("Level Control", app.levelControlView.WindowOpen())
 			windowEntry("Texts", app.textsView.WindowOpen())
 			imgui.EndMenu()
 		}

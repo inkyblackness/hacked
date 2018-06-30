@@ -4,6 +4,7 @@ import (
 	mgl "github.com/go-gl/mathgl/mgl32"
 
 	"github.com/inkyblackness/hacked/editor/render"
+	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ui/input"
 	"github.com/inkyblackness/hacked/ui/opengl"
 )
@@ -12,7 +13,9 @@ import (
 type MapDisplay struct {
 	context render.Context
 	camera  *LimitedCamera
-	grid    *BackgroundGrid
+
+	background *BackgroundGrid
+	mapGrid    *MapGrid
 
 	moveCapture func(pixelX, pixelY float32)
 }
@@ -37,7 +40,8 @@ func NewMapDisplay(gl opengl.OpenGL, guiScale float32) *MapDisplay {
 		moveCapture: func(float32, float32) {},
 	}
 	display.context.ViewMatrix = display.camera.ViewMatrix()
-	display.grid = NewBackgroundGrid(&display.context)
+	display.background = NewBackgroundGrid(&display.context)
+	display.mapGrid = NewMapGrid(&display.context)
 
 	centerX, centerY := (tilesPerMapSide*tileBaseLength)/-2.0, (tilesPerMapSide*tileBaseLength)/-2.0
 	display.camera.ZoomAt(-3+zoomShift, centerX, centerY)
@@ -47,8 +51,9 @@ func NewMapDisplay(gl opengl.OpenGL, guiScale float32) *MapDisplay {
 }
 
 // Render renders the whole map display.
-func (display *MapDisplay) Render() {
-	display.grid.Render()
+func (display *MapDisplay) Render(level *level.Level) {
+	display.background.Render()
+	display.mapGrid.Render(level)
 }
 
 // WindowResized must be called to notify of a change in window geometry.
