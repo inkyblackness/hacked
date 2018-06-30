@@ -17,7 +17,7 @@ type BaseInfo struct {
 	// YShift is the base value of YSize (YSize == 1 << YShift).
 	YShift int32
 	// ZShift is the base value of the height of the map.
-	ZShift int32
+	ZShift HeightShift
 	_      [4]byte
 	// Cyberspace indicates whether the level is cyberspace.
 	Cyberspace byte

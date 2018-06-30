@@ -51,6 +51,16 @@ func (lvl *Level) InvalidateResources(ids []resource.ID) {
 	}
 }
 
+// Size returns the dimensions of the level.
+func (lvl Level) Size() (x, y int, z HeightShift) {
+	return int(lvl.baseInfo.XSize), int(lvl.baseInfo.YSize), lvl.baseInfo.ZShift
+}
+
+// Tile returns the tile entry at given position.
+func (lvl *Level) Tile(x, y int) *TileMapEntry {
+	return lvl.tileMap.Tile(x, y)
+}
+
 // MapGridInfo returns the information necessary to draw a 2D map.
 func (lvl *Level) MapGridInfo(x, y int) (TileType, TileSlopeControl, WallHeights) {
 	tile := lvl.tileMap.Tile(x, y)
