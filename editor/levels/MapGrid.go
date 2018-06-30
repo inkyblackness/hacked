@@ -154,14 +154,13 @@ func (grid *MapGrid) Render(mapper TileMapper) {
 	ceilingTickStarts := []int32{3, 9, 15, 21}
 
 	grid.vao.OnShader(func() {
-		modelMatrixIdentity := mgl.Ident4()
-		modelMatrixTicks := mgl.Ident4()
-		grid.viewMatrixUniform.Set(gl, grid.context.ViewMatrix)
-		grid.projectionMatrixUniform.Set(gl, &grid.context.ProjectionMatrix)
+		modelMatrix := mgl.Ident4()
 		lineColor := [4]float32{0.0, 0.8, 0.0, 1.0}
 		floorTickColor := [4]float32{0.0, 0.8, 0.0, 0.9}
 		ceilingTickColor := [4]float32{0.8, 0.0, 0.0, 0.9}
 
+		grid.viewMatrixUniform.Set(gl, grid.context.ViewMatrix)
+		grid.projectionMatrixUniform.Set(gl, &grid.context.ProjectionMatrix)
 		gl.BindBuffer(opengl.ARRAY_BUFFER, grid.vertexPositionBuffer)
 
 		vertices := make([]float32, 0, ((4*3)+2)*2*3)
@@ -179,29 +178,35 @@ func (grid *MapGrid) Render(mapper TileMapper) {
 		}
 		for y := 0; y < 64; y++ {
 			for x := 0; x < 64; x++ {
+				modelMatrix = mgl.Ident4().
+					Mul4(mgl.Translate3D((float32(x)+0.5)*fineCoordinatesPerTileSide, (float32(y)+0.5)*fineCoordinatesPerTileSide, 0.0)).
+					Mul4(mgl.Scale3D(fineCoordinatesPerTileSide, fineCoordinatesPerTileSide, 1.0))
+
+				grid.modelMatrixUniform.Set(gl, &modelMatrix)
+
 				vertices = vertices[0:0]
 				tileType, slopeControl, wallHeights := mapper.MapGridInfo(x, y)
 
-				finePerFraction := fineCoordinatesPerTileSide / 3
-				left := float32(x) * fineCoordinatesPerTileSide
-				right := left + fineCoordinatesPerTileSide
-				bottom := float32(y) * fineCoordinatesPerTileSide
-				top := bottom + fineCoordinatesPerTileSide
+				left := float32(-0.5)
+				right := float32(0.5)
+				top := float32(0.5)
+				bottom := float32(-0.5)
+				finePerFraction := float32(1.0 / 3.0)
 
 				for i, height := range wallHeights.North {
 					vertices = append(vertices,
 						left+finePerFraction*float32(i), top, heightFactor[int(height)+32],
 						left+finePerFraction*float32(i+1), top, heightFactor[int(height)+32])
 				}
-				for i, height := range wallHeights.South {
-					vertices = append(vertices,
-						right-finePerFraction*float32(i), bottom, heightFactor[int(height)+32],
-						right-finePerFraction*float32(i+1), bottom, heightFactor[int(height)+32])
-				}
 				for i, height := range wallHeights.East {
 					vertices = append(vertices,
 						right, top-finePerFraction*float32(i), heightFactor[int(height)+32],
 						right, top-finePerFraction*float32(i+1), heightFactor[int(height)+32])
+				}
+				for i, height := range wallHeights.South {
+					vertices = append(vertices,
+						right-finePerFraction*float32(i), bottom, heightFactor[int(height)+32],
+						right-finePerFraction*float32(i+1), bottom, heightFactor[int(height)+32])
 				}
 				for i, height := range wallHeights.West {
 					vertices = append(vertices,
@@ -216,7 +221,6 @@ func (grid *MapGrid) Render(mapper TileMapper) {
 				}
 
 				if len(vertices) > 0 {
-					grid.modelMatrixUniform.Set(gl, &modelMatrixIdentity)
 					grid.colorUniform.Set(gl, &lineColor)
 					gl.BufferData(opengl.ARRAY_BUFFER, len(vertices)*4, vertices, opengl.STATIC_DRAW)
 					gl.DrawArrays(opengl.LINES, 0, int32(len(vertices)/3))
@@ -234,11 +238,6 @@ func (grid *MapGrid) Render(mapper TileMapper) {
 					ceilingTicks = slopeTicksByType[tileType.Info().SlopeInvertedType]
 				}
 
-				modelMatrixTicks = mgl.Ident4().
-					Mul4(mgl.Translate3D((float32(x)+0.5)*fineCoordinatesPerTileSide, (float32(y)+0.5)*fineCoordinatesPerTileSide, 0.0)).
-					Mul4(mgl.Scale3D(fineCoordinatesPerTileSide, fineCoordinatesPerTileSide, 1.0))
-
-				grid.modelMatrixUniform.Set(gl, &modelMatrixTicks)
 				gl.BufferData(opengl.ARRAY_BUFFER, len(grid.tickVertices)*4, grid.tickVertices, opengl.STATIC_DRAW)
 				grid.colorUniform.Set(gl, &floorTickColor)
 				for _, index := range floorTicks {
