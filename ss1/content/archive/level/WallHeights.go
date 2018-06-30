@@ -93,15 +93,16 @@ func (m *WallHeightsMap) calculateWallHeight(entry *TileMapEntry, entrySide Dire
 	otherCeilingSideHeights := sideHeights(otherSide, otherCeilingFactors.Negated(), otherSlopeHeight, otherCeilingHeight)
 
 	for i := 0; i < 3; i++ {
-		if (otherFloorSideHeights[i] == entryFloorSideHeights[i]) &&
-			(otherCeilingSideHeights[i] == entryCeilingSideHeights[i]) {
+		if (otherFloorSideHeights[i] == entryFloorSideHeights[i]) && (entryFloorSideHeights[i] == float32(TileHeightUnitMax)) {
 			result[i] = 0
 		} else if (otherFloorSideHeights[i] >= otherCeilingSideHeights[i]) ||
 			(otherCeilingSideHeights[i] <= entryFloorSideHeights[i]) ||
-			(otherFloorSideHeights[i] >= entryCeilingSideHeights[i]) {
+			(otherFloorSideHeights[i] >= entryCeilingSideHeights[i]) ||
+			(entryFloorSideHeights[i] >= entryCeilingSideHeights[i]) {
 			result[i] = float32(TileHeightUnitMax)
+		} else {
+			result[i] = otherFloorSideHeights[i] - entryFloorSideHeights[i]
 		}
-
 	}
 
 	return result

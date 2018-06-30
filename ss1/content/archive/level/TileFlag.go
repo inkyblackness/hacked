@@ -5,7 +5,12 @@ type TileFlag uint32
 
 // SlopeControl returns the slope control as per flags.
 func (flag TileFlag) SlopeControl() TileSlopeControl {
-	return TileSlopeControl((flag & 0x00000C00) >> 12)
+	return TileSlopeControl((flag & 0x00000C00) >> 10)
+}
+
+// WithSlopeControl returns a new flag value with the given slope control set.
+func (flag TileFlag) WithSlopeControl(ctrl TileSlopeControl) TileFlag {
+	return TileFlag(uint32(flag&^0x00000C00) | (uint32(ctrl&0x3) << 10))
 }
 
 // TileSlopeControl defines how the floor and ceiling of a sloped tile should be processed.
@@ -24,10 +29,10 @@ func (ctrl TileSlopeControl) CeilingSlopeFactors(tileType TileType) SlopeFactors
 	if ctrl == TileSlopeControlCeilingFlat {
 		return SlopeFactors{}
 	}
-	if ctrl == TileSlopeControlCeilingInverted {
-		return tileType.Info().SlopeInvertedType.Info().SlopeFloorFactors
+	if ctrl == TileSlopeControlCeilingMirrored {
+		return tileType.Info().SlopeFloorFactors
 	}
-	return tileType.Info().SlopeFloorFactors
+	return tileType.Info().SlopeInvertedType.Info().SlopeFloorFactors
 }
 
 // TileSlopeControl constants.

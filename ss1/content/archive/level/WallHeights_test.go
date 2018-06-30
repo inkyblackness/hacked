@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"testing"
 )
@@ -13,6 +14,8 @@ type WallHeightsSuite struct {
 
 	tileMap    level.TileMap
 	heightsMap level.WallHeightsMap
+
+	tile *level.TileMapEntry
 }
 
 func TestWallHeightsSuite(t *testing.T) {
@@ -22,6 +25,7 @@ func TestWallHeightsSuite(t *testing.T) {
 func (suite *WallHeightsSuite) SetupTest() {
 	suite.tileMap = level.NewTileMap(3, 3)
 	suite.heightsMap = level.NewWallHeightsMap(3, 3)
+	suite.tile = nil
 }
 
 func (suite *WallHeightsSuite) TestCalculateFromResetsToZeroForAllSolids() {
@@ -31,13 +35,75 @@ func (suite *WallHeightsSuite) TestCalculateFromResetsToZeroForAllSolids() {
 }
 
 func (suite *WallHeightsSuite) TestCalculateFromSetsToMaximumHeightUnitFromOpenToSolid() {
-	suite.givenTileHasType(1, 1, level.TileTypeOpen)
+	suite.givenTile(1, 1).typed(level.TileTypeOpen)
 	suite.whenHeightsAreCalculatedFromMap()
 	suite.thenHeightsShouldBeForTile(1, 1, 32.0)
 }
 
-func (suite *WallHeightsSuite) givenTileHasType(x int, y int, tileType level.TileType) {
-	suite.tileMap.Tile(x, y).Type = tileType
+func (suite *WallHeightsSuite) TestCalculateFromSetsHeightDifferencesForFloors() {
+	suite.givenTile(1, 1).typed(level.TileTypeOpen).floorAt(0)
+	suite.givenTile(1, 2).typed(level.TileTypeOpen).floorAt(10)
+	suite.whenHeightsAreCalculatedFromMap()
+	suite.thenHeightShouldBeForTileAt(1, 1, level.DirNorth, 10, 10, 10)
+	suite.thenHeightShouldBeForTileAt(1, 2, level.DirSouth, -10, -10, -10)
+}
+
+func (suite *WallHeightsSuite) TestCalculateFromSetsHeightDifferencesForFloorsRespectingSlope() {
+	suite.givenTile(1, 1).typed(level.TileTypeSlopeEastToWest).floorAt(0).sloped(level.TileSlopeControlCeilingFlat, 2)
+	suite.givenTile(1, 2).typed(level.TileTypeOpen).floorAt(10)
+	suite.whenHeightsAreCalculatedFromMap()
+	suite.thenHeightShouldBeForTileAt(1, 1, level.DirNorth, 8, 9, 10)
+	suite.thenHeightShouldBeForTileAt(1, 2, level.DirSouth, -8, -9, -10)
+}
+
+func (suite *WallHeightsSuite) TestCalculateFromConsidersCeilingHeightsIfWallingOff() {
+	suite.givenTile(1, 1).typed(level.TileTypeOpen).floorAt(0)
+	suite.givenTile(1, 2).typed(level.TileTypeSlopeSouthToNorth).floorAt(0).sloped(level.TileSlopeControlFloorFlat, 8).ceilingAt(8)
+	suite.whenHeightsAreCalculatedFromMap()
+	suite.thenHeightShouldBeForTileAt(1, 1, level.DirNorth, 32, 32, 32)
+	suite.thenHeightShouldBeForTileAt(1, 2, level.DirSouth, 32, 32, 32)
+}
+
+func (suite *WallHeightsSuite) TestCalculateFromConsidersMirroredSlopesWallingOff() {
+	suite.givenTile(1, 1).typed(level.TileTypeOpen).floorAt(0)
+	suite.givenTile(1, 2).typed(level.TileTypeSlopeNorthToSouth).floorAt(0).sloped(level.TileSlopeControlCeilingMirrored, 16)
+	suite.whenHeightsAreCalculatedFromMap()
+	suite.thenHeightShouldBeForTileAt(1, 1, level.DirNorth, 32, 32, 32)
+	suite.thenHeightShouldBeForTileAt(1, 2, level.DirSouth, 32, 32, 32)
+}
+
+func (suite *WallHeightsSuite) TestCalculateFromWithFloorCrossingOtherCeiling() {
+	suite.givenTile(1, 1).typed(level.TileTypeOpen).floorAt(20)
+	suite.givenTile(1, 2).typed(level.TileTypeOpen).floorAt(0).ceilingAt(8)
+	suite.whenHeightsAreCalculatedFromMap()
+	suite.thenHeightShouldBeForTileAt(1, 1, level.DirNorth, 32, 32, 32)
+	suite.thenHeightShouldBeForTileAt(1, 2, level.DirSouth, 32, 32, 32)
+}
+
+func (suite *WallHeightsSuite) givenTile(x, y int) *WallHeightsSuite {
+	suite.tile = suite.tileMap.Tile(x, y)
+	return suite
+}
+
+func (suite *WallHeightsSuite) typed(tileType level.TileType) *WallHeightsSuite {
+	suite.tile.Type = tileType
+	return suite
+}
+
+func (suite *WallHeightsSuite) sloped(ctrl level.TileSlopeControl, height level.TileHeightUnit) *WallHeightsSuite {
+	suite.tile.Flags = suite.tile.Flags.WithSlopeControl(ctrl)
+	suite.tile.SlopeHeight = height
+	return suite
+}
+
+func (suite *WallHeightsSuite) floorAt(value level.TileHeightUnit) *WallHeightsSuite {
+	suite.tile.Floor = suite.tile.Floor.WithAbsoluteHeight(value)
+	return suite
+}
+
+func (suite *WallHeightsSuite) ceilingAt(value level.TileHeightUnit) *WallHeightsSuite {
+	suite.tile.Ceiling = suite.tile.Ceiling.WithAbsoluteHeight(value)
+	return suite
 }
 
 func (suite *WallHeightsSuite) givenARandomHeightsMap() {
@@ -82,4 +148,27 @@ func (suite *WallHeightsSuite) thenHeightsShouldBeForTile(x int, y int, expected
 	verifySide("East", tile.East)
 	verifySide("South", tile.South)
 	verifySide("West", tile.West)
+}
+
+func (suite *WallHeightsSuite) thenHeightShouldBeForTileAt(x int, y int, side level.Direction,
+	expectedLeft float32, expectedCenter float32, expectedRight float32) {
+	tile := suite.heightsMap.Tile(x, y)
+	var values [3]float32
+
+	switch side {
+	case level.DirNorth:
+		values = tile.North
+	case level.DirEast:
+		values = tile.East
+	case level.DirSouth:
+		values = tile.South
+	case level.DirWest:
+		values = tile.West
+	default:
+		require.Fail(suite.T(), "Invalid side specified")
+	}
+
+	assert.Equal(suite.T(), expectedLeft, values[0], "left mismatch")
+	assert.Equal(suite.T(), expectedCenter, values[1], "center mismatch")
+	assert.Equal(suite.T(), expectedRight, values[2], "right mismatch")
 }
