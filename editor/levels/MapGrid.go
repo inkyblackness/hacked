@@ -100,6 +100,7 @@ func (grid *MapGrid) Render(mapper WallMapper) {
 		gl.BindBuffer(opengl.ARRAY_BUFFER, grid.vertexPositionBuffer)
 
 		vertices := make([]float32, 0, ((4*3)+2)*2*3)
+		// TODO: consider this table per height shift of the level
 		heightFactor := [32*2 + 1]float32{
 			0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
 			0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
