@@ -3,6 +3,8 @@ package levels
 import (
 	"fmt"
 
+	mgl "github.com/go-gl/mathgl/mgl32"
+
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ui/opengl"
@@ -15,11 +17,12 @@ precision mediump float;
 in vec3 vertexPosition;
 out float colorAlpha;
 
+uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 projectionMatrix;
 
 void main(void) {
-	gl_Position = projectionMatrix * viewMatrix * vec4(vertexPosition.xy, 0.0, 1.0);
+	gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(vertexPosition.xy, 0.0, 1.0);
 	colorAlpha = vertexPosition.z;
 }
 `
@@ -51,8 +54,11 @@ type MapGrid struct {
 	vertexPositionBuffer    uint32
 	vertexPositionAttrib    int32
 	colorUniform            opengl.Vector4Uniform
+	modelMatrixUniform      opengl.Matrix4Uniform
 	viewMatrixUniform       opengl.Matrix4Uniform
 	projectionMatrixUniform opengl.Matrix4Uniform
+
+	tickVertices []float32
 }
 
 // NewMapGrid returns a new instance.
@@ -70,9 +76,11 @@ func NewMapGrid(context *render.Context) *MapGrid {
 		vertexPositionBuffer:    gl.GenBuffers(1)[0],
 		vertexPositionAttrib:    gl.GetAttribLocation(program, "vertexPosition"),
 		colorUniform:            opengl.Vector4Uniform(gl.GetUniformLocation(program, "color")),
+		modelMatrixUniform:      opengl.Matrix4Uniform(gl.GetUniformLocation(program, "modelMatrix")),
 		viewMatrixUniform:       opengl.Matrix4Uniform(gl.GetUniformLocation(program, "viewMatrix")),
 		projectionMatrixUniform: opengl.Matrix4Uniform(gl.GetUniformLocation(program, "projectionMatrix")),
 	}
+	grid.tickVertices = grid.calculateTickVertices()
 
 	grid.vao.WithSetter(func(gl opengl.OpenGL) {
 		gl.EnableVertexAttribArray(uint32(grid.vertexPositionAttrib))
@@ -92,15 +100,67 @@ func (grid *MapGrid) Dispose() {
 	grid.vao.Dispose()
 }
 
+func (grid *MapGrid) calculateTickVertices() []float32 {
+	dotHalf := float32(0.05)
+	dotBase := float32(0.5) - (dotHalf * 2.0)
+	alpha := float32(0.9)
+
+	top := dotBase + dotHalf
+	topEnd := dotBase - dotHalf
+	left := -dotBase - dotHalf
+	leftEnd := -dotBase + dotHalf
+
+	right := top
+	rightEnd := topEnd
+	bottom := left
+	bottomEnd := leftEnd
+
+	return []float32{
+		left, top, alpha, leftEnd, top, alpha, left, topEnd, alpha,
+		leftEnd, top, alpha, leftEnd, topEnd, alpha, left, topEnd, alpha,
+
+		right, top, alpha, right, topEnd, alpha, rightEnd, top, alpha,
+		rightEnd, top, alpha, right, topEnd, alpha, rightEnd, topEnd, alpha,
+
+		right, bottom, alpha, rightEnd, bottom, alpha, right, bottomEnd, alpha,
+		right, bottomEnd, alpha, rightEnd, bottom, alpha, rightEnd, bottomEnd, alpha,
+
+		left, bottomEnd, alpha, leftEnd, bottom, alpha, left, bottom, alpha,
+		left, bottomEnd, alpha, leftEnd, bottomEnd, alpha, leftEnd, bottom, alpha,
+	}
+}
+
 // Render renders
 func (grid *MapGrid) Render(mapper TileMapper) {
 	gl := grid.context.OpenGL
 
+	var slopeTicksByType = map[level.TileType][]int{
+		level.TileTypeSlopeSouthToNorth: {0, 1},
+		level.TileTypeSlopeWestToEast:   {1, 2},
+		level.TileTypeSlopeNorthToSouth: {2, 3},
+		level.TileTypeSlopeEastToWest:   {3, 0},
+
+		level.TileTypeValleySouthEastToNorthWest: {3, 0, 1},
+		level.TileTypeValleySouthWestToNorthEast: {0, 1, 2},
+		level.TileTypeValleyNorthWestToSouthEast: {1, 2, 3},
+		level.TileTypeValleyNorthEastToSouthWest: {2, 3, 0},
+
+		level.TileTypeRidgeSouthEastToNorthWest: {0},
+		level.TileTypeRidgeSouthWestToNorthEast: {1},
+		level.TileTypeRidgeNorthWestToSouthEast: {2},
+		level.TileTypeRidgeNorthEastToSouthWest: {3}}
+
+	floorTickStarts := []int32{0, 6, 12, 18}
+	ceilingTickStarts := []int32{3, 9, 15, 21}
+
 	grid.vao.OnShader(func() {
+		modelMatrixIdentity := mgl.Ident4()
+		modelMatrixTicks := mgl.Ident4()
 		grid.viewMatrixUniform.Set(gl, grid.context.ViewMatrix)
 		grid.projectionMatrixUniform.Set(gl, &grid.context.ProjectionMatrix)
-		color := [4]float32{0.0, 0.8, 0.0, 1.0}
-		grid.colorUniform.Set(gl, &color)
+		lineColor := [4]float32{0.0, 0.8, 0.0, 1.0}
+		floorTickColor := [4]float32{0.0, 0.8, 0.0, 0.9}
+		ceilingTickColor := [4]float32{0.8, 0.0, 0.0, 0.9}
 
 		gl.BindBuffer(opengl.ARRAY_BUFFER, grid.vertexPositionBuffer)
 
@@ -120,7 +180,7 @@ func (grid *MapGrid) Render(mapper TileMapper) {
 		for y := 0; y < 64; y++ {
 			for x := 0; x < 64; x++ {
 				vertices = vertices[0:0]
-				tileType, _, wallHeights := mapper.MapGridInfo(x, y)
+				tileType, slopeControl, wallHeights := mapper.MapGridInfo(x, y)
 
 				finePerFraction := fineCoordinatesPerTileSide / 3
 				left := float32(x) * fineCoordinatesPerTileSide
@@ -156,8 +216,37 @@ func (grid *MapGrid) Render(mapper TileMapper) {
 				}
 
 				if len(vertices) > 0 {
+					grid.modelMatrixUniform.Set(gl, &modelMatrixIdentity)
+					grid.colorUniform.Set(gl, &lineColor)
 					gl.BufferData(opengl.ARRAY_BUFFER, len(vertices)*4, vertices, opengl.STATIC_DRAW)
 					gl.DrawArrays(opengl.LINES, 0, int32(len(vertices)/3))
+				}
+
+				var floorTicks []int
+				var ceilingTicks []int
+
+				if slopeControl != level.TileSlopeControlFloorFlat {
+					floorTicks = slopeTicksByType[tileType]
+				}
+				if slopeControl == level.TileSlopeControlCeilingMirrored {
+					ceilingTicks = slopeTicksByType[tileType]
+				} else if slopeControl != level.TileSlopeControlCeilingFlat {
+					ceilingTicks = slopeTicksByType[tileType.Info().SlopeInvertedType]
+				}
+
+				modelMatrixTicks = mgl.Ident4().
+					Mul4(mgl.Translate3D((float32(x)+0.5)*fineCoordinatesPerTileSide, (float32(y)+0.5)*fineCoordinatesPerTileSide, 0.0)).
+					Mul4(mgl.Scale3D(fineCoordinatesPerTileSide, fineCoordinatesPerTileSide, 1.0))
+
+				grid.modelMatrixUniform.Set(gl, &modelMatrixTicks)
+				gl.BufferData(opengl.ARRAY_BUFFER, len(grid.tickVertices)*4, grid.tickVertices, opengl.STATIC_DRAW)
+				grid.colorUniform.Set(gl, &floorTickColor)
+				for _, index := range floorTicks {
+					gl.DrawArrays(opengl.TRIANGLES, floorTickStarts[index], 3)
+				}
+				grid.colorUniform.Set(gl, &ceilingTickColor)
+				for _, index := range ceilingTicks {
+					gl.DrawArrays(opengl.TRIANGLES, ceilingTickStarts[index], 3)
 				}
 			}
 		}
