@@ -1,7 +1,7 @@
 package level
 
 // WallHeights describes the height delta, in HeightUnits, one would take to
-// cross to the other tile. A value of 0 means no resistance.
+// cross to the other tile. A value of 0 means equal floor, a negative value a fall down.
 // A value of 0x20 (= maximum of height units) means a solid wall.
 //
 // For each cardinal direction, facing to the specified direction,
@@ -54,11 +54,11 @@ func (m *WallHeightsMap) CalculateFrom(tileMap TileMap) {
 
 func (m *WallHeightsMap) calculateWallHeight(entry *TileMapEntry, entrySide Direction, other *TileMapEntry, otherSide Direction) [3]float32 {
 	var result [3]float32
-	baseHeights := func(tile *TileMapEntry) (floor TileHeightUnit, slope TileHeightUnit, ceiling TileHeightUnit) {
+	baseHeights := func(tile *TileMapEntry, side Direction) (floor TileHeightUnit, slope TileHeightUnit, ceiling TileHeightUnit) {
 		floor = TileHeightUnitMax
 		slope = TileHeightUnitMin
 		ceiling = TileHeightUnitMax
-		if (tile != nil) && (tile.Type != TileTypeSolid) {
+		if (tile != nil) && ((tile.Type.Info().SolidSides & side.AsMask()) == 0) {
 			floor = tile.Floor.AbsoluteHeight()
 			slope = tile.SlopeHeight
 			ceiling = tile.Ceiling.AbsoluteHeight()
@@ -66,7 +66,7 @@ func (m *WallHeightsMap) calculateWallHeight(entry *TileMapEntry, entrySide Dire
 		return
 	}
 
-	otherFloorHeight, otherSlopeHeight, otherCeilingHeight := baseHeights(other)
+	otherFloorHeight, otherSlopeHeight, otherCeilingHeight := baseHeights(other, otherSide)
 	var otherFloorFactors SlopeFactors
 	var otherCeilingFactors SlopeFactors
 	if other != nil {
@@ -75,7 +75,7 @@ func (m *WallHeightsMap) calculateWallHeight(entry *TileMapEntry, entrySide Dire
 		otherCeilingFactors = otherSlopeControl.CeilingSlopeFactors(other.Type)
 	}
 
-	entryFloorHeight, entrySlopeHeight, entryCeilingHeight := baseHeights(entry)
+	entryFloorHeight, entrySlopeHeight, entryCeilingHeight := baseHeights(entry, entrySide)
 	entrySlopeControl := entry.Flags.SlopeControl()
 	entryFloorFactors := entrySlopeControl.FloorSlopeFactors(entry.Type)
 	entryCeilingFactors := entrySlopeControl.CeilingSlopeFactors(entry.Type)
@@ -94,11 +94,12 @@ func (m *WallHeightsMap) calculateWallHeight(entry *TileMapEntry, entrySide Dire
 
 	for i := 0; i < 3; i++ {
 		if (otherFloorSideHeights[i] == entryFloorSideHeights[i]) && (entryFloorSideHeights[i] == float32(TileHeightUnitMax)) {
+			// shortcut for solid-to-solid - no "wall" to see here
 			result[i] = 0
-		} else if (otherFloorSideHeights[i] >= otherCeilingSideHeights[i]) ||
-			(otherCeilingSideHeights[i] <= entryFloorSideHeights[i]) ||
-			(otherFloorSideHeights[i] >= entryCeilingSideHeights[i]) ||
-			(entryFloorSideHeights[i] >= entryCeilingSideHeights[i]) {
+		} else if (otherFloorSideHeights[i] >= otherCeilingSideHeights[i]) || // other ceiling side seals off at its floor
+			(otherCeilingSideHeights[i] <= entryFloorSideHeights[i]) || // other ceiling side seals off at this floor
+			(otherFloorSideHeights[i] >= entryCeilingSideHeights[i]) || // other floor side seals off at this ceiling
+			(entryFloorSideHeights[i] >= entryCeilingSideHeights[i]) { // own ceiling side seals off at floor
 			result[i] = float32(TileHeightUnitMax)
 		} else {
 			result[i] = otherFloorSideHeights[i] - entryFloorSideHeights[i]

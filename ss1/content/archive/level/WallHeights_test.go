@@ -38,6 +38,18 @@ func (suite *WallHeightsSuite) TestCalculateFromSetsToMaximumHeightUnitFromOpenT
 	suite.givenTile(1, 1).typed(level.TileTypeOpen)
 	suite.whenHeightsAreCalculatedFromMap()
 	suite.thenHeightsShouldBeForTile(1, 1, 32.0)
+	suite.thenHeightShouldBeForTileAt(1, 2, level.DirSouth, 32, 32, 32)
+	suite.thenHeightShouldBeForTileAt(1, 0, level.DirNorth, 32, 32, 32)
+	suite.thenHeightShouldBeForTileAt(0, 1, level.DirEast, 32, 32, 32)
+	suite.thenHeightShouldBeForTileAt(2, 1, level.DirWest, 32, 32, 32)
+}
+
+func (suite *WallHeightsSuite) TestCalculateFromSetsToMaximumHeightUnitFromOpenToSolidSide() {
+	suite.givenTile(1, 1).typed(level.TileTypeOpen)
+	suite.givenTile(2, 1).typed(level.TileTypeDiagonalOpenNorthEast)
+	suite.whenHeightsAreCalculatedFromMap()
+	suite.thenHeightsShouldBeForTile(1, 1, 32)
+	suite.thenHeightShouldBeForTileAt(2, 1, level.DirWest, 32, 32, 32)
 }
 
 func (suite *WallHeightsSuite) TestCalculateFromSetsHeightDifferencesForFloors() {
