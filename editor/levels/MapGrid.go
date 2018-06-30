@@ -134,21 +134,30 @@ func (grid *MapGrid) calculateTickVertices() []float32 {
 func (grid *MapGrid) Render(mapper TileMapper) {
 	gl := grid.context.OpenGL
 
-	var slopeTicksByType = map[level.TileType][]int{
-		level.TileTypeSlopeSouthToNorth: {0, 1},
-		level.TileTypeSlopeWestToEast:   {1, 2},
-		level.TileTypeSlopeNorthToSouth: {2, 3},
-		level.TileTypeSlopeEastToWest:   {3, 0},
+	var slopeTicksByType = [][]int{
+		nil,
+		nil,
 
-		level.TileTypeValleySouthEastToNorthWest: {3, 0, 1},
-		level.TileTypeValleySouthWestToNorthEast: {0, 1, 2},
-		level.TileTypeValleyNorthWestToSouthEast: {1, 2, 3},
-		level.TileTypeValleyNorthEastToSouthWest: {2, 3, 0},
+		nil,
+		nil,
+		nil,
+		nil,
 
-		level.TileTypeRidgeSouthEastToNorthWest: {0},
-		level.TileTypeRidgeSouthWestToNorthEast: {1},
-		level.TileTypeRidgeNorthWestToSouthEast: {2},
-		level.TileTypeRidgeNorthEastToSouthWest: {3}}
+		{0, 1},
+		{1, 2},
+		{2, 3},
+		{3, 0},
+
+		{3, 0, 1},
+		{0, 1, 2},
+		{1, 2, 3},
+		{2, 3, 0},
+
+		{2},
+		{3},
+		{0},
+		{1},
+	}
 
 	floorTickStarts := []int32{0, 6, 12, 18}
 	ceilingTickStarts := []int32{3, 9, 15, 21}
