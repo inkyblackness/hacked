@@ -59,6 +59,7 @@ type Application struct {
 	projectView      *project.View
 	archiveView      *archives.View
 	levelControlView *levels.ControlView
+	levelTilesView   *levels.TilesView
 	textsView        *texts.View
 	aboutView        *about.View
 
@@ -122,6 +123,7 @@ func (app *Application) render() {
 	app.projectView.Render()
 	app.archiveView.Render()
 	app.levelControlView.Render()
+	app.levelTilesView.Render()
 	app.textsView.Render()
 
 	app.mapDisplay.Render(app.levels[app.levelControlView.SelectedLevel()])
@@ -176,6 +178,12 @@ func (app *Application) onKey(key input.Key, modifier input.Modifier) {
 		app.tryUndo()
 	} else if key == input.KeyRedo {
 		app.tryRedo()
+	} else if key == input.KeyF1 {
+		*app.projectView.WindowOpen() = !*app.projectView.WindowOpen()
+	} else if key == input.KeyF2 {
+		*app.levelControlView.WindowOpen() = !*app.levelControlView.WindowOpen()
+	} else if key == input.KeyF3 {
+		*app.levelTilesView.WindowOpen() = !*app.levelTilesView.WindowOpen()
 	}
 }
 
@@ -334,6 +342,7 @@ func (app *Application) initView() {
 	app.projectView = project.NewView(app.mod, app.GuiScale, app)
 	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)
 	app.levelControlView = levels.NewControlView(app.GuiScale)
+	app.levelTilesView = levels.NewTilesView(app.GuiScale)
 	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 }
@@ -360,23 +369,26 @@ func (app *Application) onFailure(source string, details string, err error) {
 }
 
 func (app *Application) renderMainMenu() {
-	windowEntry := func(name string, isOpen *bool) {
-		if imgui.MenuItemV(name, "", *isOpen, true) {
+	windowEntry := func(name string, shortcut string, isOpen *bool) {
+		if imgui.MenuItemV(name, shortcut, *isOpen, true) {
 			*isOpen = !*isOpen
 		}
 	}
 
 	if imgui.BeginMainMenuBar() {
 		if imgui.BeginMenu("File") {
+			windowEntry("Project", "F1", app.projectView.WindowOpen())
+			imgui.Separator()
 			if imgui.MenuItem("Exit") {
 				app.window.SetCloseRequest(true)
 			}
 			imgui.EndMenu()
 		}
 		if imgui.BeginMenu("Window") {
-			windowEntry("Archive", app.archiveView.WindowOpen())
-			windowEntry("Level Control", app.levelControlView.WindowOpen())
-			windowEntry("Texts", app.textsView.WindowOpen())
+			windowEntry("Archive", "", app.archiveView.WindowOpen())
+			windowEntry("Level Control", "F2", app.levelControlView.WindowOpen())
+			windowEntry("Level Tiles", "F3", app.levelTilesView.WindowOpen())
+			windowEntry("Texts", "", app.textsView.WindowOpen())
 			imgui.EndMenu()
 		}
 		if imgui.BeginMenu("Help") {
