@@ -13,6 +13,9 @@ func (factors SlopeFactors) Negated() SlopeFactors {
 
 // TileTypeInfo is the meta information about a tile type.
 type TileTypeInfo struct {
+	// Name is the textual representation of the tile type.
+	Name string
+
 	// SolidSides is a bitfield of cardinal directions describing solid walls.
 	SolidSides DirectionMask
 
@@ -25,26 +28,26 @@ type TileTypeInfo struct {
 }
 
 var tileTypeInfoList = []TileTypeInfo{
-	{DirNorth.Plus(DirEast).Plus(DirSouth).Plus(DirWest), SlopeFactors{0, 0, 0, 0, 0, 0, 0, 0}, TileTypeSolid},
-	{0, SlopeFactors{0, 0, 0, 0, 0, 0, 0, 0}, TileTypeOpen},
+	{"Solid", DirNorth.Plus(DirEast).Plus(DirSouth).Plus(DirWest), SlopeFactors{0, 0, 0, 0, 0, 0, 0, 0}, TileTypeSolid},
+	{"Open", 0, SlopeFactors{0, 0, 0, 0, 0, 0, 0, 0}, TileTypeOpen},
 
-	{DirNorth.Plus(DirWest), SlopeFactors{0, 0, 0, 0, 0, 0, 0, 0}, TileTypeDiagonalOpenSouthEast},
-	{DirNorth.Plus(DirEast), SlopeFactors{0, 0, 0, 0, 0, 0, 0, 0}, TileTypeDiagonalOpenSouthWest},
-	{DirSouth.Plus(DirEast), SlopeFactors{0, 0, 0, 0, 0, 0, 0, 0}, TileTypeDiagonalOpenNorthWest},
-	{DirSouth.Plus(DirWest), SlopeFactors{0, 0, 0, 0, 0, 0, 0, 0}, TileTypeDiagonalOpenNorthEast},
+	{"DiagonalOpenSouthEast", DirNorth.Plus(DirWest), SlopeFactors{0, 0, 0, 0, 0, 0, 0, 0}, TileTypeDiagonalOpenSouthEast},
+	{"DiagonalOpenSouthWest", DirNorth.Plus(DirEast), SlopeFactors{0, 0, 0, 0, 0, 0, 0, 0}, TileTypeDiagonalOpenSouthWest},
+	{"DiagonalOpenNorthWest", DirSouth.Plus(DirEast), SlopeFactors{0, 0, 0, 0, 0, 0, 0, 0}, TileTypeDiagonalOpenNorthWest},
+	{"DiagonalOpenNorthEast", DirSouth.Plus(DirWest), SlopeFactors{0, 0, 0, 0, 0, 0, 0, 0}, TileTypeDiagonalOpenNorthEast},
 
-	{0, SlopeFactors{1.0, 1.0, 0.5, 0.0, 0.0, 0.0, 0.5, 1.0}, TileTypeSlopeNorthToSouth},
-	{0, SlopeFactors{0.5, 1.0, 1.0, 1.0, 0.5, 0.0, 0.0, 0.0}, TileTypeSlopeEastToWest},
-	{0, SlopeFactors{0.0, 0.0, 0.5, 1.0, 1.0, 1.0, 0.5, 0.0}, TileTypeSlopeSouthToNorth},
-	{0, SlopeFactors{0.5, 0.0, 0.0, 0.0, 0.5, 1.0, 1.0, 1.0}, TileTypeSlopeWestToEast},
+	{"SlopeSouthToNorth", 0, SlopeFactors{1.0, 1.0, 0.5, 0.0, 0.0, 0.0, 0.5, 1.0}, TileTypeSlopeNorthToSouth},
+	{"SlopeWestToEast", 0, SlopeFactors{0.5, 1.0, 1.0, 1.0, 0.5, 0.0, 0.0, 0.0}, TileTypeSlopeEastToWest},
+	{"SlopeNorthToSouth", 0, SlopeFactors{0.0, 0.0, 0.5, 1.0, 1.0, 1.0, 0.5, 0.0}, TileTypeSlopeSouthToNorth},
+	{"SlopeEastToWest", 0, SlopeFactors{0.5, 0.0, 0.0, 0.0, 0.5, 1.0, 1.0, 1.0}, TileTypeSlopeWestToEast},
 
-	{0, SlopeFactors{1.0, 1.0, 0.5, 0.0, 0.5, 1.0, 1.0, 1.0}, TileTypeRidgeNorthWestToSouthEast},
-	{0, SlopeFactors{1.0, 1.0, 1.0, 1.0, 0.5, 0.0, 0.5, 1.0}, TileTypeRidgeNorthEastToSouthWest},
-	{0, SlopeFactors{0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 0.0}, TileTypeRidgeSouthEastToNorthWest},
-	{0, SlopeFactors{0.5, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0}, TileTypeRidgeSouthWestToNorthEast},
+	{"ValleySouthEastToNorthWest", 0, SlopeFactors{1.0, 1.0, 0.5, 0.0, 0.5, 1.0, 1.0, 1.0}, TileTypeRidgeNorthWestToSouthEast},
+	{"ValleySouthWestToNorthEast", 0, SlopeFactors{1.0, 1.0, 1.0, 1.0, 0.5, 0.0, 0.5, 1.0}, TileTypeRidgeNorthEastToSouthWest},
+	{"ValleyNorthWestToSouthEast", 0, SlopeFactors{0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 0.0}, TileTypeRidgeSouthEastToNorthWest},
+	{"ValleyNorthEastToSouthWest", 0, SlopeFactors{0.5, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0}, TileTypeRidgeSouthWestToNorthEast},
 
-	{0, SlopeFactors{0.0, 0.0, 0.5, 1.0, 0.5, 0.0, 0.0, 0.0}, TileTypeValleySouthEastToNorthWest},
-	{0, SlopeFactors{0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 0.5, 0.0}, TileTypeValleySouthWestToNorthEast},
-	{0, SlopeFactors{0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 1.0}, TileTypeValleyNorthWestToSouthEast},
-	{0, SlopeFactors{0.5, 1.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0}, TileTypeValleyNorthEastToSouthWest},
+	{"RidgeNorthWestToSouthEast", 0, SlopeFactors{0.0, 0.0, 0.5, 1.0, 0.5, 0.0, 0.0, 0.0}, TileTypeValleySouthEastToNorthWest},
+	{"RidgeNorthEastToSouthWest", 0, SlopeFactors{0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 0.5, 0.0}, TileTypeValleySouthWestToNorthEast},
+	{"RidgeSouthEastToNorthWest", 0, SlopeFactors{0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 1.0}, TileTypeValleyNorthWestToSouthEast},
+	{"RidgeSouthWestToNorthEast", 0, SlopeFactors{0.5, 1.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0}, TileTypeValleyNorthEastToSouthWest},
 }

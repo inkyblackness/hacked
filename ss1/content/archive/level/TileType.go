@@ -1,5 +1,7 @@
 package level
 
+import "fmt"
+
 // TileType describes the general type of a map tile.
 type TileType byte
 
@@ -11,6 +13,15 @@ func (t TileType) Info() TileTypeInfo {
 	info := tileTypeInfoList[TileTypeSolid]
 	info.SlopeInvertedType = t
 	return info
+}
+
+// String returns the textual representation of the type.
+func (t TileType) String() string {
+	if int(t) < len(tileTypeInfoList) {
+		return tileTypeInfoList[t].Name
+	} else {
+		return fmt.Sprintf("Unknown%02X", int(t))
+	}
 }
 
 // Tiles come in different forms:
@@ -42,3 +53,14 @@ const (
 	TileTypeRidgeSouthEastToNorthWest TileType = 0x10
 	TileTypeRidgeSouthWestToNorthEast TileType = 0x11
 )
+
+// TileTypes returns a list of all known tile types.
+func TileTypes() []TileType {
+	return []TileType{
+		TileTypeSolid, TileTypeOpen,
+		TileTypeDiagonalOpenSouthEast, TileTypeDiagonalOpenSouthWest, TileTypeDiagonalOpenNorthWest, TileTypeDiagonalOpenNorthEast,
+		TileTypeSlopeSouthToNorth, TileTypeSlopeWestToEast, TileTypeSlopeNorthToSouth, TileTypeSlopeEastToWest,
+		TileTypeValleySouthEastToNorthWest, TileTypeValleySouthWestToNorthEast, TileTypeValleyNorthWestToSouthEast, TileTypeValleyNorthEastToSouthWest,
+		TileTypeRidgeNorthWestToSouthEast, TileTypeRidgeNorthEastToSouthWest, TileTypeRidgeSouthEastToNorthWest, TileTypeRidgeSouthWestToNorthEast,
+	}
+}

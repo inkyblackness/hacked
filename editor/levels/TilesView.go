@@ -6,6 +6,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/model"
+	"github.com/inkyblackness/hacked/editor/values"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
@@ -64,6 +65,32 @@ func (view *TilesView) Render(lvl *level.Level) {
 
 func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 	imgui.LabelText("Selected Tiles", fmt.Sprintf("%d", len(view.model.selectedTiles.list)))
+
+	tileTypeUnifier := values.NewUnifier()
+	multiple := len(view.model.selectedTiles.list) > 0
+	for _, pos := range view.model.selectedTiles.list {
+		tile := lvl.Tile(int(pos.X.Tile()), int(pos.Y.Tile()))
+		tileTypeUnifier.Add(tile.Type)
+	}
+
+	var unifiedTileTypeString string
+	if tileTypeUnifier.IsUnique() {
+		unifiedTileTypeString = tileTypeUnifier.Unified().(level.TileType).String()
+	} else if multiple {
+		unifiedTileTypeString = "(multiple)"
+	}
+	if readOnly {
+		imgui.LabelText("Tile Type", unifiedTileTypeString)
+	} else {
+		if imgui.BeginCombo("Tile Type", unifiedTileTypeString) {
+			for _, tileType := range level.TileTypes() {
+				tileTypeString := tileType.String()
+
+				imgui.SelectableV(tileTypeString, tileTypeString == unifiedTileTypeString, 0, imgui.Vec2{})
+			}
+			imgui.EndCombo()
+		}
+	}
 }
 
 func (view *TilesView) editingAllowed(id int) bool {
