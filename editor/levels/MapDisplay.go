@@ -5,6 +5,7 @@ import (
 
 	mgl "github.com/go-gl/mathgl/mgl32"
 
+	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ui/input"
@@ -18,19 +19,25 @@ type MapDisplay struct {
 	camera   *LimitedCamera
 	guiScale float32
 
-	background *BackgroundGrid
-	mapGrid    *MapGrid
+	eventListener event.Listener
+
+	background  *BackgroundGrid
+	mapGrid     *MapGrid
+	highlighter *Highlighter
 
 	moveCapture func(pixelX, pixelY float32)
+	mouseMoved  bool
 
 	positionPopupPos imgui.Vec2
 	positionValid    bool
 	positionX        level.Coordinate
 	positionY        level.Coordinate
+
+	selectedTiles tileCoordinates
 }
 
 // NewMapDisplay returns a new instance.
-func NewMapDisplay(gl opengl.OpenGL, guiScale float32) *MapDisplay {
+func NewMapDisplay(gl opengl.OpenGL, guiScale float32, eventListener event.Listener, eventRegistry event.Registry) *MapDisplay {
 	tilesPerMapSide := float32(64)
 
 	tileBaseLength := fineCoordinatesPerTileSide
@@ -45,17 +52,21 @@ func NewMapDisplay(gl opengl.OpenGL, guiScale float32) *MapDisplay {
 			OpenGL:           gl,
 			ProjectionMatrix: mgl.Ident4(),
 		},
-		camera:      NewLimitedCamera(zoomLevelMin, zoomLevelMax, -tileBaseHalf, camLimit),
-		guiScale:    guiScale,
-		moveCapture: func(float32, float32) {},
+		camera:        NewLimitedCamera(zoomLevelMin, zoomLevelMax, -tileBaseHalf, camLimit),
+		guiScale:      guiScale,
+		eventListener: eventListener,
+		moveCapture:   func(float32, float32) {},
 	}
 	display.context.ViewMatrix = display.camera.ViewMatrix()
 	display.background = NewBackgroundGrid(&display.context)
 	display.mapGrid = NewMapGrid(&display.context)
+	display.highlighter = NewHighlighter(&display.context)
 
 	centerX, centerY := (tilesPerMapSide*tileBaseLength)/-2.0, (tilesPerMapSide*tileBaseLength)/-2.0
 	display.camera.ZoomAt(-3+zoomShift, centerX, centerY)
 	display.camera.MoveTo(centerX, centerY)
+
+	display.selectedTiles.registerAt(eventRegistry)
 
 	return display
 }
@@ -64,6 +75,15 @@ func NewMapDisplay(gl opengl.OpenGL, guiScale float32) *MapDisplay {
 func (display *MapDisplay) Render(lvl *level.Level) {
 	display.background.Render()
 	display.mapGrid.Render(lvl)
+	display.highlighter.Render(display.selectedTiles.list, fineCoordinatesPerTileSide, [4]float32{1.0, 1.0, 1.0, 0.3})
+	if display.positionValid {
+		tilePos := MapPosition{
+			X: level.CoordinateAt(display.positionX.Tile(), 128),
+			Y: level.CoordinateAt(display.positionY.Tile(), 128),
+		}
+		display.highlighter.Render([]MapPosition{tilePos}, fineCoordinatesPerTileSide, [4]float32{1.0, 1.0, 1.0, 0.1})
+	}
+
 	display.renderPositionOverlay(lvl)
 }
 
@@ -114,39 +134,51 @@ func (display *MapDisplay) unprojectPixel(pixelX, pixelY float32) (x, y float32)
 
 // MouseButtonDown must be called when a button was pressed.
 func (display *MapDisplay) MouseButtonDown(mouseX, mouseY float32, button uint32) {
+	display.updateMouseWorldPosition(mouseX, mouseY)
 	if button == input.MousePrimary {
 		lastPixelX, lastPixelY := mouseX, mouseY
 
+		display.mouseMoved = false
 		display.moveCapture = func(pixelX, pixelY float32) {
 			lastWorldX, lastWorldY := display.unprojectPixel(lastPixelX, lastPixelY)
 			worldX, worldY := display.unprojectPixel(pixelX, pixelY)
 
 			display.camera.MoveBy(worldX-lastWorldX, worldY-lastWorldY)
 			lastPixelX, lastPixelY = pixelX, pixelY
+			display.mouseMoved = true
 		}
 	}
 }
 
 // MouseButtonUp must be called when a button was released.
-func (display *MapDisplay) MouseButtonUp(mouseX, mouseY float32, button uint32) {
+func (display *MapDisplay) MouseButtonUp(mouseX, mouseY float32, button uint32, modifier input.Modifier) {
+	display.updateMouseWorldPosition(mouseX, mouseY)
 	if button == input.MousePrimary {
 		display.moveCapture = func(float32, float32) {}
+		if !display.mouseMoved && display.positionValid {
+			tilePos := MapPosition{
+				X: level.CoordinateAt(display.positionX.Tile(), 128),
+				Y: level.CoordinateAt(display.positionY.Tile(), 128),
+			}
+			if modifier.Has(input.ModControl) {
+				wasSelected := display.selectedTiles.contains(tilePos)
+				if wasSelected {
+					display.eventListener.Event(TileSelectionRemoveEvent{tiles: []MapPosition{tilePos}})
+				} else {
+					display.eventListener.Event(TileSelectionAddEvent{tiles: []MapPosition{tilePos}})
+				}
+			} else if modifier.Has(input.ModShift) && (len(display.selectedTiles.list) > 0) {
+				// TODO: area selection from first entry in list
+			} else {
+				display.eventListener.Event(TileSelectionSetEvent{tiles: []MapPosition{tilePos}})
+			}
+		}
 	}
 }
 
 // MouseMoved must be called for a mouse move.
 func (display *MapDisplay) MouseMoved(mouseX, mouseY float32) {
-	{
-		worldX, worldY := display.unprojectPixel(mouseX, mouseY)
-
-		display.positionValid = (worldX >= 0.0) && (worldX < (64.0 * fineCoordinatesPerTileSide)) &&
-			(worldY >= 0.0) && (worldY < (64.0 * fineCoordinatesPerTileSide))
-		if display.positionValid {
-			display.positionX = level.Coordinate(worldX + 0.5)
-			display.positionY = level.Coordinate(worldY + 0.5)
-		}
-	}
-
+	display.updateMouseWorldPosition(mouseX, mouseY)
 	display.moveCapture(mouseX, mouseY)
 }
 
@@ -159,5 +191,16 @@ func (display *MapDisplay) MouseScrolled(mouseX, mouseY float32, deltaX, deltaY 
 	}
 	if deltaY > 0 {
 		display.camera.ZoomAt(0.5, worldX, worldY)
+	}
+}
+
+func (display *MapDisplay) updateMouseWorldPosition(mouseX, mouseY float32) {
+	worldX, worldY := display.unprojectPixel(mouseX, mouseY)
+
+	display.positionValid = (worldX >= 0.0) && (worldX < (64.0 * fineCoordinatesPerTileSide)) &&
+		(worldY >= 0.0) && (worldY < (64.0 * fineCoordinatesPerTileSide))
+	if display.positionValid {
+		display.positionX = level.Coordinate(worldX + 0.5)
+		display.positionY = level.Coordinate(worldY + 0.5)
 	}
 }

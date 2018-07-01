@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/inkyblackness/hacked/editor/cmd"
+	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
@@ -24,13 +25,14 @@ type TilesView struct {
 }
 
 // NewTilesView returns a new instance.
-func NewTilesView(mod *model.Mod, guiScale float32, commander cmd.Commander) *TilesView {
+func NewTilesView(mod *model.Mod, guiScale float32, commander cmd.Commander, eventRegistry event.Registry) *TilesView {
 	view := &TilesView{
 		mod:       mod,
 		guiScale:  guiScale,
 		commander: commander,
 		model:     freshTilesViewModel(),
 	}
+	view.model.selectedTiles.registerAt(eventRegistry)
 	return view
 }
 
@@ -61,7 +63,7 @@ func (view *TilesView) Render(lvl *level.Level) {
 }
 
 func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
-	imgui.LabelText("Selected Tiles", fmt.Sprintf("%d", len(view.model.selectedTiles)))
+	imgui.LabelText("Selected Tiles", fmt.Sprintf("%d", len(view.model.selectedTiles.list)))
 }
 
 func (view *TilesView) editingAllowed(id int) bool {

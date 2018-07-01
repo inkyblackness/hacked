@@ -73,6 +73,7 @@ func (app *Application) InitializeWindow(window opengl.Window) (err error) {
 	app.clipboard.window = window
 	app.gl = window.OpenGL()
 
+	app.initSignalling()
 	app.initWindowCallbacks()
 	app.initOpenGL()
 	err = app.initGui()
@@ -156,7 +157,7 @@ func (app *Application) initGui() (err error) {
 	}
 	app.initGuiStyle()
 
-	app.mapDisplay = levels.NewMapDisplay(app.gl, app.GuiScale)
+	app.mapDisplay = levels.NewMapDisplay(app.gl, app.GuiScale, &app.eventQueue, app.eventDispatcher)
 
 	return
 }
@@ -240,7 +241,7 @@ func (app *Application) onMouseButtonDown(buttonMask uint32, modifier input.Modi
 
 func (app *Application) onMouseButtonUp(buttonMask uint32, modifier input.Modifier) {
 	if !app.guiContext.IsUsingMouse() {
-		app.mapDisplay.MouseButtonUp(app.lastMouseX, app.lastMouseY, buttonMask)
+		app.mapDisplay.MouseButtonUp(app.lastMouseX, app.lastMouseY, buttonMask, modifier)
 	}
 	app.reportButtonChange(buttonMask, false)
 }
@@ -313,9 +314,12 @@ func (app *Application) initGuiStyle() {
 	style.SetColor(imgui.StyleColorSeparatorActive, colorTripleLight(1.0))
 }
 
-func (app *Application) initModel() {
+func (app *Application) initSignalling() {
 	app.eventDispatcher = event.NewDispatcher()
 	app.cmdStack = new(cmd.Stack)
+}
+
+func (app *Application) initModel() {
 	app.mod = model.NewMod(app.resourcesChanged, app.modReset)
 
 	app.cp = text.DefaultCodepage()
@@ -330,8 +334,8 @@ func (app *Application) initModel() {
 func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) {
 	app.textLineCache.InvalidateResources(modifiedIDs)
 	app.textPageCache.InvalidateResources(modifiedIDs)
-	for _, level := range app.levels {
-		level.InvalidateResources(modifiedIDs)
+	for _, lvl := range app.levels {
+		lvl.InvalidateResources(modifiedIDs)
 	}
 }
 
@@ -343,7 +347,7 @@ func (app *Application) initView() {
 	app.projectView = project.NewView(app.mod, app.GuiScale, app)
 	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)
 	app.levelControlView = levels.NewControlView(app.GuiScale)
-	app.levelTilesView = levels.NewTilesView(app.mod, app.GuiScale, app)
+	app.levelTilesView = levels.NewTilesView(app.mod, app.GuiScale, app, app.eventDispatcher)
 	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 }

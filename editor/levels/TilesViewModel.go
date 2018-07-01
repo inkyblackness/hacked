@@ -1,12 +1,7 @@
 package levels
 
-type tileCoordinate struct {
-	x int
-	y int
-}
-
 type tilesViewModel struct {
-	selectedTiles []tileCoordinate
+	selectedTiles tileCoordinates
 
 	restoreFocus bool
 	windowOpen   bool
