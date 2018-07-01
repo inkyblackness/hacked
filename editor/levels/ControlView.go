@@ -9,14 +9,14 @@ import (
 type ControlView struct {
 	guiScale float32
 
-	model viewModel
+	model controlViewModel
 }
 
 // NewControlView returns a new instance.
 func NewControlView(guiScale float32) *ControlView {
 	view := &ControlView{
 		guiScale: guiScale,
-		model:    freshViewModel(),
+		model:    freshControlViewModel(),
 	}
 	return view
 }
