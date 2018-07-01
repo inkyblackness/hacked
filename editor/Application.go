@@ -123,10 +123,11 @@ func (app *Application) render() {
 	app.projectView.Render()
 	app.archiveView.Render()
 	app.levelControlView.Render()
-	app.levelTilesView.Render()
+	activeLevel := app.levels[app.levelControlView.SelectedLevel()]
+	app.levelTilesView.Render(activeLevel)
 	app.textsView.Render()
 
-	app.mapDisplay.Render(app.levels[app.levelControlView.SelectedLevel()])
+	app.mapDisplay.Render(activeLevel)
 
 	// imgui.ShowDemoWindow(nil)
 
@@ -342,7 +343,7 @@ func (app *Application) initView() {
 	app.projectView = project.NewView(app.mod, app.GuiScale, app)
 	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)
 	app.levelControlView = levels.NewControlView(app.GuiScale)
-	app.levelTilesView = levels.NewTilesView(app.GuiScale)
+	app.levelTilesView = levels.NewTilesView(app.mod, app.GuiScale, app)
 	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 }

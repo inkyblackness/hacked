@@ -1,18 +1,35 @@
 package levels
 
-import "github.com/inkyblackness/imgui-go"
+import (
+	"fmt"
+
+	"github.com/inkyblackness/hacked/editor/cmd"
+	"github.com/inkyblackness/hacked/editor/model"
+	"github.com/inkyblackness/hacked/ss1/content/archive"
+	"github.com/inkyblackness/hacked/ss1/content/archive/level"
+	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
+	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world/ids"
+	"github.com/inkyblackness/imgui-go"
+)
 
 // TilesView is for tile properties.
 type TilesView struct {
-	guiScale float32
-	model    tilesViewModel
+	mod *model.Mod
+
+	guiScale  float32
+	commander cmd.Commander
+
+	model tilesViewModel
 }
 
 // NewTilesView returns a new instance.
-func NewTilesView(guiScale float32) *TilesView {
+func NewTilesView(mod *model.Mod, guiScale float32, commander cmd.Commander) *TilesView {
 	view := &TilesView{
-		guiScale: guiScale,
-		model:    freshTilesViewModel(),
+		mod:       mod,
+		guiScale:  guiScale,
+		commander: commander,
+		model:     freshTilesViewModel(),
 	}
 	return view
 }
@@ -23,7 +40,7 @@ func (view *TilesView) WindowOpen() *bool {
 }
 
 // Render renders the view.
-func (view *TilesView) Render() {
+func (view *TilesView) Render(lvl *level.Level) {
 	if view.model.restoreFocus {
 		imgui.SetNextWindowFocus()
 		view.model.restoreFocus = false
@@ -31,13 +48,26 @@ func (view *TilesView) Render() {
 	}
 	if view.model.windowOpen {
 		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 500 * view.guiScale}, imgui.ConditionOnce)
-		if imgui.BeginV("Level Tiles", view.WindowOpen(), 0) {
-			view.renderContent()
+		title := "Level Tiles"
+		readOnly := !view.editingAllowed(lvl.ID())
+		if readOnly {
+			title += " (read-only)"
+		}
+		if imgui.BeginV(title+"###Level Tiles", view.WindowOpen(), 0) {
+			view.renderContent(lvl, readOnly)
 		}
 		imgui.End()
 	}
 }
 
-func (view *TilesView) renderContent() {
+func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
+	imgui.LabelText("Selected Tiles", fmt.Sprintf("%d", len(view.model.selectedTiles)))
+}
 
+func (view *TilesView) editingAllowed(id int) bool {
+	gameStateData := view.mod.ModifiedBlocks(resource.LangAny, ids.GameState)
+	isSavegame := (len(gameStateData) == 1) && (len(gameStateData[0]) == archive.GameStateSize) && (gameStateData[0][0x009C] > 0)
+	moddedLevel := len(view.mod.ModifiedBlocks(resource.LangAny, ids.LevelResourcesStart.Plus(lvlids.PerLevel*id+lvlids.FirstUsed))) > 0
+
+	return moddedLevel && !isSavegame
 }

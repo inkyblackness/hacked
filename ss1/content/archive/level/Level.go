@@ -42,6 +42,11 @@ func NewLevel(resourceBase resource.ID, id int, localizer resource.Localizer) *L
 	return lvl
 }
 
+// ID returns the identifier of the level.
+func (lvl Level) ID() int {
+	return lvl.id
+}
+
 // InvalidateResources resets all internally cached data.
 func (lvl *Level) InvalidateResources(ids []resource.ID) {
 	for _, id := range ids {
