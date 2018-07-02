@@ -50,6 +50,18 @@ func (trans *ModTransaction) SetResourceBlock(lang resource.Language, id resourc
 	trans.modifiedIDs.Add(id)
 }
 
+// PatchResourceBlock modifies an existing block.
+// This modification assumes the block already exists and can take the given data.
+func (trans *ModTransaction) PatchResourceBlock(lang resource.Language, id resource.ID, index int, offset int, data []byte) {
+	trans.actions = append(trans.actions, func(mod *Mod) {
+		res := mod.ensureResource(lang, id)
+		if res.isBlockIndexValid(index) && len(res.blocks[index]) >= (offset+len(data)) {
+			copy(res.blocks[index][offset:], data)
+		}
+	})
+	trans.modifiedIDs.Add(id)
+}
+
 // SetResourceBlocks sets the entire list of block data of a resource.
 // This method is primarily meant for compound non-list resources (e.g. text pages).
 func (trans *ModTransaction) SetResourceBlocks(lang resource.Language, id resource.ID, data [][]byte) {

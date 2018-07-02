@@ -71,7 +71,7 @@ func (mod Mod) ModifiedBlock(lang resource.Language, id resource.ID, index int) 
 	if res == nil {
 		return
 	}
-	return res.blocks[index]
+	return mod.blockCopy(res.blocks[index])
 }
 
 // ModifiedBlocks returns all blocks of the modified resource.
@@ -82,9 +82,15 @@ func (mod Mod) ModifiedBlocks(lang resource.Language, id resource.ID) [][]byte {
 	}
 	data := make([][]byte, res.blockCount)
 	for index := 0; index < res.blockCount; index++ {
-		data[index] = res.blocks[index]
+		data[index] = mod.blockCopy(res.blocks[index])
 	}
 	return data
+}
+
+func (mod Mod) blockCopy(data []byte) []byte {
+	result := make([]byte, len(data))
+	copy(result, data)
+	return result
 }
 
 // Filter returns a list of resources that match the given parameters.

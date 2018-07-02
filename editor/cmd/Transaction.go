@@ -20,6 +20,10 @@ type Transaction interface {
 	// If the resource is a compound list, then the underlying data will become visible again.
 	SetResourceBlock(lang resource.Language, id resource.ID, index int, data []byte)
 
+	// PatchResourceBlock modifies an existing block.
+	// This modification assumes the block already exists and can take the given data.
+	PatchResourceBlock(lang resource.Language, id resource.ID, index int, offset int, data []byte)
+
 	// SetResourceBlocks sets the entire list of block data of a resource.
 	// This method is primarily meant for compound non-list resources (e.g. text pages).
 	SetResourceBlocks(lang resource.Language, id resource.ID, data [][]byte)

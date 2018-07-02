@@ -1,6 +1,7 @@
 package level
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"io"
@@ -73,6 +74,26 @@ func (lvl *Level) MapGridInfo(x, y int) (TileType, TileSlopeControl, WallHeights
 		return TileTypeSolid, TileSlopeControlCeilingInverted, WallHeights{}
 	}
 	return tile.Type, tile.Flags.SlopeControl(), *lvl.wallHeightsMap.Tile(x, y)
+}
+
+// EncodeState returns a subset of encoded level data, which only includes
+// data that is loaded (modified) by the level structure.
+// For any data block that is not relevant, a zero length slice is returned.
+func (lvl *Level) EncodeState() [lvlids.PerLevel][]byte {
+	var levelData [lvlids.PerLevel][]byte
+
+	levelData[lvlids.Information] = encode(&lvl.baseInfo)
+
+	levelData[lvlids.TileMap] = encode(lvl.tileMap)
+
+	return levelData
+}
+
+func (lvl Level) encode(data interface{}) []byte {
+	buf := bytes.NewBuffer(nil)
+	encoder := serial.NewEncoder(buf)
+	encoder.Code(data)
+	return buf.Bytes()
 }
 
 func (lvl *Level) onLevelResourceDataChanged(id int) {
