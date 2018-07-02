@@ -15,9 +15,16 @@ func Compress(writer io.Writer, data []byte, reference []byte) {
 		return 0x00
 	}
 
-	countSameBytes := func(from int, value byte) int {
+	countIdenticalBytes := func(from int) int {
 		index := from
-		for index < end && data[index] == value {
+		for (index < end) && (data[index] == ref(index)) {
+			index++
+		}
+		return index - from
+	}
+	countConstantBytes := func(from int, value byte) int {
+		index := from
+		for (index < end) && (data[index] == value) {
 			index++
 		}
 		return index - from
@@ -26,32 +33,36 @@ func Compress(writer io.Writer, data []byte, reference []byte) {
 	{
 		trailingSkip := 0
 
-		for temp := end - 1; temp >= 0 && data[temp] == ref(temp); temp-- {
+		for temp := end - 1; (temp >= 0) && (data[temp] == ref(temp)); temp-- {
 			trailingSkip++
 		}
 		end -= trailingSkip % 0x7FFF
 	}
 	start := 0
 	for start < end {
-		startValue := data[start]
-		sameByteCount := countSameBytes(start, startValue)
+		identicalByteCount := countIdenticalBytes(start)
+		constByteCount := countConstantBytes(start, data[start])
 
-		if startValue == 0 {
-			writeZero(writer, sameByteCount)
-			start += sameByteCount
-		} else if sameByteCount > 3 {
-			writeConstant(writer, sameByteCount, startValue)
-			start += sameByteCount
+		if identicalByteCount > 3 {
+			skipBytes(writer, identicalByteCount)
+			start += identicalByteCount
+		} else if constByteCount > 3 {
+			writeConstant(writer, constByteCount, data[start])
+			start += constByteCount
 		} else {
 			diffByteCount := 0
 			abort := false
 
 			for (start+diffByteCount) < end && !abort {
-				startValue = data[start+diffByteCount]
-				temp := countSameBytes(start+diffByteCount, startValue)
+				nextIdenticalByteCount := countIdenticalBytes(start + diffByteCount)
+				nextConstByteCount := countConstantBytes(start+diffByteCount, data[start+diffByteCount])
 
-				if startValue != 0 && temp < 4 {
-					diffByteCount += temp
+				if nextIdenticalByteCount < 4 && nextConstByteCount < 4 {
+					if nextIdenticalByteCount > nextConstByteCount {
+						diffByteCount += nextIdenticalByteCount
+					} else {
+						diffByteCount += nextConstByteCount
+					}
 				} else {
 					abort = true
 				}
@@ -68,20 +79,16 @@ func writeExtended(writer io.Writer, control uint16, extra ...byte) {
 	writer.Write(extra)
 }
 
-func writeZero(writer io.Writer, size int) {
+func skipBytes(writer io.Writer, size int) {
 	remain := size
 
 	for remain > 0 {
 		if remain < 0x80 {
 			writer.Write([]byte{byte(0x80 + remain)})
 			remain = 0
-		} else if remain < 0xFF {
-			writer.Write([]byte{0xFF})
-			remain -= 0x7F
 		} else {
 			lenControl := 0x7FFF
-
-			if lenControl > remain {
+			if remain < lenControl {
 				lenControl = remain
 			}
 			writeExtended(writer, uint16(lenControl))
@@ -100,7 +107,6 @@ func writeConstant(writer io.Writer, size int, value byte) {
 			start = size
 		} else {
 			lenControl := 0x3FFF
-
 			if remain < lenControl {
 				lenControl = remain
 			}
