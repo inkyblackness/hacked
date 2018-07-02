@@ -3,9 +3,17 @@ package rle
 import "io"
 
 // Compress compresses the given byte array into the given writer.
-func Compress(writer io.Writer, data []byte) {
+// The optional reference array is used as a delta basis. If provided, bytes will be skipped
+// where the data equals the reference.
+func Compress(writer io.Writer, data []byte, reference []byte) {
 	end := len(data)
-	start := 0
+	refLen := len(reference)
+	ref := func(index int) byte {
+		if index < refLen {
+			return reference[index]
+		}
+		return 0x00
+	}
 
 	countSameBytes := func(from int, value byte) int {
 		index := from
@@ -16,13 +24,14 @@ func Compress(writer io.Writer, data []byte) {
 	}
 
 	{
-		trailingZeroes := 0
+		trailingSkip := 0
 
-		for temp := end - 1; temp >= 0 && data[temp] == 0; temp-- {
-			trailingZeroes++
+		for temp := end - 1; temp >= 0 && data[temp] == ref(temp); temp-- {
+			trailingSkip++
 		}
-		end -= trailingZeroes % 0x7FFF
+		end -= trailingSkip % 0x7FFF
 	}
+	start := 0
 	for start < end {
 		startValue := data[start]
 		sameByteCount := countSameBytes(start, startValue)

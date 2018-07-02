@@ -2,14 +2,55 @@ package rle
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCompressEmptyArrayResultsInTerminator(t *testing.T) {
 	writer := bytes.NewBuffer(nil)
-	Compress(writer, nil)
+	Compress(writer, nil, nil)
 	assert.Equal(t, []byte{0x80, 0x00, 0x00}, writer.Bytes())
+}
+
+func TestCompressOfZeroBytesLong(t *testing.T) {
+	writer := bytes.NewBuffer(nil)
+	input := make([]byte, 1000)
+	input[len(input)-1] = 1
+	Compress(writer, input, nil)
+	assert.Equal(t, []byte{0x80, 0xE7, 0x03, 0x01, 0x01, 0x80, 0x0, 0x0}, writer.Bytes())
+}
+
+func TestCompressOfEqualBytesLong(t *testing.T) {
+	writer := bytes.NewBuffer(nil)
+	input := make([]byte, 1000)
+	for i := 0; i < len(input); i++ {
+		input[i] = 0xAA
+	}
+	input[len(input)-1] = 1
+	Compress(writer, input, nil)
+	assert.Equal(t, []byte{0x80, 0xE7, 0xC3, 0xAA, 0x01, 0x01, 0x80, 0x0, 0x0}, writer.Bytes())
+}
+
+func TestCompressOfEqualBytesShort(t *testing.T) {
+	writer := bytes.NewBuffer(nil)
+	input := make([]byte, 40)
+	for i := 0; i < len(input); i++ {
+		input[i] = 0xAA
+	}
+	input[len(input)-1] = 1
+	Compress(writer, input, nil)
+	assert.Equal(t, []byte{0x00, 0x27, 0xAA, 0x01, 0x01, 0x80, 0x0, 0x0}, writer.Bytes())
+}
+
+func TestCompressOfRandomBytesShort(t *testing.T) {
+	writer := bytes.NewBuffer(nil)
+	input := make([]byte, 10)
+	for i := 0; i < len(input); i++ {
+		input[i] = byte(i)
+	}
+	Compress(writer, input, nil)
+	assert.Equal(t, []byte{0x81, 0x09, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x80, 0x00, 0x00}, writer.Bytes())
 }
 
 func TestCompressWriteZeroOfLessThan80(t *testing.T) {
