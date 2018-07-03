@@ -12,6 +12,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/serial/rle"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/imgui-go"
 )
@@ -129,14 +130,13 @@ func (view *TilesView) changeTiles(lvl *level.Level, positions []MapPosition, mo
 			resourceID := ids.LevelResourcesStart.Plus(lvlids.PerLevel*lvl.ID() + id)
 			oldData := view.mod.ModifiedBlock(resource.LangAny, resourceID, 0)
 			if !bytes.Equal(oldData, newData) {
-				command.newData = append(command.newData, patchData{
-					id:   resourceID,
-					data: newData,
-				})
-				command.oldData = append(command.oldData, patchData{
-					id:   resourceID,
-					data: oldData,
-				})
+				forwardPatch := bytes.NewBuffer(nil)
+				rle.Compress(forwardPatch, newData, oldData)
+				command.forwardPatches = append(command.forwardPatches, patchEntry{resourceID, forwardPatch.Bytes()})
+
+				reversePatch := bytes.NewBuffer(nil)
+				rle.Compress(reversePatch, oldData, newData)
+				command.reversePatches = append(command.reversePatches, patchEntry{resourceID, reversePatch.Bytes()})
 			}
 		}
 	}

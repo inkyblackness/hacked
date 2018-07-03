@@ -1,7 +1,10 @@
 package model
 
 import (
+	"bytes"
+
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/serial/rle"
 )
 
 type modAction func(mod *Mod)
@@ -51,12 +54,13 @@ func (trans *ModTransaction) SetResourceBlock(lang resource.Language, id resourc
 }
 
 // PatchResourceBlock modifies an existing block.
-// This modification assumes the block already exists and can take the given data.
-func (trans *ModTransaction) PatchResourceBlock(lang resource.Language, id resource.ID, index int, offset int, data []byte) {
+// This modification assumes the block already exists and can take the given patch data.
+// The patch data is expected to be produced by rle.Compress().
+func (trans *ModTransaction) PatchResourceBlock(lang resource.Language, id resource.ID, index int, patch []byte) {
 	trans.actions = append(trans.actions, func(mod *Mod) {
 		res := mod.ensureResource(lang, id)
-		if res.isBlockIndexValid(index) && len(res.blocks[index]) >= (offset+len(data)) {
-			copy(res.blocks[index][offset:], data)
+		if res.isBlockIndexValid(index) {
+			rle.Decompress(bytes.NewReader(patch), res.blocks[index])
 		}
 	})
 	trans.modifiedIDs.Add(id)

@@ -7,32 +7,29 @@ import (
 
 type stateRestorer func()
 
-type patchData struct {
-	id         resource.ID
-	blockIndex int
-
-	dataOffset int
-	data       []byte
+type patchEntry struct {
+	id   resource.ID
+	data []byte
 }
 
 type patchLevelDataCommand struct {
 	restoreState stateRestorer
 
-	oldData []patchData
-	newData []patchData
+	forwardPatches []patchEntry
+	reversePatches []patchEntry
 }
 
 func (cmd patchLevelDataCommand) Do(trans cmd.Transaction) error {
-	return cmd.perform(trans, cmd.newData)
+	return cmd.perform(trans, cmd.forwardPatches)
 }
 
 func (cmd patchLevelDataCommand) Undo(trans cmd.Transaction) error {
-	return cmd.perform(trans, cmd.oldData)
+	return cmd.perform(trans, cmd.reversePatches)
 }
 
-func (cmd patchLevelDataCommand) perform(trans cmd.Transaction, patches []patchData) error {
+func (cmd patchLevelDataCommand) perform(trans cmd.Transaction, patches []patchEntry) error {
 	for _, patch := range patches {
-		trans.PatchResourceBlock(resource.LangAny, patch.id, patch.blockIndex, patch.dataOffset, patch.data)
+		trans.PatchResourceBlock(resource.LangAny, patch.id, 0, patch.data)
 	}
 	cmd.restoreState()
 	return nil
