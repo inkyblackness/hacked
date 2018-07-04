@@ -13,7 +13,6 @@ var shortcuts = []shortcut{
 	{"x", ModControl, KeyCut},
 	{"v", ModControl, KeyPaste},
 	{"z", ModControl, KeyUndo},
-	{"Z", ModControl.With(ModShift), KeyRedo},
 	{"z", ModControl.With(ModShift), KeyRedo},
 	{"y", ModControl, KeyRedo}}
 
