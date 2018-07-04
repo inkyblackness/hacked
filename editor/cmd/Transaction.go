@@ -22,8 +22,8 @@ type Transaction interface {
 
 	// PatchResourceBlock modifies an existing block.
 	// This modification assumes the block already exists and can take the given patch data.
-	// The patch data is expected to be produced by rle.Compress().
-	PatchResourceBlock(lang resource.Language, id resource.ID, index int, patch []byte)
+	// The patch data is expected to be produced by rle.Compress(). (see also: Mod.CreateBlockPatch)
+	PatchResourceBlock(lang resource.Language, id resource.ID, index int, expectedLength int, patch []byte)
 
 	// SetResourceBlocks sets the entire list of block data of a resource.
 	// This method is primarily meant for compound non-list resources (e.g. text pages).

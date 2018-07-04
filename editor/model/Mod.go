@@ -1,9 +1,13 @@
 package model
 
 import (
+	"bytes"
+	"errors"
+	"fmt"
 	"math"
 
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/serial/rle"
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 )
@@ -62,6 +66,45 @@ func (mod Mod) ModifiedResources() LocalizedResources {
 // Returns nil if the resource does not exist.
 func (mod Mod) ModifiedResource(lang resource.Language, id resource.ID) resource.View {
 	return mod.localizedResources[lang][id]
+}
+
+// CreateBlockPatch creates delta information for a block witch static data length.
+// The returned patch structure contains details for both modifying the current state to be equal the new state,
+// as well as the reversal delta. These deltas are calculated using the rle compression package.
+// The returned boolean indicates whether the data differs. This can be used to detect whether the patch is necessary.
+// An error is returned if the resource or the block do not exist, or if the length of newData does not match that of the block.
+//
+// If no error is returned, both the patch and the boolean provide valid information - even if the data is equal.
+func (mod Mod) CreateBlockPatch(lang resource.Language, id resource.ID, index int, newData []byte) (BlockPatch, bool, error) {
+	patch := BlockPatch{
+		ID:          id,
+		BlockIndex:  -1,
+		BlockLength: 0,
+	}
+	res := mod.localizedResources[lang][id]
+	if res == nil {
+		return patch, false, errors.New("resource unknown")
+	}
+	if (index < 0) || (index >= res.BlockCount()) {
+		return patch, false, errors.New("block index wrong")
+	}
+	oldData := res.blocks[index]
+	if len(oldData) != len(newData) {
+		return patch, false, fmt.Errorf("block length mismatch: current=%d, newData=%d", len(oldData), len(newData))
+	}
+
+	forwardData := bytes.NewBuffer(nil)
+	rle.Compress(forwardData, newData, oldData)
+	patch.ForwardData = forwardData.Bytes()
+
+	reverseData := bytes.NewBuffer(nil)
+	rle.Compress(reverseData, oldData, newData)
+	patch.ReverseData = reverseData.Bytes()
+
+	patch.BlockIndex = index
+	patch.BlockLength = len(oldData)
+
+	return patch, !bytes.Equal(oldData, newData), nil
 }
 
 // ModifiedBlock retrieves the specific block identified by given parameter.

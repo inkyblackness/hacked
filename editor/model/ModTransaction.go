@@ -56,10 +56,10 @@ func (trans *ModTransaction) SetResourceBlock(lang resource.Language, id resourc
 // PatchResourceBlock modifies an existing block.
 // This modification assumes the block already exists and can take the given patch data.
 // The patch data is expected to be produced by rle.Compress().
-func (trans *ModTransaction) PatchResourceBlock(lang resource.Language, id resource.ID, index int, patch []byte) {
+func (trans *ModTransaction) PatchResourceBlock(lang resource.Language, id resource.ID, index int, expectedLength int, patch []byte) {
 	trans.actions = append(trans.actions, func(mod *Mod) {
 		res := mod.ensureResource(lang, id)
-		if res.isBlockIndexValid(index) {
+		if res.isBlockIndexValid(index) && (len(res.blocks[index]) == expectedLength) {
 			rle.Decompress(bytes.NewReader(patch), res.blocks[index])
 		}
 	})

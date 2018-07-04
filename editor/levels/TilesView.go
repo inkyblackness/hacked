@@ -1,7 +1,6 @@
 package levels
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/inkyblackness/hacked/editor/cmd"
@@ -12,7 +11,6 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
 	"github.com/inkyblackness/hacked/ss1/resource"
-	"github.com/inkyblackness/hacked/ss1/serial/rle"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/imgui-go"
 )
@@ -128,15 +126,12 @@ func (view *TilesView) changeTiles(lvl *level.Level, positions []MapPosition, mo
 	for id, newData := range newDataSet {
 		if len(newData) > 0 {
 			resourceID := ids.LevelResourcesStart.Plus(lvlids.PerLevel*lvl.ID() + id)
-			oldData := view.mod.ModifiedBlock(resource.LangAny, resourceID, 0)
-			if !bytes.Equal(oldData, newData) {
-				forwardPatch := bytes.NewBuffer(nil)
-				rle.Compress(forwardPatch, newData, oldData)
-				command.forwardPatches = append(command.forwardPatches, patchEntry{resourceID, forwardPatch.Bytes()})
-
-				reversePatch := bytes.NewBuffer(nil)
-				rle.Compress(reversePatch, oldData, newData)
-				command.reversePatches = append(command.reversePatches, patchEntry{resourceID, reversePatch.Bytes()})
+			patch, changed, err := view.mod.CreateBlockPatch(resource.LangAny, resourceID, 0, newData)
+			if err != nil {
+				fmt.Printf("err: %v\n", err)
+				// TODO how to handle this? We're not expecting this, so crash and burn?
+			} else if changed {
+				command.patches = append(command.patches, patch)
 			}
 		}
 	}
