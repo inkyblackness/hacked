@@ -62,6 +62,11 @@ func (lvl Level) Size() (x, y int, z HeightShift) {
 	return int(lvl.baseInfo.XSize), int(lvl.baseInfo.YSize), lvl.baseInfo.ZShift
 }
 
+// IsCyberspace returns true if the level describes a cyberspace.
+func (lvl Level) IsCyberspace() bool {
+	return lvl.baseInfo.Cyberspace != 0
+}
+
 // Tile returns the tile entry at given position.
 func (lvl *Level) Tile(x, y int) *TileMapEntry {
 	return lvl.tileMap.Tile(x, y)
