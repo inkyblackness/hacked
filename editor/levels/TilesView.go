@@ -72,6 +72,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 	floorHeightUnifier := values.NewUnifier()
 	ceilingHeightUnifier := values.NewUnifier()
 	slopeHeightUnifier := values.NewUnifier()
+	slopeControlUnifier := values.NewUnifier()
 	multiple := len(view.model.selectedTiles.list) > 0
 	for _, pos := range view.model.selectedTiles.list {
 		tile := lvl.Tile(int(pos.X.Tile()), int(pos.Y.Tile()))
@@ -79,29 +80,17 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 		floorHeightUnifier.Add(tile.Floor.AbsoluteHeight())
 		ceilingHeightUnifier.Add(tile.Ceiling.AbsoluteHeight())
 		slopeHeightUnifier.Add(tile.SlopeHeight)
+		slopeControlUnifier.Add(tile.Flags.SlopeControl())
 	}
 
-	var selectedTileTypeString string
-	if tileTypeUnifier.IsUnique() {
-		selectedTileTypeString = tileTypeUnifier.Unified().(level.TileType).String()
-	} else if multiple {
-		selectedTileTypeString = "(multiple)"
-	}
-	if readOnly {
-		imgui.LabelText("Tile Type", selectedTileTypeString)
-	} else {
-		if imgui.BeginCombo("Tile Type", selectedTileTypeString) {
-			for _, tileType := range level.TileTypes() {
-				tileTypeString := tileType.String()
-
-				if imgui.SelectableV(tileTypeString, tileTypeString == selectedTileTypeString, 0, imgui.Vec2{}) {
-					view.requestSetTileType(lvl, view.model.selectedTiles.list, tileType)
-				}
-			}
-			imgui.EndCombo()
-		}
-	}
-
+	tileTypes := level.TileTypes()
+	view.renderCombo(readOnly, multiple, "Tile Type", tileTypeUnifier,
+		func(u values.Unifier) int { return int(u.Unified().(level.TileType)) },
+		func(value int) string { return tileTypes[value].String() },
+		len(tileTypes),
+		func(newValue int) {
+			view.requestSetTileType(lvl, view.model.selectedTiles.list, level.TileType(newValue))
+		})
 	view.renderSliderInt(readOnly, multiple, "Floor Height", floorHeightUnifier,
 		func(u values.Unifier) int { return int(u.Unified().(level.TileHeightUnit)) },
 		func(value int) string { return "%d" },
@@ -123,6 +112,14 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 		func(newValue int) {
 			view.requestSetSlopeHeight(lvl, view.model.selectedTiles.list, level.TileHeightUnit(newValue))
 		})
+	slopeControls := level.TileSlopeControls()
+	view.renderCombo(readOnly, multiple, "Slope Control", slopeControlUnifier,
+		func(u values.Unifier) int { return int(u.Unified().(level.TileSlopeControl)) },
+		func(value int) string { return slopeControls[value].String() },
+		len(slopeControls),
+		func(newValue int) {
+			view.requestSetSlopeControl(lvl, view.model.selectedTiles.list, slopeControls[newValue])
+		})
 
 	imgui.PopItemWidth()
 }
@@ -143,6 +140,32 @@ func (view *TilesView) renderSliderInt(readOnly, multiple bool, label string, un
 	} else {
 		if gui.StepSliderIntV(label, &selectedValue, min, max, selectedString) {
 			changeHandler(selectedValue)
+		}
+	}
+}
+
+func (view *TilesView) renderCombo(readOnly, multiple bool, label string, unifier values.Unifier,
+	intConverter func(values.Unifier) int, formatter func(int) string, count int, changeHandler func(int)) {
+	var selectedString string
+	selectedIndex := -1
+	if unifier.IsUnique() {
+		selectedIndex = intConverter(unifier)
+		selectedString = formatter(selectedIndex)
+	} else if multiple {
+		selectedString = "(multiple)"
+	}
+	if readOnly {
+		imgui.LabelText(label, selectedString)
+	} else {
+		if imgui.BeginCombo(label, selectedString) {
+			for i := 0; i < count; i++ {
+				entryString := formatter(i)
+
+				if imgui.SelectableV(entryString, i == selectedIndex, 0, imgui.Vec2{}) {
+					changeHandler(i)
+				}
+			}
+			imgui.EndCombo()
 		}
 	}
 }
@@ -178,6 +201,13 @@ func (view *TilesView) requestSetSlopeHeight(lvl *level.Level, positions []MapPo
 		tile.SlopeHeight = height
 	})
 }
+
+func (view *TilesView) requestSetSlopeControl(lvl *level.Level, positions []MapPosition, value level.TileSlopeControl) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.Flags = tile.Flags.WithSlopeControl(value)
+	})
+}
+
 func (view *TilesView) changeTiles(lvl *level.Level, positions []MapPosition, modifier func(*level.TileMapEntry)) {
 	for _, pos := range positions {
 		tile := lvl.Tile(int(pos.X.Tile()), int(pos.Y.Tile()))
