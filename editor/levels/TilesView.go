@@ -73,6 +73,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 	ceilingHeightUnifier := values.NewUnifier()
 	slopeHeightUnifier := values.NewUnifier()
 	slopeControlUnifier := values.NewUnifier()
+	musicIndexUnifier := values.NewUnifier()
 	multiple := len(view.model.selectedTiles.list) > 0
 	for _, pos := range view.model.selectedTiles.list {
 		tile := lvl.Tile(int(pos.X.Tile()), int(pos.Y.Tile()))
@@ -81,6 +82,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 		ceilingHeightUnifier.Add(tile.Ceiling.AbsoluteHeight())
 		slopeHeightUnifier.Add(tile.SlopeHeight)
 		slopeControlUnifier.Add(tile.Flags.SlopeControl())
+		musicIndexUnifier.Add(tile.Flags.MusicIndex())
 	}
 
 	tileTypes := level.TileTypes()
@@ -119,6 +121,13 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 		len(slopeControls),
 		func(newValue int) {
 			view.requestSetSlopeControl(lvl, view.model.selectedTiles.list, slopeControls[newValue])
+		})
+	view.renderSliderInt(readOnly, multiple, "Music Index", musicIndexUnifier,
+		func(u values.Unifier) int { return u.Unified().(int) },
+		func(value int) string { return "%d" },
+		0, 15,
+		func(newValue int) {
+			view.requestMusicIndex(lvl, view.model.selectedTiles.list, newValue)
 		})
 
 	imgui.PopItemWidth()
@@ -205,6 +214,12 @@ func (view *TilesView) requestSetSlopeHeight(lvl *level.Level, positions []MapPo
 func (view *TilesView) requestSetSlopeControl(lvl *level.Level, positions []MapPosition, value level.TileSlopeControl) {
 	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
 		tile.Flags = tile.Flags.WithSlopeControl(value)
+	})
+}
+
+func (view *TilesView) requestMusicIndex(lvl *level.Level, positions []MapPosition, value int) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.Flags = tile.Flags.WithMusicIndex(value)
 	})
 }
 

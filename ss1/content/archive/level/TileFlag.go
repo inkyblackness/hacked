@@ -5,6 +5,19 @@ import "fmt"
 // TileFlag describes simple properties of a map tile.
 type TileFlag uint32
 
+// MusicIndex returns the music identifier. Range: [0..15].
+func (flag TileFlag) MusicIndex() int {
+	return int((flag & 0x0000F000) >> 12)
+}
+
+// WithMusicIndex returns a new flag value with the given music index set. Values beyond allowed range are ignored.
+func (flag TileFlag) WithMusicIndex(value int) TileFlag {
+	if (value < 0) || (value > 15) {
+		return flag
+	}
+	return TileFlag(uint32(flag&^0x0000F000) | (uint32(value) << 12))
+}
+
 // SlopeControl returns the slope control as per flags.
 func (flag TileFlag) SlopeControl() TileSlopeControl {
 	return TileSlopeControl((flag & 0x00000C00) >> 10)
