@@ -75,13 +75,13 @@ func NewMapDisplay(gl opengl.OpenGL, guiScale float32, eventListener event.Liste
 func (display *MapDisplay) Render(lvl *level.Level) {
 	display.background.Render()
 	display.mapGrid.Render(lvl)
-	display.highlighter.Render(display.selectedTiles.list, fineCoordinatesPerTileSide, [4]float32{1.0, 1.0, 1.0, 0.3})
+	display.highlighter.Render(display.selectedTiles.list, fineCoordinatesPerTileSide, [4]float32{0.0, 0.8, 0.2, 0.5})
 	if display.positionValid {
 		tilePos := MapPosition{
 			X: level.CoordinateAt(display.positionX.Tile(), 128),
 			Y: level.CoordinateAt(display.positionY.Tile(), 128),
 		}
-		display.highlighter.Render([]MapPosition{tilePos}, fineCoordinatesPerTileSide, [4]float32{1.0, 1.0, 1.0, 0.1})
+		display.highlighter.Render([]MapPosition{tilePos}, fineCoordinatesPerTileSide, [4]float32{0.0, 0.2, 0.8, 0.3})
 	}
 
 	display.renderPositionOverlay(lvl)
