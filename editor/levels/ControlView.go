@@ -1,6 +1,9 @@
 package levels
 
 import (
+	"reflect"
+
+	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/imgui-go"
@@ -10,15 +13,20 @@ import (
 type ControlView struct {
 	guiScale float32
 
+	eventListener event.Listener
+
 	model controlViewModel
 }
 
 // NewControlView returns a new instance.
-func NewControlView(guiScale float32) *ControlView {
+func NewControlView(guiScale float32, eventListener event.Listener, eventRegistry event.Registry) *ControlView {
 	view := &ControlView{
-		guiScale: guiScale,
-		model:    freshControlViewModel(),
+		guiScale:      guiScale,
+		eventListener: eventListener,
+		model:         freshControlViewModel(),
 	}
+	var evt LevelSelectionSetEvent
+	eventRegistry.RegisterHandler(reflect.TypeOf(evt), view.onLevelSelectionSetEvent)
 	return view
 }
 
@@ -52,4 +60,8 @@ func (view *ControlView) renderContent() {
 	imgui.PushItemWidth(-100 * view.guiScale)
 	gui.StepSliderInt("Active Level", &view.model.selectedLevel, 0, archive.MaxLevels-1)
 	imgui.PopItemWidth()
+}
+
+func (view *ControlView) onLevelSelectionSetEvent(evt LevelSelectionSetEvent) {
+	view.model.selectedLevel = evt.id
 }

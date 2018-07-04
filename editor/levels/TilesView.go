@@ -67,13 +67,33 @@ func (view *TilesView) Render(lvl *level.Level) {
 }
 
 func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
-	imgui.PushItemWidth(-250 * view.guiScale)
+	isCyberspace := lvl.IsCyberspace()
 	tileTypeUnifier := values.NewUnifier()
 	floorHeightUnifier := values.NewUnifier()
 	ceilingHeightUnifier := values.NewUnifier()
 	slopeHeightUnifier := values.NewUnifier()
 	slopeControlUnifier := values.NewUnifier()
 	musicIndexUnifier := values.NewUnifier()
+
+	floorPaletteIndexUnifier := values.NewUnifier()
+	ceilingPaletteIndexUnifier := values.NewUnifier()
+	flightPullTypeUnifier := values.NewUnifier()
+	gameOfLightStateUnifier := values.NewUnifier()
+
+	floorTextureIndexUnifier := values.NewUnifier()
+	floorTextureRotationsUnifier := values.NewUnifier()
+	ceilingTextureIndexUnifier := values.NewUnifier()
+	ceilingTextureRotationsUnifier := values.NewUnifier()
+	wallTextureIndexUnifier := values.NewUnifier()
+	wallTextureOffsetUnifier := values.NewUnifier()
+	useAdjacentWallTextureUnifier := values.NewUnifier()
+	wallTexturePatternUnifier := values.NewUnifier()
+	floorLightUnifier := values.NewUnifier()
+	ceilingLightUnifier := values.NewUnifier()
+	deconstructedUnifier := values.NewUnifier()
+	floorHazardUnifier := values.NewUnifier()
+	ceilingHazardUnifier := values.NewUnifier()
+
 	multiple := len(view.model.selectedTiles.list) > 0
 	for _, pos := range view.model.selectedTiles.list {
 		tile := lvl.Tile(int(pos.X.Tile()), int(pos.Y.Tile()))
@@ -83,7 +103,30 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 		slopeHeightUnifier.Add(tile.SlopeHeight)
 		slopeControlUnifier.Add(tile.Flags.SlopeControl())
 		musicIndexUnifier.Add(tile.Flags.MusicIndex())
+		if isCyberspace {
+			floorPaletteIndexUnifier.Add(tile.TextureInfo.FloorPaletteIndex())
+			ceilingPaletteIndexUnifier.Add(tile.TextureInfo.CeilingPaletteIndex())
+			flightPullTypeUnifier.Add(tile.Flags.ForCyberspace().FlightPull())
+			gameOfLightStateUnifier.Add(tile.Flags.ForCyberspace().GameOfLifeState())
+		} else {
+			flags := tile.Flags.ForRealWorld()
+			floorTextureIndexUnifier.Add(tile.TextureInfo.FloorTextureIndex())
+			floorTextureRotationsUnifier.Add(tile.Floor.TextureRotations())
+			ceilingTextureIndexUnifier.Add(tile.TextureInfo.CeilingTextureIndex())
+			ceilingTextureRotationsUnifier.Add(tile.Ceiling.TextureRotations())
+			wallTextureIndexUnifier.Add(tile.TextureInfo.WallTextureIndex())
+			wallTextureOffsetUnifier.Add(flags.WallTextureOffset())
+			useAdjacentWallTextureUnifier.Add(flags.UseAdjacentWallTexture())
+			wallTexturePatternUnifier.Add(flags.WallTexturePattern())
+			floorLightUnifier.Add(15 - flags.FloorShadow())
+			ceilingLightUnifier.Add(15 - flags.CeilingShadow())
+			deconstructedUnifier.Add(flags.Deconstructed())
+			floorHazardUnifier.Add(tile.Floor.HasHazard())
+			ceilingHazardUnifier.Add(tile.Ceiling.HasHazard())
+		}
 	}
+
+	imgui.PushItemWidth(-250 * view.guiScale)
 
 	tileTypes := level.TileTypes()
 	view.renderCombo(readOnly, multiple, "Tile Type", tileTypeUnifier,
@@ -130,7 +173,155 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			view.requestMusicIndex(lvl, view.model.selectedTiles.list, newValue)
 		})
 
+	imgui.Separator()
+
+	if isCyberspace {
+		view.renderSliderInt(readOnly, multiple, "Floor Color", floorPaletteIndexUnifier,
+			func(u values.Unifier) int { return int(u.Unified().(byte)) },
+			func(value int) string { return "%d" },
+			0, 255,
+			func(newValue int) {
+				view.requestFloorPaletteIndex(lvl, view.model.selectedTiles.list, newValue)
+			})
+		view.renderSliderInt(readOnly, multiple, "Ceiling Color", ceilingPaletteIndexUnifier,
+			func(u values.Unifier) int { return int(u.Unified().(byte)) },
+			func(value int) string { return "%d" },
+			0, 255,
+			func(newValue int) {
+				view.requestCeilingPaletteIndex(lvl, view.model.selectedTiles.list, newValue)
+			})
+
+		flightPulls := level.CyberspaceFlightPulls()
+		view.renderCombo(readOnly, multiple, "Flight Pull Type", flightPullTypeUnifier,
+			func(u values.Unifier) int { return int(u.Unified().(level.CyberspaceFlightPull)) },
+			func(value int) string { return flightPulls[value].String() },
+			len(flightPulls),
+			func(newValue int) {
+				view.requestFlightPullType(lvl, view.model.selectedTiles.list, flightPulls[newValue])
+			})
+		view.renderSliderInt(readOnly, multiple, "Game Of Life State", gameOfLightStateUnifier,
+			func(u values.Unifier) int { return u.Unified().(int) },
+			func(value int) string { return "%d" },
+			0, 3,
+			func(newValue int) {
+				view.requestGameOfLightState(lvl, view.model.selectedTiles.list, newValue)
+			})
+
+	} else {
+		view.renderSliderInt(readOnly, multiple, "Floor Texture", floorTextureIndexUnifier,
+			func(u values.Unifier) int { return u.Unified().(int) },
+			func(value int) string { return "%d" },
+			0, level.FloorCeilingTextureLimit-1,
+			func(newValue int) {
+				view.requestFloorTextureIndex(lvl, view.model.selectedTiles.list, newValue)
+			})
+		view.renderSliderInt(readOnly, multiple, "Floor Texture Rotations", floorTextureRotationsUnifier,
+			func(u values.Unifier) int { return u.Unified().(int) },
+			func(value int) string { return "%d" },
+			0, 3,
+			func(newValue int) {
+				view.requestFloorTextureRotations(lvl, view.model.selectedTiles.list, newValue)
+			})
+
+		view.renderSliderInt(readOnly, multiple, "Ceiling Texture", ceilingTextureIndexUnifier,
+			func(u values.Unifier) int { return u.Unified().(int) },
+			func(value int) string { return "%d" },
+			0, level.FloorCeilingTextureLimit-1,
+			func(newValue int) {
+				view.requestCeilingTextureIndex(lvl, view.model.selectedTiles.list, newValue)
+			})
+		view.renderSliderInt(readOnly, multiple, "Ceiling Texture Rotations", ceilingTextureRotationsUnifier,
+			func(u values.Unifier) int { return u.Unified().(int) },
+			func(value int) string { return "%d" },
+			0, 3,
+			func(newValue int) {
+				view.requestCeilingTextureRotations(lvl, view.model.selectedTiles.list, newValue)
+			})
+
+		view.renderSliderInt(readOnly, multiple, "Wall Texture", wallTextureIndexUnifier,
+			func(u values.Unifier) int { return u.Unified().(int) },
+			func(value int) string { return "%d" },
+			0, level.DefaultTextureAtlasSize-1,
+			func(newValue int) {
+				view.requestWallTextureIndex(lvl, view.model.selectedTiles.list, newValue)
+			})
+		view.renderSliderInt(readOnly, multiple, "Wall Texture Offset", wallTextureOffsetUnifier,
+			func(u values.Unifier) int { return int(u.Unified().(level.TileHeightUnit)) },
+			func(value int) string { return "%d" },
+			0, int(level.TileHeightUnitMax)-1,
+			func(newValue int) {
+				view.requestWallTextureOffset(lvl, view.model.selectedTiles.list, level.TileHeightUnit(newValue))
+			})
+
+		view.renderCheckboxCombo(readOnly, multiple, "Use Adjacent Wall Texture", useAdjacentWallTextureUnifier,
+			func(newValue bool) {
+				view.requestUseAdjacentWallTexture(lvl, view.model.selectedTiles.list, newValue)
+			})
+		wallTexturePatterns := level.WallTexturePatterns()
+		view.renderCombo(readOnly, multiple, "Wall Texture Pattern", wallTexturePatternUnifier,
+			func(u values.Unifier) int { return int(u.Unified().(level.WallTexturePattern)) },
+			func(value int) string { return wallTexturePatterns[value].String() },
+			len(wallTexturePatterns),
+			func(newValue int) {
+				view.requestWallTexturePattern(lvl, view.model.selectedTiles.list, wallTexturePatterns[newValue])
+			})
+
+		view.renderSliderInt(readOnly, multiple, "Floor Light", floorLightUnifier,
+			func(u values.Unifier) int { return u.Unified().(int) },
+			func(value int) string { return "%d" },
+			0, 15,
+			func(newValue int) {
+				view.requestFloorLight(lvl, view.model.selectedTiles.list, newValue)
+			})
+		view.renderSliderInt(readOnly, multiple, "Ceiling Light", ceilingLightUnifier,
+			func(u values.Unifier) int { return u.Unified().(int) },
+			func(value int) string { return "%d" },
+			0, 15,
+			func(newValue int) {
+				view.requestCeilingLight(lvl, view.model.selectedTiles.list, newValue)
+			})
+
+		view.renderCheckboxCombo(readOnly, multiple, "Deconstructed", deconstructedUnifier,
+			func(newValue bool) {
+				view.requestDeconstructed(lvl, view.model.selectedTiles.list, newValue)
+			})
+		view.renderCheckboxCombo(readOnly, multiple, "Floor Hazard", floorHazardUnifier,
+			func(newValue bool) {
+				view.requestFloorHazard(lvl, view.model.selectedTiles.list, newValue)
+			})
+		view.renderCheckboxCombo(readOnly, multiple, "Ceiling Hazard", ceilingHazardUnifier,
+			func(newValue bool) {
+				view.requestCeilingHazard(lvl, view.model.selectedTiles.list, newValue)
+			})
+	}
+
 	imgui.PopItemWidth()
+}
+
+func (view *TilesView) renderCheckboxCombo(readOnly, multiple bool, label string, unifier values.Unifier, changeHandler func(bool)) {
+	selectedString := ""
+	if unifier.IsUnique() {
+		selectedValue := unifier.Unified().(bool)
+		if selectedValue {
+			selectedString = "Yes"
+		} else {
+			selectedString = "No"
+		}
+	} else if multiple {
+		selectedString = "(multiple)"
+	}
+	if readOnly {
+		imgui.LabelText(label, selectedString)
+	} else {
+		if imgui.BeginCombo(label, selectedString) {
+			for i, text := range []string{"No", "Yes"} {
+				if imgui.SelectableV(text, text == selectedString, 0, imgui.Vec2{}) {
+					changeHandler(i != 0)
+				}
+			}
+			imgui.EndCombo()
+		}
+	}
 }
 
 func (view *TilesView) renderSliderInt(readOnly, multiple bool, label string, unifier values.Unifier,
@@ -145,7 +336,7 @@ func (view *TilesView) renderSliderInt(readOnly, multiple bool, label string, un
 		selectedString = "(multiple)"
 	}
 	if readOnly {
-		imgui.LabelText(label, selectedString)
+		imgui.LabelText(label, fmt.Sprintf(selectedString, selectedValue))
 	} else {
 		if gui.StepSliderIntV(label, &selectedValue, min, max, selectedString) {
 			changeHandler(selectedValue)
@@ -223,6 +414,108 @@ func (view *TilesView) requestMusicIndex(lvl *level.Level, positions []MapPositi
 	})
 }
 
+func (view *TilesView) requestFloorTextureIndex(lvl *level.Level, positions []MapPosition, value int) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.TextureInfo = tile.TextureInfo.WithFloorTextureIndex(value)
+	})
+}
+
+func (view *TilesView) requestFloorTextureRotations(lvl *level.Level, positions []MapPosition, value int) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.Floor = tile.Floor.WithTextureRotations(value)
+	})
+}
+
+func (view *TilesView) requestCeilingTextureIndex(lvl *level.Level, positions []MapPosition, value int) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.TextureInfo = tile.TextureInfo.WithCeilingTextureIndex(value)
+	})
+}
+
+func (view *TilesView) requestCeilingTextureRotations(lvl *level.Level, positions []MapPosition, value int) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.Ceiling = tile.Ceiling.WithTextureRotations(value)
+	})
+}
+
+func (view *TilesView) requestWallTextureIndex(lvl *level.Level, positions []MapPosition, value int) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.TextureInfo = tile.TextureInfo.WithWallTextureIndex(value)
+	})
+}
+
+func (view *TilesView) requestWallTextureOffset(lvl *level.Level, positions []MapPosition, value level.TileHeightUnit) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.Flags = tile.Flags.ForRealWorld().WithWallTextureOffset(value).AsTileFlag()
+	})
+}
+
+func (view *TilesView) requestUseAdjacentWallTexture(lvl *level.Level, positions []MapPosition, value bool) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.Flags = tile.Flags.ForRealWorld().WithUseAdjacentWallTexture(value).AsTileFlag()
+	})
+}
+
+func (view *TilesView) requestWallTexturePattern(lvl *level.Level, positions []MapPosition, value level.WallTexturePattern) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.Flags = tile.Flags.ForRealWorld().WithWallTexturePattern(value).AsTileFlag()
+	})
+}
+
+func (view *TilesView) requestFloorLight(lvl *level.Level, positions []MapPosition, value int) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.Flags = tile.Flags.ForRealWorld().WithFloorShadow(15 - value).AsTileFlag()
+	})
+}
+
+func (view *TilesView) requestCeilingLight(lvl *level.Level, positions []MapPosition, value int) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.Flags = tile.Flags.ForRealWorld().WithCeilingShadow(15 - value).AsTileFlag()
+	})
+}
+
+func (view *TilesView) requestDeconstructed(lvl *level.Level, positions []MapPosition, value bool) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.Flags = tile.Flags.ForRealWorld().WithDeconstructed(value).AsTileFlag()
+	})
+}
+
+func (view *TilesView) requestFloorHazard(lvl *level.Level, positions []MapPosition, value bool) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.Floor = tile.Floor.WithHazard(value)
+	})
+}
+
+func (view *TilesView) requestCeilingHazard(lvl *level.Level, positions []MapPosition, value bool) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.Ceiling = tile.Ceiling.WithHazard(value)
+	})
+}
+
+func (view *TilesView) requestFloorPaletteIndex(lvl *level.Level, positions []MapPosition, value int) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.TextureInfo = tile.TextureInfo.WithFloorPaletteIndex(byte(value))
+	})
+}
+
+func (view *TilesView) requestCeilingPaletteIndex(lvl *level.Level, positions []MapPosition, value int) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.TextureInfo = tile.TextureInfo.WithCeilingPaletteIndex(byte(value))
+	})
+}
+
+func (view *TilesView) requestFlightPullType(lvl *level.Level, positions []MapPosition, value level.CyberspaceFlightPull) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.Flags = tile.Flags.ForCyberspace().WithFlightPull(value).AsTileFlag()
+	})
+}
+
+func (view *TilesView) requestGameOfLightState(lvl *level.Level, positions []MapPosition, value int) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.Flags = tile.Flags.ForCyberspace().WithGameOfLifeState(value).AsTileFlag()
+	})
+}
+
 func (view *TilesView) changeTiles(lvl *level.Level, positions []MapPosition, modifier func(*level.TileMapEntry)) {
 	for _, pos := range positions {
 		tile := lvl.Tile(int(pos.X.Tile()), int(pos.Y.Tile()))
@@ -233,6 +526,7 @@ func (view *TilesView) changeTiles(lvl *level.Level, positions []MapPosition, mo
 		restoreState: func() {
 			view.model.restoreFocus = true
 			view.setSelectedTiles(positions)
+			view.setSelectedLevel(lvl.ID())
 		},
 	}
 
@@ -251,6 +545,10 @@ func (view *TilesView) changeTiles(lvl *level.Level, positions []MapPosition, mo
 	}
 
 	view.commander.Queue(command)
+}
+
+func (view *TilesView) setSelectedLevel(id int) {
+	view.eventListener.Event(LevelSelectionSetEvent{id: id})
 }
 
 func (view *TilesView) setSelectedTiles(positions []MapPosition) {
