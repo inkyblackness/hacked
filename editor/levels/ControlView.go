@@ -2,6 +2,7 @@ package levels
 
 import (
 	"github.com/inkyblackness/hacked/ss1/content/archive"
+	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/imgui-go"
 )
 
@@ -49,18 +50,6 @@ func (view *ControlView) Render() {
 
 func (view *ControlView) renderContent() {
 	imgui.PushItemWidth(-100 * view.guiScale)
-	if imgui.Button("-") && view.model.selectedLevel > 0 {
-		view.model.selectedLevel--
-	}
-	imgui.SameLine()
-	if imgui.Button("+") && view.model.selectedLevel < (archive.MaxLevels-1) {
-		view.model.selectedLevel++
-	}
-	imgui.SameLine()
-	level := int32(view.model.selectedLevel)
-	if imgui.SliderInt("Active Level", &level, 0, int32(archive.MaxLevels-1)) {
-		view.model.selectedLevel = int(level)
-	}
+	gui.StepSliderInt("Active Level", &view.model.selectedLevel, 0, archive.MaxLevels-1)
 	imgui.PopItemWidth()
-
 }

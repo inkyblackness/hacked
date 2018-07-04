@@ -12,6 +12,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
+	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/imgui-go"
 )
 
@@ -66,11 +67,18 @@ func (view *TilesView) Render(lvl *level.Level) {
 }
 
 func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
+	imgui.PushItemWidth(-250 * view.guiScale)
 	tileTypeUnifier := values.NewUnifier()
+	floorHeightUnifier := values.NewUnifier()
+	ceilingHeightUnifier := values.NewUnifier()
+	slopeHeightUnifier := values.NewUnifier()
 	multiple := len(view.model.selectedTiles.list) > 0
 	for _, pos := range view.model.selectedTiles.list {
 		tile := lvl.Tile(int(pos.X.Tile()), int(pos.Y.Tile()))
 		tileTypeUnifier.Add(tile.Type)
+		floorHeightUnifier.Add(tile.Floor.AbsoluteHeight())
+		ceilingHeightUnifier.Add(tile.Ceiling.AbsoluteHeight())
+		slopeHeightUnifier.Add(tile.SlopeHeight)
 	}
 
 	var selectedTileTypeString string
@@ -93,6 +101,50 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			imgui.EndCombo()
 		}
 	}
+
+	view.renderSliderInt(readOnly, multiple, "Floor Height", floorHeightUnifier,
+		func(u values.Unifier) int { return int(u.Unified().(level.TileHeightUnit)) },
+		func(value int) string { return "%d" },
+		0, int(level.TileHeightUnitMax)-1,
+		func(newValue int) {
+			view.requestSetFloorHeight(lvl, view.model.selectedTiles.list, level.TileHeightUnit(newValue))
+		})
+	view.renderSliderInt(readOnly, multiple, "Ceiling Height (abs)", ceilingHeightUnifier,
+		func(u values.Unifier) int { return int(u.Unified().(level.TileHeightUnit)) },
+		func(value int) string { return "%d" },
+		0, int(level.TileHeightUnitMax)-1,
+		func(newValue int) {
+			view.requestSetCeilingHeight(lvl, view.model.selectedTiles.list, level.TileHeightUnit(newValue))
+		})
+	view.renderSliderInt(readOnly, multiple, "Slope Height", slopeHeightUnifier,
+		func(u values.Unifier) int { return int(u.Unified().(level.TileHeightUnit)) },
+		func(value int) string { return "%d" },
+		0, int(level.TileHeightUnitMax)-1,
+		func(newValue int) {
+			view.requestSetSlopeHeight(lvl, view.model.selectedTiles.list, level.TileHeightUnit(newValue))
+		})
+
+	imgui.PopItemWidth()
+}
+
+func (view *TilesView) renderSliderInt(readOnly, multiple bool, label string, unifier values.Unifier,
+	intConverter func(values.Unifier) int, formatter func(int) string, min, max int, changeHandler func(int)) {
+
+	var selectedString string
+	selectedValue := -1
+	if unifier.IsUnique() {
+		selectedValue = intConverter(unifier)
+		selectedString = formatter(selectedValue)
+	} else if multiple {
+		selectedString = "(multiple)"
+	}
+	if readOnly {
+		imgui.LabelText(label, selectedString)
+	} else {
+		if gui.StepSliderIntV(label, &selectedValue, min, max, selectedString) {
+			changeHandler(selectedValue)
+		}
+	}
 }
 
 func (view *TilesView) editingAllowed(id int) bool {
@@ -109,6 +161,23 @@ func (view *TilesView) requestSetTileType(lvl *level.Level, positions []MapPosit
 	})
 }
 
+func (view *TilesView) requestSetFloorHeight(lvl *level.Level, positions []MapPosition, height level.TileHeightUnit) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.Floor = tile.Floor.WithAbsoluteHeight(height)
+	})
+}
+
+func (view *TilesView) requestSetCeilingHeight(lvl *level.Level, positions []MapPosition, height level.TileHeightUnit) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.Ceiling = tile.Ceiling.WithAbsoluteHeight(height)
+	})
+}
+
+func (view *TilesView) requestSetSlopeHeight(lvl *level.Level, positions []MapPosition, height level.TileHeightUnit) {
+	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
+		tile.SlopeHeight = height
+	})
+}
 func (view *TilesView) changeTiles(lvl *level.Level, positions []MapPosition, modifier func(*level.TileMapEntry)) {
 	for _, pos := range positions {
 		tile := lvl.Tile(int(pos.X.Tile()), int(pos.Y.Tile()))
