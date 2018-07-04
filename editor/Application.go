@@ -389,6 +389,15 @@ func (app *Application) renderMainMenu() {
 			}
 			imgui.EndMenu()
 		}
+		if imgui.BeginMenu("Edit") {
+			if imgui.MenuItemV("Undo", "Ctrl+Z", false, app.cmdStack.CanUndo()) {
+				app.tryUndo()
+			}
+			if imgui.MenuItemV("Redo", "Ctrl+Y / Ctrl+Shift+Z", false, app.cmdStack.CanRedo()) {
+				app.tryRedo()
+			}
+			imgui.EndMenu()
+		}
 		if imgui.BeginMenu("Window") {
 			windowEntry("Archive", "", app.archiveView.WindowOpen())
 			windowEntry("Level Control", "F2", app.levelControlView.WindowOpen())
