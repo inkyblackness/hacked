@@ -104,6 +104,8 @@ func init() {
 var infoByID = map[resource.ID]ResourceInfo{}
 
 var infoList = []ResourceInfo{
+	{GamePalettesStart, GamePalettesStart.Plus(3), resource.Palette, false, false, false, 3, GamePal},
+
 	{IconTextures, IconTextures.Plus(1), resource.Bitmap, true, false, true, 300, Texture},
 	{SmallTextures, SmallTextures.Plus(1), resource.Bitmap, true, false, true, 300, Texture},
 

@@ -2,6 +2,11 @@ package ids
 
 import "github.com/inkyblackness/hacked/ss1/resource"
 
+// Palettes
+const (
+	GamePalettesStart resource.ID = 0x02BC
+)
+
 // Textures
 const (
 	IconTextures  resource.ID = 0x004C

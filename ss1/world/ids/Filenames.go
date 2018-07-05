@@ -27,6 +27,9 @@ var SvgaIntr = resource.I18nFile([resource.LanguageCount]string{"svgaintr.res", 
 // Archive contains the game world.
 var Archive = resource.AnyLanguage("archive.dat")
 
+// GamePal contains the game palettes.
+var GamePal = resource.AnyLanguage("gamepal.res")
+
 // Texture contains all textures.
 var Texture = resource.AnyLanguage("texture.res")
 
