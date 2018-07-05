@@ -82,7 +82,10 @@ func (dispatcher *Dispatcher) UnregisterHandler(eType reflect.Type, handlerFunc 
 
 // Event dispatches the given event to all currently registered handlers.
 func (dispatcher *Dispatcher) Event(e Event) {
-	entry := dispatcher.handlers[reflect.TypeOf(e)]
+	entry, existing := dispatcher.handlers[reflect.TypeOf(e)]
+	if !existing {
+		return
+	}
 	if entry.dispatching {
 		panic("event distribution during event of same type not supported.")
 	}

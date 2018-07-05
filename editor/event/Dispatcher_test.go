@@ -195,6 +195,12 @@ func (suite *DispatcherSuite) TestRegistrationReturnsDeregisterShortcut() {
 	assert.Equal(suite.T(), 0, calls, "No call expected")
 }
 
+func (suite *DispatcherSuite) TestEventIsIgnoredIfNoHandlerRegistered() {
+	type testedEvent struct{ key int }
+	eventA := testedEvent{123}
+	assert.NotPanics(suite.T(), func() { suite.whenEventIsDispatched(eventA) })
+}
+
 func (suite *DispatcherSuite) givenRegisteredHandler(t reflect.Type, handlers ...interface{}) {
 	for _, handler := range handlers {
 		require.NotPanics(suite.T(), func() {
