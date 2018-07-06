@@ -1,11 +1,11 @@
 package bitmap
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"io"
 
-	"bytes"
 	"github.com/inkyblackness/hacked/ss1/serial/rle"
 )
 
@@ -52,6 +52,12 @@ func Decode(reader io.Reader) (*Bitmap, error) {
 	return &bmp, nil
 }
 
+// DecodeReferenced tries to read a bitmap from given reader.
+// If the serialized bitmap describes a compressed bitmap, then the pixels from the reference are used as a basis for the result.
+func DecodeReferenced(reader io.Reader, reference *Bitmap) (*Bitmap, error) {
+	return nil, errors.New("not implemented")
+}
+
 // Encode writes the bitmap to a byte array and returns it.
 // Compressed bitmaps will be compressed with a reference image with pixel data all 0x00.
 func Encode(bmp *Bitmap, offsetBase int) []byte {
@@ -75,4 +81,10 @@ func Encode(bmp *Bitmap, offsetBase int) []byte {
 	}
 
 	return buf.Bytes()
+}
+
+// EncodeReferenced writes the bitmap to a byte array and returns it.
+// If the bitmap is a compressed one, the compression takes the pixels of the reference bitmap as a basis.
+func EncodeReferenced(bmp *Bitmap, offsetBase int, reference *Bitmap) []byte {
+	panic("not implemented")
 }

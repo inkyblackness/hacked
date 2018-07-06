@@ -3,10 +3,12 @@ package bitmap_test
 import (
 	"bytes"
 	"encoding/binary"
+	"testing"
+
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestDecodeReturnsErrorOnNilSource(t *testing.T) {
