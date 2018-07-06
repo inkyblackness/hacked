@@ -76,7 +76,7 @@ func Encode(bmp *Bitmap, offsetBase int) []byte {
 	_ = binary.Write(buf, binary.LittleEndian, &header)
 	_ = binary.Write(buf, binary.LittleEndian, rawData)
 	if bmp.Palette != nil {
-		_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+		_ = binary.Write(buf, binary.LittleEndian, paletteMarker)
 		_ = binary.Write(buf, binary.LittleEndian, bmp.Palette)
 	}
 

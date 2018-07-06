@@ -106,7 +106,7 @@ func getTestData(bmpType bitmap.Type, data []byte, withPalette bool) []byte {
 	buf.Write(data)
 	if withPalette {
 		var pal bitmap.Palette
-		_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+		_ = binary.Write(buf, binary.LittleEndian, uint32(0x01000000))
 		_ = binary.Write(buf, binary.LittleEndian, pal)
 	}
 
