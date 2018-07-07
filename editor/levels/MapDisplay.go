@@ -77,7 +77,7 @@ func NewMapDisplay(gl opengl.OpenGL, guiScale float32,
 }
 
 // Render renders the whole map display.
-func (display *MapDisplay) Render(lvl *level.Level, paletteTexture *graphics.PaletteTexture) {
+func (display *MapDisplay) Render(lvl *level.Level, paletteTexture *graphics.PaletteTexture, textureDisplay TextureDisplay) {
 	columns, rows, _ := lvl.Size()
 
 	display.background.Render()
@@ -87,13 +87,13 @@ func (display *MapDisplay) Render(lvl *level.Level, paletteTexture *graphics.Pal
 			if tile == nil {
 				return level.TileTypeSolid, 0, 0
 			}
-			atlasIndex := tile.TextureInfo.FloorTextureIndex()
+			atlasIndex, textureRotations := textureDisplay.Func()(tile)
 			atlas := lvl.TextureAtlas()
 			textureIndex := -1
 			if (atlasIndex >= 0) && (atlasIndex < len(atlas)) {
 				textureIndex = int(atlas[atlasIndex])
 			}
-			return tile.Type, textureIndex, tile.Floor.TextureRotations()
+			return tile.Type, textureIndex, textureRotations
 		}, paletteTexture)
 	}
 	display.mapGrid.Render(lvl)

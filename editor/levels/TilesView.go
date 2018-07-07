@@ -45,6 +45,11 @@ func (view *TilesView) WindowOpen() *bool {
 	return &view.model.windowOpen
 }
 
+// TextureDisplay returns the current setting which textures should be displayed.
+func (view TilesView) TextureDisplay() TextureDisplay {
+	return view.model.textureDisplay
+}
+
 // Render renders the view.
 func (view *TilesView) Render(lvl *level.Level) {
 	if view.model.restoreFocus {
@@ -208,6 +213,18 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			})
 
 	} else {
+		if imgui.BeginCombo("Texture View", view.model.textureDisplay.String()) {
+			displays := TextureDisplays()
+			for _, display := range displays {
+				displayString := display.String()
+
+				if imgui.SelectableV(displayString, display == view.model.textureDisplay, 0, imgui.Vec2{}) {
+					view.model.textureDisplay = display
+				}
+			}
+			imgui.EndCombo()
+		}
+
 		view.renderSliderInt(readOnly, multiple, "Floor Texture", floorTextureIndexUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
@@ -327,16 +344,19 @@ func (view *TilesView) renderCheckboxCombo(readOnly, multiple bool, label string
 func (view *TilesView) renderSliderInt(readOnly, multiple bool, label string, unifier values.Unifier,
 	intConverter func(values.Unifier) int, formatter func(int) string, min, max int, changeHandler func(int)) {
 
+	var labelValue string
 	var selectedString string
 	selectedValue := -1
 	if unifier.IsUnique() {
 		selectedValue = intConverter(unifier)
 		selectedString = formatter(selectedValue)
+		labelValue = fmt.Sprintf(selectedString, selectedValue)
 	} else if multiple {
 		selectedString = "(multiple)"
+		labelValue = selectedString
 	}
 	if readOnly {
-		imgui.LabelText(label, fmt.Sprintf(selectedString, selectedValue))
+		imgui.LabelText(label, labelValue)
 	} else {
 		if gui.StepSliderIntV(label, &selectedValue, min, max, selectedString) {
 			changeHandler(selectedValue)
