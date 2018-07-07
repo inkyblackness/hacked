@@ -106,8 +106,10 @@ var infoByID = map[resource.ID]ResourceInfo{}
 var infoList = []ResourceInfo{
 	{GamePalettesStart, GamePalettesStart.Plus(3), resource.Palette, false, false, false, 3, GamePal},
 
-	{IconTextures, IconTextures.Plus(1), resource.Bitmap, true, false, true, 300, Texture},
-	{SmallTextures, SmallTextures.Plus(1), resource.Bitmap, true, false, true, 300, Texture},
+	{IconTextures, IconTextures.Plus(1), resource.Bitmap, true, false, true, 293, Texture},
+	{SmallTextures, SmallTextures.Plus(1), resource.Bitmap, true, false, true, 293, Texture},
+	{MediumTextures, MediumTextures.Plus(293), resource.Bitmap, true, false, false, 293, Texture},
+	{LargeTextures, LargeTextures.Plus(293), resource.Bitmap, true, false, false, 293, Texture},
 
 	{PaperTextsStart, PaperTextsStart.Plus(16), resource.Text, true, false, false, 16, CybStrng},
 

@@ -9,8 +9,10 @@ const (
 
 // Textures
 const (
-	IconTextures  resource.ID = 0x004C
-	SmallTextures resource.ID = 0x004D
+	IconTextures   resource.ID = 0x004C
+	SmallTextures  resource.ID = 0x004D
+	MediumTextures resource.ID = 0x02C3
+	LargeTextures  resource.ID = 0x03E8
 )
 
 // Texts
