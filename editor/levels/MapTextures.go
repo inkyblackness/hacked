@@ -12,7 +12,7 @@ import (
 	"github.com/inkyblackness/hacked/ui/opengl"
 )
 
-var mapTileVertexShaderSource = `
+var mapTexturesVertexShaderSource = `
 #version 150
 precision mediump float;
 
@@ -32,7 +32,7 @@ void main(void) {
 }
 `
 
-var mapTileFragmentShaderSource = `
+var mapTexturesFragmentShaderSource = `
 #version 150
 precision mediump float;
 
@@ -94,7 +94,7 @@ func init() {
 // NewMapTextures returns a new instance of a renderable for tile map textures.
 func NewMapTextures(context *render.Context, textureQuery TextureQuery) *MapTextures {
 	gl := context.OpenGL
-	program, programErr := opengl.LinkNewStandardProgram(gl, mapTileVertexShaderSource, mapTileFragmentShaderSource)
+	program, programErr := opengl.LinkNewStandardProgram(gl, mapTexturesVertexShaderSource, mapTexturesFragmentShaderSource)
 
 	if programErr != nil {
 		panic(fmt.Errorf("MapTextures shader failed: %v", programErr))
@@ -164,11 +164,11 @@ func (renderable *MapTextures) Render(columns, rows int, tileTextureQuery TileTe
 						uvMatrix := uvRotations[textureRotations]
 						renderable.uvMatrixUniform.Set(gl, uvMatrix)
 						renderable.modelMatrixUniform.Set(gl, &modelMatrix)
-						verticeCount := renderable.ensureTileType(tileType)
+						vertexCount := renderable.ensureTileType(tileType)
 						gl.BindTexture(opengl.TEXTURE_2D, texture.Handle())
 						gl.Uniform1i(renderable.bitmapUniform, textureUnit)
 
-						gl.DrawArrays(opengl.TRIANGLES, 0, int32(verticeCount))
+						gl.DrawArrays(opengl.TRIANGLES, 0, int32(vertexCount))
 					}
 				}
 			}
@@ -178,14 +178,14 @@ func (renderable *MapTextures) Render(columns, rows int, tileTextureQuery TileTe
 	})
 }
 
-func (renderable *MapTextures) ensureTileType(tileType level.TileType) (verticeCount int) {
+func (renderable *MapTextures) ensureTileType(tileType level.TileType) (vertexCount int) {
 	displayedType := level.TileTypeOpen
 
-	verticeCount = 6
+	vertexCount = 6
 	if tileType == level.TileTypeDiagonalOpenNorthEast || tileType == level.TileTypeDiagonalOpenNorthWest ||
 		tileType == level.TileTypeDiagonalOpenSouthEast || tileType == level.TileTypeDiagonalOpenSouthWest {
 		displayedType = tileType
-		verticeCount = 3
+		vertexCount = 3
 	}
 	if renderable.lastTileType != displayedType {
 		gl := renderable.context.OpenGL
