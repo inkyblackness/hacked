@@ -189,6 +189,18 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 	imgui.Separator()
 
 	if isCyberspace {
+		if imgui.BeginCombo("Color View", view.model.cyberColorDisplay.String()) {
+			displays := ColorDisplays()
+			for _, display := range displays {
+				displayString := display.String()
+
+				if imgui.SelectableV(displayString, display == view.model.cyberColorDisplay, 0, imgui.Vec2{}) {
+					view.model.cyberColorDisplay = display
+				}
+			}
+			imgui.EndCombo()
+		}
+
 		view.renderSliderInt(readOnly, multiple, "Floor Color", floorPaletteIndexUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(byte)) },
 			func(value int) string { return "%d" },
@@ -203,6 +215,8 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			func(newValue int) {
 				view.requestCeilingPaletteIndex(lvl, view.model.selectedTiles.list, newValue)
 			})
+
+		imgui.Separator()
 
 		flightPulls := level.CyberspaceFlightPulls()
 		view.renderCombo(readOnly, multiple, "Flight Pull Type", flightPullTypeUnifier,

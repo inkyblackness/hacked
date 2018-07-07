@@ -9,14 +9,16 @@ import (
 type PaletteTexture struct {
 	gl opengl.OpenGL
 
-	handle uint32
+	handle  uint32
+	palette bitmap.Palette
 }
 
 // NewPaletteTexture creates a new PaletteTexture instance.
 func NewPaletteTexture(gl opengl.OpenGL, palette bitmap.Palette) *PaletteTexture {
 	tex := &PaletteTexture{
 		gl:     gl,
-		handle: gl.GenTextures(1)[0]}
+		handle: gl.GenTextures(1)[0],
+	}
 
 	tex.Update(palette)
 
@@ -29,6 +31,11 @@ func (tex *PaletteTexture) Dispose() {
 		tex.gl.DeleteTextures([]uint32{tex.handle})
 		tex.handle = 0
 	}
+}
+
+// Palette returns the original palette.
+func (tex *PaletteTexture) Palette() bitmap.Palette {
+	return tex.palette
 }
 
 // Handle returns the texture handle.
@@ -58,4 +65,6 @@ func (tex *PaletteTexture) Update(palette bitmap.Palette) {
 	gl.TexParameteri(opengl.TEXTURE_2D, opengl.TEXTURE_MIN_FILTER, opengl.NEAREST)
 	gl.GenerateMipmap(opengl.TEXTURE_2D)
 	gl.BindTexture(opengl.TEXTURE_2D, 0)
+
+	tex.palette = palette
 }

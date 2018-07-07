@@ -84,7 +84,26 @@ func (display *MapDisplay) Render(lvl *level.Level, paletteTexture *graphics.Pal
 	columns, rows, _ := lvl.Size()
 
 	display.background.Render()
-	if !lvl.IsCyberspace() {
+	if lvl.IsCyberspace() {
+		if paletteTexture != nil {
+			var colorQuery ColorQuery
+			palette := paletteTexture.Palette()
+			if colorDisplay == ColorDisplayFloor {
+				colorQuery = display.colorQueryFor(lvl, func(tile *level.TileMapEntry) [4]float32 {
+					rgb := palette[tile.TextureInfo.FloorPaletteIndex()]
+					return [4]float32{float32(rgb.Red) / 255, float32(rgb.Green) / 255, float32(rgb.Blue) / 255, 0.8}
+				})
+			} else if colorDisplay == ColorDisplayCeiling {
+				colorQuery = display.colorQueryFor(lvl, func(tile *level.TileMapEntry) [4]float32 {
+					rgb := palette[tile.TextureInfo.CeilingPaletteIndex()]
+					return [4]float32{float32(rgb.Red) / 255, float32(rgb.Green) / 255, float32(rgb.Blue) / 255, 0.8}
+				})
+			}
+			if colorQuery != nil {
+				display.colors.Render(columns, rows, colorQuery)
+			}
+		}
+	} else {
 		if paletteTexture != nil {
 			display.textures.Render(columns, rows, func(x, y int) (level.TileType, int, int) {
 				tile := lvl.Tile(x, y)
@@ -103,21 +122,13 @@ func (display *MapDisplay) Render(lvl *level.Level, paletteTexture *graphics.Pal
 
 		var colorQuery ColorQuery
 		if colorDisplay == ColorDisplayFloor {
-			colorQuery = func(x, y int) [4]float32 {
-				tile := lvl.Tile(x, y)
-				if tile == nil {
-					return [4]float32{}
-				}
+			colorQuery = display.colorQueryFor(lvl, func(tile *level.TileMapEntry) [4]float32 {
 				return [4]float32{0.0, 0.0, 0.0, float32(tile.Flags.ForRealWorld().FloorShadow()) / 15.0}
-			}
+			})
 		} else if colorDisplay == ColorDisplayCeiling {
-			colorQuery = func(x, y int) [4]float32 {
-				tile := lvl.Tile(x, y)
-				if tile == nil {
-					return [4]float32{}
-				}
+			colorQuery = display.colorQueryFor(lvl, func(tile *level.TileMapEntry) [4]float32 {
 				return [4]float32{0.0, 0.0, 0.0, float32(tile.Flags.ForRealWorld().CeilingShadow()) / 15.0}
-			}
+			})
 		}
 		if colorQuery != nil {
 			display.colors.Render(columns, rows, colorQuery)
@@ -134,6 +145,16 @@ func (display *MapDisplay) Render(lvl *level.Level, paletteTexture *graphics.Pal
 	}
 
 	display.renderPositionOverlay(lvl)
+}
+
+func (display *MapDisplay) colorQueryFor(lvl *level.Level, tileToColor func(*level.TileMapEntry) [4]float32) func(int, int) [4]float32 {
+	return func(x, y int) [4]float32 {
+		tile := lvl.Tile(x, y)
+		if tile == nil {
+			return [4]float32{}
+		}
+		return tileToColor(tile)
+	}
 }
 
 func (display *MapDisplay) renderPositionOverlay(lvl *level.Level) {
