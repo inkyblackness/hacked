@@ -132,7 +132,7 @@ func (app *Application) render() {
 	app.textsView.Render()
 
 	paletteTexture, _ := app.paletteCache.Palette(0)
-	app.mapDisplay.Render(activeLevel, paletteTexture, app.levelTilesView.TextureDisplay())
+	app.mapDisplay.Render(activeLevel, paletteTexture, app.levelTilesView.TextureDisplay(), app.levelTilesView.ColorDisplay(activeLevel))
 
 	// imgui.ShowDemoWindow(nil)
 

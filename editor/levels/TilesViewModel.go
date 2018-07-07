@@ -1,8 +1,10 @@
 package levels
 
 type tilesViewModel struct {
-	selectedTiles  tileCoordinates
-	textureDisplay TextureDisplay
+	selectedTiles     tileCoordinates
+	textureDisplay    TextureDisplay
+	shadowDisplay     ColorDisplay
+	cyberColorDisplay ColorDisplay
 
 	restoreFocus bool
 	windowOpen   bool
@@ -10,6 +12,8 @@ type tilesViewModel struct {
 
 func freshTilesViewModel() tilesViewModel {
 	return tilesViewModel{
-		textureDisplay: TextureDisplayFloor,
+		textureDisplay:    TextureDisplayFloor,
+		shadowDisplay:     ColorDisplayNone,
+		cyberColorDisplay: ColorDisplayNone,
 	}
 }

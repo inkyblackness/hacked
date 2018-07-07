@@ -24,6 +24,7 @@ type MapDisplay struct {
 
 	background  *BackgroundGrid
 	textures    *MapTextures
+	colors      *MapColors
 	mapGrid     *MapGrid
 	highlighter *Highlighter
 
@@ -64,6 +65,7 @@ func NewMapDisplay(gl opengl.OpenGL, guiScale float32,
 	display.context.ViewMatrix = display.camera.ViewMatrix()
 	display.background = NewBackgroundGrid(&display.context)
 	display.textures = NewMapTextures(&display.context, textureQuery)
+	display.colors = NewMapColors(&display.context)
 	display.mapGrid = NewMapGrid(&display.context)
 	display.highlighter = NewHighlighter(&display.context)
 
@@ -77,24 +79,49 @@ func NewMapDisplay(gl opengl.OpenGL, guiScale float32,
 }
 
 // Render renders the whole map display.
-func (display *MapDisplay) Render(lvl *level.Level, paletteTexture *graphics.PaletteTexture, textureDisplay TextureDisplay) {
+func (display *MapDisplay) Render(lvl *level.Level, paletteTexture *graphics.PaletteTexture,
+	textureDisplay TextureDisplay, colorDisplay ColorDisplay) {
 	columns, rows, _ := lvl.Size()
 
 	display.background.Render()
-	if !lvl.IsCyberspace() && (paletteTexture != nil) {
-		display.textures.Render(columns, rows, func(x, y int) (level.TileType, int, int) {
-			tile := lvl.Tile(x, y)
-			if tile == nil {
-				return level.TileTypeSolid, 0, 0
+	if !lvl.IsCyberspace() {
+		if paletteTexture != nil {
+			display.textures.Render(columns, rows, func(x, y int) (level.TileType, int, int) {
+				tile := lvl.Tile(x, y)
+				if tile == nil {
+					return level.TileTypeSolid, 0, 0
+				}
+				atlasIndex, textureRotations := textureDisplay.Func()(tile)
+				atlas := lvl.TextureAtlas()
+				textureIndex := -1
+				if (atlasIndex >= 0) && (atlasIndex < len(atlas)) {
+					textureIndex = int(atlas[atlasIndex])
+				}
+				return tile.Type, textureIndex, textureRotations
+			}, paletteTexture)
+		}
+
+		var colorQuery ColorQuery
+		if colorDisplay == ColorDisplayFloor {
+			colorQuery = func(x, y int) [4]float32 {
+				tile := lvl.Tile(x, y)
+				if tile == nil {
+					return [4]float32{}
+				}
+				return [4]float32{0.0, 0.0, 0.0, float32(tile.Flags.ForRealWorld().FloorShadow()) / 15.0}
 			}
-			atlasIndex, textureRotations := textureDisplay.Func()(tile)
-			atlas := lvl.TextureAtlas()
-			textureIndex := -1
-			if (atlasIndex >= 0) && (atlasIndex < len(atlas)) {
-				textureIndex = int(atlas[atlasIndex])
+		} else if colorDisplay == ColorDisplayCeiling {
+			colorQuery = func(x, y int) [4]float32 {
+				tile := lvl.Tile(x, y)
+				if tile == nil {
+					return [4]float32{}
+				}
+				return [4]float32{0.0, 0.0, 0.0, float32(tile.Flags.ForRealWorld().CeilingShadow()) / 15.0}
 			}
-			return tile.Type, textureIndex, textureRotations
-		}, paletteTexture)
+		}
+		if colorQuery != nil {
+			display.colors.Render(columns, rows, colorQuery)
+		}
 	}
 	display.mapGrid.Render(lvl)
 	display.highlighter.Render(display.selectedTiles.list, fineCoordinatesPerTileSide, [4]float32{0.0, 0.8, 0.2, 0.5})

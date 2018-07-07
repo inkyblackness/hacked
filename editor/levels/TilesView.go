@@ -50,6 +50,14 @@ func (view TilesView) TextureDisplay() TextureDisplay {
 	return view.model.textureDisplay
 }
 
+// ColorDisplay returns the current setting which colors should be displayed.
+func (view TilesView) ColorDisplay(lvl *level.Level) ColorDisplay {
+	if lvl.IsCyberspace() {
+		return view.model.cyberColorDisplay
+	}
+	return view.model.shadowDisplay
+}
+
 // Render renders the view.
 func (view *TilesView) Render(lvl *level.Level) {
 	if view.model.restoreFocus {
@@ -283,6 +291,20 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 				view.requestWallTexturePattern(lvl, view.model.selectedTiles.list, wallTexturePatterns[newValue])
 			})
 
+		imgui.Separator()
+
+		if imgui.BeginCombo("Shadow View", view.model.shadowDisplay.String()) {
+			displays := ColorDisplays()
+			for _, display := range displays {
+				displayString := display.String()
+
+				if imgui.SelectableV(displayString, display == view.model.shadowDisplay, 0, imgui.Vec2{}) {
+					view.model.shadowDisplay = display
+				}
+			}
+			imgui.EndCombo()
+		}
+
 		view.renderSliderInt(readOnly, multiple, "Floor Light", floorLightUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
@@ -297,6 +319,8 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			func(newValue int) {
 				view.requestCeilingLight(lvl, view.model.selectedTiles.list, newValue)
 			})
+
+		imgui.Separator()
 
 		view.renderCheckboxCombo(readOnly, multiple, "Deconstructed", deconstructedUnifier,
 			func(newValue bool) {
