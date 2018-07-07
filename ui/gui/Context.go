@@ -16,6 +16,9 @@ type ContextParameters struct {
 	FontSize float32
 }
 
+// BitmapTextureQuery resolves the texture and the palette to be used for a bitmap.
+type BitmapTextureQuery func(id imgui.TextureID) (palette uint32, texture uint32)
+
 // Context describes a scope for a graphical user interface.
 // It is based on ImGui.
 type Context struct {
@@ -29,7 +32,9 @@ type Context struct {
 
 	fontTexture            uint32
 	shaderHandle           uint32
+	attribLocationType     int32
 	attribLocationTex      int32
+	attribLocationPal      int32
 	attribLocationProjMtx  int32
 	attribLocationPosition int32
 	attribLocationUV       int32
@@ -101,9 +106,9 @@ func (context *Context) NewFrame() {
 }
 
 // Render must be called at the end of rendering.
-func (context *Context) Render() {
+func (context *Context) Render(bitmapTextureQuery BitmapTextureQuery) {
 	imgui.Render()
-	context.renderDrawData(imgui.RenderedDrawData())
+	context.renderDrawData(imgui.RenderedDrawData(), bitmapTextureQuery)
 }
 
 func (context *Context) createDeviceObjects(param ContextParameters) (err error) {
@@ -125,13 +130,23 @@ void main()
 }
 `
 	fragmentShaderSource := glslVersion + `
+uniform int ImageType;
 uniform sampler2D Texture;
+uniform sampler2D Palette;
 in vec2 Frag_UV;
 in vec4 Frag_Color;
 out vec4 Out_Color;
 void main()
 {
-	Out_Color = Frag_Color * texture( Texture, Frag_UV.st).r;
+	if (ImageType == 1)
+	{
+		vec4 pixel = texture(Texture, Frag_UV.st);
+		Out_Color = Frag_Color * texture(Palette, vec2(pixel.r, 0.5));
+	}
+	else
+	{
+		Out_Color = Frag_Color * texture( Texture, Frag_UV.st).r;
+	}
 }
 `
 	context.shaderHandle, err = opengl.LinkNewStandardProgram(gl, vertexShaderSource, fragmentShaderSource)
@@ -139,7 +154,9 @@ void main()
 		return
 	}
 
+	context.attribLocationType = gl.GetUniformLocation(context.shaderHandle, "ImageType")
 	context.attribLocationTex = gl.GetUniformLocation(context.shaderHandle, "Texture")
+	context.attribLocationPal = gl.GetUniformLocation(context.shaderHandle, "Palette")
 	context.attribLocationProjMtx = gl.GetUniformLocation(context.shaderHandle, "ProjMtx")
 	context.attribLocationPosition = gl.GetAttribLocation(context.shaderHandle, "Position")
 	context.attribLocationUV = gl.GetAttribLocation(context.shaderHandle, "UV")
@@ -175,7 +192,7 @@ func (context *Context) createFontsTexture(gl opengl.OpenGL, param ContextParame
 	gl.TexImage2D(opengl.TEXTURE_2D, 0, opengl.RED, int32(image.Width), int32(image.Height),
 		0, opengl.RED, opengl.UNSIGNED_BYTE, image.Pixels)
 
-	io.Fonts().SetTextureID(imgui.TextureID(context.fontTexture))
+	io.Fonts().SetTextureID(TextureIDForSimpleTexture(context.fontTexture))
 
 	gl.BindTexture(opengl.TEXTURE_2D, 0)
 	return nil
@@ -203,7 +220,7 @@ func (context *Context) destroyDeviceObjects(gl opengl.OpenGL) {
 	}
 }
 
-func (context *Context) renderDrawData(drawData imgui.DrawData) {
+func (context *Context) renderDrawData(drawData imgui.DrawData, bitmapTextureQuery BitmapTextureQuery) {
 	gl := context.window.OpenGL()
 
 	displayWidth, displayHeight := context.window.Size()
@@ -266,6 +283,7 @@ func (context *Context) renderDrawData(drawData imgui.DrawData) {
 	}
 	gl.UseProgram(context.shaderHandle)
 	gl.Uniform1i(context.attribLocationTex, 0)
+	gl.Uniform1i(context.attribLocationPal, 1)
 	gl.UniformMatrix4fv(context.attribLocationProjMtx, false, &orthoProjection)
 	gl.BindSampler(0, 0) // Rely on combined texture/sampler state.
 
@@ -301,7 +319,24 @@ func (context *Context) renderDrawData(drawData imgui.DrawData) {
 			if cmd.HasUserCallback() {
 				cmd.CallUserCallback(list)
 			} else {
-				gl.BindTexture(opengl.TEXTURE_2D, uint32(cmd.TextureID()))
+				textureID := cmd.TextureID()
+				imageType := ImageTypeFromID(textureID)
+				gl.Uniform1i(context.attribLocationType, int32(imageType))
+				if imageType == ImageTypeSimpleTexture {
+					gl.ActiveTexture(opengl.TEXTURE0 + uint32(0))
+					gl.BindTexture(opengl.TEXTURE_2D, uint32(textureID))
+				} else if imageType == ImageTypeBitmapTexture {
+					palette, bitmap := bitmapTextureQuery(textureID)
+					gl.ActiveTexture(opengl.TEXTURE0 + uint32(0))
+					gl.BindTexture(opengl.TEXTURE_2D, bitmap)
+					gl.ActiveTexture(opengl.TEXTURE0 + uint32(1))
+					gl.BindTexture(opengl.TEXTURE_2D, palette)
+				} else {
+					gl.ActiveTexture(opengl.TEXTURE0 + uint32(0))
+					gl.BindTexture(opengl.TEXTURE_2D, 0)
+					gl.ActiveTexture(opengl.TEXTURE0 + uint32(1))
+					gl.BindTexture(opengl.TEXTURE_2D, 0)
+				}
 				clipRect := cmd.ClipRect()
 				gl.Scissor(int32(clipRect.X), int32(displayHeight)-int32(clipRect.W), int32(clipRect.Z-clipRect.X), int32(clipRect.W-clipRect.Y))
 				gl.DrawElements(opengl.TRIANGLES, int32(cmd.ElementCount()), uint32(drawType), indexBufferOffset)

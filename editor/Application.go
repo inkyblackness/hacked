@@ -139,7 +139,7 @@ func (app *Application) render() {
 	app.handleFailure()
 	app.aboutView.Render()
 
-	app.guiContext.Render()
+	app.guiContext.Render(app.bitmapTextureForUI)
 }
 
 func (app *Application) initOpenGL() {
@@ -171,6 +171,24 @@ func (app *Application) initGui() (err error) {
 func (app *Application) gameTexture(index int) (*graphics.BitmapTexture, error) {
 	key := resource.KeyOf(ids.LargeTextures.Plus(index), resource.LangAny, 0)
 	return app.textureCache.Texture(key)
+}
+
+func (app *Application) bitmapTextureForUI(textureID imgui.TextureID) (palette uint32, texture uint32) {
+	paletteTexture, _ := app.paletteCache.Palette(0)
+	if paletteTexture == nil {
+		return 0, 0
+	}
+
+	lang := resource.Language((textureID >> 32) & 0xFF)
+	resourceID := resource.ID((textureID >> 16) & 0xFFFF)
+	blockIndex := int(textureID & 0xFFFF)
+	key := resource.KeyOf(resourceID, lang, blockIndex)
+	tex, err := app.textureCache.Texture(key)
+	if err != nil {
+		return 0, 0
+	}
+
+	return paletteTexture.Handle(), tex.Handle()
 }
 
 func (app *Application) onWindowClosing() {
