@@ -24,6 +24,11 @@ type Level struct {
 	tileMap        TileMap
 	wallHeightsMap WallHeightsMap
 	textureAtlas   TextureAtlas
+
+	objectMasterTable ObjectMasterTable
+
+	surveillanceSources    [SurveillanceObjectCount]ObjectID
+	surveillanceSurrogates [SurveillanceObjectCount]ObjectID
 }
 
 // NewLevel returns a new instance.
@@ -42,6 +47,9 @@ func NewLevel(resourceBase resource.ID, id int, localizer resource.Localizer) *L
 	lvl.reloadBaseInfo()
 	lvl.reloadTileMap()
 	lvl.reloadTextureAtlas()
+	lvl.reloadObjectMasterTable()
+	lvl.reloadSurveillanceSources()
+	lvl.reloadSurveillanceSurrogates()
 
 	return lvl
 }
@@ -68,6 +76,30 @@ func (lvl Level) Size() (x, y int, z HeightShift) {
 // SetHeightShift changes the vertical scale of the level.
 func (lvl *Level) SetHeightShift(value HeightShift) {
 	lvl.baseInfo.ZShift = value
+}
+
+// SurveillanceSources returns the current sources of surveillance.
+func (lvl *Level) SurveillanceSources() [SurveillanceObjectCount]ObjectID {
+	return lvl.surveillanceSources
+}
+
+// SetSurveillanceSource sets a surveillance source.
+func (lvl *Level) SetSurveillanceSource(index int, id ObjectID) {
+	if (index >= 0) && (index < SurveillanceObjectCount) {
+		lvl.surveillanceSources[index] = id
+	}
+}
+
+// SurveillanceSurrogates returns the current surrogates of surveillance.
+func (lvl *Level) SurveillanceSurrogates() [SurveillanceObjectCount]ObjectID {
+	return lvl.surveillanceSurrogates
+}
+
+// SetSurveillanceSurrogate sets a surveillance source.
+func (lvl *Level) SetSurveillanceSurrogate(index int, id ObjectID) {
+	if (index >= 0) && (index < SurveillanceObjectCount) {
+		lvl.surveillanceSurrogates[index] = id
+	}
 }
 
 // IsCyberspace returns true if the level describes a cyberspace.
@@ -101,6 +133,15 @@ func (lvl *Level) MapGridInfo(x, y int) (TileType, TileSlopeControl, WallHeights
 	return tile.Type, tile.Flags.SlopeControl(), *lvl.wallHeightsMap.Tile(x, y)
 }
 
+// ObjectLimit returns the highest object ID that can be stored in this level.
+func (lvl *Level) ObjectLimit() ObjectID {
+	size := len(lvl.objectMasterTable)
+	if size == 0 {
+		return 0
+	}
+	return ObjectID(size - 1)
+}
+
 // EncodeState returns a subset of encoded level data, which only includes
 // data that is loaded (modified) by the level structure.
 // For any data block that is not relevant, a zero length slice is returned.
@@ -111,6 +152,10 @@ func (lvl *Level) EncodeState() [lvlids.PerLevel][]byte {
 
 	levelData[lvlids.TextureAtlas] = encode(lvl.textureAtlas)
 	levelData[lvlids.TileMap] = encode(lvl.tileMap)
+	levelData[lvlids.ObjectMasterTable] = encode(lvl.objectMasterTable)
+
+	levelData[lvlids.SurveillanceSources] = encode(&lvl.surveillanceSources)
+	levelData[lvlids.SurveillanceSurrogates] = encode(&lvl.surveillanceSurrogates)
 
 	return levelData
 }
@@ -130,6 +175,12 @@ func (lvl *Level) onLevelResourceDataChanged(id int) {
 		lvl.reloadTextureAtlas()
 	case lvlids.TileMap:
 		lvl.reloadTileMap()
+	case lvlids.ObjectMasterTable:
+		lvl.reloadObjectMasterTable()
+	case lvlids.SurveillanceSources:
+		lvl.reloadSurveillanceSources()
+	case lvlids.SurveillanceSurrogates:
+		lvl.reloadSurveillanceSurrogates()
 	}
 }
 
@@ -174,6 +225,44 @@ func (lvl *Level) reloadTileMap() {
 		lvl.clearTileMap()
 	}
 	lvl.wallHeightsMap.CalculateFrom(lvl.tileMap)
+}
+
+func (lvl *Level) reloadObjectMasterTable() {
+	reader, err := lvl.reader(lvlids.ObjectMasterTable)
+	if err != nil {
+		lvl.objectMasterTable = nil
+		return
+	}
+	data, err := ioutil.ReadAll(reader)
+	if err != nil {
+		lvl.objectMasterTable = nil
+		return
+	}
+	lvl.objectMasterTable = make([]ObjectMasterEntry, len(data)/ObjectMasterEntrySize)
+	err = binary.Read(bytes.NewReader(data), binary.LittleEndian, lvl.objectMasterTable)
+	if err != nil {
+		lvl.objectMasterTable = nil
+	}
+}
+
+func (lvl *Level) reloadSurveillanceSources() {
+	reader, err := lvl.reader(lvlids.SurveillanceSources)
+	if err == nil {
+		err = binary.Read(reader, binary.LittleEndian, &lvl.surveillanceSources)
+	}
+	if err != nil {
+		lvl.surveillanceSources = [SurveillanceObjectCount]ObjectID{}
+	}
+}
+
+func (lvl *Level) reloadSurveillanceSurrogates() {
+	reader, err := lvl.reader(lvlids.SurveillanceSurrogates)
+	if err == nil {
+		err = binary.Read(reader, binary.LittleEndian, &lvl.surveillanceSurrogates)
+	}
+	if err != nil {
+		lvl.surveillanceSurrogates = [SurveillanceObjectCount]ObjectID{}
+	}
 }
 
 func (lvl *Level) clearTileMap() {

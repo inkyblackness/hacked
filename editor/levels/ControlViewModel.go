@@ -3,8 +3,9 @@ package levels
 import "github.com/inkyblackness/hacked/ss1/world"
 
 type controlViewModel struct {
-	selectedLevel      int
-	selectedAtlasIndex int
+	selectedLevel                   int
+	selectedAtlasIndex              int
+	selectedSurveillanceObjectIndex int
 
 	restoreFocus bool
 	windowOpen   bool

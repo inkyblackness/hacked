@@ -86,7 +86,7 @@ var levelHeights = []string{
 }
 
 func (view *ControlView) renderContent(lvl *level.Level, readOnly bool) {
-	imgui.PushItemWidth(-100 * view.guiScale)
+	imgui.PushItemWidth(-150 * view.guiScale)
 	gui.StepSliderInt("Active Level", &view.model.selectedLevel, 0, archive.MaxLevels-1)
 	imgui.Separator()
 	levelType := "Real World"
@@ -111,6 +111,7 @@ func (view *ControlView) renderContent(lvl *level.Level, readOnly bool) {
 	}
 	if !lvl.IsCyberspace() {
 		imgui.Separator()
+		// Texture Atlas
 		{
 			atlas := lvl.TextureAtlas()
 			fcwSelected := ""
@@ -152,6 +153,34 @@ func (view *ControlView) renderContent(lvl *level.Level, readOnly bool) {
 				imgui.EndCombo()
 			}
 		}
+		imgui.Separator()
+		// Surveillance objects
+		{
+			if imgui.BeginCombo("Surveillance Object", fmt.Sprintf("Object %d", view.model.selectedSurveillanceObjectIndex)) {
+				for i := 0; i < level.SurveillanceObjectCount; i++ {
+					if imgui.SelectableV(fmt.Sprintf("Object %d", i), i == view.model.selectedSurveillanceObjectIndex, 0, imgui.Vec2{}) {
+						view.model.selectedSurveillanceObjectIndex = i
+					}
+				}
+				imgui.EndCombo()
+			}
+			sources := lvl.SurveillanceSources()
+			surrogates := lvl.SurveillanceSurrogates()
+			limit := lvl.ObjectLimit()
+
+			view.renderSliderInt(readOnly, "Surveillance Source", int(sources[view.model.selectedSurveillanceObjectIndex]),
+				func(int) string { return "%d" },
+				0, int(limit),
+				func(newValue int) {
+					view.requestSetSurveillanceSource(lvl, view.model.selectedSurveillanceObjectIndex, level.ObjectID(newValue))
+				})
+			view.renderSliderInt(readOnly, "Surveillance Surrogate", int(surrogates[view.model.selectedSurveillanceObjectIndex]),
+				func(int) string { return "%d" },
+				0, int(limit),
+				func(newValue int) {
+					view.requestSetSurveillanceSurrogate(lvl, view.model.selectedSurveillanceObjectIndex, level.ObjectID(newValue))
+				})
+		}
 	}
 
 	imgui.PopItemWidth()
@@ -165,6 +194,20 @@ func (view *ControlView) editingAllowed(id int) bool {
 	return moddedLevel && !isSavegame
 }
 
+func (view *ControlView) renderSliderInt(readOnly bool, label string, selectedValue int,
+	formatter func(int) string, min, max int, changeHandler func(int)) {
+
+	selectedString := formatter(selectedValue)
+	labelValue := fmt.Sprintf(selectedString, selectedValue)
+	if readOnly {
+		imgui.LabelText(label, labelValue)
+	} else {
+		if gui.StepSliderIntV(label, &selectedValue, min, max, selectedString) {
+			changeHandler(selectedValue)
+		}
+	}
+}
+
 func (view *ControlView) requestSetZShift(lvl *level.Level, newValue int) {
 	lvl.SetHeightShift(level.HeightShift(newValue))
 	view.patchLevelResources(lvl, func() {})
@@ -174,6 +217,20 @@ func (view *ControlView) requestSetLevelTexture(lvl *level.Level, atlasIndex, wo
 	lvl.SetTextureAtlasEntry(atlasIndex, level.TextureIndex(worldTextureIndex))
 	view.patchLevelResources(lvl, func() {
 		view.model.selectedAtlasIndex = atlasIndex
+	})
+}
+
+func (view *ControlView) requestSetSurveillanceSource(lvl *level.Level, objectIndex int, objectID level.ObjectID) {
+	lvl.SetSurveillanceSource(objectIndex, objectID)
+	view.patchLevelResources(lvl, func() {
+		view.model.selectedSurveillanceObjectIndex = objectIndex
+	})
+}
+
+func (view *ControlView) requestSetSurveillanceSurrogate(lvl *level.Level, objectIndex int, objectID level.ObjectID) {
+	lvl.SetSurveillanceSurrogate(objectIndex, objectID)
+	view.patchLevelResources(lvl, func() {
+		view.model.selectedSurveillanceObjectIndex = objectIndex
 	})
 }
 
