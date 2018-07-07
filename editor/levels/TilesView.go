@@ -460,7 +460,7 @@ func (view *TilesView) renderTextureCombo(readOnly, multiple bool, label string,
 			for i := minIndex; (i <= maxIndex) && (i < len(atlas)); i++ {
 				key := resource.KeyOf(ids.LargeTextures.Plus(int(atlas[i])), resource.LangAny, 0)
 				textureID := render.TextureIDForBitmapTexture(key)
-				if imgui.SelectableV(fmt.Sprintf("%d", i), selectedIndex == i, 0, imgui.Vec2{X: 0, Y: 66 * view.guiScale}) {
+				if imgui.SelectableV(fmt.Sprintf("%2d", i), selectedIndex == i, 0, imgui.Vec2{X: 0, Y: 66 * view.guiScale}) {
 					changeHandler(i)
 				}
 				imgui.SameLine()
