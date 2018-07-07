@@ -172,7 +172,12 @@ func (display *MapDisplay) renderPositionOverlay(lvl *level.Level) {
 			if (tile != nil) && (tile.Type != level.TileTypeSolid) {
 				_, _, heightShift := lvl.Size()
 				height := tile.Floor.AbsoluteHeight()
-				imgui.Text(fmt.Sprintf("Z: %2d = %2.3f", height, heightShift.ValueFromTileHeight(height)))
+				heightInTiles, err := heightShift.ValueFromTileHeight(height)
+				heightInTilesString := "???"
+				if err == nil {
+					heightInTilesString = fmt.Sprintf("%2.3f", heightInTiles)
+				}
+				imgui.Text(fmt.Sprintf("Z: %2d = %s", height, heightInTilesString))
 			} else {
 				imgui.Text("Z: -- = --.---")
 			}

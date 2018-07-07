@@ -142,6 +142,16 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 
 	imgui.PushItemWidth(-250 * view.guiScale)
 
+	_, _, levelHeight := lvl.Size()
+	tileHeightFormatter := func(value int) string {
+		tileHeight, err := levelHeight.ValueFromTileHeight(level.TileHeightUnit(value))
+		tileHeightString := "???"
+		if err == nil {
+			tileHeightString = fmt.Sprintf("%2.3f", tileHeight)
+		}
+		return tileHeightString + " tile(s) - raw: %d"
+	}
+
 	tileTypes := level.TileTypes()
 	view.renderCombo(readOnly, multiple, "Tile Type", tileTypeUnifier,
 		func(u values.Unifier) int { return int(u.Unified().(level.TileType)) },
@@ -152,21 +162,21 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 		})
 	view.renderSliderInt(readOnly, multiple, "Floor Height", floorHeightUnifier,
 		func(u values.Unifier) int { return int(u.Unified().(level.TileHeightUnit)) },
-		func(value int) string { return "%d" },
+		tileHeightFormatter,
 		0, int(level.TileHeightUnitMax)-1,
 		func(newValue int) {
 			view.requestSetFloorHeight(lvl, view.model.selectedTiles.list, level.TileHeightUnit(newValue))
 		})
 	view.renderSliderInt(readOnly, multiple, "Ceiling Height (abs)", ceilingHeightUnifier,
 		func(u values.Unifier) int { return int(u.Unified().(level.TileHeightUnit)) },
-		func(value int) string { return "%d" },
+		tileHeightFormatter,
 		0, int(level.TileHeightUnitMax)-1,
 		func(newValue int) {
 			view.requestSetCeilingHeight(lvl, view.model.selectedTiles.list, level.TileHeightUnit(newValue))
 		})
 	view.renderSliderInt(readOnly, multiple, "Slope Height", slopeHeightUnifier,
 		func(u values.Unifier) int { return int(u.Unified().(level.TileHeightUnit)) },
-		func(value int) string { return "%d" },
+		tileHeightFormatter,
 		0, int(level.TileHeightUnitMax)-1,
 		func(newValue int) {
 			view.requestSetSlopeHeight(lvl, view.model.selectedTiles.list, level.TileHeightUnit(newValue))
@@ -301,7 +311,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			})
 		view.renderSliderInt(readOnly, multiple, "Wall Texture Offset", wallTextureOffsetUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(level.TileHeightUnit)) },
-			func(value int) string { return "%d" },
+			tileHeightFormatter,
 			0, int(level.TileHeightUnitMax)-1,
 			func(newValue int) {
 				view.requestWallTextureOffset(lvl, view.model.selectedTiles.list, level.TileHeightUnit(newValue))
