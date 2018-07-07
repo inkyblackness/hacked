@@ -7,6 +7,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/archives"
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/event"
+	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/levels"
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/project"
@@ -51,6 +52,8 @@ type Application struct {
 	cp            text.Codepage
 	textLineCache *text.Cache
 	textPageCache *text.Cache
+	paletteCache  *graphics.PaletteCache
+	textureCache  *graphics.TextureCache
 
 	mapDisplay *levels.MapDisplay
 
@@ -329,6 +332,9 @@ func (app *Application) initModel() {
 	for i := 0; i < archive.MaxLevels; i++ {
 		app.levels[i] = level.NewLevel(ids.LevelResourcesStart, i, app.mod)
 	}
+
+	app.paletteCache = graphics.NewPaletteCache(app.gl, app.mod)
+	app.textureCache = graphics.NewTextureCache(app.gl, app.mod)
 }
 
 func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) {
@@ -337,6 +343,8 @@ func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []
 	for _, lvl := range app.levels {
 		lvl.InvalidateResources(modifiedIDs)
 	}
+	app.paletteCache.InvalidateResources(modifiedIDs)
+	app.textureCache.InvalidateResources(modifiedIDs)
 }
 
 func (app *Application) modReset() {
