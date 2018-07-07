@@ -6,6 +6,7 @@ import (
 	mgl "github.com/go-gl/mathgl/mgl32"
 
 	"github.com/inkyblackness/hacked/editor/event"
+	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ui/input"
@@ -22,6 +23,7 @@ type MapDisplay struct {
 	eventListener event.Listener
 
 	background  *BackgroundGrid
+	textures    *MapTextures
 	mapGrid     *MapGrid
 	highlighter *Highlighter
 
@@ -37,7 +39,9 @@ type MapDisplay struct {
 }
 
 // NewMapDisplay returns a new instance.
-func NewMapDisplay(gl opengl.OpenGL, guiScale float32, eventListener event.Listener, eventRegistry event.Registry) *MapDisplay {
+func NewMapDisplay(gl opengl.OpenGL, guiScale float32,
+	textureQuery TextureQuery,
+	eventListener event.Listener, eventRegistry event.Registry) *MapDisplay {
 	tilesPerMapSide := float32(64)
 
 	tileBaseLength := fineCoordinatesPerTileSide
@@ -59,6 +63,7 @@ func NewMapDisplay(gl opengl.OpenGL, guiScale float32, eventListener event.Liste
 	}
 	display.context.ViewMatrix = display.camera.ViewMatrix()
 	display.background = NewBackgroundGrid(&display.context)
+	display.textures = NewMapTextures(&display.context, textureQuery)
 	display.mapGrid = NewMapGrid(&display.context)
 	display.highlighter = NewHighlighter(&display.context)
 
@@ -72,8 +77,25 @@ func NewMapDisplay(gl opengl.OpenGL, guiScale float32, eventListener event.Liste
 }
 
 // Render renders the whole map display.
-func (display *MapDisplay) Render(lvl *level.Level) {
+func (display *MapDisplay) Render(lvl *level.Level, paletteTexture *graphics.PaletteTexture) {
+	columns, rows, _ := lvl.Size()
+
 	display.background.Render()
+	if !lvl.IsCyberspace() && (paletteTexture != nil) {
+		display.textures.Render(columns, rows, func(x, y int) (level.TileType, int, int) {
+			tile := lvl.Tile(x, y)
+			if tile == nil {
+				return level.TileTypeSolid, 0, 0
+			}
+			atlasIndex := tile.TextureInfo.FloorTextureIndex()
+			atlas := lvl.TextureAtlas()
+			textureIndex := -1
+			if (atlasIndex >= 0) && (atlasIndex < len(atlas)) {
+				textureIndex = int(atlas[atlasIndex])
+			}
+			return tile.Type, textureIndex, tile.Floor.TextureRotations()
+		}, paletteTexture)
+	}
 	display.mapGrid.Render(lvl)
 	display.highlighter.Render(display.selectedTiles.list, fineCoordinatesPerTileSide, [4]float32{0.0, 0.8, 0.2, 0.5})
 	if display.positionValid {

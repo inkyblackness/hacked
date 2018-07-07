@@ -131,7 +131,8 @@ func (app *Application) render() {
 	app.levelTilesView.Render(activeLevel)
 	app.textsView.Render()
 
-	app.mapDisplay.Render(activeLevel)
+	paletteTexture, _ := app.paletteCache.Palette(0)
+	app.mapDisplay.Render(activeLevel, paletteTexture)
 
 	// imgui.ShowDemoWindow(nil)
 
@@ -160,9 +161,16 @@ func (app *Application) initGui() (err error) {
 	}
 	app.initGuiStyle()
 
-	app.mapDisplay = levels.NewMapDisplay(app.gl, app.GuiScale, &app.eventQueue, app.eventDispatcher)
+	app.mapDisplay = levels.NewMapDisplay(app.gl, app.GuiScale,
+		app.gameTexture,
+		&app.eventQueue, app.eventDispatcher)
 
 	return
+}
+
+func (app *Application) gameTexture(index int) (*graphics.BitmapTexture, error) {
+	key := resource.KeyOf(ids.LargeTextures.Plus(index), resource.LangAny, 0)
+	return app.textureCache.Texture(key)
 }
 
 func (app *Application) onWindowClosing() {
