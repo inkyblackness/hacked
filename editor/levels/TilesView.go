@@ -456,7 +456,7 @@ func (view *TilesView) renderTextureCombo(readOnly, multiple bool, label string,
 	if readOnly {
 		imgui.LabelText(label, selectedString)
 	} else {
-		if imgui.BeginCombo(label, selectedString) {
+		if imgui.BeginComboV(label, selectedString, imgui.ComboFlagHeightLarge) {
 			for i := minIndex; (i <= maxIndex) && (i < len(atlas)); i++ {
 				key := resource.KeyOf(ids.LargeTextures.Plus(int(atlas[i])), resource.LangAny, 0)
 				textureID := render.TextureIDForBitmapTexture(key)
