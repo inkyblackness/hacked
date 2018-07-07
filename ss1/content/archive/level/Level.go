@@ -65,6 +65,11 @@ func (lvl Level) Size() (x, y int, z HeightShift) {
 	return int(lvl.baseInfo.XSize), int(lvl.baseInfo.YSize), lvl.baseInfo.ZShift
 }
 
+// SetHeightShift changes the vertical scale of the level.
+func (lvl *Level) SetHeightShift(value HeightShift) {
+	lvl.baseInfo.ZShift = value
+}
+
 // IsCyberspace returns true if the level describes a cyberspace.
 func (lvl Level) IsCyberspace() bool {
 	return lvl.baseInfo.Cyberspace != 0
@@ -73,6 +78,13 @@ func (lvl Level) IsCyberspace() bool {
 // TextureAtlas returns the atlas for textures.
 func (lvl *Level) TextureAtlas() TextureAtlas {
 	return lvl.textureAtlas
+}
+
+// SetTextureAtlasEntry changes the entry of the atlas.
+func (lvl *Level) SetTextureAtlasEntry(index int, textureIndex TextureIndex) {
+	if (index >= 0) && (index < len(lvl.textureAtlas)) {
+		lvl.textureAtlas[index] = textureIndex
+	}
 }
 
 // Tile returns the tile entry at given position.
