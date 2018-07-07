@@ -6,5 +6,9 @@ const (
 	// StartingTileX identifies the default X position of the protagonist.
 	StartingTileX = 30
 	// StartingTileY identifies the default Y position of the protagonist.
-	StartingTileY = 30
+	StartingTileY = 22
+
+	// MaxWorldTextures is the limit of how many textures the engine supports.
+	// Note that this value is equal to that of the resource limits in package ids. It is actually based on them.
+	MaxWorldTextures = 293
 )
