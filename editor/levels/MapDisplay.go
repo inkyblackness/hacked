@@ -238,7 +238,29 @@ func (display *MapDisplay) MouseButtonUp(mouseX, mouseY float32, button uint32, 
 					display.eventListener.Event(TileSelectionAddEvent{tiles: []MapPosition{tilePos}})
 				}
 			} else if modifier.Has(input.ModShift) && (len(display.selectedTiles.list) > 0) {
-				// TODO: area selection from first entry in list
+				firstPos := display.selectedTiles.list[0]
+
+				fromX := int(firstPos.X.Tile())
+				fromY := int(firstPos.Y.Tile())
+				toX := int(tilePos.X.Tile())
+				toY := int(tilePos.Y.Tile())
+				xIncrement := 1
+				yIncrement := 1
+				if fromX > toX {
+					xIncrement = -1
+				}
+				if fromY > toY {
+					yIncrement = -1
+				}
+				toX += xIncrement
+				toY += yIncrement
+				var newList []MapPosition
+				for y := fromY; y != toY; y += yIncrement {
+					for x := fromX; x != toX; x += xIncrement {
+						newList = append(newList, MapPosition{X: level.CoordinateAt(byte(x), 128), Y: level.CoordinateAt(byte(y), 128)})
+					}
+				}
+				display.eventListener.Event(TileSelectionSetEvent{tiles: newList})
 			} else {
 				display.eventListener.Event(TileSelectionSetEvent{tiles: []MapPosition{tilePos}})
 			}
