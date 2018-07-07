@@ -53,7 +53,7 @@ func (tex *PaletteTexture) Update(palette bitmap.Palette) {
 	data[3] = 0x00
 
 	gl.BindTexture(opengl.TEXTURE_2D, tex.handle)
-	gl.TexImage2D(opengl.TEXTURE_2D, 0, opengl.RGBA, int32(colors), 1, 0, opengl.RGBA, opengl.UNSIGNED_BYTE, palette[:])
+	gl.TexImage2D(opengl.TEXTURE_2D, 0, opengl.RGBA, int32(colors), 1, 0, opengl.RGBA, opengl.UNSIGNED_BYTE, data[:])
 	gl.TexParameteri(opengl.TEXTURE_2D, opengl.TEXTURE_MAG_FILTER, opengl.NEAREST)
 	gl.TexParameteri(opengl.TEXTURE_2D, opengl.TEXTURE_MIN_FILTER, opengl.NEAREST)
 	gl.GenerateMipmap(opengl.TEXTURE_2D)
