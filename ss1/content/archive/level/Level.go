@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
+	"io/ioutil"
 
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -22,6 +23,7 @@ type Level struct {
 	baseInfo       BaseInfo
 	tileMap        TileMap
 	wallHeightsMap WallHeightsMap
+	textureAtlas   TextureAtlas
 }
 
 // NewLevel returns a new instance.
@@ -39,6 +41,7 @@ func NewLevel(resourceBase resource.ID, id int, localizer resource.Localizer) *L
 
 	lvl.reloadBaseInfo()
 	lvl.reloadTileMap()
+	lvl.reloadTextureAtlas()
 
 	return lvl
 }
@@ -67,6 +70,11 @@ func (lvl Level) IsCyberspace() bool {
 	return lvl.baseInfo.Cyberspace != 0
 }
 
+// TextureAtlas returns the atlas for textures.
+func (lvl *Level) TextureAtlas() TextureAtlas {
+	return lvl.textureAtlas
+}
+
 // Tile returns the tile entry at given position.
 func (lvl *Level) Tile(x, y int) *TileMapEntry {
 	return lvl.tileMap.Tile(x, y)
@@ -89,6 +97,7 @@ func (lvl *Level) EncodeState() [lvlids.PerLevel][]byte {
 
 	levelData[lvlids.Information] = encode(&lvl.baseInfo)
 
+	levelData[lvlids.TextureAtlas] = encode(lvl.textureAtlas)
 	levelData[lvlids.TileMap] = encode(lvl.tileMap)
 
 	return levelData
@@ -105,6 +114,8 @@ func (lvl *Level) onLevelResourceDataChanged(id int) {
 	switch id {
 	case lvlids.Information:
 		lvl.reloadBaseInfo()
+	case lvlids.TextureAtlas:
+		lvl.reloadTextureAtlas()
 	case lvlids.TileMap:
 		lvl.reloadTileMap()
 	}
@@ -119,6 +130,24 @@ func (lvl *Level) reloadBaseInfo() {
 	err = binary.Read(reader, binary.LittleEndian, &lvl.baseInfo)
 	if err != nil {
 		lvl.baseInfo = BaseInfo{}
+	}
+}
+
+func (lvl *Level) reloadTextureAtlas() {
+	reader, err := lvl.reader(lvlids.TextureAtlas)
+	if err != nil {
+		lvl.textureAtlas = nil
+		return
+	}
+	data, err := ioutil.ReadAll(reader)
+	if err != nil {
+		lvl.textureAtlas = nil
+		return
+	}
+	lvl.textureAtlas = make([]TextureIndex, len(data)/2)
+	err = binary.Read(bytes.NewReader(data), binary.LittleEndian, lvl.textureAtlas)
+	if err != nil {
+		lvl.textureAtlas = nil
 	}
 }
 
