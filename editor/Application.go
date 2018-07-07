@@ -126,8 +126,8 @@ func (app *Application) render() {
 
 	app.projectView.Render()
 	app.archiveView.Render()
-	app.levelControlView.Render()
 	activeLevel := app.levels[app.levelControlView.SelectedLevel()]
+	app.levelControlView.Render(activeLevel)
 	app.levelTilesView.Render(activeLevel)
 	app.textsView.Render()
 
@@ -380,7 +380,7 @@ func (app *Application) modReset() {
 func (app *Application) initView() {
 	app.projectView = project.NewView(app.mod, app.GuiScale, app)
 	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)
-	app.levelControlView = levels.NewControlView(app.GuiScale, &app.eventQueue, app.eventDispatcher)
+	app.levelControlView = levels.NewControlView(app.mod, app.GuiScale, app, &app.eventQueue, app.eventDispatcher)
 	app.levelTilesView = levels.NewTilesView(app.mod, app.GuiScale, app, &app.eventQueue, app.eventDispatcher)
 	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
