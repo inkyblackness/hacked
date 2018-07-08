@@ -1,5 +1,7 @@
 package level
 
+import "fmt"
+
 const (
 	// TextureAnimationCount describes how many entries of texture animations a level can have.
 	TextureAnimationCount = 4
@@ -20,6 +22,20 @@ type TextureAnimationEntry struct {
 // TextureAnimationLoopType describes how a texture animation loop should advance.
 type TextureAnimationLoopType byte
 
+// String returns the textual representation.
+func (loopType TextureAnimationLoopType) String() string {
+	switch loopType {
+	case TextureAnimationForward:
+		return "Forward"
+	case TextureAnimationForthAndBack:
+		return "Forth-And-Back"
+	case TextureAnimationBackAndForth:
+		return "Back-And-Forth"
+	default:
+		return fmt.Sprintf("Unknown%02X", int(loopType))
+	}
+}
+
 const (
 	// TextureAnimationForward has the texture animation run in a linear loop.
 	TextureAnimationForward = TextureAnimationLoopType(0x00)
@@ -28,3 +44,12 @@ const (
 	// TextureAnimationBackAndForth reverses the sequence at every end.
 	TextureAnimationBackAndForth = TextureAnimationLoopType(0x81)
 )
+
+// TextureAnimationLoopTypes returns all constants.
+func TextureAnimationLoopTypes() []TextureAnimationLoopType {
+	return []TextureAnimationLoopType{
+		TextureAnimationForward,
+		TextureAnimationForthAndBack,
+		TextureAnimationBackAndForth,
+	}
+}
