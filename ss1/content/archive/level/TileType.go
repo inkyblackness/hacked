@@ -11,6 +11,7 @@ func (t TileType) Info() TileTypeInfo {
 		return tileTypeInfoList[t]
 	}
 	info := tileTypeInfoList[TileTypeSolid]
+	info.Name = t.String()
 	info.SlopeInvertedType = t
 	return info
 }

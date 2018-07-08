@@ -40,6 +40,7 @@ func TestTileTypeInfoSlopeFactorsSealTileWithInversion(t *testing.T) {
 func TestTileTypeInfoDefaultsToSolidEquivalent(t *testing.T) {
 	tileType := level.TileType(0x77)
 	expected := level.TileTypeInfo{
+		Name:              "Unknown77",
 		SolidSides:        level.DirNorth.Plus(level.DirEast).Plus(level.DirSouth).Plus(level.DirWest),
 		SlopeFloorFactors: level.SlopeFactors{0, 0, 0, 0, 0, 0, 0, 0},
 		SlopeInvertedType: tileType,
