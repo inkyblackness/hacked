@@ -94,134 +94,143 @@ func (view *ControlView) renderContent(lvl *level.Level, readOnly bool) {
 		levelType = "Cyberspace"
 	}
 	imgui.LabelText("Type", levelType)
-	{
-		_, _, currentShift := lvl.Size()
-		if readOnly {
-			imgui.LabelText("Level Height", levelHeights[currentShift])
-		} else {
-			if imgui.BeginCombo("Level Height", levelHeights[currentShift]) {
-				for shift, height := range levelHeights {
-					if imgui.SelectableV(height, shift == int(currentShift), 0, imgui.Vec2{}) {
-						view.requestSetZShift(lvl, shift)
-					}
-				}
-				imgui.EndCombo()
-			}
-		}
-	}
+	view.renderLevelHeight(lvl, readOnly)
+
 	if !lvl.IsCyberspace() {
-		imgui.Separator()
-		// Texture Atlas
-		{
-			atlas := lvl.TextureAtlas()
-			fcwSelected := ""
-			if (view.model.selectedAtlasIndex >= 0) && (view.model.selectedAtlasIndex < len(atlas)) {
-				fcwSelected = fmt.Sprintf("%d", view.model.selectedAtlasIndex)
-			}
-			if imgui.BeginComboV("Level Textures", fcwSelected, imgui.ComboFlagHeightLarge) {
-				for i := 0; i < len(atlas); i++ {
-					key := resource.KeyOf(ids.LargeTextures.Plus(int(atlas[i])), resource.LangAny, 0)
-					textureID := render.TextureIDForBitmapTexture(key)
-					if imgui.SelectableV(fmt.Sprintf("%2d", i), view.model.selectedAtlasIndex == i, 0, imgui.Vec2{X: 0, Y: 66 * view.guiScale}) {
-						view.model.selectedAtlasIndex = i
-					}
-					imgui.SameLine()
-					imgui.Image(textureID, imgui.Vec2{X: 64 * view.guiScale, Y: 64 * view.guiScale})
-					imgui.SameLine()
-					textureType := "(F/C/W)"
-					if i >= level.FloorCeilingTextureLimit {
-						textureType = "(walls only)"
-					}
-					imgui.Text(textureType)
-				}
-				imgui.EndCombo()
-			}
-			gameTextureIndex := -1
-			if (view.model.selectedAtlasIndex >= 0) && (view.model.selectedAtlasIndex < len(atlas)) {
-				gameTextureIndex = int(atlas[view.model.selectedAtlasIndex])
-			}
-			if !readOnly && imgui.BeginComboV("Game Textures", fmt.Sprintf("%d", gameTextureIndex), imgui.ComboFlagHeightLarge) {
-				for i := 0; i < world.MaxWorldTextures; i++ {
-					key := resource.KeyOf(ids.LargeTextures.Plus(i), resource.LangAny, 0)
-					textureID := render.TextureIDForBitmapTexture(key)
-					if imgui.SelectableV(fmt.Sprintf("%3d", i), gameTextureIndex == i, 0, imgui.Vec2{X: 0, Y: 66 * view.guiScale}) {
-						view.requestSetLevelTexture(lvl, view.model.selectedAtlasIndex, i)
-					}
-					imgui.SameLine()
-					imgui.Image(textureID, imgui.Vec2{X: 64 * view.guiScale, Y: 64 * view.guiScale})
-				}
-				imgui.EndCombo()
-			}
-		}
-		imgui.Separator()
-		// Surveillance objects
-		{
-			if imgui.BeginCombo("Surveillance Object", fmt.Sprintf("Object %d", view.model.selectedSurveillanceObjectIndex)) {
-				for i := 0; i < level.SurveillanceObjectCount; i++ {
-					if imgui.SelectableV(fmt.Sprintf("Object %d", i), i == view.model.selectedSurveillanceObjectIndex, 0, imgui.Vec2{}) {
-						view.model.selectedSurveillanceObjectIndex = i
-					}
-				}
-				imgui.EndCombo()
-			}
-			sources := lvl.SurveillanceSources()
-			surrogates := lvl.SurveillanceSurrogates()
-			limit := lvl.ObjectLimit()
-
-			view.renderSliderInt(readOnly, "Surveillance Source", int(sources[view.model.selectedSurveillanceObjectIndex]),
-				func(int) string { return "%d" },
-				0, int(limit),
-				func(newValue int) {
-					view.requestSetSurveillanceSource(lvl, view.model.selectedSurveillanceObjectIndex, level.ObjectID(newValue))
-				})
-			view.renderSliderInt(readOnly, "Surveillance Surrogate", int(surrogates[view.model.selectedSurveillanceObjectIndex]),
-				func(int) string { return "%d" },
-				0, int(limit),
-				func(newValue int) {
-					view.requestSetSurveillanceSurrogate(lvl, view.model.selectedSurveillanceObjectIndex, level.ObjectID(newValue))
-				})
-		}
-		imgui.Separator()
-		// Hazards
-		{
-			parameters := lvl.Parameters()
-			currentCeiling := currentCeilingHazard(parameters)
-			if readOnly {
-				imgui.LabelText("Ceiling Hazard", currentCeiling.title)
-			} else if imgui.BeginCombo("Ceiling Hazard", currentCeiling.title) {
-				for _, info := range ceilingHazards {
-					if imgui.SelectableV(info.title, info.title == currentCeiling.title, 0, imgui.Vec2{}) {
-						view.requestSetCeilingHazard(lvl, info)
-					}
-				}
-				imgui.EndCombo()
-			}
-			view.renderSliderInt(readOnly, "Ceiling Hazard Level", int(parameters.CeilingHazardLevel),
-				currentCeiling.formatter, 0, 255,
-				func(newValue int) {
-					view.requestSetCeilingHazardLevel(lvl, byte(newValue))
-				})
-
-			currentFloor := currentFloorHazard(parameters)
-			if readOnly {
-				imgui.LabelText("Floor Hazard", currentFloor.title)
-			} else if imgui.BeginCombo("Floor Hazard", currentFloor.title) {
-				for _, info := range floorHazards {
-					if imgui.SelectableV(info.title, info.title == currentFloor.title, 0, imgui.Vec2{}) {
-						view.requestSetFloorHazard(lvl, info)
-					}
-				}
-				imgui.EndCombo()
-			}
-			view.renderSliderInt(readOnly, "Floor Hazard Level", int(parameters.FloorHazardLevel),
-				currentFloor.formatter, 0, 255,
-				func(newValue int) {
-					view.requestSetFloorHazardLevel(lvl, byte(newValue))
-				})
-		}
+		view.renderTextureAtlas(lvl, readOnly)
+		view.renderSurveillanceObjects(lvl, readOnly)
+		view.renderHazards(lvl, readOnly)
 	}
 
 	imgui.PopItemWidth()
+}
+
+func (view *ControlView) renderLevelHeight(lvl *level.Level, readOnly bool) {
+	_, _, currentShift := lvl.Size()
+	if readOnly {
+		imgui.LabelText("Level Height", levelHeights[currentShift])
+	} else {
+		if imgui.BeginCombo("Level Height", levelHeights[currentShift]) {
+			for shift, height := range levelHeights {
+				if imgui.SelectableV(height, shift == int(currentShift), 0, imgui.Vec2{}) {
+					view.requestSetZShift(lvl, shift)
+				}
+			}
+			imgui.EndCombo()
+		}
+	}
+}
+
+func (view *ControlView) renderTextureAtlas(lvl *level.Level, readOnly bool) {
+	imgui.Separator()
+
+	atlas := lvl.TextureAtlas()
+	fcwSelected := ""
+	if (view.model.selectedAtlasIndex >= 0) && (view.model.selectedAtlasIndex < len(atlas)) {
+		fcwSelected = fmt.Sprintf("%d", view.model.selectedAtlasIndex)
+	}
+	if imgui.BeginComboV("Level Textures", fcwSelected, imgui.ComboFlagHeightLarge) {
+		for i := 0; i < len(atlas); i++ {
+			key := resource.KeyOf(ids.LargeTextures.Plus(int(atlas[i])), resource.LangAny, 0)
+			textureID := render.TextureIDForBitmapTexture(key)
+			if imgui.SelectableV(fmt.Sprintf("%2d", i), view.model.selectedAtlasIndex == i, 0, imgui.Vec2{X: 0, Y: 66 * view.guiScale}) {
+				view.model.selectedAtlasIndex = i
+			}
+			imgui.SameLine()
+			imgui.Image(textureID, imgui.Vec2{X: 64 * view.guiScale, Y: 64 * view.guiScale})
+			imgui.SameLine()
+			textureType := "(F/C/W)"
+			if i >= level.FloorCeilingTextureLimit {
+				textureType = "(walls only)"
+			}
+			imgui.Text(textureType)
+		}
+		imgui.EndCombo()
+	}
+	gameTextureIndex := -1
+	if (view.model.selectedAtlasIndex >= 0) && (view.model.selectedAtlasIndex < len(atlas)) {
+		gameTextureIndex = int(atlas[view.model.selectedAtlasIndex])
+	}
+	if !readOnly && imgui.BeginComboV("Game Textures", fmt.Sprintf("%d", gameTextureIndex), imgui.ComboFlagHeightLarge) {
+		for i := 0; i < world.MaxWorldTextures; i++ {
+			key := resource.KeyOf(ids.LargeTextures.Plus(i), resource.LangAny, 0)
+			textureID := render.TextureIDForBitmapTexture(key)
+			if imgui.SelectableV(fmt.Sprintf("%3d", i), gameTextureIndex == i, 0, imgui.Vec2{X: 0, Y: 66 * view.guiScale}) {
+				view.requestSetLevelTexture(lvl, view.model.selectedAtlasIndex, i)
+			}
+			imgui.SameLine()
+			imgui.Image(textureID, imgui.Vec2{X: 64 * view.guiScale, Y: 64 * view.guiScale})
+		}
+		imgui.EndCombo()
+	}
+}
+
+func (view *ControlView) renderSurveillanceObjects(lvl *level.Level, readOnly bool) {
+	imgui.Separator()
+
+	if imgui.BeginCombo("Surveillance Object", fmt.Sprintf("Object %d", view.model.selectedSurveillanceObjectIndex)) {
+		for i := 0; i < level.SurveillanceObjectCount; i++ {
+			if imgui.SelectableV(fmt.Sprintf("Object %d", i), i == view.model.selectedSurveillanceObjectIndex, 0, imgui.Vec2{}) {
+				view.model.selectedSurveillanceObjectIndex = i
+			}
+		}
+		imgui.EndCombo()
+	}
+	sources := lvl.SurveillanceSources()
+	surrogates := lvl.SurveillanceSurrogates()
+	limit := lvl.ObjectLimit()
+
+	view.renderSliderInt(readOnly, "Surveillance Source", int(sources[view.model.selectedSurveillanceObjectIndex]),
+		func(int) string { return "%d" },
+		0, int(limit),
+		func(newValue int) {
+			view.requestSetSurveillanceSource(lvl, view.model.selectedSurveillanceObjectIndex, level.ObjectID(newValue))
+		})
+	view.renderSliderInt(readOnly, "Surveillance Surrogate", int(surrogates[view.model.selectedSurveillanceObjectIndex]),
+		func(int) string { return "%d" },
+		0, int(limit),
+		func(newValue int) {
+			view.requestSetSurveillanceSurrogate(lvl, view.model.selectedSurveillanceObjectIndex, level.ObjectID(newValue))
+		})
+}
+
+func (view *ControlView) renderHazards(lvl *level.Level, readOnly bool) {
+	imgui.Separator()
+
+	parameters := lvl.Parameters()
+	currentCeiling := currentCeilingHazard(parameters)
+	if readOnly {
+		imgui.LabelText("Ceiling Hazard", currentCeiling.title)
+	} else if imgui.BeginCombo("Ceiling Hazard", currentCeiling.title) {
+		for _, info := range ceilingHazards {
+			if imgui.SelectableV(info.title, info.title == currentCeiling.title, 0, imgui.Vec2{}) {
+				view.requestSetCeilingHazard(lvl, info)
+			}
+		}
+		imgui.EndCombo()
+	}
+	view.renderSliderInt(readOnly, "Ceiling Hazard Level", int(parameters.CeilingHazardLevel),
+		currentCeiling.formatter, 0, 255,
+		func(newValue int) {
+			view.requestSetCeilingHazardLevel(lvl, byte(newValue))
+		})
+
+	currentFloor := currentFloorHazard(parameters)
+	if readOnly {
+		imgui.LabelText("Floor Hazard", currentFloor.title)
+	} else if imgui.BeginCombo("Floor Hazard", currentFloor.title) {
+		for _, info := range floorHazards {
+			if imgui.SelectableV(info.title, info.title == currentFloor.title, 0, imgui.Vec2{}) {
+				view.requestSetFloorHazard(lvl, info)
+			}
+		}
+		imgui.EndCombo()
+	}
+	view.renderSliderInt(readOnly, "Floor Hazard Level", int(parameters.FloorHazardLevel),
+		currentFloor.formatter, 0, 255,
+		func(newValue int) {
+			view.requestSetFloorHazardLevel(lvl, byte(newValue))
+		})
 }
 
 func (view *ControlView) editingAllowed(id int) bool {
