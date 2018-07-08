@@ -3,6 +3,9 @@ package level
 const (
 	// TextureAnimationCount describes how many entries of texture animations a level can have.
 	TextureAnimationCount = 4
+
+	// TextureAnimationEntrySize is the size, in bytes, of one animation entry.
+	TextureAnimationEntrySize = 7
 )
 
 // TextureAnimationEntry describes one entry of the texture animation table.

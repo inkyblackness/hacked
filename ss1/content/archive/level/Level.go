@@ -27,10 +27,10 @@ type Level struct {
 
 	objectMasterTable ObjectMasterTable
 
+	textureAnimations      []TextureAnimationEntry
 	surveillanceSources    [SurveillanceObjectCount]ObjectID
 	surveillanceSurrogates [SurveillanceObjectCount]ObjectID
-
-	parameters Parameters
+	parameters             Parameters
 }
 
 // NewLevel returns a new instance.
@@ -50,6 +50,7 @@ func NewLevel(resourceBase resource.ID, id int, localizer resource.Localizer) *L
 	lvl.reloadTileMap()
 	lvl.reloadTextureAtlas()
 	lvl.reloadObjectMasterTable()
+	lvl.reloadTextureAnimations()
 	lvl.reloadSurveillanceSources()
 	lvl.reloadSurveillanceSurrogates()
 	lvl.reloadParameters()
@@ -79,6 +80,11 @@ func (lvl *Level) Size() (x, y int, z HeightShift) {
 // SetHeightShift changes the vertical scale of the level.
 func (lvl *Level) SetHeightShift(value HeightShift) {
 	lvl.baseInfo.ZShift = value
+}
+
+// TextureAnimations returns the list of animations.
+func (lvl *Level) TextureAnimations() []TextureAnimationEntry {
+	return lvl.textureAnimations
 }
 
 // SurveillanceSources returns the current sources of surveillance.
@@ -162,9 +168,9 @@ func (lvl *Level) EncodeState() [lvlids.PerLevel][]byte {
 	levelData[lvlids.TileMap] = encode(lvl.tileMap)
 	levelData[lvlids.ObjectMasterTable] = encode(lvl.objectMasterTable)
 
+	levelData[lvlids.TextureAnimations] = encode(lvl.textureAnimations)
 	levelData[lvlids.SurveillanceSources] = encode(&lvl.surveillanceSources)
 	levelData[lvlids.SurveillanceSurrogates] = encode(&lvl.surveillanceSurrogates)
-
 	levelData[lvlids.Parameters] = encode(&lvl.parameters)
 
 	return levelData
@@ -187,6 +193,8 @@ func (lvl *Level) onLevelResourceDataChanged(id int) {
 		lvl.reloadTileMap()
 	case lvlids.ObjectMasterTable:
 		lvl.reloadObjectMasterTable()
+	case lvlids.TextureAnimations:
+		lvl.reloadTextureAnimations()
 	case lvlids.SurveillanceSources:
 		lvl.reloadSurveillanceSources()
 	case lvlids.SurveillanceSurrogates:
@@ -254,6 +262,24 @@ func (lvl *Level) reloadObjectMasterTable() {
 	err = binary.Read(bytes.NewReader(data), binary.LittleEndian, lvl.objectMasterTable)
 	if err != nil {
 		lvl.objectMasterTable = nil
+	}
+}
+
+func (lvl *Level) reloadTextureAnimations() {
+	reader, err := lvl.reader(lvlids.TextureAnimations)
+	if err != nil {
+		lvl.textureAnimations = nil
+		return
+	}
+	data, err := ioutil.ReadAll(reader)
+	if err != nil {
+		lvl.textureAnimations = nil
+		return
+	}
+	lvl.textureAnimations = make([]TextureAnimationEntry, len(data)/TextureAnimationEntrySize)
+	err = binary.Read(bytes.NewReader(data), binary.LittleEndian, lvl.textureAnimations)
+	if err != nil {
+		lvl.textureAnimations = nil
 	}
 }
 
