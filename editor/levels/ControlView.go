@@ -181,6 +181,44 @@ func (view *ControlView) renderContent(lvl *level.Level, readOnly bool) {
 					view.requestSetSurveillanceSurrogate(lvl, view.model.selectedSurveillanceObjectIndex, level.ObjectID(newValue))
 				})
 		}
+		imgui.Separator()
+		// Hazards
+		{
+			parameters := lvl.Parameters()
+			currentCeiling := currentCeilingHazard(parameters)
+			if readOnly {
+				imgui.LabelText("Ceiling Hazard", currentCeiling.title)
+			} else if imgui.BeginCombo("Ceiling Hazard", currentCeiling.title) {
+				for _, info := range ceilingHazards {
+					if imgui.SelectableV(info.title, info.title == currentCeiling.title, 0, imgui.Vec2{}) {
+						view.requestSetCeilingHazard(lvl, info)
+					}
+				}
+				imgui.EndCombo()
+			}
+			view.renderSliderInt(readOnly, "Ceiling Hazard Level", int(parameters.CeilingHazardLevel),
+				currentCeiling.formatter, 0, 255,
+				func(newValue int) {
+					view.requestSetCeilingHazardLevel(lvl, byte(newValue))
+				})
+
+			currentFloor := currentFloorHazard(parameters)
+			if readOnly {
+				imgui.LabelText("Floor Hazard", currentFloor.title)
+			} else if imgui.BeginCombo("Floor Hazard", currentFloor.title) {
+				for _, info := range floorHazards {
+					if imgui.SelectableV(info.title, info.title == currentFloor.title, 0, imgui.Vec2{}) {
+						view.requestSetFloorHazard(lvl, info)
+					}
+				}
+				imgui.EndCombo()
+			}
+			view.renderSliderInt(readOnly, "Floor Hazard Level", int(parameters.FloorHazardLevel),
+				currentFloor.formatter, 0, 255,
+				func(newValue int) {
+					view.requestSetFloorHazardLevel(lvl, byte(newValue))
+				})
+		}
 	}
 
 	imgui.PopItemWidth()
@@ -232,6 +270,37 @@ func (view *ControlView) requestSetSurveillanceSurrogate(lvl *level.Level, objec
 	view.patchLevelResources(lvl, func() {
 		view.model.selectedSurveillanceObjectIndex = objectIndex
 	})
+}
+
+func (view *ControlView) requestSetCeilingHazard(lvl *level.Level, info ceilingHazardInfo) {
+	parameters := lvl.Parameters()
+	parameters.RadiationRegister = 0
+	if info.radiationRegister {
+		parameters.RadiationRegister = 1
+	}
+	view.patchLevelResources(lvl, func() {})
+}
+
+func (view *ControlView) requestSetCeilingHazardLevel(lvl *level.Level, value byte) {
+	lvl.Parameters().CeilingHazardLevel = value
+	view.patchLevelResources(lvl, func() {})
+}
+
+func (view *ControlView) requestSetFloorHazard(lvl *level.Level, info floorHazardInfo) {
+	parameters := lvl.Parameters()
+	parameters.BiohazardRegister = 0
+	parameters.FloorHazardIsGravity = 0
+	if info.isGravity {
+		parameters.FloorHazardIsGravity = 1
+	} else if info.biohazardRegister {
+		parameters.BiohazardRegister = 1
+	}
+	view.patchLevelResources(lvl, func() {})
+}
+
+func (view *ControlView) requestSetFloorHazardLevel(lvl *level.Level, value byte) {
+	lvl.Parameters().FloorHazardLevel = value
+	view.patchLevelResources(lvl, func() {})
 }
 
 func (view *ControlView) patchLevelResources(lvl *level.Level, extraRestoreState func()) {
