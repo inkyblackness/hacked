@@ -86,7 +86,7 @@ var levelHeights = []string{
 }
 
 func (view *ControlView) renderContent(lvl *level.Level, readOnly bool) {
-	imgui.PushItemWidth(-150 * view.guiScale)
+	imgui.PushItemWidth(-200 * view.guiScale)
 	gui.StepSliderInt("Active Level", &view.model.selectedLevel, 0, archive.MaxLevels-1)
 	imgui.Separator()
 	levelType := "Real World"
@@ -100,6 +100,7 @@ func (view *ControlView) renderContent(lvl *level.Level, readOnly bool) {
 		view.renderTextureAtlas(lvl, readOnly)
 		view.renderSurveillanceObjects(lvl, readOnly)
 		view.renderHazards(lvl, readOnly)
+		view.renderTextureAnimations(lvl, readOnly)
 	}
 
 	imgui.PopItemWidth()
@@ -233,6 +234,51 @@ func (view *ControlView) renderHazards(lvl *level.Level, readOnly bool) {
 		})
 }
 
+func (view *ControlView) renderTextureAnimations(lvl *level.Level, readOnly bool) {
+	imgui.Separator()
+
+	animations := lvl.TextureAnimations()
+	selectedText := ""
+	if (view.model.selectedTextureAnimationIndex >= 1) && (view.model.selectedTextureAnimationIndex < len(animations)) {
+		selectedText = fmt.Sprintf("%d", view.model.selectedTextureAnimationIndex)
+	}
+	if imgui.BeginCombo("Texture Animation Group", selectedText) {
+		for i := 1; i < len(animations); i++ {
+			if imgui.SelectableV(fmt.Sprintf("%2d", i), view.model.selectedTextureAnimationIndex == i, 0, imgui.Vec2{}) {
+				view.model.selectedTextureAnimationIndex = i
+			}
+		}
+		imgui.EndCombo()
+	}
+
+	if (view.model.selectedTextureAnimationIndex >= 1) && (view.model.selectedTextureAnimationIndex < len(animations)) {
+		animation := animations[view.model.selectedTextureAnimationIndex]
+		view.renderSliderInt(readOnly, "Texture Animation Time", int(animation.FrameTime),
+			func(int) string { return "%d msec" },
+			0, 1000,
+			func(newValue int) {
+				view.requestSetTextureAnimationTime(lvl, view.model.selectedTextureAnimationIndex, uint16(newValue))
+			})
+		view.renderSliderInt(readOnly, "Texture Animation Frame Count", int(animation.FrameCount),
+			func(int) string { return "%d" },
+			0, 10,
+			func(newValue int) {
+				view.requestSetTextureAnimationFrameCount(lvl, view.model.selectedTextureAnimationIndex, byte(newValue))
+			})
+		if readOnly {
+			imgui.LabelText("Texture Animation Loop Type", animation.LoopType.String())
+		} else if imgui.BeginCombo("Texture Animation Loop Type", animation.LoopType.String()) {
+			loopTypes := level.TextureAnimationLoopTypes()
+			for _, loopType := range loopTypes {
+				if imgui.SelectableV(loopType.String(), loopType == animation.LoopType, 0, imgui.Vec2{}) {
+					view.requestSetTextureAnimationType(lvl, view.model.selectedTextureAnimationIndex, loopType)
+				}
+			}
+			imgui.EndCombo()
+		}
+	}
+}
+
 func (view *ControlView) editingAllowed(id int) bool {
 	gameStateData := view.mod.ModifiedBlocks(resource.LangAny, ids.GameState)
 	isSavegame := (len(gameStateData) == 1) && (len(gameStateData[0]) == archive.GameStateSize) && (gameStateData[0][0x009C] > 0)
@@ -310,6 +356,27 @@ func (view *ControlView) requestSetFloorHazard(lvl *level.Level, info floorHazar
 func (view *ControlView) requestSetFloorHazardLevel(lvl *level.Level, value byte) {
 	lvl.Parameters().FloorHazardLevel = value
 	view.patchLevelResources(lvl, func() {})
+}
+
+func (view *ControlView) requestSetTextureAnimationTime(lvl *level.Level, index int, value uint16) {
+	lvl.TextureAnimations()[index].FrameTime = value
+	view.patchLevelResources(lvl, func() {
+		view.model.selectedTextureAnimationIndex = index
+	})
+}
+
+func (view *ControlView) requestSetTextureAnimationFrameCount(lvl *level.Level, index int, value byte) {
+	lvl.TextureAnimations()[index].FrameCount = value
+	view.patchLevelResources(lvl, func() {
+		view.model.selectedTextureAnimationIndex = index
+	})
+}
+
+func (view *ControlView) requestSetTextureAnimationType(lvl *level.Level, index int, value level.TextureAnimationLoopType) {
+	lvl.TextureAnimations()[index].LoopType = value
+	view.patchLevelResources(lvl, func() {
+		view.model.selectedTextureAnimationIndex = index
+	})
 }
 
 func (view *ControlView) patchLevelResources(lvl *level.Level, extraRestoreState func()) {

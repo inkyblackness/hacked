@@ -6,6 +6,7 @@ type controlViewModel struct {
 	selectedLevel                   int
 	selectedAtlasIndex              int
 	selectedSurveillanceObjectIndex int
+	selectedTextureAnimationIndex   int
 
 	restoreFocus bool
 	windowOpen   bool
@@ -13,6 +14,7 @@ type controlViewModel struct {
 
 func freshControlViewModel() controlViewModel {
 	return controlViewModel{
-		selectedLevel: world.StartingLevel,
+		selectedLevel:                 world.StartingLevel,
+		selectedTextureAnimationIndex: 1,
 	}
 }
