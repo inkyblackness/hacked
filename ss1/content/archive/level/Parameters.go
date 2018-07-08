@@ -14,8 +14,8 @@ type Parameters struct {
 	CeilingHazardLevel   byte
 	FloorHazardLevel     byte
 	FloorHazardIsGravity byte
-	FloorHazardOn        byte
-	CeilingHazardOn      byte
+	BiohazardRegister    byte
+	RadiationRegister    byte
 
 	_ [4]byte
 	_ [3][27]byte
@@ -24,8 +24,6 @@ type Parameters struct {
 // DefaultParameters returns a new instance of parameters.
 func DefaultParameters() Parameters {
 	return Parameters{
-		Size:            ParametersSize,
-		FloorHazardOn:   1,
-		CeilingHazardOn: 1,
+		Size: ParametersSize,
 	}
 }
