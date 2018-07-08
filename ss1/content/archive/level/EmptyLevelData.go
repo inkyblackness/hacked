@@ -30,7 +30,7 @@ func EmptyLevelData(param EmptyLevelParameters) [lvlids.PerLevel][]byte {
 	param.MapModifier(tileMap)
 	levelData[lvlids.TileMap] = encode(tileMap)
 
-	levelData[lvlids.Schedules] = encode(make([]byte, baseInfo.Scheduler.ElementSize*baseInfo.Scheduler.Size))
+	levelData[lvlids.Schedules] = encode(make([]byte, baseInfo.Scheduler.ElementSize*1))
 	levelData[lvlids.TextureAtlas] = encode(make(TextureAtlas, DefaultTextureAtlasSize))
 	levelData[lvlids.ObjectMasterTable] = encode(DefaultObjectMasterTable())
 	levelData[lvlids.ObjectCrossRefTable] = encode(DefaultObjectCrossReferenceTable())
