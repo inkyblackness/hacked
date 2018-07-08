@@ -32,7 +32,7 @@ var ceilingHazards = []ceilingHazardInfo{
 }
 
 func currentCeilingHazard(param *level.Parameters) ceilingHazardInfo {
-	radiationRegister := param.RadiationRegister != 0
+	radiationRegister := param.RadiationRegister > 1
 	if radiationRegister {
 		return ceilingHazards[1]
 	}
@@ -53,7 +53,7 @@ var floorHazards = []floorHazardInfo{
 }
 
 func currentFloorHazard(param *level.Parameters) floorHazardInfo {
-	biohazardRegister := param.BiohazardRegister != 0
+	biohazardRegister := param.BiohazardRegister > 1
 	isGravity := param.FloorHazardIsGravity != 0
 	if isGravity {
 		return floorHazards[1]

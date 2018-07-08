@@ -331,7 +331,7 @@ func (view *ControlView) requestSetCeilingHazard(lvl *level.Level, info ceilingH
 	parameters := lvl.Parameters()
 	parameters.RadiationRegister = 0
 	if info.radiationRegister {
-		parameters.RadiationRegister = 1
+		parameters.RadiationRegister = 2
 	}
 	view.patchLevelResources(lvl, func() {})
 }
@@ -348,7 +348,7 @@ func (view *ControlView) requestSetFloorHazard(lvl *level.Level, info floorHazar
 	if info.isGravity {
 		parameters.FloorHazardIsGravity = 1
 	} else if info.biohazardRegister {
-		parameters.BiohazardRegister = 1
+		parameters.BiohazardRegister = 2
 	}
 	view.patchLevelResources(lvl, func() {})
 }
