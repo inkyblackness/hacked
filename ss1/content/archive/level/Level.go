@@ -29,6 +29,8 @@ type Level struct {
 
 	surveillanceSources    [SurveillanceObjectCount]ObjectID
 	surveillanceSurrogates [SurveillanceObjectCount]ObjectID
+
+	parameters Parameters
 }
 
 // NewLevel returns a new instance.
@@ -50,12 +52,13 @@ func NewLevel(resourceBase resource.ID, id int, localizer resource.Localizer) *L
 	lvl.reloadObjectMasterTable()
 	lvl.reloadSurveillanceSources()
 	lvl.reloadSurveillanceSurrogates()
+	lvl.reloadParameters()
 
 	return lvl
 }
 
 // ID returns the identifier of the level.
-func (lvl Level) ID() int {
+func (lvl *Level) ID() int {
 	return lvl.id
 }
 
@@ -69,7 +72,7 @@ func (lvl *Level) InvalidateResources(ids []resource.ID) {
 }
 
 // Size returns the dimensions of the level.
-func (lvl Level) Size() (x, y int, z HeightShift) {
+func (lvl *Level) Size() (x, y int, z HeightShift) {
 	return int(lvl.baseInfo.XSize), int(lvl.baseInfo.YSize), lvl.baseInfo.ZShift
 }
 
@@ -103,8 +106,13 @@ func (lvl *Level) SetSurveillanceSurrogate(index int, id ObjectID) {
 }
 
 // IsCyberspace returns true if the level describes a cyberspace.
-func (lvl Level) IsCyberspace() bool {
+func (lvl *Level) IsCyberspace() bool {
 	return lvl.baseInfo.Cyberspace != 0
+}
+
+// Parameters returns the extra properties the level has.
+func (lvl *Level) Parameters() *Parameters {
+	return &lvl.parameters
 }
 
 // TextureAtlas returns the atlas for textures.
@@ -157,6 +165,8 @@ func (lvl *Level) EncodeState() [lvlids.PerLevel][]byte {
 	levelData[lvlids.SurveillanceSources] = encode(&lvl.surveillanceSources)
 	levelData[lvlids.SurveillanceSurrogates] = encode(&lvl.surveillanceSurrogates)
 
+	levelData[lvlids.Parameters] = encode(&lvl.parameters)
+
 	return levelData
 }
 
@@ -181,6 +191,8 @@ func (lvl *Level) onLevelResourceDataChanged(id int) {
 		lvl.reloadSurveillanceSources()
 	case lvlids.SurveillanceSurrogates:
 		lvl.reloadSurveillanceSurrogates()
+	case lvlids.Parameters:
+		lvl.reloadParameters()
 	}
 }
 
@@ -262,6 +274,16 @@ func (lvl *Level) reloadSurveillanceSurrogates() {
 	}
 	if err != nil {
 		lvl.surveillanceSurrogates = [SurveillanceObjectCount]ObjectID{}
+	}
+}
+
+func (lvl *Level) reloadParameters() {
+	reader, err := lvl.reader(lvlids.Parameters)
+	if err == nil {
+		err = binary.Read(reader, binary.LittleEndian, &lvl.parameters)
+	}
+	if err != nil {
+		lvl.parameters = DefaultParameters()
 	}
 }
 
