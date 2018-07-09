@@ -156,6 +156,19 @@ func (lvl *Level) ObjectLimit() ObjectID {
 	return ObjectID(size - 1)
 }
 
+// ForEachObject iterates over all active objects and calls the given handler.
+func (lvl *Level) ForEachObject(handler func(ObjectID, ObjectMasterEntry)) {
+	tableSize := len(lvl.objectMasterTable)
+	if tableSize > 0 {
+		id := ObjectID(lvl.objectMasterTable[0].CrossReferenceTableIndex)
+		for (id > 0) && (int(id) < tableSize) {
+			entry := lvl.objectMasterTable[id]
+			handler(id, entry)
+			id = entry.Next
+		}
+	}
+}
+
 // EncodeState returns a subset of encoded level data, which only includes
 // data that is loaded (modified) by the level structure.
 // For any data block that is not relevant, a zero length slice is returned.

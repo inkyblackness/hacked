@@ -136,6 +136,13 @@ func (display *MapDisplay) Render(lvl *level.Level, paletteTexture *graphics.Pal
 	}
 	display.mapGrid.Render(lvl)
 	display.highlighter.Render(display.selectedTiles.list, fineCoordinatesPerTileSide, [4]float32{0.0, 0.8, 0.2, 0.5})
+	{
+		var objects []MapPosition
+		lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMasterEntry) {
+			objects = append(objects, MapPosition{X: entry.X, Y: entry.Y})
+		})
+		display.highlighter.Render(objects, fineCoordinatesPerTileSide/4, [4]float32{1.0, 1.0, 1.0, 0.3})
+	}
 	if display.positionValid {
 		tilePos := MapPosition{
 			X: level.CoordinateAt(display.positionX.Tile(), 128),
