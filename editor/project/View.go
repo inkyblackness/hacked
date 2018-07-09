@@ -3,6 +3,7 @@ package project
 import (
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/model"
+	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/imgui-go"
 )
@@ -189,9 +190,9 @@ func (view *View) requestRemoveManifestEntry() {
 	view.commander.Queue(command)
 }
 
-func (view *View) requestLoadMod(modPath string, resources model.LocalizedResources) {
+func (view *View) requestLoadMod(modPath string, resources model.LocalizedResources, objectProperties object.PropertiesTable) {
 	view.mod.SetPath(modPath)
-	view.mod.Reset(resources)
+	view.mod.Reset(resources, objectProperties)
 }
 
 func (view *View) requestSaveMod(modPath string) {

@@ -3,6 +3,7 @@ package world
 import (
 	"errors"
 
+	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
@@ -123,6 +124,17 @@ func (manifest *Manifest) LocalizedResources(lang resource.Language) resource.Se
 		From: manifest,
 		As:   ResourceViewStrategy(),
 	}
+}
+
+// ObjectProperties returns the table of object properties.
+func (manifest *Manifest) ObjectProperties() object.PropertiesTable {
+	var table object.PropertiesTable
+	for _, entry := range manifest.entries {
+		if len(entry.ObjectProperties) > 0 {
+			table = entry.ObjectProperties
+		}
+	}
+	return table
 }
 
 func (manifest *Manifest) listIDs(entry *ManifestEntry) (ids []resource.ID) {

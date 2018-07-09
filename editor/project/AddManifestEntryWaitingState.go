@@ -1,14 +1,9 @@
 package project
 
 import (
-	"bytes"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/inkyblackness/hacked/ss1/resource"
-	"github.com/inkyblackness/hacked/ss1/resource/lgres"
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/imgui-go"
@@ -48,53 +43,6 @@ Typically, you would use the main "data" directory of the game
 	}
 }
 
-type fileStaging struct {
-	failedFiles int
-	savegames   map[string]resource.Provider
-	resources   map[string]resource.Provider
-}
-
-func (staging *fileStaging) stage(name string, enterDir bool) {
-	fileInfo, err := os.Stat(name)
-	if err != nil {
-		staging.failedFiles++
-		return
-	}
-	file, err := os.Open(name)
-	if err != nil {
-		return
-	}
-	defer file.Close() // nolint: errcheck
-
-	if fileInfo.IsDir() {
-		if enterDir {
-			subNames, _ := file.Readdirnames(0)
-			for _, subName := range subNames {
-				staging.stage(filepath.Join(name, subName), false)
-			}
-		}
-	} else {
-		fileData, err := ioutil.ReadAll(file)
-		if err != nil {
-			staging.failedFiles++
-		}
-
-		reader, err := lgres.ReaderFrom(bytes.NewReader(fileData))
-		if err == nil {
-			filename := filepath.Base(name)
-			if world.IsSavegame(reader) {
-				staging.savegames[filename] = reader
-			} else {
-				staging.resources[filename] = reader
-			}
-		}
-
-		if err != nil {
-			staging.failedFiles++
-		}
-	}
-}
-
 func (state *addManifestEntryWaitingState) HandleFiles(names []string) {
 	staging := fileStaging{
 		resources: make(map[string]resource.Provider),
@@ -119,6 +67,9 @@ func (state *addManifestEntryWaitingState) HandleFiles(names []string) {
 				}
 				entry.Resources = append(entry.Resources, localized)
 			}
+		}
+		if len(staging.objectProperties) > 0 {
+			entry.ObjectProperties = staging.objectProperties
 		}
 
 		state.view.requestAddManifestEntry(entry)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/serial/rle"
 	"github.com/inkyblackness/hacked/ss1/world"
@@ -26,6 +27,7 @@ type Mod struct {
 
 	modPath            string
 	localizedResources LocalizedResources
+	objectProperties   object.PropertiesTable
 }
 
 // NewMod returns a new instance.
@@ -174,6 +176,14 @@ func (mod *Mod) Modify(modifier func(*ModTransaction)) {
 	}, trans.modifiedIDs.ToList())
 }
 
+// ObjectProperties returns the table of object properties.
+func (mod *Mod) ObjectProperties() object.PropertiesTable {
+	if len(mod.objectProperties) > 0 {
+		return mod.objectProperties
+	}
+	return mod.worldManifest.ObjectProperties()
+}
+
 func (mod *Mod) modifyAndNotify(modifier func(), modifiedIDs []resource.ID) {
 	notifier := resource.ChangeNotifier{
 		Callback:  mod.resourcesChanged,
@@ -238,7 +248,7 @@ func (mod *Mod) delResource(lang resource.Language, id resource.ID) {
 }
 
 // Reset changes the mod to a new set of resources.
-func (mod *Mod) Reset(newResources LocalizedResources) {
+func (mod *Mod) Reset(newResources LocalizedResources, objectProperties object.PropertiesTable) {
 	modifiedIDs := make(resource.IDMarkerMap)
 	collectIDs := func(res LocalizedResources) {
 		for _, resMap := range res {
@@ -251,6 +261,7 @@ func (mod *Mod) Reset(newResources LocalizedResources) {
 	collectIDs(newResources)
 
 	mod.localizedResources = newResources
+	mod.objectProperties = objectProperties
 	mod.resetCallback()
 	mod.resourcesChanged(modifiedIDs.ToList(), nil)
 }
