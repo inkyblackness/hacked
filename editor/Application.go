@@ -63,6 +63,7 @@ type Application struct {
 	archiveView      *archives.View
 	levelControlView *levels.ControlView
 	levelTilesView   *levels.TilesView
+	levelObjectsView *levels.ObjectsView
 	textsView        *texts.View
 	aboutView        *about.View
 
@@ -129,6 +130,7 @@ func (app *Application) render() {
 	activeLevel := app.levels[app.levelControlView.SelectedLevel()]
 	app.levelControlView.Render(activeLevel)
 	app.levelTilesView.Render(activeLevel)
+	app.levelObjectsView.Render(activeLevel)
 	app.textsView.Render()
 
 	paletteTexture, _ := app.paletteCache.Palette(0)
@@ -215,6 +217,8 @@ func (app *Application) onKey(key input.Key, modifier input.Modifier) {
 		*app.levelControlView.WindowOpen() = !*app.levelControlView.WindowOpen()
 	} else if key == input.KeyF3 {
 		*app.levelTilesView.WindowOpen() = !*app.levelTilesView.WindowOpen()
+	} else if key == input.KeyF4 {
+		*app.levelObjectsView.WindowOpen() = !*app.levelObjectsView.WindowOpen()
 	}
 }
 
@@ -382,6 +386,7 @@ func (app *Application) initView() {
 	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)
 	app.levelControlView = levels.NewControlView(app.mod, app.GuiScale, app, &app.eventQueue, app.eventDispatcher)
 	app.levelTilesView = levels.NewTilesView(app.mod, app.GuiScale, app, &app.eventQueue, app.eventDispatcher)
+	app.levelObjectsView = levels.NewObjectsView(app.mod, app.GuiScale, app, &app.eventQueue, app.eventDispatcher)
 	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 }
@@ -436,6 +441,7 @@ func (app *Application) renderMainMenu() {
 			windowEntry("Archive", "", app.archiveView.WindowOpen())
 			windowEntry("Level Control", "F2", app.levelControlView.WindowOpen())
 			windowEntry("Level Tiles", "F3", app.levelTilesView.WindowOpen())
+			windowEntry("Level Objects", "F4", app.levelObjectsView.WindowOpen())
 			windowEntry("Texts", "", app.textsView.WindowOpen())
 			imgui.EndMenu()
 		}

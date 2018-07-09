@@ -1,8 +1,9 @@
 package levels
 
 import (
-	"github.com/inkyblackness/hacked/editor/event"
 	"reflect"
+
+	"github.com/inkyblackness/hacked/editor/event"
 )
 
 type tileCoordinates struct {
