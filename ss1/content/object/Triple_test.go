@@ -8,6 +8,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestClasses(t *testing.T) {
+	classes := object.Classes()
+	assert.Equal(t, 15, len(classes))
+}
+
+func TestClassString(t *testing.T) {
+	assert.Equal(t, "Gun", object.Class(0).String())
+	assert.Equal(t, "UnknownFF", object.Class(0xFF).String())
+}
+
 func TestTripleString(t *testing.T) {
 	tt := []struct {
 		triple   object.Triple
