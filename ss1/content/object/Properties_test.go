@@ -1,9 +1,11 @@
 package object_test
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/inkyblackness/hacked/ss1/content/object"
+	"github.com/inkyblackness/hacked/ss1/serial"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -44,4 +46,14 @@ func TestPropertiesForObjectData(t *testing.T) {
 		assert.Equal(t, tc.genSize, len(prop.Generic), "wrong generic size for "+tc.triple.String())
 		assert.Equal(t, tc.specSize, len(prop.Specific), "wrong specific size for "+tc.triple.String())
 	}
+}
+
+func TestPropertiesEncoding(t *testing.T) {
+	buf := bytes.NewBuffer(nil)
+	encoder := serial.NewEncoder(buf)
+	table := object.StandardPropertiesTable()
+
+	table.Code(encoder)
+	result := buf.Bytes()
+	assert.Equal(t, 17951, len(result)) // as taken from original CD
 }

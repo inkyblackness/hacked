@@ -1,6 +1,10 @@
 package object
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/inkyblackness/hacked/ss1/serial"
+)
 
 // PropertiesTable is a collection of class-specific properties.
 type PropertiesTable []ClassProperties
@@ -56,4 +60,29 @@ func (table PropertiesTable) ForObject(triple Triple) (Properties, error) {
 		return Properties{}, errors.New("invalid type")
 	}
 	return subclassEntry[triple.Type], nil
+}
+
+// Code serializes the table with given coder.
+func (table PropertiesTable) Code(coder serial.Coder) {
+	version := propertiesFileVersion
+	coder.Code(&version)
+	for _, class := range table {
+		for _, subclass := range class {
+			for _, objType := range subclass {
+				coder.Code(objType.Generic)
+			}
+		}
+		for _, subclass := range class {
+			for _, objType := range subclass {
+				coder.Code(objType.Specific)
+			}
+		}
+	}
+	for _, class := range table {
+		for _, subclass := range class {
+			for _, objType := range subclass {
+				coder.Code(objType.Common)
+			}
+		}
+	}
 }
