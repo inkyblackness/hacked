@@ -2,7 +2,6 @@ package levels
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/event"
@@ -38,8 +37,7 @@ func NewControlView(mod *model.Mod, guiScale float32, commander cmd.Commander, e
 		eventListener: eventListener,
 		model:         freshControlViewModel(),
 	}
-	var evt LevelSelectionSetEvent
-	eventRegistry.RegisterHandler(reflect.TypeOf(evt), view.onLevelSelectionSetEvent)
+	eventRegistry.RegisterHandler(view.onLevelSelectionSetEvent)
 	return view
 }
 

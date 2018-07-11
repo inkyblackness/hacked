@@ -1,7 +1,6 @@
 package event_test
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/inkyblackness/hacked/editor/event"
@@ -27,22 +26,21 @@ func (suite *DispatcherSuite) SetupTest() {
 
 func (suite *DispatcherSuite) TestRegisterHandlerPanicsWithWrongHandlerType() {
 	type actualEvent struct{}
-	eType := reflect.TypeOf((*actualEvent)(nil)).Elem()
 
 	assert.Panics(suite.T(), func() {
-		suite.dispatcher.RegisterHandler(reflect.TypeOf(int(0)), func(int) {})
+		suite.dispatcher.RegisterHandler(func(int) {})
 	}, "Panic expected for event type not being a struct")
 	assert.Panics(suite.T(), func() {
-		suite.dispatcher.RegisterHandler(eType, 123)
+		suite.dispatcher.RegisterHandler(123)
 	}, "Panic expected for not being a function")
 	assert.Panics(suite.T(), func() {
-		suite.dispatcher.RegisterHandler(eType, func() {})
+		suite.dispatcher.RegisterHandler(func() {})
 	}, "Panic expected for missing parameter")
 	assert.Panics(suite.T(), func() {
-		suite.dispatcher.RegisterHandler(eType, func(int) {})
+		suite.dispatcher.RegisterHandler(func(int) {})
 	}, "Panic expected for wrong parameter")
 	assert.Panics(suite.T(), func() {
-		suite.dispatcher.RegisterHandler(eType, func(*actualEvent, int) {})
+		suite.dispatcher.RegisterHandler(func(*actualEvent, int) {})
 	}, "Panic expected for too many parameters")
 }
 
@@ -50,7 +48,7 @@ func (suite *DispatcherSuite) TestEventDispatchesGivenEventToRegisteredHandler()
 	type testedEvent struct{ key int }
 	eventA := testedEvent{123}
 	var received *testedEvent
-	suite.givenRegisteredHandler(reflect.TypeOf(eventA), func(e testedEvent) { received = &e })
+	suite.givenRegisteredHandler(func(e testedEvent) { received = &e })
 	suite.whenEventIsDispatched(eventA)
 	require.NotNil(suite.T(), received, "No event received")
 	assert.Equal(suite.T(), eventA, *received, "Wrong event received")
@@ -61,8 +59,8 @@ func (suite *DispatcherSuite) TestEventHandlerCanBeUnregistered() {
 	eventA := testedEvent{123}
 	var received *testedEvent
 	handler := func(e testedEvent) { received = &e }
-	suite.givenRegisteredHandler(reflect.TypeOf(eventA), handler)
-	suite.givenHandlerWasUnregistered(reflect.TypeOf(eventA), handler)
+	suite.givenRegisteredHandler(handler)
+	suite.givenHandlerWasUnregistered(handler)
 	suite.whenEventIsDispatched(eventA)
 	require.Nil(suite.T(), received, "No call expected")
 }
@@ -80,9 +78,9 @@ func (suite *DispatcherSuite) TestDeregistrationKeepsOtherHandlersAlive() {
 	handlerB := func(e testedEvent) { receivedB = &e }
 	handlerC := func(e testedEvent) { receivedC = &e }
 	handlerD := func(e differentEvent) { receivedD = &e }
-	suite.givenRegisteredHandler(reflect.TypeOf(event1), handlerA, handlerB, handlerC, handlerB)
-	suite.givenRegisteredHandler(reflect.TypeOf(event2), handlerD)
-	suite.givenHandlerWasUnregistered(reflect.TypeOf(event1), handlerB)
+	suite.givenRegisteredHandler(handlerA, handlerB, handlerC, handlerB)
+	suite.givenRegisteredHandler(handlerD)
+	suite.givenHandlerWasUnregistered(handlerB)
 	suite.whenEventIsDispatched(event1)
 	suite.whenEventIsDispatched(event2)
 	assert.NotNil(suite.T(), receivedA, "Call expected via A")
@@ -96,10 +94,10 @@ func (suite *DispatcherSuite) TestDeregistrationOfHandlerDuringDispatchIsConside
 	eventA := testedEvent{123}
 	calls := 0
 	handler := func(e testedEvent) { calls++ }
-	deregisteringHandler := func(e testedEvent) { suite.dispatcher.UnregisterHandler(reflect.TypeOf(eventA), handler) }
+	deregisteringHandler := func(e testedEvent) { suite.dispatcher.UnregisterHandler(handler) }
 	otherHandlerCalledTimes := 0
 	otherHandler := func(e testedEvent) { otherHandlerCalledTimes++ }
-	suite.givenRegisteredHandler(reflect.TypeOf(eventA), handler, handler, deregisteringHandler, handler, handler, otherHandler)
+	suite.givenRegisteredHandler(handler, handler, deregisteringHandler, handler, handler, otherHandler)
 	suite.whenEventIsDispatched(eventA)
 	assert.Equal(suite.T(), 2, calls, "More calls than expected")
 	assert.Equal(suite.T(), 1, otherHandlerCalledTimes, "Handler list is wrong")
@@ -110,10 +108,10 @@ func (suite *DispatcherSuite) TestRegistrationOfHandlerDuringDispatchIsIgnored()
 	eventA := testedEvent{123}
 	var received *testedEvent
 	handler := func(e testedEvent) { received = &e }
-	registeringHandler := func(e testedEvent) { suite.dispatcher.RegisterHandler(reflect.TypeOf(eventA), handler) }
+	registeringHandler := func(e testedEvent) { suite.dispatcher.RegisterHandler(handler) }
 	dummyHandler := func(e testedEvent) {}
-	suite.givenRegisteredHandler(reflect.TypeOf(eventA), registeringHandler, dummyHandler)
-	suite.givenHandlerWasUnregistered(reflect.TypeOf(eventA), dummyHandler) // in case same array was reused through cap
+	suite.givenRegisteredHandler(registeringHandler, dummyHandler)
+	suite.givenHandlerWasUnregistered(dummyHandler) // in case same array was reused through cap
 	suite.whenEventIsDispatched(eventA)
 	require.Nil(suite.T(), received, "No call expected")
 }
@@ -131,7 +129,7 @@ func (suite *DispatcherSuite) TestEventCanNotBeDispatchedDuringDispatch() {
 			}, "panic expected")
 		}
 	}
-	suite.givenRegisteredHandler(reflect.TypeOf(eventA), handler)
+	suite.givenRegisteredHandler(handler)
 	suite.whenEventIsDispatched(eventA)
 	assert.Equal(suite.T(), 1, calls, "Only one call expected")
 }
@@ -141,13 +139,13 @@ func (suite *DispatcherSuite) TestRegistrationAndDeregistrationCanBeStackedAndSt
 	eventA := testedEvent{123}
 	calls := 0
 	handler := func(e testedEvent) { calls++ }
-	registeringHandler := func(e testedEvent) { suite.dispatcher.RegisterHandler(reflect.TypeOf(eventA), handler) }
-	unregisteringHandler := func(e testedEvent) { suite.dispatcher.UnregisterHandler(reflect.TypeOf(eventA), handler) }
-	suite.givenRegisteredHandler(reflect.TypeOf(eventA), unregisteringHandler, registeringHandler)
+	registeringHandler := func(e testedEvent) { suite.dispatcher.RegisterHandler(handler) }
+	unregisteringHandler := func(e testedEvent) { suite.dispatcher.UnregisterHandler(handler) }
+	suite.givenRegisteredHandler(unregisteringHandler, registeringHandler)
 	suite.givenEventWasDispatched(eventA)
 	require.Equal(suite.T(), 0, calls, "No call expected during first pass")
-	suite.givenHandlerWasUnregistered(reflect.TypeOf(eventA), unregisteringHandler)
-	suite.givenHandlerWasUnregistered(reflect.TypeOf(eventA), registeringHandler)
+	suite.givenHandlerWasUnregistered(unregisteringHandler)
+	suite.givenHandlerWasUnregistered(registeringHandler)
 	suite.whenEventIsDispatched(eventA)
 	assert.Equal(suite.T(), 1, calls, "One call expected as the last call was a registration")
 }
@@ -157,13 +155,13 @@ func (suite *DispatcherSuite) TestRegistrationAndDeregistrationCanBeStackedAndSt
 	eventA := testedEvent{123}
 	calls := 0
 	handler := func(e testedEvent) { calls++ }
-	registeringHandler := func(e testedEvent) { suite.dispatcher.RegisterHandler(reflect.TypeOf(eventA), handler) }
-	unregisteringHandler := func(e testedEvent) { suite.dispatcher.UnregisterHandler(reflect.TypeOf(eventA), handler) }
-	suite.givenRegisteredHandler(reflect.TypeOf(eventA), registeringHandler, unregisteringHandler)
+	registeringHandler := func(e testedEvent) { suite.dispatcher.RegisterHandler(handler) }
+	unregisteringHandler := func(e testedEvent) { suite.dispatcher.UnregisterHandler(handler) }
+	suite.givenRegisteredHandler(registeringHandler, unregisteringHandler)
 	suite.givenEventWasDispatched(eventA)
 	require.Equal(suite.T(), 0, calls, "No call expected during first pass as it was registered during event chain")
-	suite.givenHandlerWasUnregistered(reflect.TypeOf(eventA), unregisteringHandler)
-	suite.givenHandlerWasUnregistered(reflect.TypeOf(eventA), registeringHandler)
+	suite.givenHandlerWasUnregistered(unregisteringHandler)
+	suite.givenHandlerWasUnregistered(registeringHandler)
 	suite.whenEventIsDispatched(eventA)
 	assert.Equal(suite.T(), 0, calls, "No call expected as the deregistration happened after registration")
 }
@@ -173,13 +171,13 @@ func (suite *DispatcherSuite) TestRegistrationAndDeregistrationCanBeStackedAndSt
 	eventA := testedEvent{123}
 	calls := 0
 	handler := func(e testedEvent) { calls++ }
-	registeringHandler := func(e testedEvent) { suite.dispatcher.RegisterHandler(reflect.TypeOf(eventA), handler) }
-	unregisteringHandler := func(e testedEvent) { suite.dispatcher.UnregisterHandler(reflect.TypeOf(eventA), handler) }
-	suite.givenRegisteredHandler(reflect.TypeOf(eventA), registeringHandler, unregisteringHandler, registeringHandler)
+	registeringHandler := func(e testedEvent) { suite.dispatcher.RegisterHandler(handler) }
+	unregisteringHandler := func(e testedEvent) { suite.dispatcher.UnregisterHandler(handler) }
+	suite.givenRegisteredHandler(registeringHandler, unregisteringHandler, registeringHandler)
 	suite.givenEventWasDispatched(eventA)
 	require.Equal(suite.T(), 0, calls, "No call expected during first pass as it was registered during event chain")
-	suite.givenHandlerWasUnregistered(reflect.TypeOf(eventA), unregisteringHandler)
-	suite.givenHandlerWasUnregistered(reflect.TypeOf(eventA), registeringHandler)
+	suite.givenHandlerWasUnregistered(unregisteringHandler)
+	suite.givenHandlerWasUnregistered(registeringHandler)
 	suite.whenEventIsDispatched(eventA)
 	assert.Equal(suite.T(), 1, calls, "One call expected as there was one additional registration")
 }
@@ -189,7 +187,7 @@ func (suite *DispatcherSuite) TestRegistrationReturnsDeregisterShortcut() {
 	eventA := testedEvent{123}
 	calls := 0
 	handler := func(e testedEvent) { calls++ }
-	unreg := suite.dispatcher.RegisterHandler(reflect.TypeOf(eventA), handler)
+	unreg := suite.dispatcher.RegisterHandler(handler)
 	unreg()
 	suite.whenEventIsDispatched(eventA)
 	assert.Equal(suite.T(), 0, calls, "No call expected")
@@ -201,16 +199,16 @@ func (suite *DispatcherSuite) TestEventIsIgnoredIfNoHandlerRegistered() {
 	assert.NotPanics(suite.T(), func() { suite.whenEventIsDispatched(eventA) })
 }
 
-func (suite *DispatcherSuite) givenRegisteredHandler(t reflect.Type, handlers ...interface{}) {
+func (suite *DispatcherSuite) givenRegisteredHandler(handlers ...interface{}) {
 	for _, handler := range handlers {
 		require.NotPanics(suite.T(), func() {
-			suite.dispatcher.RegisterHandler(t, handler)
+			suite.dispatcher.RegisterHandler(handler)
 		}, "Registering handler panicked! Not expected.")
 	}
 }
 
-func (suite *DispatcherSuite) givenHandlerWasUnregistered(t reflect.Type, handler interface{}) {
-	suite.dispatcher.UnregisterHandler(t, handler)
+func (suite *DispatcherSuite) givenHandlerWasUnregistered(handler interface{}) {
+	suite.dispatcher.UnregisterHandler(handler)
 }
 
 func (suite *DispatcherSuite) givenEventWasDispatched(e event.Event) {

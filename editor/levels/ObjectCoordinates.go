@@ -1,8 +1,6 @@
 package levels
 
 import (
-	"reflect"
-
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 )
@@ -21,12 +19,9 @@ func (coords objectIDs) contains(pos level.ObjectID) bool {
 }
 
 func (coords *objectIDs) registerAt(registry event.Registry) {
-	var setEvent ObjectSelectionSetEvent
-	registry.RegisterHandler(reflect.TypeOf(setEvent), coords.onObjectSelectionSetEvent)
-	var addEvent ObjectSelectionAddEvent
-	registry.RegisterHandler(reflect.TypeOf(addEvent), coords.onObjectSelectionAddEvent)
-	var removeEvent ObjectSelectionRemoveEvent
-	registry.RegisterHandler(reflect.TypeOf(removeEvent), coords.onObjectSelectionRemoveEvent)
+	registry.RegisterHandler(coords.onObjectSelectionSetEvent)
+	registry.RegisterHandler(coords.onObjectSelectionAddEvent)
+	registry.RegisterHandler(coords.onObjectSelectionRemoveEvent)
 }
 
 func (coords *objectIDs) onObjectSelectionSetEvent(evt ObjectSelectionSetEvent) {

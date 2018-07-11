@@ -29,28 +29,16 @@ func NewDispatcher() *Dispatcher {
 	}
 }
 
-// RegisterHandler must be called with a concrete structural type (implementing the Event interface),
-// and a function that takes one argument that is of the given type.
+// RegisterHandler must be called a function that takes one argument which is
+// a concrete structural type (implementing the Event interface).
 // This function panics if this is not fulfilled.
 // The same handler function can be registered several times for the same type.
 // It will be called for each registration.
 //
 // The returned function can be used to unregister the handler again. It is a closure over
 // UnregisterHandler(eType, handlerFunc).
-func (dispatcher *Dispatcher) RegisterHandler(eType reflect.Type, handlerFunc interface{}) func() {
-	if eType.Kind() != reflect.Struct {
-		panic("event type must be a structure")
-	}
-	handlerType := reflect.TypeOf(handlerFunc)
-	if handlerType.Kind() != reflect.Func {
-		panic("handler must be a function")
-	}
-	if handlerType.NumIn() != 1 {
-		panic("handler takes wrong number of arguments")
-	}
-	if handlerType.In(0) != eType {
-		panic("handler does not take given type as argument")
-	}
+func (dispatcher *Dispatcher) RegisterHandler(handlerFunc interface{}) func() {
+	eType := dispatcher.verifyHandlerFunction(handlerFunc)
 
 	entry, existing := dispatcher.handlers[eType]
 	if !existing {
@@ -64,14 +52,16 @@ func (dispatcher *Dispatcher) RegisterHandler(eType reflect.Type, handlerFunc in
 		entry.pending = append(entry.pending, pendingHandlerAction{add: true, val: handlerValue})
 	}
 
-	return func() { dispatcher.UnregisterHandler(eType, handlerFunc) }
+	return func() { dispatcher.UnregisterHandler(handlerFunc) }
 }
 
 // UnregisterHandler removes a handler that was previously registered.
 // If there was no registration done, this call is ignored.
 // If the same handler was registered multiple times, all registrations are removed.
-func (dispatcher *Dispatcher) UnregisterHandler(eType reflect.Type, handlerFunc interface{}) {
+func (dispatcher *Dispatcher) UnregisterHandler(handlerFunc interface{}) {
 	handlerValue := reflect.ValueOf(handlerFunc)
+	eType := dispatcher.verifyHandlerFunction(handlerFunc)
+
 	entry := dispatcher.handlers[eType]
 	if !entry.dispatching {
 		dispatcher.removeHandlerFromList(entry, handlerValue)
@@ -128,4 +118,19 @@ func (dispatcher *Dispatcher) isHandlerStillRegistered(entry *handlerEntry, hand
 		}
 	}
 	return true
+}
+
+func (dispatcher *Dispatcher) verifyHandlerFunction(handlerFunc interface{}) reflect.Type {
+	handlerType := reflect.TypeOf(handlerFunc)
+	if handlerType.Kind() != reflect.Func {
+		panic("handler must be a function")
+	}
+	if handlerType.NumIn() != 1 {
+		panic("handler takes wrong number of arguments")
+	}
+	eType := handlerType.In(0)
+	if eType.Kind() != reflect.Struct {
+		panic("event type must be a structure")
+	}
+	return eType
 }

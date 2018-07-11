@@ -1,8 +1,6 @@
 package levels
 
 import (
-	"reflect"
-
 	"github.com/inkyblackness/hacked/editor/event"
 )
 
@@ -20,12 +18,9 @@ func (coords tileCoordinates) contains(pos MapPosition) bool {
 }
 
 func (coords *tileCoordinates) registerAt(registry event.Registry) {
-	var setEvent TileSelectionSetEvent
-	registry.RegisterHandler(reflect.TypeOf(setEvent), coords.onTileSelectionSetEvent)
-	var addEvent TileSelectionAddEvent
-	registry.RegisterHandler(reflect.TypeOf(addEvent), coords.onTileSelectionAddEvent)
-	var removeEvent TileSelectionRemoveEvent
-	registry.RegisterHandler(reflect.TypeOf(removeEvent), coords.onTileSelectionRemoveEvent)
+	registry.RegisterHandler(coords.onTileSelectionSetEvent)
+	registry.RegisterHandler(coords.onTileSelectionAddEvent)
+	registry.RegisterHandler(coords.onTileSelectionRemoveEvent)
 }
 
 func (coords *tileCoordinates) onTileSelectionSetEvent(evt TileSelectionSetEvent) {
