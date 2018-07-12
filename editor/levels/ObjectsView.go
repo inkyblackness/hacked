@@ -11,6 +11,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
 	"github.com/inkyblackness/hacked/ss1/content/object"
+	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/imgui-go"
@@ -18,7 +19,8 @@ import (
 
 // ObjectsView is for object properties.
 type ObjectsView struct {
-	mod *model.Mod
+	mod       *model.Mod
+	textCache *text.Cache
 
 	guiScale      float32
 	commander     cmd.Commander
@@ -28,13 +30,17 @@ type ObjectsView struct {
 }
 
 // NewObjectsView returns a new instance.
-func NewObjectsView(mod *model.Mod, guiScale float32, commander cmd.Commander, eventListener event.Listener, eventRegistry event.Registry) *ObjectsView {
+func NewObjectsView(mod *model.Mod, guiScale float32, textCache *text.Cache,
+	commander cmd.Commander, eventListener event.Listener, eventRegistry event.Registry) *ObjectsView {
 	view := &ObjectsView{
-		mod:           mod,
+		mod:       mod,
+		textCache: textCache,
+
 		guiScale:      guiScale,
 		commander:     commander,
 		eventListener: eventListener,
-		model:         freshObjectsViewModel(),
+
+		model: freshObjectsViewModel(),
 	}
 	view.model.selectedObjects.registerAt(eventRegistry)
 	return view
@@ -59,7 +65,7 @@ func (view *ObjectsView) Render(lvl *level.Level) {
 		if readOnly {
 			title += " (read-only)"
 		}
-		if imgui.BeginV(title+"###Level Objects", view.WindowOpen(), 0) {
+		if imgui.BeginV(title+"###Level Objects", view.WindowOpen(), imgui.WindowFlagsHorizontalScrollbar) {
 			view.renderContent(lvl, readOnly)
 		}
 		imgui.End()
@@ -68,6 +74,7 @@ func (view *ObjectsView) Render(lvl *level.Level) {
 
 func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 	objectIDUnifier := values.NewUnifier()
+	classUnifier := values.NewUnifier()
 	typeUnifier := values.NewUnifier()
 	zUnifier := values.NewUnifier()
 	tileXUnifier := values.NewUnifier()
@@ -82,6 +89,7 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 	for _, id := range view.model.selectedObjects.list {
 		obj := lvl.Object(id)
 		objectIDUnifier.Add(id)
+		classUnifier.Add(obj.Class)
 		typeUnifier.Add(object.TripleFrom(int(obj.Class), int(obj.Subclass), int(obj.Type)))
 		zUnifier.Add(obj.Z)
 		tileXUnifier.Add(obj.X.Tile())
@@ -94,7 +102,7 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 		hitpointsUnifier.Add(obj.Hitpoints)
 	}
 
-	imgui.PushItemWidth(-250 * view.guiScale)
+	imgui.PushItemWidth(-150 * view.guiScale)
 	multiple := len(view.model.selectedObjects.list) > 1
 	columns, rows, levelHeight := lvl.Size()
 
@@ -116,6 +124,51 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 		imgui.LabelText("ID", fmt.Sprintf("%3d", int(objectIDUnifier.Unified().(level.ObjectID))))
 	} else {
 		imgui.LabelText("ID", "")
+	}
+	if classUnifier.IsUnique() {
+		objectProperties := view.mod.ObjectProperties()
+		triples := objectProperties.TriplesInClass(classUnifier.Unified().(object.Class))
+		selectedIndex := -1
+		if typeUnifier.IsUnique() {
+			triple := typeUnifier.Unified().(object.Triple)
+			for index, availableTriple := range triples {
+				if availableTriple == triple {
+					selectedIndex = index
+				}
+			}
+			if selectedIndex < 0 {
+				selectedIndex = len(triples)
+				triples = append(triples, triple)
+			}
+		}
+		values.RenderUnifiedCombo(readOnly, multiple, "Object Type", typeUnifier,
+			func(u values.Unifier) int { return selectedIndex },
+			func(value int) string {
+				triple := triples[value]
+				suffix := "???"
+				linearIndex := objectProperties.TripleIndex(triple)
+				if linearIndex >= 0 {
+					key := resource.KeyOf(ids.ObjectLongNames, resource.LangDefault, linearIndex)
+					objName, err := view.textCache.Text(key)
+					if err == nil {
+						suffix = objName
+					}
+				}
+				return triple.String() + ": " + suffix
+			},
+			len(triples),
+			func(newValue int) {
+				triple := triples[newValue]
+				view.requestBaseChange(lvl, func(entry *level.ObjectMasterEntry) {
+					entry.Subclass = triple.Subclass
+					entry.Type = triple.Type
+				})
+			})
+
+	} else if multiple {
+		imgui.LabelText("Object Type", "(multiple classes)")
+	} else {
+		imgui.LabelText("Object Type", "")
 	}
 
 	if imgui.TreeNodeV("Base Properties", imgui.TreeNodeFlagsDefaultOpen|imgui.TreeNodeFlagsFramed) {

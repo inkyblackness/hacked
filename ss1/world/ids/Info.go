@@ -123,6 +123,8 @@ var infoList = []ResourceInfo{
 	{AccessCardNameTexts, AccessCardNameTexts.Plus(1), resource.Text, true, false, true, 32 * 2, CybStrng},
 	{DataletMessageTexts, DataletMessageTexts.Plus(1), resource.Text, true, false, true, 256, CybStrng},
 
+	{ObjectLongNames, ObjectLongNames.Plus(1), resource.Text, true, false, true, 1000, CybStrng},
+
 	{ArchiveName, ArchiveName.Plus(1), resource.Archive, false, false, false, 1, Archive},
 	{GameState, GameState.Plus(1), resource.Archive, false, true, false, 1, Archive},
 }

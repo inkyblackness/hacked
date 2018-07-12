@@ -27,6 +27,8 @@ const (
 	InfoNodeMessageTexts resource.ID = 0x0878
 	AccessCardNameTexts  resource.ID = 0x0879
 	DataletMessageTexts  resource.ID = 0x087A
+
+	ObjectLongNames resource.ID = 0x0024
 )
 
 // Archives
