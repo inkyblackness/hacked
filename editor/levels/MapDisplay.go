@@ -184,11 +184,13 @@ func (display *MapDisplay) Render(lvl *level.Level, paletteTexture *graphics.Pal
 		display.highlighter.Render(objects, fineCoordinatesPerTileSide/4, [4]float32{1.0, 1.0, 1.0, 0.3})
 	}
 	{
-		selectedObjectHighlights := make([]MapPosition, len(display.selectedObjects.list))
-		for index, entry := range display.selectedObjects.list {
+		selectedObjectHighlights := make([]MapPosition, 0, len(display.selectedObjects.list))
+		for _, entry := range display.selectedObjects.list {
 			obj := lvl.Object(entry)
-			objPos := MapPosition{X: obj.X, Y: obj.Y}
-			selectedObjectHighlights[index] = objPos
+			if obj != nil {
+				objPos := MapPosition{X: obj.X, Y: obj.Y}
+				selectedObjectHighlights = append(selectedObjectHighlights, objPos)
+			}
 		}
 		display.highlighter.Render(selectedObjectHighlights, fineCoordinatesPerTileSide/4, [4]float32{0.0, 0.8, 0.2, 0.5})
 	}
@@ -300,13 +302,15 @@ func (display *MapDisplay) renderPositionOverlay(lvl *level.Level) {
 			} else if objectItem, isObjectItem := display.activeHoverItem.(objectHoverItem); isObjectItem {
 				_, _, heightShift := lvl.Size()
 				obj := lvl.Object(objectItem.id)
-				typeString = fmt.Sprintf("%3d = %v", objectItem.id, object.TripleFrom(int(obj.Class), int(obj.Subclass), int(obj.Type)))
-				heightInTiles, err := heightShift.ValueFromObjectHeight(obj.Z)
-				if err == nil {
-					floorString = fmt.Sprintf("%2.3f", heightInTiles)
+				if obj != nil {
+					typeString = fmt.Sprintf("%3d = %v", objectItem.id, object.TripleFrom(int(obj.Class), int(obj.Subclass), int(obj.Type)))
+					heightInTiles, err := heightShift.ValueFromObjectHeight(obj.Z)
+					if err == nil {
+						floorString = fmt.Sprintf("%2.3f", heightInTiles)
+					}
+					floorRaw = int(obj.Z)
+					hasFloor = true
 				}
-				floorRaw = int(obj.Z)
-				hasFloor = true
 			}
 		}
 		imgui.Text("T: " + typeString)

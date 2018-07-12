@@ -88,18 +88,20 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 
 	for _, id := range view.model.selectedObjects.list {
 		obj := lvl.Object(id)
-		objectIDUnifier.Add(id)
-		classUnifier.Add(obj.Class)
-		typeUnifier.Add(object.TripleFrom(int(obj.Class), int(obj.Subclass), int(obj.Type)))
-		zUnifier.Add(obj.Z)
-		tileXUnifier.Add(obj.X.Tile())
-		fineXUnifier.Add(obj.X.Fine())
-		tileYUnifier.Add(obj.Y.Tile())
-		fineYUnifier.Add(obj.Y.Fine())
-		rotationXUnifier.Add(obj.XRotation)
-		rotationYUnifier.Add(obj.YRotation)
-		rotationZUnifier.Add(obj.ZRotation)
-		hitpointsUnifier.Add(obj.Hitpoints)
+		if obj != nil {
+			objectIDUnifier.Add(id)
+			classUnifier.Add(obj.Class)
+			typeUnifier.Add(object.TripleFrom(int(obj.Class), int(obj.Subclass), int(obj.Type)))
+			zUnifier.Add(obj.Z)
+			tileXUnifier.Add(obj.X.Tile())
+			fineXUnifier.Add(obj.X.Fine())
+			tileYUnifier.Add(obj.Y.Tile())
+			fineYUnifier.Add(obj.Y.Fine())
+			rotationXUnifier.Add(obj.XRotation)
+			rotationYUnifier.Add(obj.YRotation)
+			rotationZUnifier.Add(obj.ZRotation)
+			hitpointsUnifier.Add(obj.Hitpoints)
+		}
 	}
 
 	imgui.PushItemWidth(-150 * view.guiScale)
@@ -115,7 +117,7 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 		return tileHeightString + " tile(s) - raw: %d"
 	}
 	rotationFormatter := func(value int) string {
-		return fmt.Sprintf("%.3f degrees  - raw: %v", level.RotationUnit(value).ToDegrees(), value)
+		return fmt.Sprintf("%.3f degrees  - raw: %%d", level.RotationUnit(value).ToDegrees())
 	}
 
 	if multiple {
@@ -266,7 +268,9 @@ func (view *ObjectsView) requestBaseChange(lvl *level.Level, modifier func(*leve
 func (view *ObjectsView) changeObjectMaster(lvl *level.Level, objectIDs []level.ObjectID, modifier func(*level.ObjectMasterEntry)) {
 	for _, id := range objectIDs {
 		obj := lvl.Object(id)
-		modifier(obj)
+		if obj != nil {
+			modifier(obj)
+		}
 	}
 
 	command := patchLevelDataCommand{
