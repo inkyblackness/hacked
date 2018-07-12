@@ -10,6 +10,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
+	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ui/input"
 	"github.com/inkyblackness/hacked/ui/opengl"
 	"github.com/inkyblackness/imgui-go"
@@ -182,7 +183,15 @@ func (display *MapDisplay) Render(lvl *level.Level, paletteTexture *graphics.Pal
 		})
 		display.highlighter.Render(objects, fineCoordinatesPerTileSide/4, [4]float32{1.0, 1.0, 1.0, 0.3})
 	}
-	//display.highlighter.Render(display.selectedObjects.list, fineCoordinatesPerTileSide/4, [4]float32{0.0, 0.8, 0.2, 0.5})
+	{
+		selectedObjectHighlights := make([]MapPosition, len(display.selectedObjects.list))
+		for index, entry := range display.selectedObjects.list {
+			obj := lvl.Object(entry)
+			objPos := MapPosition{X: obj.X, Y: obj.Y}
+			selectedObjectHighlights[index] = objPos
+		}
+		display.highlighter.Render(selectedObjectHighlights, fineCoordinatesPerTileSide/4, [4]float32{0.0, 0.8, 0.2, 0.5})
+	}
 	if display.positionValid {
 		if len(display.availableHoverItems) == 0 {
 			display.availableHoverItems = display.nearestHoverItems(lvl, display.position)
@@ -263,31 +272,55 @@ func (display *MapDisplay) renderPositionOverlay(lvl *level.Level) {
 	if imgui.BeginV("Position", nil, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoResize|imgui.WindowFlagsAlwaysAutoResize|
 		imgui.WindowFlagsNoSavedSettings|imgui.WindowFlagsNoFocusOnAppearing|imgui.WindowFlagsNoNav) {
 
-		if display.activeHoverItem != nil {
-			pos := display.activeHoverItem.Pos()
+		typeString := "---"
+		hasPos := false
+		var pos MapPosition
+		hasFloor := false
+		var floorRaw int
+		floorString := "???"
 
-			imgui.Text(fmt.Sprintf("X: T %2d F %3d", pos.X.Tile(), pos.X.Fine()))
-			imgui.Text(fmt.Sprintf("Y: T %2d F %3d", pos.Y.Tile(), pos.Y.Fine()))
-			_, isTileItem := display.activeHoverItem.(*tileHoverItem)
-			if isTileItem {
+		if display.activeHoverItem != nil {
+			pos = display.activeHoverItem.Pos()
+			hasPos = true
+
+			if _, isTileItem := display.activeHoverItem.(tileHoverItem); isTileItem {
+				pos = display.position // use raw cursor position for this display
+				typeString = "Tile"
 				tile := lvl.Tile(int(pos.X.Tile()), int(pos.Y.Tile()))
 				if (tile != nil) && (tile.Type != level.TileTypeSolid) {
 					_, _, heightShift := lvl.Size()
 					height := tile.Floor.AbsoluteHeight()
 					heightInTiles, err := heightShift.ValueFromTileHeight(height)
-					heightInTilesString := "???"
 					if err == nil {
-						heightInTilesString = fmt.Sprintf("%2.3f", heightInTiles)
+						floorString = fmt.Sprintf("%2.3f", heightInTiles)
 					}
-					imgui.Text(fmt.Sprintf("Z: %2d = %s", height, heightInTilesString))
+					floorRaw = int(height)
+					hasFloor = true
 				}
-			} else {
-				imgui.Text("Z: -- = --.---")
+			} else if objectItem, isObjectItem := display.activeHoverItem.(objectHoverItem); isObjectItem {
+				_, _, heightShift := lvl.Size()
+				obj := lvl.Object(objectItem.id)
+				typeString = fmt.Sprintf("%3d = %v", objectItem.id, object.TripleFrom(int(obj.Class), int(obj.Subclass), int(obj.Type)))
+				heightInTiles, err := heightShift.ValueFromObjectHeight(obj.Z)
+				if err == nil {
+					floorString = fmt.Sprintf("%2.3f", heightInTiles)
+				}
+				floorRaw = int(obj.Z)
+				hasFloor = true
 			}
+		}
+		imgui.Text("T: " + typeString)
+		if hasPos {
+			imgui.Text(fmt.Sprintf("X: T %2d F %3d", pos.X.Tile(), pos.X.Fine()))
+			imgui.Text(fmt.Sprintf("Y: T %2d F %3d", pos.Y.Tile(), pos.Y.Fine()))
 		} else {
 			imgui.Text("X: T -- F ---")
 			imgui.Text("Y: T -- F ---")
-			imgui.Text("Z: -- = --.---")
+		}
+		if hasFloor {
+			imgui.Text(fmt.Sprintf("F: %3d = %s", floorRaw, floorString))
+		} else {
+			imgui.Text("F: -- = --.---")
 		}
 		imgui.End()
 	}
@@ -334,24 +367,15 @@ func (display *MapDisplay) MouseButtonUp(mouseX, mouseY float32, button uint32, 
 	if button == input.MousePrimary {
 		display.moveCapture = func(float32, float32) {}
 		if !display.mouseMoved && display.positionValid {
-			tilePos := MapPosition{
-				X: level.CoordinateAt(display.position.X.Tile(), 128),
-				Y: level.CoordinateAt(display.position.Y.Tile(), 128),
-			}
 			if modifier.Has(input.ModControl) {
-				wasSelected := display.selectedTiles.contains(tilePos)
-				if wasSelected {
-					display.eventListener.Event(TileSelectionRemoveEvent{tiles: []MapPosition{tilePos}})
-				} else {
-					display.eventListener.Event(TileSelectionAddEvent{tiles: []MapPosition{tilePos}})
-				}
+				display.toggleSelectionAtActiveHoverItem()
 			} else if modifier.Has(input.ModShift) && (len(display.selectedTiles.list) > 0) {
 				firstPos := display.selectedTiles.list[0]
 
 				fromX := int(firstPos.X.Tile())
 				fromY := int(firstPos.Y.Tile())
-				toX := int(tilePos.X.Tile())
-				toY := int(tilePos.Y.Tile())
+				toX := int(display.position.X.Tile())
+				toY := int(display.position.Y.Tile())
 				xIncrement := 1
 				yIncrement := 1
 				if fromX > toX {
@@ -369,11 +393,75 @@ func (display *MapDisplay) MouseButtonUp(mouseX, mouseY float32, button uint32, 
 					}
 				}
 				display.eventListener.Event(TileSelectionSetEvent{tiles: newList})
+				display.eventListener.Event(ObjectSelectionSetEvent{objects: display.objectsInTiles(newList)})
 			} else {
-				display.eventListener.Event(TileSelectionSetEvent{tiles: []MapPosition{tilePos}})
+				display.setSelectionByActiveHoverItem()
 			}
 		}
 	}
+}
+
+func (display *MapDisplay) setSelectionByActiveHoverItem() {
+	var tiles []MapPosition
+	var objects []level.ObjectID
+	if display.activeHoverItem != nil {
+		if tileItem, isTile := display.activeHoverItem.(tileHoverItem); isTile {
+			tiles = append(tiles, tileItem.pos)
+		} else if objectItem, isObject := display.activeHoverItem.(objectHoverItem); isObject {
+			objects = append(objects, objectItem.id)
+		}
+	}
+	display.eventListener.Event(TileSelectionSetEvent{tiles: tiles})
+	if len(tiles) > 0 {
+		display.eventListener.Event(ObjectSelectionSetEvent{objects: display.objectsInTiles(tiles)})
+	} else {
+		display.eventListener.Event(ObjectSelectionSetEvent{objects: objects})
+	}
+}
+
+func (display *MapDisplay) toggleSelectionAtActiveHoverItem() {
+	if display.activeHoverItem != nil {
+		if tileItem, isTile := display.activeHoverItem.(tileHoverItem); isTile {
+			wasSelected := display.selectedTiles.contains(tileItem.pos)
+			tiles := []MapPosition{tileItem.pos}
+			if wasSelected {
+				display.eventListener.Event(TileSelectionRemoveEvent{tiles: tiles})
+				display.eventListener.Event(ObjectSelectionRemoveEvent{objects: display.objectsInTiles(tiles)})
+			} else {
+				display.eventListener.Event(TileSelectionAddEvent{tiles: tiles})
+				display.eventListener.Event(ObjectSelectionAddEvent{objects: display.objectsInTiles(tiles)})
+			}
+		} else if objectItem, isObject := display.activeHoverItem.(objectHoverItem); isObject {
+			wasSelected := display.selectedObjects.contains(objectItem.id)
+			if wasSelected {
+				display.eventListener.Event(ObjectSelectionRemoveEvent{objects: []level.ObjectID{objectItem.id}})
+			} else {
+				display.eventListener.Event(ObjectSelectionAddEvent{objects: []level.ObjectID{objectItem.id}})
+			}
+		}
+	}
+}
+
+func (display *MapDisplay) objectsInTiles(tiles []MapPosition) []level.ObjectID {
+	tilesContain := func(pos MapPosition) bool {
+		for _, entry := range tiles {
+			if entry == pos {
+				return true
+			}
+		}
+		return false
+	}
+
+	var objects []level.ObjectID
+	if display.activeLevel != nil {
+		display.activeLevel.ForEachObject(func(id level.ObjectID, entry level.ObjectMasterEntry) {
+			tilePos := MapPosition{X: level.CoordinateAt(entry.X.Tile(), 128), Y: level.CoordinateAt(entry.Y.Tile(), 128)}
+			if tilesContain(tilePos) {
+				objects = append(objects, id)
+			}
+		})
+	}
+	return objects
 }
 
 // MouseMoved must be called for a mouse move.
