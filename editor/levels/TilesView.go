@@ -13,7 +13,6 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
-	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/imgui-go"
 )
 
@@ -108,7 +107,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 	floorHazardUnifier := values.NewUnifier()
 	ceilingHazardUnifier := values.NewUnifier()
 
-	multiple := len(view.model.selectedTiles.list) > 0
+	multiple := len(view.model.selectedTiles.list) > 1
 	for _, pos := range view.model.selectedTiles.list {
 		tile := lvl.Tile(int(pos.X.Tile()), int(pos.Y.Tile()))
 		tileTypeUnifier.Add(tile.Type)
@@ -160,21 +159,21 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 		func(newValue int) {
 			view.requestSetTileType(lvl, view.model.selectedTiles.list, level.TileType(newValue))
 		})
-	view.renderSliderInt(readOnly, multiple, "Floor Height", floorHeightUnifier,
+	values.RenderUnifiedSliderInt(readOnly, multiple, "Floor Height", floorHeightUnifier,
 		func(u values.Unifier) int { return int(u.Unified().(level.TileHeightUnit)) },
 		tileHeightFormatter,
 		0, int(level.TileHeightUnitMax)-1,
 		func(newValue int) {
 			view.requestSetFloorHeight(lvl, view.model.selectedTiles.list, level.TileHeightUnit(newValue))
 		})
-	view.renderSliderInt(readOnly, multiple, "Ceiling Height (abs)", ceilingHeightUnifier,
+	values.RenderUnifiedSliderInt(readOnly, multiple, "Ceiling Height (abs)", ceilingHeightUnifier,
 		func(u values.Unifier) int { return int(u.Unified().(level.TileHeightUnit)) },
 		tileHeightFormatter,
 		0, int(level.TileHeightUnitMax)-1,
 		func(newValue int) {
 			view.requestSetCeilingHeight(lvl, view.model.selectedTiles.list, level.TileHeightUnit(newValue))
 		})
-	view.renderSliderInt(readOnly, multiple, "Slope Height", slopeHeightUnifier,
+	values.RenderUnifiedSliderInt(readOnly, multiple, "Slope Height", slopeHeightUnifier,
 		func(u values.Unifier) int { return int(u.Unified().(level.TileHeightUnit)) },
 		tileHeightFormatter,
 		0, int(level.TileHeightUnitMax)-1,
@@ -189,7 +188,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 		func(newValue int) {
 			view.requestSetSlopeControl(lvl, view.model.selectedTiles.list, slopeControls[newValue])
 		})
-	view.renderSliderInt(readOnly, multiple, "Music Index", musicIndexUnifier,
+	values.RenderUnifiedSliderInt(readOnly, multiple, "Music Index", musicIndexUnifier,
 		func(u values.Unifier) int { return u.Unified().(int) },
 		func(value int) string { return "%d" },
 		0, 15,
@@ -212,14 +211,14 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			imgui.EndCombo()
 		}
 
-		view.renderSliderInt(readOnly, multiple, "Floor Color", floorPaletteIndexUnifier,
+		values.RenderUnifiedSliderInt(readOnly, multiple, "Floor Color", floorPaletteIndexUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(byte)) },
 			func(value int) string { return "%d" },
 			0, 255,
 			func(newValue int) {
 				view.requestFloorPaletteIndex(lvl, view.model.selectedTiles.list, newValue)
 			})
-		view.renderSliderInt(readOnly, multiple, "Ceiling Color", ceilingPaletteIndexUnifier,
+		values.RenderUnifiedSliderInt(readOnly, multiple, "Ceiling Color", ceilingPaletteIndexUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(byte)) },
 			func(value int) string { return "%d" },
 			0, 255,
@@ -237,7 +236,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			func(newValue int) {
 				view.requestFlightPullType(lvl, view.model.selectedTiles.list, flightPulls[newValue])
 			})
-		view.renderSliderInt(readOnly, multiple, "Game Of Life State", gameOfLightStateUnifier,
+		values.RenderUnifiedSliderInt(readOnly, multiple, "Game Of Life State", gameOfLightStateUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
 			0, 3,
@@ -260,7 +259,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			imgui.EndCombo()
 		}
 
-		view.renderSliderInt(readOnly, multiple, "Floor Texture (atlas index)", floorTextureIndexUnifier,
+		values.RenderUnifiedSliderInt(readOnly, multiple, "Floor Texture (atlas index)", floorTextureIndexUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
 			0, level.FloorCeilingTextureLimit-1,
@@ -271,7 +270,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			func(newValue int) {
 				view.requestFloorTextureIndex(lvl, view.model.selectedTiles.list, newValue)
 			})
-		view.renderSliderInt(readOnly, multiple, "Floor Texture Rotations", floorTextureRotationsUnifier,
+		values.RenderUnifiedSliderInt(readOnly, multiple, "Floor Texture Rotations", floorTextureRotationsUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
 			0, 3,
@@ -279,7 +278,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 				view.requestFloorTextureRotations(lvl, view.model.selectedTiles.list, newValue)
 			})
 
-		view.renderSliderInt(readOnly, multiple, "Ceiling Texture (atlas index)", ceilingTextureIndexUnifier,
+		values.RenderUnifiedSliderInt(readOnly, multiple, "Ceiling Texture (atlas index)", ceilingTextureIndexUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
 			0, level.FloorCeilingTextureLimit-1,
@@ -290,7 +289,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			func(newValue int) {
 				view.requestCeilingTextureIndex(lvl, view.model.selectedTiles.list, newValue)
 			})
-		view.renderSliderInt(readOnly, multiple, "Ceiling Texture Rotations", ceilingTextureRotationsUnifier,
+		values.RenderUnifiedSliderInt(readOnly, multiple, "Ceiling Texture Rotations", ceilingTextureRotationsUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
 			0, 3,
@@ -298,7 +297,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 				view.requestCeilingTextureRotations(lvl, view.model.selectedTiles.list, newValue)
 			})
 
-		view.renderSliderInt(readOnly, multiple, "Wall Texture (atlas index)", wallTextureIndexUnifier,
+		values.RenderUnifiedSliderInt(readOnly, multiple, "Wall Texture (atlas index)", wallTextureIndexUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
 			0, level.DefaultTextureAtlasSize-1,
@@ -309,7 +308,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			func(newValue int) {
 				view.requestWallTextureIndex(lvl, view.model.selectedTiles.list, newValue)
 			})
-		view.renderSliderInt(readOnly, multiple, "Wall Texture Offset", wallTextureOffsetUnifier,
+		values.RenderUnifiedSliderInt(readOnly, multiple, "Wall Texture Offset", wallTextureOffsetUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(level.TileHeightUnit)) },
 			tileHeightFormatter,
 			0, int(level.TileHeightUnitMax)-1,
@@ -344,14 +343,14 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			imgui.EndCombo()
 		}
 
-		view.renderSliderInt(readOnly, multiple, "Floor Light", floorLightUnifier,
+		values.RenderUnifiedSliderInt(readOnly, multiple, "Floor Light", floorLightUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
 			0, 15,
 			func(newValue int) {
 				view.requestFloorLight(lvl, view.model.selectedTiles.list, newValue)
 			})
-		view.renderSliderInt(readOnly, multiple, "Ceiling Light", ceilingLightUnifier,
+		values.RenderUnifiedSliderInt(readOnly, multiple, "Ceiling Light", ceilingLightUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
 			0, 15,
@@ -400,29 +399,6 @@ func (view *TilesView) renderCheckboxCombo(readOnly, multiple bool, label string
 				}
 			}
 			imgui.EndCombo()
-		}
-	}
-}
-
-func (view *TilesView) renderSliderInt(readOnly, multiple bool, label string, unifier values.Unifier,
-	intConverter func(values.Unifier) int, formatter func(int) string, min, max int, changeHandler func(int)) {
-
-	var labelValue string
-	var selectedString string
-	selectedValue := -1
-	if unifier.IsUnique() {
-		selectedValue = intConverter(unifier)
-		selectedString = formatter(selectedValue)
-		labelValue = fmt.Sprintf(selectedString, selectedValue)
-	} else if multiple {
-		selectedString = "(multiple)"
-		labelValue = selectedString
-	}
-	if readOnly {
-		imgui.LabelText(label, labelValue)
-	} else {
-		if gui.StepSliderIntV(label, &selectedValue, min, max, selectedString) {
-			changeHandler(selectedValue)
 		}
 	}
 }

@@ -170,10 +170,10 @@ func (lvl *Level) ForEachObject(handler func(ObjectID, ObjectMasterEntry)) {
 }
 
 // Object returns the master entry for the identified object.
-func (lvl *Level) Object(id ObjectID) ObjectMasterEntry {
-	var entry ObjectMasterEntry
+func (lvl *Level) Object(id ObjectID) *ObjectMasterEntry {
+	var entry *ObjectMasterEntry
 	if (id > 0) && (int(id) < len(lvl.objectMasterTable)) {
-		entry = lvl.objectMasterTable[id]
+		entry = &lvl.objectMasterTable[id]
 	}
 	return entry
 }
