@@ -152,7 +152,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 	}
 
 	tileTypes := level.TileTypes()
-	view.renderCombo(readOnly, multiple, "Tile Type", tileTypeUnifier,
+	values.RenderUnifiedCombo(readOnly, multiple, "Tile Type", tileTypeUnifier,
 		func(u values.Unifier) int { return int(u.Unified().(level.TileType)) },
 		func(value int) string { return tileTypes[value].String() },
 		len(tileTypes),
@@ -181,7 +181,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			view.requestSetSlopeHeight(lvl, view.model.selectedTiles.list, level.TileHeightUnit(newValue))
 		})
 	slopeControls := level.TileSlopeControls()
-	view.renderCombo(readOnly, multiple, "Slope Control", slopeControlUnifier,
+	values.RenderUnifiedCombo(readOnly, multiple, "Slope Control", slopeControlUnifier,
 		func(u values.Unifier) int { return int(u.Unified().(level.TileSlopeControl)) },
 		func(value int) string { return slopeControls[value].String() },
 		len(slopeControls),
@@ -229,7 +229,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 		imgui.Separator()
 
 		flightPulls := level.CyberspaceFlightPulls()
-		view.renderCombo(readOnly, multiple, "Flight Pull Type", flightPullTypeUnifier,
+		values.RenderUnifiedCombo(readOnly, multiple, "Flight Pull Type", flightPullTypeUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(level.CyberspaceFlightPull)) },
 			func(value int) string { return flightPulls[value].String() },
 			len(flightPulls),
@@ -316,12 +316,12 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 				view.requestWallTextureOffset(lvl, view.model.selectedTiles.list, level.TileHeightUnit(newValue))
 			})
 
-		view.renderCheckboxCombo(readOnly, multiple, "Use Adjacent Wall Texture", useAdjacentWallTextureUnifier,
+		values.RenderUnifiedCheckboxCombo(readOnly, multiple, "Use Adjacent Wall Texture", useAdjacentWallTextureUnifier,
 			func(newValue bool) {
 				view.requestUseAdjacentWallTexture(lvl, view.model.selectedTiles.list, newValue)
 			})
 		wallTexturePatterns := level.WallTexturePatterns()
-		view.renderCombo(readOnly, multiple, "Wall Texture Pattern", wallTexturePatternUnifier,
+		values.RenderUnifiedCombo(readOnly, multiple, "Wall Texture Pattern", wallTexturePatternUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(level.WallTexturePattern)) },
 			func(value int) string { return wallTexturePatterns[value].String() },
 			len(wallTexturePatterns),
@@ -360,73 +360,21 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 
 		imgui.Separator()
 
-		view.renderCheckboxCombo(readOnly, multiple, "Deconstructed", deconstructedUnifier,
+		values.RenderUnifiedCheckboxCombo(readOnly, multiple, "Deconstructed", deconstructedUnifier,
 			func(newValue bool) {
 				view.requestDeconstructed(lvl, view.model.selectedTiles.list, newValue)
 			})
-		view.renderCheckboxCombo(readOnly, multiple, "Floor Hazard", floorHazardUnifier,
+		values.RenderUnifiedCheckboxCombo(readOnly, multiple, "Floor Hazard", floorHazardUnifier,
 			func(newValue bool) {
 				view.requestFloorHazard(lvl, view.model.selectedTiles.list, newValue)
 			})
-		view.renderCheckboxCombo(readOnly, multiple, "Ceiling Hazard", ceilingHazardUnifier,
+		values.RenderUnifiedCheckboxCombo(readOnly, multiple, "Ceiling Hazard", ceilingHazardUnifier,
 			func(newValue bool) {
 				view.requestCeilingHazard(lvl, view.model.selectedTiles.list, newValue)
 			})
 	}
 
 	imgui.PopItemWidth()
-}
-
-func (view *TilesView) renderCheckboxCombo(readOnly, multiple bool, label string, unifier values.Unifier, changeHandler func(bool)) {
-	selectedString := ""
-	if unifier.IsUnique() {
-		selectedValue := unifier.Unified().(bool)
-		if selectedValue {
-			selectedString = "Yes"
-		} else {
-			selectedString = "No"
-		}
-	} else if multiple {
-		selectedString = "(multiple)"
-	}
-	if readOnly {
-		imgui.LabelText(label, selectedString)
-	} else {
-		if imgui.BeginCombo(label, selectedString) {
-			for i, text := range []string{"No", "Yes"} {
-				if imgui.SelectableV(text, text == selectedString, 0, imgui.Vec2{}) {
-					changeHandler(i != 0)
-				}
-			}
-			imgui.EndCombo()
-		}
-	}
-}
-
-func (view *TilesView) renderCombo(readOnly, multiple bool, label string, unifier values.Unifier,
-	intConverter func(values.Unifier) int, formatter func(int) string, count int, changeHandler func(int)) {
-	var selectedString string
-	selectedIndex := -1
-	if unifier.IsUnique() {
-		selectedIndex = intConverter(unifier)
-		selectedString = formatter(selectedIndex)
-	} else if multiple {
-		selectedString = "(multiple)"
-	}
-	if readOnly {
-		imgui.LabelText(label, selectedString)
-	} else {
-		if imgui.BeginCombo(label, selectedString) {
-			for i := 0; i < count; i++ {
-				entryString := formatter(i)
-
-				if imgui.SelectableV(entryString, i == selectedIndex, 0, imgui.Vec2{}) {
-					changeHandler(i)
-				}
-			}
-			imgui.EndCombo()
-		}
-	}
 }
 
 func (view *TilesView) renderTextureCombo(readOnly, multiple bool, label string, unifier values.Unifier,
