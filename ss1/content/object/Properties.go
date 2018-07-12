@@ -86,3 +86,43 @@ func (table PropertiesTable) Code(coder serial.Coder) {
 		}
 	}
 }
+
+// TriplesInClass returns all triples that are available in the given class.
+func (table PropertiesTable) TriplesInClass(class Class) []Triple {
+	var triples []Triple
+	if int(class) < len(table) {
+		subclasses := table[class]
+		for subclass, subclassEntry := range subclasses {
+			for objType := range subclassEntry {
+				triples = append(triples, TripleFrom(int(class), subclass, objType))
+			}
+		}
+	}
+	return triples
+}
+
+// TripleIndex returns the linear index of the given index.
+func (table PropertiesTable) TripleIndex(triple Triple) int {
+	if int(triple.Class) >= len(table) {
+		return -1
+	}
+	counter := 0
+	for class := Class(0); class < triple.Class; class++ {
+		subclasses := table[class]
+		for _, types := range subclasses {
+			counter += len(types)
+		}
+	}
+	subclasses := table[triple.Class]
+	if int(triple.Subclass) >= len(subclasses) {
+		return -1
+	}
+	for subclass := Subclass(0); subclass < triple.Subclass; subclass++ {
+		counter += len(subclasses[subclass])
+	}
+	types := subclasses[triple.Subclass]
+	if int(triple.Type) >= len(types) {
+		return -1
+	}
+	return counter + int(triple.Type)
+}
