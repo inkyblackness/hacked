@@ -169,6 +169,15 @@ func (lvl *Level) ForEachObject(handler func(ObjectID, ObjectMasterEntry)) {
 	}
 }
 
+// Object returns the master entry for the identified object.
+func (lvl *Level) Object(id ObjectID) ObjectMasterEntry {
+	var entry ObjectMasterEntry
+	if (id > 0) && (int(id) < len(lvl.objectMasterTable)) {
+		entry = lvl.objectMasterTable[id]
+	}
+	return entry
+}
+
 // EncodeState returns a subset of encoded level data, which only includes
 // data that is loaded (modified) by the level structure.
 // For any data block that is not relevant, a zero length slice is returned.
