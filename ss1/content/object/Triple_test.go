@@ -1,6 +1,7 @@
 package object_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/inkyblackness/hacked/ss1/content/object"
@@ -29,5 +30,21 @@ func TestTripleString(t *testing.T) {
 	for _, tc := range tt {
 		result := tc.triple.String()
 		assert.Equal(t, tc.expected, result)
+	}
+}
+
+func TestTripleIntegerRepresentation(t *testing.T) {
+	tt := []struct {
+		triple   object.Triple
+		expected int
+	}{
+		{object.TripleFrom(1, 2, 3), 0x00010203},
+		{object.TripleFrom(20, 0, 10), 0x0014000A},
+	}
+	for _, tc := range tt {
+		result := tc.triple.Int()
+		assert.Equal(t, tc.expected, result, fmt.Sprintf("integer value not matching for %v", tc.triple))
+		reversed := object.TripleFromInt(tc.expected)
+		assert.Equal(t, tc.triple, reversed, fmt.Sprintf("reverse value not matching for %v", tc.triple))
 	}
 }

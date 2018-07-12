@@ -81,7 +81,24 @@ func TripleFrom(class, subclass, objType int) Triple {
 	}
 }
 
+// TripleFromInt returns a Triple instance based on a single integer value.
+func TripleFromInt(value int) Triple {
+	return Triple{
+		Class:    Class((value >> 16) & 0xFF),
+		Subclass: Subclass((value >> 8) & 0xFF),
+		Type:     Type((value >> 0) & 0xFF),
+	}
+}
+
 // String returns the textual representation of the triple as "cl/s/ty" string.
 func (triple Triple) String() string {
 	return fmt.Sprintf("%2d/%d/%2d", triple.Class, triple.Subclass, triple.Type)
+}
+
+// Int returns the triple as a single integer value.
+func (triple Triple) Int() int {
+	value := int(triple.Class) << 16
+	value |= int(triple.Subclass) << 8
+	value |= int(triple.Type) << 0
+	return value
 }
