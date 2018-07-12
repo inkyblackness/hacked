@@ -41,8 +41,9 @@ type Application struct {
 	GuiScale   float32
 	guiContext *gui.Context
 
-	lastMouseX float32
-	lastMouseY float32
+	lastModifier input.Modifier
+	lastMouseX   float32
+	lastMouseY   float32
 
 	eventQueue      event.Queue
 	eventDispatcher *event.Dispatcher
@@ -108,6 +109,7 @@ func (app *Application) initWindowCallbacks() {
 	app.window.OnResize(app.onWindowResize)
 
 	app.window.OnKey(app.onKey)
+	app.window.OnModifier(app.onModifier)
 
 	app.window.OnMouseMove(app.onMouseMove)
 	app.window.OnMouseScroll(app.onMouseScroll)
@@ -207,6 +209,7 @@ func (app *Application) onFilesDropped(names []string) {
 }
 
 func (app *Application) onKey(key input.Key, modifier input.Modifier) {
+	app.lastModifier = modifier
 	if key == input.KeyUndo {
 		app.tryUndo()
 	} else if key == input.KeyRedo {
@@ -220,6 +223,10 @@ func (app *Application) onKey(key input.Key, modifier input.Modifier) {
 	} else if key == input.KeyF4 {
 		*app.levelObjectsView.WindowOpen() = !*app.levelObjectsView.WindowOpen()
 	}
+}
+
+func (app *Application) onModifier(modifier input.Modifier) {
+	app.lastModifier = modifier
 }
 
 func (app *Application) tryUndo() {
@@ -260,7 +267,7 @@ func (app *Application) onMouseMove(x, y float32) {
 
 func (app *Application) onMouseScroll(dx, dy float32) {
 	if !app.guiContext.IsUsingMouse() {
-		app.mapDisplay.MouseScrolled(app.lastMouseX, app.lastMouseY, dx, dy)
+		app.mapDisplay.MouseScrolled(app.lastMouseX, app.lastMouseY, dx, dy, app.lastModifier)
 	}
 	app.guiContext.MouseScroll(dx, dy)
 }

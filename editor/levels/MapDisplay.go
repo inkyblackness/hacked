@@ -2,6 +2,7 @@ package levels
 
 import (
 	"fmt"
+	"sort"
 
 	mgl "github.com/go-gl/mathgl/mgl32"
 
@@ -13,6 +14,36 @@ import (
 	"github.com/inkyblackness/hacked/ui/opengl"
 	"github.com/inkyblackness/imgui-go"
 )
+
+type hoverItem interface {
+	Pos() MapPosition
+	Size() float32
+}
+
+type tileHoverItem struct {
+	pos MapPosition
+}
+
+func (item tileHoverItem) Pos() MapPosition {
+	return item.pos
+}
+
+func (item tileHoverItem) Size() float32 {
+	return fineCoordinatesPerTileSide
+}
+
+type objectHoverItem struct {
+	id  level.ObjectID
+	pos MapPosition
+}
+
+func (item objectHoverItem) Pos() MapPosition {
+	return item.pos
+}
+
+func (item objectHoverItem) Size() float32 {
+	return fineCoordinatesPerTileSide / 4
+}
 
 // MapDisplay renders a level map.
 type MapDisplay struct {
@@ -33,10 +64,15 @@ type MapDisplay struct {
 
 	positionPopupPos imgui.Vec2
 	positionValid    bool
-	positionX        level.Coordinate
-	positionY        level.Coordinate
+	position         MapPosition
 
-	selectedTiles tileCoordinates
+	selectedTiles   tileCoordinates
+	selectedObjects objectIDs
+
+	activeLevel         *level.Level
+	availableHoverItems []hoverItem
+	activeHoverIndex    int
+	activeHoverItem     hoverItem
 }
 
 // NewMapDisplay returns a new instance.
@@ -74,6 +110,8 @@ func NewMapDisplay(gl opengl.OpenGL, guiScale float32,
 	display.camera.MoveTo(centerX, centerY)
 
 	display.selectedTiles.registerAt(eventRegistry)
+	display.selectedObjects.registerAt(eventRegistry)
+	eventRegistry.RegisterHandler(display.onLevelSelectionSetEvent)
 
 	return display
 }
@@ -83,6 +121,7 @@ func (display *MapDisplay) Render(lvl *level.Level, paletteTexture *graphics.Pal
 	textureDisplay TextureDisplay, colorDisplay ColorDisplay) {
 	columns, rows, _ := lvl.Size()
 
+	display.activeLevel = lvl
 	display.background.Render()
 	if lvl.IsCyberspace() {
 		if paletteTexture != nil {
@@ -143,15 +182,68 @@ func (display *MapDisplay) Render(lvl *level.Level, paletteTexture *graphics.Pal
 		})
 		display.highlighter.Render(objects, fineCoordinatesPerTileSide/4, [4]float32{1.0, 1.0, 1.0, 0.3})
 	}
+	//display.highlighter.Render(display.selectedObjects.list, fineCoordinatesPerTileSide/4, [4]float32{0.0, 0.8, 0.2, 0.5})
 	if display.positionValid {
-		tilePos := MapPosition{
-			X: level.CoordinateAt(display.positionX.Tile(), 128),
-			Y: level.CoordinateAt(display.positionY.Tile(), 128),
+		if len(display.availableHoverItems) == 0 {
+			display.availableHoverItems = display.nearestHoverItems(lvl, display.position)
+			display.activeHoverIndex = 0
+			display.activeHoverItem = display.availableHoverItems[0]
 		}
-		display.highlighter.Render([]MapPosition{tilePos}, fineCoordinatesPerTileSide, [4]float32{0.0, 0.2, 0.8, 0.3})
+	}
+	if display.activeHoverItem != nil {
+		display.highlighter.Render([]MapPosition{display.activeHoverItem.Pos()}, display.activeHoverItem.Size(), [4]float32{0.0, 0.2, 0.8, 0.3})
 	}
 
 	display.renderPositionOverlay(lvl)
+}
+
+func (display *MapDisplay) nearestHoverItems(lvl *level.Level, ref MapPosition) []hoverItem {
+	var items []hoverItem
+	var distances []float32
+
+	refVec := mgl.Vec2{float32(ref.X), float32(ref.Y)}
+
+	lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMasterEntry) {
+		entryVec := mgl.Vec2{float32(entry.X), float32(entry.Y)}
+		distance := refVec.Sub(entryVec).Len()
+		if distance < fineCoordinatesPerTileSide/4 {
+			items = append(items, objectHoverItem{id: id, pos: MapPosition{X: entry.X, Y: entry.Y}})
+			distances = append(distances, distance)
+		}
+	})
+	items = append(items, tileHoverItem{pos: MapPosition{
+		X: level.CoordinateAt(ref.X.Tile(), 128),
+		Y: level.CoordinateAt(ref.Y.Tile(), 128),
+	}})
+	distances = append(distances, fineCoordinatesPerTileSide)
+
+	sort.Slice(items, func(a, b int) bool { return distances[a] < distances[b] })
+
+	return items
+}
+
+func (display *MapDisplay) locateNearestSelectable(lvl *level.Level, ref MapPosition) (MapPosition, float32) {
+	refVec := mgl.Vec2{float32(ref.X), float32(ref.Y)}
+	var closestObject MapPosition
+	shortest := float32(-1)
+	lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMasterEntry) {
+		entryVec := mgl.Vec2{float32(entry.X), float32(entry.Y)}
+		distance := refVec.Sub(entryVec).Len()
+		if distance < fineCoordinatesPerTileSide/4 {
+			if (shortest < 0) || (shortest > distance) {
+				shortest = distance
+				closestObject = MapPosition{X: entry.X, Y: entry.Y}
+			}
+		}
+	})
+	if shortest < 0 {
+		return MapPosition{
+			X: level.CoordinateAt(ref.X.Tile(), 128),
+			Y: level.CoordinateAt(ref.Y.Tile(), 128),
+		}, fineCoordinatesPerTileSide
+	} else {
+		return closestObject, fineCoordinatesPerTileSide / 4
+	}
 }
 
 func (display *MapDisplay) colorQueryFor(lvl *level.Level, tileToColor func(*level.TileMapEntry) [4]float32) func(int, int) [4]float32 {
@@ -171,20 +263,24 @@ func (display *MapDisplay) renderPositionOverlay(lvl *level.Level) {
 	if imgui.BeginV("Position", nil, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoResize|imgui.WindowFlagsAlwaysAutoResize|
 		imgui.WindowFlagsNoSavedSettings|imgui.WindowFlagsNoFocusOnAppearing|imgui.WindowFlagsNoNav) {
 
-		if display.positionValid {
-			tile := lvl.Tile(int(display.positionX.Tile()), int(display.positionY.Tile()))
+		if display.activeHoverItem != nil {
+			pos := display.activeHoverItem.Pos()
 
-			imgui.Text(fmt.Sprintf("X: T %2d F %3d", display.positionX.Tile(), display.positionX.Fine()))
-			imgui.Text(fmt.Sprintf("Y: T %2d F %3d", display.positionY.Tile(), display.positionY.Fine()))
-			if (tile != nil) && (tile.Type != level.TileTypeSolid) {
-				_, _, heightShift := lvl.Size()
-				height := tile.Floor.AbsoluteHeight()
-				heightInTiles, err := heightShift.ValueFromTileHeight(height)
-				heightInTilesString := "???"
-				if err == nil {
-					heightInTilesString = fmt.Sprintf("%2.3f", heightInTiles)
+			imgui.Text(fmt.Sprintf("X: T %2d F %3d", pos.X.Tile(), pos.X.Fine()))
+			imgui.Text(fmt.Sprintf("Y: T %2d F %3d", pos.Y.Tile(), pos.Y.Fine()))
+			_, isTileItem := display.activeHoverItem.(*tileHoverItem)
+			if isTileItem {
+				tile := lvl.Tile(int(pos.X.Tile()), int(pos.Y.Tile()))
+				if (tile != nil) && (tile.Type != level.TileTypeSolid) {
+					_, _, heightShift := lvl.Size()
+					height := tile.Floor.AbsoluteHeight()
+					heightInTiles, err := heightShift.ValueFromTileHeight(height)
+					heightInTilesString := "???"
+					if err == nil {
+						heightInTilesString = fmt.Sprintf("%2.3f", heightInTiles)
+					}
+					imgui.Text(fmt.Sprintf("Z: %2d = %s", height, heightInTilesString))
 				}
-				imgui.Text(fmt.Sprintf("Z: %2d = %s", height, heightInTilesString))
 			} else {
 				imgui.Text("Z: -- = --.---")
 			}
@@ -239,8 +335,8 @@ func (display *MapDisplay) MouseButtonUp(mouseX, mouseY float32, button uint32, 
 		display.moveCapture = func(float32, float32) {}
 		if !display.mouseMoved && display.positionValid {
 			tilePos := MapPosition{
-				X: level.CoordinateAt(display.positionX.Tile(), 128),
-				Y: level.CoordinateAt(display.positionY.Tile(), 128),
+				X: level.CoordinateAt(display.position.X.Tile(), 128),
+				Y: level.CoordinateAt(display.position.Y.Tile(), 128),
 			}
 			if modifier.Has(input.ModControl) {
 				wasSelected := display.selectedTiles.contains(tilePos)
@@ -283,18 +379,31 @@ func (display *MapDisplay) MouseButtonUp(mouseX, mouseY float32, button uint32, 
 // MouseMoved must be called for a mouse move.
 func (display *MapDisplay) MouseMoved(mouseX, mouseY float32) {
 	display.updateMouseWorldPosition(mouseX, mouseY)
+	display.resetHoverItems()
 	display.moveCapture(mouseX, mouseY)
 }
 
 // MouseScrolled must be called for a mouse scroll
-func (display *MapDisplay) MouseScrolled(mouseX, mouseY float32, deltaX, deltaY float32) {
-	worldX, worldY := display.unprojectPixel(mouseX, mouseY)
+func (display *MapDisplay) MouseScrolled(mouseX, mouseY float32, deltaX, deltaY float32, modifier input.Modifier) {
+	if modifier.Has(input.ModControl) {
+		hoverItems := len(display.availableHoverItems)
+		if hoverItems > 0 {
+			diff := 1
+			if deltaY < 0 {
+				diff = -1
+			}
+			display.activeHoverIndex = (hoverItems + (display.activeHoverIndex + diff)) % hoverItems
+			display.activeHoverItem = display.availableHoverItems[display.activeHoverIndex]
+		}
+	} else {
+		worldX, worldY := display.unprojectPixel(mouseX, mouseY)
 
-	if deltaY < 0 {
-		display.camera.ZoomAt(-0.5, worldX, worldY)
-	}
-	if deltaY > 0 {
-		display.camera.ZoomAt(0.5, worldX, worldY)
+		if deltaY < 0 {
+			display.camera.ZoomAt(-0.5, worldX, worldY)
+		}
+		if deltaY > 0 {
+			display.camera.ZoomAt(0.5, worldX, worldY)
+		}
 	}
 }
 
@@ -304,7 +413,16 @@ func (display *MapDisplay) updateMouseWorldPosition(mouseX, mouseY float32) {
 	display.positionValid = (worldX >= 0.0) && (worldX < (64.0 * fineCoordinatesPerTileSide)) &&
 		(worldY >= 0.0) && (worldY < (64.0 * fineCoordinatesPerTileSide))
 	if display.positionValid {
-		display.positionX = level.Coordinate(worldX + 0.5)
-		display.positionY = level.Coordinate(worldY + 0.5)
+		display.position = MapPosition{X: level.Coordinate(worldX + 0.5), Y: level.Coordinate(worldY + 0.5)}
 	}
+}
+
+func (display *MapDisplay) resetHoverItems() {
+	display.availableHoverItems = nil
+	display.activeHoverIndex = 0
+	display.activeHoverItem = nil
+}
+
+func (display *MapDisplay) onLevelSelectionSetEvent(evt LevelSelectionSetEvent) {
+	display.resetHoverItems()
 }
