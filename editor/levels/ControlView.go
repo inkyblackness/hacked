@@ -38,6 +38,7 @@ func NewControlView(mod *model.Mod, guiScale float32, commander cmd.Commander, e
 		model:         freshControlViewModel(),
 	}
 	eventRegistry.RegisterHandler(view.onLevelSelectionSetEvent)
+	view.setSelectedLevel(view.model.selectedLevel)
 	return view
 }
 
@@ -85,7 +86,11 @@ var levelHeights = []string{
 
 func (view *ControlView) renderContent(lvl *level.Level, readOnly bool) {
 	imgui.PushItemWidth(-200 * view.guiScale)
-	gui.StepSliderInt("Active Level", &view.model.selectedLevel, 0, archive.MaxLevels-1)
+	selectedLevel := view.model.selectedLevel
+	if gui.StepSliderInt("Active Level", &selectedLevel, 0, archive.MaxLevels-1) {
+		view.eventListener.Event(ObjectSelectionSetEvent{})
+		view.setSelectedLevel(selectedLevel)
+	}
 	imgui.Separator()
 	levelType := "Real World"
 	if lvl.IsCyberspace() {
