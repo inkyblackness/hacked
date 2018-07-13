@@ -42,7 +42,6 @@ func TestPropertiesForObjectData(t *testing.T) {
 	for _, tc := range tt {
 		prop, err := table.ForObject(tc.triple)
 		assert.Nil(t, err, "no error expected for "+tc.triple.String())
-		assert.Equal(t, object.CommonPropertiesSize, len(prop.Common), "wrong common size for "+tc.triple.String())
 		assert.Equal(t, tc.genSize, len(prop.Generic), "wrong generic size for "+tc.triple.String())
 		assert.Equal(t, tc.specSize, len(prop.Specific), "wrong specific size for "+tc.triple.String())
 	}

@@ -17,7 +17,7 @@ type SubclassProperties []Properties
 
 // Properties contains the object-specific properties.
 type Properties struct {
-	Common   []byte
+	Common   CommonProperties
 	Generic  []byte
 	Specific []byte
 }
@@ -37,7 +37,6 @@ func NewPropertiesTable(desc Descriptors) PropertiesTable {
 			subclassProperties[subclass] = typeProperties
 			for objType := 0; objType < subclassDesc.TypeCount; objType++ {
 				prop := &typeProperties[objType]
-				prop.Common = make([]byte, CommonPropertiesSize)
 				prop.Generic = make([]byte, classDesc.GenericDataSize)
 				prop.Specific = make([]byte, subclassDesc.SpecificDataSize)
 			}
@@ -66,22 +65,22 @@ func (table PropertiesTable) ForObject(triple Triple) (Properties, error) {
 func (table PropertiesTable) Code(coder serial.Coder) {
 	version := propertiesFileVersion
 	coder.Code(&version)
-	for _, class := range table {
-		for _, subclass := range class {
-			for _, objType := range subclass {
-				coder.Code(objType.Generic)
+	for _, subclasses := range table {
+		for _, types := range subclasses {
+			for _, prop := range types {
+				coder.Code(prop.Generic)
 			}
 		}
-		for _, subclass := range class {
-			for _, objType := range subclass {
-				coder.Code(objType.Specific)
+		for _, types := range subclasses {
+			for _, prop := range types {
+				coder.Code(prop.Specific)
 			}
 		}
 	}
-	for _, class := range table {
-		for _, subclass := range class {
-			for _, objType := range subclass {
-				coder.Code(objType.Common)
+	for _, subclasses := range table {
+		for _, types := range subclasses {
+			for objType := 0; objType < len(types); objType++ {
+				coder.Code(&types[objType].Common)
 			}
 		}
 	}
@@ -92,8 +91,8 @@ func (table PropertiesTable) TriplesInClass(class Class) []Triple {
 	var triples []Triple
 	if int(class) < len(table) {
 		subclasses := table[class]
-		for subclass, subclassEntry := range subclasses {
-			for objType := range subclassEntry {
+		for subclass, types := range subclasses {
+			for objType := range types {
 				triples = append(triples, TripleFrom(int(class), subclass, objType))
 			}
 		}
@@ -125,4 +124,18 @@ func (table PropertiesTable) TripleIndex(triple Triple) int {
 		return -1
 	}
 	return counter + int(triple.Type)
+}
+
+// Iterate walks through all types sequentially and gives the properties to the given consumer.
+// The iteration stops when the consumer returns false or the table has been exhausted.
+func (table PropertiesTable) Iterate(consumer func(Triple, *Properties) bool) {
+	for class, subclasses := range table {
+		for subclass, types := range subclasses {
+			for objType := 0; objType < len(types); objType++ {
+				if !consumer(TripleFrom(class, subclass, objType), &types[objType]) {
+					return
+				}
+			}
+		}
+	}
 }
