@@ -37,6 +37,11 @@ type ObjectMasterEntry struct {
 	Extra [4]byte
 }
 
+// Triple returns the unique identifier of the entry.
+func (entry ObjectMasterEntry) Triple() object.Triple {
+	return object.TripleFrom(int(entry.Class), int(entry.Subclass), int(entry.Type))
+}
+
 // Reset clears the entry and resets all members.
 func (entry *ObjectMasterEntry) Reset() {
 	*entry = ObjectMasterEntry{}
