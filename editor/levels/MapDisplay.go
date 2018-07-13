@@ -11,6 +11,8 @@ import (
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/object"
+	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/input"
 	"github.com/inkyblackness/hacked/ui/opengl"
 	"github.com/inkyblackness/imgui-go"
@@ -59,6 +61,7 @@ type MapDisplay struct {
 	colors      *MapColors
 	mapGrid     *MapGrid
 	highlighter *Highlighter
+	icons       *MapIcons
 
 	moveCapture func(pixelX, pixelY float32)
 	mouseMoved  bool
@@ -105,6 +108,7 @@ func NewMapDisplay(gl opengl.OpenGL, guiScale float32,
 	display.colors = NewMapColors(&display.context)
 	display.mapGrid = NewMapGrid(&display.context)
 	display.highlighter = NewHighlighter(&display.context)
+	display.icons = NewMapIcons(&display.context)
 
 	centerX, centerY := (tilesPerMapSide*tileBaseLength)/-2.0, (tilesPerMapSide*tileBaseLength)/-2.0
 	display.camera.ZoomAt(-3+zoomShift, centerX, centerY)
@@ -118,7 +122,8 @@ func NewMapDisplay(gl opengl.OpenGL, guiScale float32,
 }
 
 // Render renders the whole map display.
-func (display *MapDisplay) Render(lvl *level.Level, paletteTexture *graphics.PaletteTexture,
+func (display *MapDisplay) Render(properties object.PropertiesTable, lvl *level.Level,
+	paletteTexture *graphics.PaletteTexture, textureRetriever func(resource.Key) (*graphics.BitmapTexture, error),
 	textureDisplay TextureDisplay, colorDisplay ColorDisplay) {
 	columns, rows, _ := lvl.Size()
 
@@ -182,6 +187,38 @@ func (display *MapDisplay) Render(lvl *level.Level, paletteTexture *graphics.Pal
 			objects = append(objects, MapPosition{X: entry.X, Y: entry.Y})
 		})
 		display.highlighter.Render(objects, fineCoordinatesPerTileSide/4, [4]float32{1.0, 1.0, 1.0, 0.3})
+	}
+	if paletteTexture != nil {
+		tripleOffsets := make(map[object.Triple]int)
+
+		{
+			offset := 0
+			properties.Iterate(func(triple object.Triple, prop *object.Properties) bool {
+				numExtra := prop.Common.Bitmap3D >> 12
+
+				if triple.Class != object.ClassTrap {
+					tripleOffsets[triple] = offset + 2
+				} else {
+					tripleOffsets[triple] = offset
+				}
+				offset += 3 + int(numExtra)
+				return true
+			})
+		}
+		var icons []iconData
+
+		lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMasterEntry) {
+			triple := entry.Triple()
+			index, cached := tripleOffsets[triple]
+			if cached {
+				key := resource.KeyOf(ids.ObjectBitmaps, resource.LangAny, index+1)
+				texture, err := textureRetriever(key)
+				if err == nil {
+					icons = append(icons, iconData{pos: MapPosition{X: entry.X, Y: entry.Y}, texture: texture})
+				}
+			}
+		})
+		display.icons.Render(paletteTexture, fineCoordinatesPerTileSide/4, icons)
 	}
 	{
 		selectedObjectHighlights := make([]MapPosition, 0, len(display.selectedObjects.list))
