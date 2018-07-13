@@ -15,6 +15,11 @@ const (
 	LargeTextures  resource.ID = 0x03E8
 )
 
+// Bitmaps
+const (
+	ObjectBitmaps resource.ID = 0x0546
+)
+
 // Texts
 const (
 	PaperTextsStart      resource.ID = 0x003C

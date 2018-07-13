@@ -23,7 +23,7 @@ type ResourceInfo struct {
 
 	// List is set for compound resources that have an atomic resource per block.
 	List bool
-	// MaxCount describes how many resources can be stored at maximum.
+	// MaxCount describes how many resources can be stored at maximum. Zero for unlimited / defined somewhere else.
 	MaxCount int
 
 	// ResFile specifies the .res file in which this resource should be stored.
@@ -111,6 +111,8 @@ var infoList = []ResourceInfo{
 	{MediumTextures, MediumTextures.Plus(293), resource.Bitmap, true, false, false, 293, Texture},
 	{LargeTextures, LargeTextures.Plus(293), resource.Bitmap, true, false, false, 293, Texture},
 
+	{ObjectBitmaps, ObjectBitmaps.Plus(1), resource.Bitmap, true, false, true, 0, ObjArt},
+
 	{PaperTextsStart, PaperTextsStart.Plus(16), resource.Text, true, false, false, 16, CybStrng},
 
 	{TrapMessageTexts, TrapMessageTexts.Plus(1), resource.Text, true, false, true, 512, CybStrng},
@@ -123,7 +125,7 @@ var infoList = []ResourceInfo{
 	{AccessCardNameTexts, AccessCardNameTexts.Plus(1), resource.Text, true, false, true, 32 * 2, CybStrng},
 	{DataletMessageTexts, DataletMessageTexts.Plus(1), resource.Text, true, false, true, 256, CybStrng},
 
-	{ObjectLongNames, ObjectLongNames.Plus(1), resource.Text, true, false, true, 1000, CybStrng},
+	{ObjectLongNames, ObjectLongNames.Plus(1), resource.Text, true, false, true, 0, CybStrng},
 
 	{ArchiveName, ArchiveName.Plus(1), resource.Archive, false, false, false, 1, Archive},
 	{GameState, GameState.Plus(1), resource.Archive, false, true, false, 1, Archive},
