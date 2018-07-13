@@ -33,9 +33,20 @@ func NewBitmapTexture(gl opengl.OpenGL, width, height int, pixelData []byte) *Bi
 	tex.u = tex.width / float32(textureWidth)
 	tex.v = tex.height / float32(textureHeight)
 
+	paddedData := make([]byte, textureWidth*textureHeight)
+	for y := 0; y < height; y++ {
+		inStart := y * width
+		outOffset := y * textureWidth
+		for x := 0; x < width; x++ {
+			value := pixelData[inStart+x]
+			paddedData[outOffset] = value
+			outOffset++
+		}
+	}
+
 	gl.BindTexture(opengl.TEXTURE_2D, tex.handle)
 	gl.TexImage2D(opengl.TEXTURE_2D, 0, opengl.RED, int32(textureWidth), int32(textureHeight),
-		0, opengl.RED, opengl.UNSIGNED_BYTE, pixelData)
+		0, opengl.RED, opengl.UNSIGNED_BYTE, paddedData)
 	gl.TexParameteri(opengl.TEXTURE_2D, opengl.TEXTURE_MAG_FILTER, opengl.NEAREST)
 	gl.TexParameteri(opengl.TEXTURE_2D, opengl.TEXTURE_MIN_FILTER, opengl.NEAREST)
 	gl.GenerateMipmap(opengl.TEXTURE_2D)
