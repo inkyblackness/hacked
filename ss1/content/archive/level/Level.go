@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
+	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/serial"
 )
@@ -25,7 +26,9 @@ type Level struct {
 	wallHeightsMap WallHeightsMap
 	textureAtlas   TextureAtlas
 
-	objectMasterTable ObjectMasterTable
+	objectMasterTable   ObjectMasterTable
+	objectCrossRefTable ObjectCrossReferenceTable
+	objectClassTables   [object.ClassCount]ObjectClassTable
 
 	textureAnimations      []TextureAnimationEntry
 	surveillanceSources    [SurveillanceObjectCount]ObjectID
@@ -50,6 +53,8 @@ func NewLevel(resourceBase resource.ID, id int, localizer resource.Localizer) *L
 	lvl.reloadTileMap()
 	lvl.reloadTextureAtlas()
 	lvl.reloadObjectMasterTable()
+	lvl.reloadObjectCrossRefTable()
+	lvl.reloadObjectClassTables()
 	lvl.reloadTextureAnimations()
 	lvl.reloadSurveillanceSources()
 	lvl.reloadSurveillanceSurrogates()
@@ -178,6 +183,22 @@ func (lvl *Level) Object(id ObjectID) *ObjectMasterEntry {
 	return entry
 }
 
+// ObjectClassData returns the raw class data for the given object.
+func (lvl *Level) ObjectClassData(id ObjectID) []byte {
+	obj := lvl.Object(id)
+	if (obj == nil) || (obj.InUse == 0) {
+		return nil
+	}
+	if int(obj.Class) >= len(lvl.objectClassTables) {
+		return nil
+	}
+	classTable := lvl.objectClassTables[obj.Class]
+	if (obj.ClassTableIndex < 1) || (int(obj.ClassTableIndex) >= len(classTable)) {
+		return nil
+	}
+	return classTable[obj.ClassTableIndex].Data
+}
+
 // EncodeState returns a subset of encoded level data, which only includes
 // data that is loaded (modified) by the level structure.
 // For any data block that is not relevant, a zero length slice is returned.
@@ -189,6 +210,10 @@ func (lvl *Level) EncodeState() [lvlids.PerLevel][]byte {
 	levelData[lvlids.TextureAtlas] = encode(lvl.textureAtlas)
 	levelData[lvlids.TileMap] = encode(lvl.tileMap)
 	levelData[lvlids.ObjectMasterTable] = encode(lvl.objectMasterTable)
+	levelData[lvlids.ObjectCrossRefTable] = encode(lvl.objectCrossRefTable)
+	for class := 0; class < len(lvl.objectClassTables); class++ {
+		levelData[lvlids.ObjectClassTablesStart+class] = encode(lvl.objectClassTables[class])
+	}
 
 	levelData[lvlids.TextureAnimations] = encode(lvl.textureAnimations)
 	levelData[lvlids.SurveillanceSources] = encode(&lvl.surveillanceSources)
@@ -215,6 +240,8 @@ func (lvl *Level) onLevelResourceDataChanged(id int) {
 		lvl.reloadTileMap()
 	case lvlids.ObjectMasterTable:
 		lvl.reloadObjectMasterTable()
+	case lvlids.ObjectCrossRefTable:
+		lvl.reloadObjectCrossRefTable()
 	case lvlids.TextureAnimations:
 		lvl.reloadTextureAnimations()
 	case lvlids.SurveillanceSources:
@@ -223,6 +250,9 @@ func (lvl *Level) onLevelResourceDataChanged(id int) {
 		lvl.reloadSurveillanceSurrogates()
 	case lvlids.Parameters:
 		lvl.reloadParameters()
+	}
+	if (id >= lvlids.ObjectClassTablesStart) && (id < lvlids.ObjectClassTablesStart+len(lvl.objectClassTables)) {
+		lvl.reloadObjectClassTable(object.Class(id - lvlids.ObjectClassTablesStart))
 	}
 }
 
@@ -284,6 +314,52 @@ func (lvl *Level) reloadObjectMasterTable() {
 	err = binary.Read(bytes.NewReader(data), binary.LittleEndian, lvl.objectMasterTable)
 	if err != nil {
 		lvl.objectMasterTable = nil
+	}
+}
+
+func (lvl *Level) reloadObjectCrossRefTable() {
+	reader, err := lvl.reader(lvlids.ObjectCrossRefTable)
+	if err != nil {
+		lvl.objectCrossRefTable = nil
+		return
+	}
+	data, err := ioutil.ReadAll(reader)
+	if err != nil {
+		lvl.objectCrossRefTable = nil
+		return
+	}
+	lvl.objectCrossRefTable = make([]ObjectCrossReferenceEntry, len(data)/ObjectCrossReferenceEntrySize)
+	err = binary.Read(bytes.NewReader(data), binary.LittleEndian, lvl.objectCrossRefTable)
+	if err != nil {
+		lvl.objectCrossRefTable = nil
+	}
+}
+
+func (lvl *Level) reloadObjectClassTables() {
+	for class := 0; class < len(lvl.objectClassTables); class++ {
+		lvl.reloadObjectClassTable(object.Class(class))
+	}
+}
+
+func (lvl *Level) reloadObjectClassTable(class object.Class) {
+	reader, err := lvl.reader(lvlids.ObjectClassTablesStart + int(class))
+	if err != nil {
+		lvl.objectClassTables[class] = nil
+		return
+	}
+	data, err := ioutil.ReadAll(reader)
+	if err != nil {
+		lvl.objectClassTables[class] = nil
+		return
+	}
+
+	info := ObjectClassInfoFor(class)
+	table := make(ObjectClassTable, len(data)/(ObjectClassEntryHeaderSize+info.DataSize))
+	table.AllocateData(info.DataSize)
+	lvl.objectClassTables[class] = table
+	err = binary.Read(bytes.NewReader(data), binary.LittleEndian, table)
+	if err != nil {
+		lvl.objectClassTables[class] = nil
 	}
 }
 

@@ -5,6 +5,11 @@ import (
 	"github.com/inkyblackness/hacked/ss1/serial"
 )
 
+const (
+	// ObjectClassEntryHeaderSize is the size, in bytes, of the header prefix for each class entry.
+	ObjectClassEntryHeaderSize = 6
+)
+
 // ObjectClassEntry describes an entry in a object-class specific list.
 type ObjectClassEntry struct {
 	ObjectID ObjectID
