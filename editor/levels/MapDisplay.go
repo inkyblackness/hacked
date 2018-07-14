@@ -180,6 +180,13 @@ func (display *MapDisplay) Render(properties object.PropertiesTable, lvl *level.
 		}
 	}
 	display.mapGrid.Render(lvl)
+	if display.positionValid {
+		if len(display.availableHoverItems) == 0 {
+			display.availableHoverItems = display.nearestHoverItems(lvl, display.position)
+			display.activeHoverIndex = 0
+			display.activeHoverItem = display.availableHoverItems[0]
+		}
+	}
 	display.highlighter.Render(display.selectedTiles.list, fineCoordinatesPerTileSide, [4]float32{0.0, 0.8, 0.2, 0.5})
 	{
 		var objects []MapPosition
@@ -206,7 +213,15 @@ func (display *MapDisplay) Render(properties object.PropertiesTable, lvl *level.
 			})
 		}
 		var icons []iconData
+		var highlightIcon iconData
+		var highlightID level.ObjectID
 
+		if display.positionValid {
+			objectItem, isObject := display.activeHoverItem.(objectHoverItem)
+			if isObject {
+				highlightID = objectItem.id
+			}
+		}
 		lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMasterEntry) {
 			triple := entry.Triple()
 			index, cached := tripleOffsets[triple]
@@ -214,10 +229,18 @@ func (display *MapDisplay) Render(properties object.PropertiesTable, lvl *level.
 				key := resource.KeyOf(ids.ObjectBitmaps, resource.LangAny, index+1)
 				texture, err := textureRetriever(key)
 				if err == nil {
-					icons = append(icons, iconData{pos: MapPosition{X: entry.X, Y: entry.Y}, texture: texture})
+					icon := iconData{pos: MapPosition{X: entry.X, Y: entry.Y}, texture: texture}
+					if highlightID == id {
+						highlightIcon = icon
+					} else {
+						icons = append(icons, icon)
+					}
 				}
 			}
 		})
+		if (highlightID != 0) && (highlightIcon.texture != nil) {
+			icons = append(icons, highlightIcon)
+		}
 		display.icons.Render(paletteTexture, fineCoordinatesPerTileSide/4, icons)
 	}
 	{
@@ -230,13 +253,6 @@ func (display *MapDisplay) Render(properties object.PropertiesTable, lvl *level.
 			}
 		}
 		display.highlighter.Render(selectedObjectHighlights, fineCoordinatesPerTileSide/4, [4]float32{0.0, 0.8, 0.2, 0.5})
-	}
-	if display.positionValid {
-		if len(display.availableHoverItems) == 0 {
-			display.availableHoverItems = display.nearestHoverItems(lvl, display.position)
-			display.activeHoverIndex = 0
-			display.activeHoverItem = display.availableHoverItems[0]
-		}
 	}
 	if display.activeHoverItem != nil {
 		display.highlighter.Render([]MapPosition{display.activeHoverItem.Pos()}, display.activeHoverItem.Size(), [4]float32{0.0, 0.2, 0.8, 0.3})
