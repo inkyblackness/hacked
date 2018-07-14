@@ -423,6 +423,89 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 			})
 	})
 
+	addVariableKey := func() {
+		variableTypes := []string{"boolean", "Integer"}
+		typeMask := 0x1000
+
+		typeLabel := key + "-Type###" + fullKey + "-Type"
+		values.RenderUnifiedCombo(readOnly, multiple, typeLabel, unifier,
+			func(u values.Unifier) int {
+				value := u.Unified().(int32)
+				result := 0
+				if (value & int32(typeMask)) != 0 {
+					result = 1
+				}
+				return result
+			},
+			func(index int) string { return variableTypes[index] },
+			len(variableTypes),
+			func(newIndex int) {
+				setMask := uint32(0)
+				if newIndex > 0 {
+					setMask |= uint32(typeMask)
+				}
+				updater(func(oldValue uint32) uint32 {
+					return (oldValue & uint32(0xE000)) | setMask
+				})
+			})
+
+		valueLabel := key + "-Value###" + fullKey + "-Value"
+		if unifier.IsUnique() {
+			key := unifier.Unified().(int32)
+			limit := 0x1FF
+			if (key & int32(typeMask)) != 0 {
+				limit = 0x3F
+			}
+			values.RenderUnifiedSliderInt(readOnly, multiple, valueLabel, unifier,
+				func(u values.Unifier) int { return int(u.Unified().(int32)) & 0x1FF },
+				func(value int) string { return "%d" },
+				0, limit,
+				func(newValue int) {
+					updater(func(oldValue uint32) uint32 {
+						result := oldValue & ^uint32(0x01FF)
+						result |= uint32(newValue) & uint32(0x01FF)
+						return result
+					})
+				})
+
+		} else if multiple {
+			imgui.LabelText(valueLabel, "(multiple)")
+		} else {
+			imgui.LabelText(valueLabel, "")
+		}
+	}
+
+	simplifier.SetSpecialHandler("VariableKey", addVariableKey)
+	simplifier.SetSpecialHandler("VariableCondition", func() {
+		addVariableKey()
+
+		comparisons := []string{
+			"Var == Val",
+			"Var < Val",
+			"Var <= Val",
+			"Var > Val",
+			"Var >= Val",
+			"Var != Val",
+		}
+
+		comboLabel := key + "-Check###" + fullKey + "-Value"
+
+		values.RenderUnifiedCombo(readOnly, multiple, comboLabel, unifier,
+			func(u values.Unifier) int {
+				key := unifier.Unified().(int32)
+				return int((key >> 13) & 0x7)
+			},
+			func(index int) string { return comparisons[index] },
+			len(comparisons),
+			func(newIndex int) {
+				updater(func(oldValue uint32) uint32 {
+					result := oldValue & ^uint32(0xE000)
+					result |= uint32(newIndex<<13) & uint32(0xE000)
+					return result
+				})
+			})
+	})
+
 	simplifier.SetSpecialHandler("BinaryCodedDecimal", func() {
 		values.RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
 			func(u values.Unifier) int { return int(lvlobj.FromBinaryCodedDecimal(uint16(u.Unified().(int32)))) },
