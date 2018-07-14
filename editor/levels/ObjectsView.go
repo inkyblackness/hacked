@@ -110,16 +110,9 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 
 	imgui.PushItemWidth(-150 * view.guiScale)
 	multiple := len(view.model.selectedObjects.list) > 1
-	columns, rows, levelHeight := lvl.Size()
+	columns, rows, _ := lvl.Size()
 
-	objectHeightFormatter := func(value int) string {
-		tileHeight, err := levelHeight.ValueFromObjectHeight(level.HeightUnit(value))
-		tileHeightString := "???"
-		if err == nil {
-			tileHeightString = fmt.Sprintf("%2.3f", tileHeight)
-		}
-		return tileHeightString + " tile(s) - raw: %d"
-	}
+	objectHeightFormatter := view.objectHeightFormatter(lvl)
 	rotationFormatter := func(value int) string {
 		return fmt.Sprintf("%.3f degrees  - raw: %%d", level.RotationUnit(value).ToDegrees())
 	}
@@ -225,6 +218,19 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 	imgui.PopItemWidth()
 }
 
+func (view *ObjectsView) objectHeightFormatter(lvl *level.Level) func(int) string {
+	_, _, levelHeight := lvl.Size()
+
+	return func(value int) string {
+		tileHeight, err := levelHeight.ValueFromObjectHeight(level.HeightUnit(value))
+		tileHeightString := "???"
+		if err == nil {
+			tileHeightString = fmt.Sprintf("%2.3f", tileHeight)
+		}
+		return tileHeightString + " tile(s) - raw: %d"
+	}
+}
+
 func (view *ObjectsView) renderProperties(lvl *level.Level, readOnly bool,
 	dataRetriever func(level.ObjectID, *level.ObjectMasterEntry) []byte,
 	interpreterFactory lvlobj.InterpreterFactory) {
@@ -307,6 +313,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 	keys := strings.Split(fullKey, ".")
 	key := keys[len(keys)-1]
 	label := key + "###" + fullKey
+	objectHeightFormatter := view.objectHeightFormatter(lvl)
 
 	simplifier := interpreters.NewSimplifier(func(minValue, maxValue int64, formatter interpreters.RawValueFormatter) {
 		values.RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
@@ -434,6 +441,16 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 			0, 999,
 			func(newValue int) {
 				updater(func(oldValue uint32) uint32 { return uint32(lvlobj.ToBinaryCodedDecimal(uint16(newValue))) })
+			})
+	})
+
+	simplifier.SetSpecialHandler("ObjectHeight", func() {
+		values.RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
+			func(u values.Unifier) int { return int(u.Unified().(int32)) },
+			objectHeightFormatter,
+			0, 255,
+			func(newValue int) {
+				updater(func(oldValue uint32) uint32 { return uint32(newValue) })
 			})
 	})
 
