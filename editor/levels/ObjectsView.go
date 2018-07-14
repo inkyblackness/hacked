@@ -94,7 +94,7 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 		obj := lvl.Object(id)
 		if obj != nil {
 			objectIDUnifier.Add(id)
-			classUnifier.Add(obj.Class)
+			classUnifier.Add(object.TripleFrom(int(obj.Class), 0, 0))
 			typeUnifier.Add(object.TripleFrom(int(obj.Class), int(obj.Subclass), int(obj.Type)))
 			zUnifier.Add(obj.Z)
 			tileXUnifier.Add(obj.X.Tile())
@@ -131,51 +131,14 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 	} else {
 		imgui.LabelText("ID", "")
 	}
-	if classUnifier.IsUnique() {
-		objectProperties := view.mod.ObjectProperties()
-		triples := objectProperties.TriplesInClass(classUnifier.Unified().(object.Class))
-		selectedIndex := -1
-		if typeUnifier.IsUnique() {
-			triple := typeUnifier.Unified().(object.Triple)
-			for index, availableTriple := range triples {
-				if availableTriple == triple {
-					selectedIndex = index
-				}
-			}
-			if selectedIndex < 0 {
-				selectedIndex = len(triples)
-				triples = append(triples, triple)
-			}
-		}
-		values.RenderUnifiedCombo(readOnly, multiple, "Object Type", typeUnifier,
-			func(u values.Unifier) int { return selectedIndex },
-			func(value int) string {
-				triple := triples[value]
-				suffix := "???"
-				linearIndex := objectProperties.TripleIndex(triple)
-				if linearIndex >= 0 {
-					key := resource.KeyOf(ids.ObjectLongNames, resource.LangDefault, linearIndex)
-					objName, err := view.textCache.Text(key)
-					if err == nil {
-						suffix = objName
-					}
-				}
-				return triple.String() + ": " + suffix
-			},
-			len(triples),
-			func(newValue int) {
-				triple := triples[newValue]
-				view.requestBaseChange(lvl, func(entry *level.ObjectMasterEntry) {
-					entry.Subclass = triple.Subclass
-					entry.Type = triple.Type
-				})
+	view.renderTypeCombo(readOnly, multiple, "Object Type", classUnifier, typeUnifier,
+		func(u values.Unifier) object.Triple { return u.Unified().(object.Triple) },
+		func(newValue object.Triple) {
+			view.requestBaseChange(lvl, func(entry *level.ObjectMasterEntry) {
+				entry.Subclass = newValue.Subclass
+				entry.Type = newValue.Type
 			})
-
-	} else if multiple {
-		imgui.LabelText("Object Type", "(multiple classes)")
-	} else {
-		imgui.LabelText("Object Type", "")
-	}
+		})
 
 	if imgui.TreeNodeV("Base Properties", imgui.TreeNodeFlagsDefaultOpen|imgui.TreeNodeFlagsFramed) {
 
@@ -418,6 +381,31 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 		}
 	})
 
+	simplifier.SetSpecialHandler("ObjectType", func() {
+		var classNames [object.ClassCount]string
+		for index, class := range object.Classes() {
+			classNames[index] = class.String()
+		}
+		tripleResolver := func(u values.Unifier) object.Triple { return object.TripleFromInt(int(u.Unified().(int32))) }
+		values.RenderUnifiedCombo(readOnly, multiple, key+"-Class###"+fullKey+"-Class", unifier,
+			func(u values.Unifier) int {
+				triple := tripleResolver(u)
+				return int(triple.Class)
+			},
+			func(value int) string { return fmt.Sprintf("%2d: %v", value, object.Class(value)) },
+			object.ClassCount,
+			func(newValue int) {
+				triple := object.TripleFrom(newValue, 0, 0)
+				updater(func(oldValue uint32) uint32 { return uint32(triple.Int()) })
+			})
+
+		view.renderTypeCombo(readOnly, multiple, key+"###"+fullKey+"-Type", unifier, unifier,
+			tripleResolver,
+			func(newValue object.Triple) {
+				updater(func(oldValue uint32) uint32 { return uint32(newValue.Int()) })
+			})
+	})
+
 	simplifier.SetObjectIDHandler(func() {
 		values.RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
 			func(u values.Unifier) int { return int(u.Unified().(int32)) },
@@ -432,6 +420,54 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 	simplifier.SetSpecialHandler("Ignored", func() {})
 
 	describer(simplifier)
+}
+
+func (view *ObjectsView) renderTypeCombo(readOnly, multiple bool, label string,
+	classUnifier values.Unifier, typeUnifier values.Unifier,
+	tripleResolver func(values.Unifier) object.Triple,
+	changeHandler func(object.Triple)) {
+	if classUnifier.IsUnique() {
+		objectProperties := view.mod.ObjectProperties()
+		class := tripleResolver(classUnifier).Class
+		triples := objectProperties.TriplesInClass(class)
+		selectedIndex := -1
+		if typeUnifier.IsUnique() {
+			triple := tripleResolver(typeUnifier)
+			for index, availableTriple := range triples {
+				if availableTriple == triple {
+					selectedIndex = index
+				}
+			}
+			if selectedIndex < 0 {
+				selectedIndex = len(triples)
+				triples = append(triples, triple)
+			}
+		}
+		values.RenderUnifiedCombo(readOnly, multiple, label, typeUnifier,
+			func(u values.Unifier) int { return selectedIndex },
+			func(value int) string {
+				triple := triples[value]
+				suffix := "???"
+				linearIndex := objectProperties.TripleIndex(triple)
+				if linearIndex >= 0 {
+					key := resource.KeyOf(ids.ObjectLongNames, resource.LangDefault, linearIndex)
+					objName, err := view.textCache.Text(key)
+					if err == nil {
+						suffix = objName
+					}
+				}
+				return triple.String() + ": " + suffix
+			},
+			len(triples),
+			func(newValue int) {
+				triple := triples[newValue]
+				changeHandler(triple)
+			})
+	} else if multiple {
+		imgui.LabelText(label, "(multiple classes)")
+	} else {
+		imgui.LabelText(label, "")
+	}
 }
 
 func (view *ObjectsView) editingAllowed(id int) bool {
