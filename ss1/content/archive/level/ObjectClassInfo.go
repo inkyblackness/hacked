@@ -11,21 +11,21 @@ type ObjectClassInfo struct {
 }
 
 var objectClassInfoList = []ObjectClassInfo{
-	{2, 16},
-	{0, 32},
-	{34, 32},
-	{6, 32},
-	{0, 32},
-	{1, 8},
-	{3, 16},
-	{10, 176},
-	{10, 128},
-	{24, 64},
-	{8, 64},
-	{4, 32},
-	{22, 160},
-	{15, 64},
-	{40, 64},
+	{DataSize: 2, EntryCount: 16},
+	{DataSize: 0, EntryCount: 32},
+	{DataSize: 34, EntryCount: 32},
+	{DataSize: 6, EntryCount: 32},
+	{DataSize: 0, EntryCount: 32},
+	{DataSize: 1, EntryCount: 8},
+	{DataSize: 3, EntryCount: 16},
+	{DataSize: 10, EntryCount: 176},
+	{DataSize: 10, EntryCount: 128},
+	{DataSize: 24, EntryCount: 64},
+	{DataSize: 8, EntryCount: 64},
+	{DataSize: 4, EntryCount: 32},
+	{DataSize: 22, EntryCount: 160},
+	{DataSize: 15, EntryCount: 64},
+	{DataSize: 40, EntryCount: 64},
 }
 
 // ObjectClassInfoFor returns the info entry for the corresponding object class.
