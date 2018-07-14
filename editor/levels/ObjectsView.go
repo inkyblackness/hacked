@@ -2,6 +2,7 @@ package levels
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/inkyblackness/hacked/editor/cmd"
@@ -324,9 +325,10 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 	fullKey string, unifier values.Unifier, describer func(*interpreters.Simplifier)) {
 	keys := strings.Split(fullKey, ".")
 	key := keys[len(keys)-1]
+	label := key + "###" + fullKey
 
 	simplifier := interpreters.NewSimplifier(func(minValue, maxValue int64, formatter interpreters.RawValueFormatter) {
-		values.RenderUnifiedSliderInt(readOnly, multiple, key+"###"+fullKey, unifier,
+		values.RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
 			func(u values.Unifier) int { return int(u.Unified().(int32)) },
 			func(value int) string { return "%d" },
 			int(minValue), int(maxValue),
@@ -336,6 +338,47 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 				})
 			})
 	})
+
+	simplifier.SetEnumValueHandler(func(enumValues map[uint32]string) {
+		valueKeys := make([]uint32, 0, len(enumValues))
+		for valueKey := range enumValues {
+			valueKeys = append(valueKeys, valueKey)
+		}
+		sort.Slice(valueKeys, func(indexA, indexB int) bool { return valueKeys[indexA] < valueKeys[indexB] })
+
+		values.RenderUnifiedCombo(readOnly, multiple, label, unifier,
+			func(u values.Unifier) int {
+				unifiedValue := uint32(u.Unified().(int32))
+				for index, valueKey := range valueKeys {
+					if valueKey == unifiedValue {
+						return index
+					}
+				}
+				return -1
+			},
+			func(index int) string { return enumValues[valueKeys[index]] },
+			len(valueKeys),
+			func(newIndex int) {
+				view.requestClassChange(lvl, func(interpreter *interpreters.Instance) {
+					view.setInterpreterValue(interpreter, fullKey, func(oldValue uint32) uint32 { return valueKeys[newIndex] })
+				})
+			})
+	})
+
+	simplifier.SetObjectIDHandler(func() {
+		values.RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
+			func(u values.Unifier) int { return int(u.Unified().(int32)) },
+			func(value int) string { return "%d" },
+			0, int(lvl.ObjectLimit()),
+			func(newValue int) {
+				view.requestClassChange(lvl, func(interpreter *interpreters.Instance) {
+					view.setInterpreterValue(interpreter, fullKey, func(oldValue uint32) uint32 { return uint32(newValue) })
+				})
+			})
+	})
+
+	simplifier.SetSpecialHandler("Mistake", func() {})
+	simplifier.SetSpecialHandler("Ignored", func() {})
 
 	describer(simplifier)
 }
