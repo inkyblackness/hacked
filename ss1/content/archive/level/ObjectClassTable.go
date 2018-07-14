@@ -26,7 +26,7 @@ func NewObjectClassEntry(dataSize int) ObjectClassEntry {
 }
 
 // Code serializes the entry with given coder, including the data array.
-func (entry ObjectClassEntry) Code(coder serial.Coder) {
+func (entry *ObjectClassEntry) Code(coder serial.Coder) {
 	coder.Code(&entry.ObjectID)
 	coder.Code(&entry.Next)
 	coder.Code(&entry.Prev)
@@ -84,6 +84,6 @@ func (table ObjectClassTable) Reset() {
 // Code serializes the table with the provided coder.
 func (table ObjectClassTable) Code(coder serial.Coder) {
 	for i := 0; i < len(table); i++ {
-		coder.Code(&table[i])
+		table[i].Code(coder)
 	}
 }

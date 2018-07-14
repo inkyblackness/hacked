@@ -251,7 +251,7 @@ func (lvl *Level) onLevelResourceDataChanged(id int) {
 	case lvlids.Parameters:
 		lvl.reloadParameters()
 	}
-	if (id >= lvlids.ObjectClassTablesStart) && (id < lvlids.ObjectClassTablesStart+len(lvl.objectClassTables)) {
+	if (id >= lvlids.ObjectClassTablesStart) && (id < (lvlids.ObjectClassTablesStart + len(lvl.objectClassTables))) {
 		lvl.reloadObjectClassTable(object.Class(id - lvlids.ObjectClassTablesStart))
 	}
 }
@@ -342,25 +342,26 @@ func (lvl *Level) reloadObjectClassTables() {
 }
 
 func (lvl *Level) reloadObjectClassTable(class object.Class) {
+	lvl.objectClassTables[class] = nil
 	reader, err := lvl.reader(lvlids.ObjectClassTablesStart + int(class))
 	if err != nil {
-		lvl.objectClassTables[class] = nil
 		return
 	}
 	data, err := ioutil.ReadAll(reader)
 	if err != nil {
-		lvl.objectClassTables[class] = nil
 		return
 	}
 
 	info := ObjectClassInfoFor(class)
 	table := make(ObjectClassTable, len(data)/(ObjectClassEntryHeaderSize+info.DataSize))
 	table.AllocateData(info.DataSize)
-	lvl.objectClassTables[class] = table
-	err = binary.Read(bytes.NewReader(data), binary.LittleEndian, table)
-	if err != nil {
-		lvl.objectClassTables[class] = nil
+
+	coder := serial.NewDecoder(bytes.NewReader(data))
+	table.Code(coder)
+	if coder.FirstError() != nil {
+		return
 	}
+	lvl.objectClassTables[class] = table
 }
 
 func (lvl *Level) reloadTextureAnimations() {
