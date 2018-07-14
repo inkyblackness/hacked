@@ -13,7 +13,8 @@ func TextureSelector(label string, width float32, guiScale float32,
 	count int, selectedIndex int, indexResolver func(int) int,
 	tooltipText func(int) string,
 	changeCallback func(int)) {
-	if imgui.BeginChildV(label, imgui.Vec2{X: width * guiScale, Y: 110 * guiScale}, true, imgui.WindowFlagsHorizontalScrollbar) {
+	if imgui.BeginChildV(label, imgui.Vec2{X: width * guiScale, Y: 110 * guiScale}, true,
+		imgui.WindowFlagsHorizontalScrollbar|imgui.WindowFlagsNoScrollWithMouse) {
 		for i := 0; i < count; i++ {
 			textureIndex := indexResolver(i)
 			key := resource.KeyOf(ids.LargeTextures.Plus(textureIndex), resource.LangAny, 0)

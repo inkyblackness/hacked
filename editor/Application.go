@@ -140,7 +140,7 @@ func (app *Application) render() {
 		paletteTexture, app.textureCache.Texture,
 		app.levelTilesView.TextureDisplay(), app.levelTilesView.ColorDisplay(activeLevel))
 
-	imgui.ShowDemoWindow(nil)
+	// imgui.ShowDemoWindow(nil)
 
 	app.handleFailure()
 	app.aboutView.Render()

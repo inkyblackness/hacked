@@ -8,6 +8,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/model"
+	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
@@ -544,6 +545,30 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 			})
 	})
 
+	simplifier.SetSpecialHandler("LevelTexture", func() {
+		atlas := lvl.TextureAtlas()
+		selectedIndex := -1
+		if unifier.IsUnique() {
+			selectedIndex = int(unifier.Unified().(int32))
+		}
+
+		values.RenderUnifiedSliderInt(readOnly, multiple, key+" (atlas index)###"+fullKey, unifier,
+			func(u values.Unifier) int { return int(u.Unified().(int32)) },
+			func(value int) string { return "%d" },
+			0, len(atlas)-1,
+			func(newValue int) {
+				updater(func(oldValue uint32) uint32 { return uint32(newValue) })
+			})
+		render.TextureSelector(label, -1, view.guiScale, len(atlas), selectedIndex,
+			func(index int) int { return int(atlas[index]) },
+			func(index int) string { return view.textureName(int(atlas[index])) },
+			func(index int) {
+				if !readOnly {
+					updater(func(oldValue uint32) uint32 { return uint32(index) })
+				}
+			})
+	})
+
 	simplifier.SetSpecialHandler("ObjectHeight", func() {
 		values.RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
 			func(u values.Unifier) int { return int(u.Unified().(int32)) },
@@ -757,4 +782,14 @@ func (view *ObjectsView) tripleName(triple object.Triple) string {
 		}
 	}
 	return triple.String() + ": " + suffix
+}
+
+func (view *ObjectsView) textureName(index int) string {
+	key := resource.KeyOf(ids.TextureNames, resource.LangDefault, index)
+	text, err := view.textCache.Text(key)
+	suffix := ""
+	if err == nil {
+		suffix = ": " + text
+	}
+	return fmt.Sprintf("%3d", index) + suffix
 }
