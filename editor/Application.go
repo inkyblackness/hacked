@@ -398,6 +398,8 @@ func (app *Application) initView() {
 	app.levelObjectsView = levels.NewObjectsView(app.mod, app.GuiScale, app.textLineCache, app, &app.eventQueue, app.eventDispatcher)
 	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
+
+	app.eventDispatcher.RegisterHandler(app.onLevelObjectRequestCreateEvent)
 }
 
 // Queue requests to perform the given command.
@@ -419,6 +421,11 @@ func (app *Application) dispatchEvents() {
 func (app *Application) onFailure(source string, details string, err error) {
 	app.failurePending = true
 	app.failureMessage = fmt.Sprintf("Source: %v\nDetails: %v\nError: %v", source, details, err)
+}
+
+func (app *Application) onLevelObjectRequestCreateEvent(evt levels.ObjectRequestCreateEvent) {
+	lvl := app.levels[app.levelControlView.SelectedLevel()]
+	app.levelObjectsView.RequestCreateObject(lvl, evt.Pos)
 }
 
 func (app *Application) renderMainMenu() {

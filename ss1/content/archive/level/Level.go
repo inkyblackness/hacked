@@ -161,16 +161,22 @@ func (lvl *Level) ObjectLimit() ObjectID {
 	return ObjectID(size - 1)
 }
 
-// ObjectClassLimit returns the number of possible entries of given class.
-func (lvl *Level) ObjectClassLimit(class object.Class) int {
+// ObjectClassStats returns the number of used and totoal possible entries of given class.
+func (lvl *Level) ObjectClassStats(class object.Class) (active, limit int) {
 	if int(class) >= len(lvl.objectClassTables) {
-		return 0
+		return 0, 0
 	}
-	size := len(lvl.objectClassTables[class])
-	if size == 0 {
-		return 0
+	objectClassTable := lvl.objectClassTables[class]
+	size := len(objectClassTable)
+	if size < 2 {
+		return 0, 0
 	}
-	return size - 1
+	index := int(objectClassTable[0].ObjectID)
+	for index != 0 {
+		active++
+		index = int(objectClassTable[index].Next)
+	}
+	return active, size - 1
 }
 
 // ForEachObject iterates over all active objects and calls the given handler.

@@ -117,6 +117,34 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 		return fmt.Sprintf("%.3f degrees  - raw: %%d", level.RotationUnit(value).ToDegrees())
 	}
 
+	if !readOnly {
+		classString := func(class object.Class) string {
+			active, limit := lvl.ObjectClassStats(class)
+			return fmt.Sprintf("%2d: %v -- %d/%d", int(class), class, active, limit)
+		}
+		if imgui.BeginCombo("New Object Class", classString(view.model.newObjectTriple.Class)) {
+			for _, class := range object.Classes() {
+				if imgui.SelectableV(classString(class), class == view.model.newObjectTriple.Class, 0, imgui.Vec2{}) {
+					view.model.newObjectTriple = object.TripleFrom(int(class), 0, 0)
+				}
+			}
+			imgui.EndCombo()
+		}
+		if imgui.BeginCombo("New Object Type", view.tripleName(view.model.newObjectTriple)) {
+			allTypes := view.mod.ObjectProperties().TriplesInClass(view.model.newObjectTriple.Class)
+			for _, triple := range allTypes {
+				if imgui.SelectableV(view.tripleName(triple), triple == view.model.newObjectTriple, 0, imgui.Vec2{}) {
+					view.model.newObjectTriple = triple
+				}
+			}
+			imgui.EndCombo()
+		}
+		if imgui.Button("Delete Selected") {
+			view.requestDeleteObjects(lvl, view.model.selectedObjects.list)
+		}
+		imgui.Separator()
+	}
+
 	if multiple {
 		imgui.LabelText("ID", "(multiple)")
 	} else if objectIDUnifier.IsUnique() {
@@ -567,16 +595,7 @@ func (view *ObjectsView) renderTypeCombo(readOnly, multiple bool, label string,
 			func(u values.Unifier) int { return selectedIndex },
 			func(value int) string {
 				triple := triples[value]
-				suffix := "???"
-				linearIndex := objectProperties.TripleIndex(triple)
-				if linearIndex >= 0 {
-					key := resource.KeyOf(ids.ObjectLongNames, resource.LangDefault, linearIndex)
-					objName, err := view.textCache.Text(key)
-					if err == nil {
-						suffix = objName
-					}
-				}
-				return triple.String() + ": " + suffix
+				return view.tripleName(triple)
 			},
 			len(triples),
 			func(newValue int) {
@@ -607,7 +626,7 @@ func (view *ObjectsView) requestBaseChange(lvl *level.Level, modifier func(*leve
 		}
 	}
 
-	view.patchLevel(lvl, objectIDs)
+	view.patchLevel(lvl, objectIDs, objectIDs)
 }
 
 func (view *ObjectsView) extraInterpreterFactory(lvl *level.Level) lvlobj.InterpreterFactory {
@@ -647,16 +666,58 @@ func (view *ObjectsView) requestPropertiesChange(lvl *level.Level,
 		}
 	}
 
-	view.patchLevel(lvl, objectIDs)
+	view.patchLevel(lvl, objectIDs, objectIDs)
 }
 
-func (view *ObjectsView) patchLevel(lvl *level.Level, objectIDs []level.ObjectID) {
+// RequestCreateObject requests to create a new object of the currently selected type.
+func (view *ObjectsView) RequestCreateObject(lvl *level.Level, pos MapPosition) {
+	if view.editingAllowed(lvl.ID()) {
+		view.requestCreateObject(lvl, view.model.newObjectTriple, pos)
+	}
+}
+
+func (view *ObjectsView) requestCreateObject(lvl *level.Level, triple object.Triple, pos MapPosition) {
+	id, err := lvl.NewObject(triple.Class)
+	if err != nil {
+		return
+	}
+	obj := lvl.Object(id)
+	prop, err := view.mod.ObjectProperties().ForObject(triple)
+	if err != nil {
+		obj.Hitpoints = prop.Common.Hitpoints
+	}
+	obj.X = pos.X
+	obj.Y = pos.Y
+	tile := lvl.Tile(int(pos.X.Tile()), int(pos.Y.Tile()))
+	if tile != nil {
+		obj.Z = level.HeightUnit((int(tile.Floor.AbsoluteHeight()) * 0xFF) / int(level.TileHeightUnitMax))
+	}
+	obj.Subclass = triple.Subclass
+	obj.Type = triple.Type
+	lvl.UpdateObjectLocation(id)
+	view.patchLevel(lvl, []level.ObjectID{id}, view.model.selectedObjects.list)
+}
+
+func (view *ObjectsView) requestDeleteObjects(lvl *level.Level, objectIDs []level.ObjectID) {
+	if len(objectIDs) > 0 {
+		for _, id := range objectIDs {
+			lvl.DelObject(id)
+		}
+		view.patchLevel(lvl, nil, objectIDs)
+	}
+}
+
+func (view *ObjectsView) patchLevel(lvl *level.Level, forwardObjectIDs []level.ObjectID, reverseObjectIDs []level.ObjectID) {
 
 	command := patchLevelDataCommand{
-		restoreState: func() {
+		restoreState: func(forward bool) {
 			view.model.restoreFocus = true
 			view.setSelectedLevel(lvl.ID())
-			view.setSelectedObjects(objectIDs)
+			if forward {
+				view.setSelectedObjects(forwardObjectIDs)
+			} else {
+				view.setSelectedObjects(reverseObjectIDs)
+			}
 		},
 	}
 
@@ -683,4 +744,17 @@ func (view *ObjectsView) setSelectedLevel(id int) {
 
 func (view *ObjectsView) setSelectedObjects(objectIDs []level.ObjectID) {
 	view.eventListener.Event(ObjectSelectionSetEvent{objects: objectIDs})
+}
+
+func (view *ObjectsView) tripleName(triple object.Triple) string {
+	suffix := "???"
+	linearIndex := view.mod.ObjectProperties().TripleIndex(triple)
+	if linearIndex >= 0 {
+		key := resource.KeyOf(ids.ObjectLongNames, resource.LangDefault, linearIndex)
+		objName, err := view.textCache.Text(key)
+		if err == nil {
+			suffix = objName
+		}
+	}
+	return triple.String() + ": " + suffix
 }

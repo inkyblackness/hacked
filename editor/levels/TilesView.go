@@ -551,7 +551,7 @@ func (view *TilesView) changeTiles(lvl *level.Level, positions []MapPosition, mo
 	}
 
 	command := patchLevelDataCommand{
-		restoreState: func() {
+		restoreState: func(bool) {
 			view.model.restoreFocus = true
 			view.setSelectedLevel(lvl.ID())
 			view.setSelectedTiles(positions)

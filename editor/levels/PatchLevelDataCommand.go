@@ -6,7 +6,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
-type stateRestorer func()
+type stateRestorer func(forward bool)
 
 type patchLevelDataCommand struct {
 	restoreState stateRestorer
@@ -15,17 +15,19 @@ type patchLevelDataCommand struct {
 }
 
 func (cmd patchLevelDataCommand) Do(trans cmd.Transaction) error {
-	return cmd.perform(trans, cmd.patches, func(p *model.BlockPatch) []byte { return p.ForwardData })
+	cmd.perform(trans, cmd.patches, func(p *model.BlockPatch) []byte { return p.ForwardData })
+	cmd.restoreState(true)
+	return nil
 }
 
 func (cmd patchLevelDataCommand) Undo(trans cmd.Transaction) error {
-	return cmd.perform(trans, cmd.patches, func(p *model.BlockPatch) []byte { return p.ReverseData })
+	cmd.perform(trans, cmd.patches, func(p *model.BlockPatch) []byte { return p.ReverseData })
+	cmd.restoreState(false)
+	return nil
 }
 
-func (cmd patchLevelDataCommand) perform(trans cmd.Transaction, patches []model.BlockPatch, dataResolver func(*model.BlockPatch) []byte) error {
+func (cmd patchLevelDataCommand) perform(trans cmd.Transaction, patches []model.BlockPatch, dataResolver func(*model.BlockPatch) []byte) {
 	for _, patch := range patches {
 		trans.PatchResourceBlock(resource.LangAny, patch.ID, patch.BlockIndex, patch.BlockLength, dataResolver(&patch))
 	}
-	cmd.restoreState()
-	return nil
 }

@@ -385,7 +385,7 @@ func (view *ControlView) requestSetTextureAnimationType(lvl *level.Level, index 
 func (view *ControlView) patchLevelResources(lvl *level.Level, extraRestoreState func()) {
 
 	command := patchLevelDataCommand{
-		restoreState: func() {
+		restoreState: func(bool) {
 			view.model.restoreFocus = true
 			view.setSelectedLevel(lvl.ID())
 			extraRestoreState()

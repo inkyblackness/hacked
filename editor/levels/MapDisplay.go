@@ -455,6 +455,24 @@ func (display *MapDisplay) MouseButtonUp(mouseX, mouseY float32, button uint32, 
 				display.setSelectionByActiveHoverItem()
 			}
 		}
+	} else if button == input.MouseSecondary {
+		if display.positionValid {
+			evt := ObjectRequestCreateEvent{Pos: display.position}
+			if modifier.Has(input.ModShift) {
+				toGrid := func(value byte) byte {
+					if value < 0x40 {
+						return 0x00
+					} else if value >= 0xC0 {
+						return 0xFF
+					} else {
+						return 0x80
+					}
+				}
+				evt.Pos.X = level.CoordinateAt(evt.Pos.X.Tile(), toGrid(evt.Pos.X.Fine()))
+				evt.Pos.Y = level.CoordinateAt(evt.Pos.Y.Tile(), toGrid(evt.Pos.Y.Fine()))
+			}
+			display.eventListener.Event(evt)
+		}
 	}
 }
 
