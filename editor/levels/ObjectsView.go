@@ -280,8 +280,19 @@ func (view *ObjectsView) renderProperties(lvl *level.Level, readOnly bool,
 	}
 
 	multiple := len(view.model.selectedObjects.list) > 1
+	lastTitle := ""
 	for _, key := range propertyOrder {
 		if unifier, existing := propertyUnifier[key]; existing {
+			subKeys := strings.Split(key, ".")
+			baseKey := ""
+			if len(subKeys) > 1 {
+				baseKey = subKeys[0]
+			}
+			if baseKey != lastTitle {
+				imgui.Separator()
+				imgui.Text(baseKey + ":")
+				lastTitle = baseKey
+			}
 			view.renderPropertyControl(lvl, readOnly, multiple, key, *unifier, propertyDescribers[key],
 				func(modifier func(uint32) uint32) {
 					view.requestPropertiesChange(lvl, dataRetriever, interpreterFactory, key, modifier)
@@ -381,7 +392,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 		}
 	})
 
-	simplifier.SetSpecialHandler("ObjectType", func() {
+	simplifier.SetSpecialHandler("ObjectTriple", func() {
 		var classNames [object.ClassCount]string
 		for index, class := range object.Classes() {
 			classNames[index] = class.String()
@@ -418,6 +429,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 
 	simplifier.SetSpecialHandler("Mistake", func() {})
 	simplifier.SetSpecialHandler("Ignored", func() {})
+	simplifier.SetSpecialHandler("Unknown", func() {})
 
 	describer(simplifier)
 }
