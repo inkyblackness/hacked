@@ -2,6 +2,7 @@ package levels
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/event"
@@ -10,6 +11,8 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
+	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlobj"
+	"github.com/inkyblackness/hacked/ss1/content/interpreters"
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -243,14 +246,95 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 		imgui.TreePop()
 	}
 	if imgui.TreeNodeV("Extra Properties", imgui.TreeNodeFlagsFramed) {
-
 		imgui.TreePop()
 	}
 	if imgui.TreeNodeV("Class Properties", imgui.TreeNodeFlagsFramed) {
+		view.renderClassProperties(lvl, readOnly)
 		imgui.TreePop()
 	}
 
 	imgui.PopItemWidth()
+}
+
+func (view *ObjectsView) renderClassProperties(lvl *level.Level, readOnly bool) {
+	specializer := lvlobj.ForRealWorld
+	if lvl.IsCyberspace() {
+		specializer = lvlobj.ForCyberspace
+	}
+
+	propertyUnifier := make(map[string]*values.Unifier)
+	propertyDescribers := make(map[string]func(*interpreters.Simplifier))
+	var propertyOrder []string
+	describer := func(interpreter *interpreters.Instance, key string) func(simpl *interpreters.Simplifier) {
+		return func(simpl *interpreters.Simplifier) { interpreter.Describe(key, simpl) }
+	}
+
+	var unifyInterpreter func(string, *interpreters.Instance, bool, map[string]bool)
+	unifyInterpreter = func(path string, interpreter *interpreters.Instance, first bool, thisKeys map[string]bool) {
+		for _, key := range interpreter.Keys() {
+			fullPath := path + key
+			thisKeys[fullPath] = true
+			if unifier, existing := propertyUnifier[fullPath]; existing || first {
+				if !existing {
+					u := values.NewUnifier()
+					unifier = &u
+					propertyUnifier[fullPath] = unifier
+					propertyDescribers[fullPath] = describer(interpreter, key)
+					propertyOrder = append(propertyOrder, fullPath)
+				}
+				unifier.Add(int32(interpreter.Get(key)))
+			}
+		}
+		for _, key := range interpreter.ActiveRefinements() {
+			unifyInterpreter(path+key+".", interpreter.Refined(key), first, thisKeys)
+		}
+	}
+
+	for index, id := range view.model.selectedObjects.list {
+		obj := lvl.Object(id)
+		if obj != nil {
+			classData := lvl.ObjectClassData(id)
+			interpreter := specializer(obj.Triple(), classData)
+
+			thisKeys := make(map[string]bool)
+			unifyInterpreter("", interpreter, index == 0, thisKeys)
+			{
+				var toRemove []string
+				for previousKey := range propertyUnifier {
+					if !thisKeys[previousKey] {
+						toRemove = append(toRemove, previousKey)
+					}
+				}
+				for _, key := range toRemove {
+					delete(propertyUnifier, key)
+				}
+			}
+		}
+	}
+
+	multiple := len(view.model.selectedObjects.list) > 1
+	for _, key := range propertyOrder {
+		if unifier, existing := propertyUnifier[key]; existing {
+			view.renderPropertyControl(lvl, readOnly, multiple, key, *unifier, propertyDescribers[key])
+		}
+	}
+}
+
+func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, multiple bool,
+	fullKey string, unifier values.Unifier, describer func(*interpreters.Simplifier)) {
+	keys := strings.Split(fullKey, ".")
+	key := keys[len(keys)-1]
+
+	simplifier := interpreters.NewSimplifier(func(minValue, maxValue int64, formatter interpreters.RawValueFormatter) {
+		values.RenderUnifiedSliderInt(readOnly, multiple, key+"###"+fullKey, unifier,
+			func(u values.Unifier) int { return int(u.Unified().(int32)) },
+			func(value int) string { return "%d" },
+			int(minValue), int(maxValue),
+			func(newValue int) {
+			})
+	})
+
+	describer(simplifier)
 }
 
 func (view *ObjectsView) editingAllowed(id int) bool {
