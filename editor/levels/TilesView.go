@@ -142,14 +142,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 	imgui.PushItemWidth(-250 * view.guiScale)
 
 	_, _, levelHeight := lvl.Size()
-	tileHeightFormatter := func(value int) string {
-		tileHeight, err := levelHeight.ValueFromTileHeight(level.TileHeightUnit(value))
-		tileHeightString := "???"
-		if err == nil {
-			tileHeightString = fmt.Sprintf("%2.3f", tileHeight)
-		}
-		return tileHeightString + " tile(s) - raw: %d"
-	}
+	tileHeightFormatter := tileHeightFormatterFor(levelHeight)
 
 	tileTypes := level.TileTypes()
 	values.RenderUnifiedCombo(readOnly, multiple, "Tile Type", tileTypeUnifier,
