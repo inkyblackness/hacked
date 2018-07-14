@@ -46,3 +46,35 @@ func (table ObjectCrossReferenceTable) Reset() {
 		table[tableLen-1].NextInTile = 0
 	}
 }
+
+// Allocate attempts to reserve a free entry in the table and return its index.
+// Returns 0 if exhausted.
+func (table ObjectCrossReferenceTable) Allocate() int {
+	if len(table) < 2 {
+		return 0
+	}
+	start := &table[0]
+	if start.NextInTile == 0 {
+		return 0
+	}
+	index := start.NextInTile
+	entry := &table[index]
+	start.NextInTile = entry.NextInTile
+
+	entry.Reset()
+
+	return int(index)
+}
+
+// Release frees the entry with given index.
+func (table ObjectCrossReferenceTable) Release(index int) {
+	if (index < 1) || (index >= len(table)) {
+		return
+	}
+	start := &table[0]
+	entry := &table[index]
+
+	entry.Reset()
+	entry.NextInTile = start.NextInTile
+	start.NextInTile = int16(index)
+}

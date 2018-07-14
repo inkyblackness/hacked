@@ -10,6 +10,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/serial"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestObjectCrossReferenceEntrySerializedSize(t *testing.T) {
@@ -48,6 +49,59 @@ func TestDefaultObjectCrossReferenceTable(t *testing.T) {
 
 	assert.Equal(t, 1600, len(table), "Wrong default size")
 	assert.Equal(t, int16(1), table[0].NextInTile, "start entry should point to first free.")
+}
+
+func TestObjectCrossReferenceTableAllocate(t *testing.T) {
+	tt := []int{0, 1, 2, 3, 100}
+
+	for _, tc := range tt {
+		table := make(level.ObjectCrossReferenceTable, tc)
+		table.Reset()
+		possible := tc - 1
+
+		for attempt := 0; attempt < possible; attempt++ {
+			index := table.Allocate()
+			assert.NotEqual(t, 0, index, "could not allocate at attempt %d for size %d", attempt, tc)
+		}
+		last := table.Allocate()
+		assert.Equal(t, 0, last, "table was not exhausted although it should be")
+	}
+}
+
+func TestObjectCrossReferenceTableRelease(t *testing.T) {
+	stats := func(table level.ObjectCrossReferenceTable) (used, free int) {
+		for next := int16(table[0].NextInTile); next != 0; next = table[next].NextInTile {
+			free++
+		}
+		used = len(table) - 1 - free
+		return
+	}
+
+	table := make(level.ObjectCrossReferenceTable, 10)
+	table.Reset()
+	var allocated []int
+	for i := 0; i < 4; i++ {
+		id := table.Allocate()
+		allocated = append(allocated, id)
+	}
+	used, free := stats(table)
+	require.Equal(t, 4, used, "invalid amount of used entries")
+	require.Equal(t, 5, free, "invalid amount of free entries")
+
+	for _, id := range allocated {
+		table.Release(id)
+	}
+
+	used, free = stats(table)
+	assert.Equal(t, 0, used, "invalid amount of used entries after release")
+	assert.Equal(t, 9, free, "invalid amount of free entries after release")
+
+	table.Release(0)
+	table.Release(20)
+	for i := 0; i < len(table)-1; i++ {
+		id := table.Allocate()
+		assert.NotEqual(t, level.ObjectID(0), id, "should have been able to re-allocate")
+	}
 }
 
 func aRandomObjectCrossReferenceEntry() level.ObjectCrossReferenceEntry {
