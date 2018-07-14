@@ -427,6 +427,16 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 			})
 	})
 
+	simplifier.SetSpecialHandler("BinaryCodedDecimal", func() {
+		values.RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
+			func(u values.Unifier) int { return int(lvlobj.FromBinaryCodedDecimal(uint16(u.Unified().(int32)))) },
+			func(value int) string { return "%03d" },
+			0, 999,
+			func(newValue int) {
+				updater(func(oldValue uint32) uint32 { return uint32(lvlobj.ToBinaryCodedDecimal(uint16(newValue))) })
+			})
+	})
+
 	simplifier.SetSpecialHandler("Mistake", func() {})
 	simplifier.SetSpecialHandler("Ignored", func() {})
 	simplifier.SetSpecialHandler("Unknown", func() {})
