@@ -44,7 +44,7 @@ var cloneMoveObjectDetails = interpreters.New().
 var setGameVariableDetails = interpreters.New().
 	With("VariableKey", 0, 4).As(interpreters.SpecialValue("VariableKey")).
 	With("Value", 4, 2).
-	With("Operation", 6, 2).As(interpreters.EnumValue(map[uint32]string{0: "Set", 1: "Add", 2: "Subtract", 3: "Multiply", 4: "Divide"})).
+	With("Operation", 6, 2).As(interpreters.EnumValue(map[uint32]string{0: "Set", 1: "Add", 2: "Subtract", 3: "Multiply", 4: "Divide", 5: "Modulo"})).
 	With("Message1", 8, 4).As(interpreters.RangedValue(0, 511)).
 	With("Message2", 12, 4).As(interpreters.RangedValue(0, 511))
 

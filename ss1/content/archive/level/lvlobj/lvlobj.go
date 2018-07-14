@@ -11,17 +11,24 @@ var cyberspaceEntries *interpreterEntry
 var realWorldExtras *interpreterEntry
 var cyberspaceExtras *interpreterEntry
 
+var extraDefault = interpreters.New().
+	With("CurrentFrame", 1, 1).
+	With("TimeRemainder", 2, 1)
+
 var extraIced = interpreters.New().
 	With("ICE-presence", 1, 1).
 	With("ICE-level", 3, 1)
 
-var extraIcedPanels = interpreters.New().
+var extraIcedFixtures = interpreters.New().
 	With("PanelName", 0, 1).
 	With("ICE-presence", 1, 1).
 	With("ICE-level", 3, 1)
 
-var extraPanels = interpreters.New().
+var extraFixtures = interpreters.New().
 	With("PanelName", 0, 1)
+
+var extraSurfaces = interpreters.New().
+	With("Index", 1, 1)
 
 func init() {
 
@@ -54,11 +61,18 @@ func init() {
 	cyberspaceEntries.set(int(object.ClassTrap), traps)
 	cyberspaceEntries.set(int(object.ClassCritter), critters)
 
-	realWorldExtras = newInterpreterEntry(interpreters.New())
-	realWorldExtras.set(9, newInterpreterLeaf(extraPanels))
+	realWorldExtras = newInterpreterEntry(extraDefault)
+	realWorldExtras.set(int(object.ClassFixture), newInterpreterLeaf(extraFixtures))
+	extraBigStuff := newInterpreterEntry(extraDefault)
+	simpleSurfaces := newInterpreterLeaf(extraSurfaces)
+	surfaces := newInterpreterEntry(extraDefault)
+	surfaces.set(1, simpleSurfaces)
+	surfaces.set(4, simpleSurfaces)
+	extraBigStuff.set(2, surfaces)
+	realWorldExtras.set(int(object.ClassBigStuff), extraBigStuff)
 	cyberspaceExtras = newInterpreterEntry(interpreters.New())
-	cyberspaceExtras.set(6, newInterpreterLeaf(extraIced))
-	cyberspaceExtras.set(7, newInterpreterLeaf(extraIced))
-	cyberspaceExtras.set(8, newInterpreterLeaf(extraIced))
-	cyberspaceExtras.set(9, newInterpreterLeaf(extraIcedPanels))
+	cyberspaceExtras.set(int(object.ClassSoftware), newInterpreterLeaf(extraIced))
+	cyberspaceExtras.set(int(object.ClassBigStuff), newInterpreterLeaf(extraIced))
+	cyberspaceExtras.set(int(object.ClassSmallStuff), newInterpreterLeaf(extraIced))
+	cyberspaceExtras.set(int(object.ClassFixture), newInterpreterLeaf(extraIcedFixtures))
 }
