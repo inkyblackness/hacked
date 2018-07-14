@@ -88,10 +88,10 @@ func (table ObjectMasterTable) Allocate() ObjectID {
 	start.Next = entry.Next
 
 	entry.Reset()
-	entry.Next = ObjectID(start.ClassTableIndex)
-	table[start.ClassTableIndex].Prev = id
+	entry.Next = ObjectID(start.CrossReferenceTableIndex)
+	table[start.CrossReferenceTableIndex].Prev = id
 	entry.Prev = 0
-	start.ClassTableIndex = int16(id)
+	start.CrossReferenceTableIndex = int16(id)
 
 	entry.InUse = 1
 
@@ -111,7 +111,7 @@ func (table ObjectMasterTable) Release(id ObjectID) {
 	}
 
 	if entry.Prev == 0 {
-		start.ClassTableIndex = int16(entry.Next)
+		start.CrossReferenceTableIndex = int16(entry.Next)
 	} else {
 		table[entry.Prev].Next = entry.Next
 	}
