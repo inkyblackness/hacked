@@ -69,7 +69,7 @@ func (view *ObjectsView) Render(lvl *level.Level) {
 		if readOnly {
 			title += " (read-only)"
 		}
-		if imgui.BeginV(title+"###Level Objects", view.WindowOpen(), imgui.WindowFlagsHorizontalScrollbar) {
+		if imgui.BeginV(title+"###Level Objects", view.WindowOpen(), imgui.WindowFlagsHorizontalScrollbar|imgui.WindowFlagsAlwaysVerticalScrollbar) {
 			view.renderContent(lvl, readOnly)
 		}
 		imgui.End()
@@ -366,6 +366,56 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 			func(newIndex int) {
 				updater(func(oldValue uint32) uint32 { return valueKeys[newIndex] })
 			})
+	})
+
+	simplifier.SetBitfieldHandler(func(maskNames map[uint32]string) {
+		masks := make([]uint32, 0, len(maskNames))
+		for mask := range maskNames {
+			masks = append(masks, mask)
+		}
+		sort.Slice(masks, func(indexA, indexB int) bool { return masks[indexA] < masks[indexB] })
+
+		addMaskedItem := func(mask uint32) {
+			maxValue := mask
+			shift := 0
+			maskedLabel := key + "." + maskNames[mask] + "###" + label + "-" + maskNames[mask]
+
+			for (maxValue & 1) == 0 {
+				shift++
+				maxValue >>= 1
+			}
+
+			if maxValue == 1 {
+				booleanUnifier := values.NewUnifier()
+				if unifier.IsUnique() {
+					booleanUnifier.Add((uint32(unifier.Unified().(int32)) & mask) != 0)
+				}
+				values.RenderUnifiedCheckboxCombo(readOnly, multiple, maskedLabel, booleanUnifier,
+					func(newValue bool) {
+						updater(func(oldValue uint32) uint32 {
+							result := oldValue & ^mask
+							if newValue {
+								result |= mask
+							}
+							return result
+						})
+					})
+			} else {
+				values.RenderUnifiedSliderInt(readOnly, multiple, maskedLabel, unifier,
+					func(u values.Unifier) int { return int((uint32(u.Unified().(int32)) & mask) >> uint32(shift)) },
+					func(value int) string { return "%d" },
+					0, int(maxValue),
+					func(newValue int) {
+						updater(func(oldValue uint32) uint32 {
+							return (oldValue & ^mask) | (uint32(newValue) << uint32(shift))
+						})
+					})
+			}
+		}
+
+		for _, mask := range masks {
+			addMaskedItem(mask)
+		}
 	})
 
 	simplifier.SetObjectIDHandler(func() {
