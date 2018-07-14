@@ -247,21 +247,24 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 		imgui.TreePop()
 	}
 	if imgui.TreeNodeV("Extra Properties", imgui.TreeNodeFlagsFramed) {
+		view.renderProperties(lvl, readOnly,
+			func(id level.ObjectID, entry *level.ObjectMasterEntry) []byte { return entry.Extra[:] },
+			view.extraInterpreterFactory(lvl))
 		imgui.TreePop()
 	}
 	if imgui.TreeNodeV("Class Properties", imgui.TreeNodeFlagsFramed) {
-		view.renderClassProperties(lvl, readOnly)
+		view.renderProperties(lvl, readOnly,
+			func(id level.ObjectID, entry *level.ObjectMasterEntry) []byte { return lvl.ObjectClassData(id) },
+			view.classInterpreterFactory(lvl))
 		imgui.TreePop()
 	}
 
 	imgui.PopItemWidth()
 }
 
-func (view *ObjectsView) renderClassProperties(lvl *level.Level, readOnly bool) {
-	interpreterFactory := lvlobj.ForRealWorld
-	if lvl.IsCyberspace() {
-		interpreterFactory = lvlobj.ForCyberspace
-	}
+func (view *ObjectsView) renderProperties(lvl *level.Level, readOnly bool,
+	dataRetriever func(level.ObjectID, *level.ObjectMasterEntry) []byte,
+	interpreterFactory lvlobj.InterpreterFactory) {
 
 	propertyUnifier := make(map[string]*values.Unifier)
 	propertyDescribers := make(map[string]func(*interpreters.Simplifier))
@@ -294,8 +297,8 @@ func (view *ObjectsView) renderClassProperties(lvl *level.Level, readOnly bool) 
 	for index, id := range view.model.selectedObjects.list {
 		obj := lvl.Object(id)
 		if obj != nil {
-			classData := lvl.ObjectClassData(id)
-			interpreter := interpreterFactory(obj.Triple(), classData)
+			data := dataRetriever(id, obj)
+			interpreter := interpreterFactory(obj.Triple(), data)
 
 			thisKeys := make(map[string]bool)
 			unifyInterpreter("", interpreter, index == 0, thisKeys)
@@ -316,13 +319,17 @@ func (view *ObjectsView) renderClassProperties(lvl *level.Level, readOnly bool) 
 	multiple := len(view.model.selectedObjects.list) > 1
 	for _, key := range propertyOrder {
 		if unifier, existing := propertyUnifier[key]; existing {
-			view.renderPropertyControl(lvl, readOnly, multiple, key, *unifier, propertyDescribers[key])
+			view.renderPropertyControl(lvl, readOnly, multiple, key, *unifier, propertyDescribers[key],
+				func(modifier func(uint32) uint32) {
+					view.requestPropertiesChange(lvl, dataRetriever, interpreterFactory, key, modifier)
+				})
 		}
 	}
 }
 
 func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, multiple bool,
-	fullKey string, unifier values.Unifier, describer func(*interpreters.Simplifier)) {
+	fullKey string, unifier values.Unifier, describer func(*interpreters.Simplifier),
+	updater func(func(uint32) uint32)) {
 	keys := strings.Split(fullKey, ".")
 	key := keys[len(keys)-1]
 	label := key + "###" + fullKey
@@ -333,9 +340,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 			func(value int) string { return "%d" },
 			int(minValue), int(maxValue),
 			func(newValue int) {
-				view.requestClassChange(lvl, func(interpreter *interpreters.Instance) {
-					view.setInterpreterValue(interpreter, fullKey, func(oldValue uint32) uint32 { return uint32(newValue) })
-				})
+				updater(func(oldValue uint32) uint32 { return uint32(newValue) })
 			})
 	})
 
@@ -359,9 +364,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 			func(index int) string { return enumValues[valueKeys[index]] },
 			len(valueKeys),
 			func(newIndex int) {
-				view.requestClassChange(lvl, func(interpreter *interpreters.Instance) {
-					view.setInterpreterValue(interpreter, fullKey, func(oldValue uint32) uint32 { return valueKeys[newIndex] })
-				})
+				updater(func(oldValue uint32) uint32 { return valueKeys[newIndex] })
 			})
 	})
 
@@ -371,9 +374,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 			func(value int) string { return "%d" },
 			0, int(lvl.ObjectLimit()),
 			func(newValue int) {
-				view.requestClassChange(lvl, func(interpreter *interpreters.Instance) {
-					view.setInterpreterValue(interpreter, fullKey, func(oldValue uint32) uint32 { return uint32(newValue) })
-				})
+				updater(func(oldValue uint32) uint32 { return uint32(newValue) })
 			})
 	})
 
@@ -403,28 +404,40 @@ func (view *ObjectsView) requestBaseChange(lvl *level.Level, modifier func(*leve
 	view.patchLevel(lvl, objectIDs)
 }
 
-func (view *ObjectsView) setInterpreterValue(interpreter *interpreters.Instance,
-	key string, update func(uint32) uint32) {
-	subKeys := strings.Split(key, ".")
-	valueIndex := len(subKeys) - 1
-	for subIndex := 0; subIndex < valueIndex; subIndex++ {
-		interpreter = interpreter.Refined(subKeys[subIndex])
+func (view *ObjectsView) extraInterpreterFactory(lvl *level.Level) lvlobj.InterpreterFactory {
+	interpreterFactory := lvlobj.RealWorldExtra
+	if lvl.IsCyberspace() {
+		interpreterFactory = lvlobj.CyberspaceExtra
 	}
-	subKey := subKeys[valueIndex]
-	interpreter.Set(subKey, update(interpreter.Get(subKey)))
+	return interpreterFactory
 }
 
-func (view *ObjectsView) requestClassChange(lvl *level.Level, modifier func(*interpreters.Instance)) {
+func (view *ObjectsView) classInterpreterFactory(lvl *level.Level) lvlobj.InterpreterFactory {
 	interpreterFactory := lvlobj.ForRealWorld
 	if lvl.IsCyberspace() {
 		interpreterFactory = lvlobj.ForCyberspace
 	}
+	return interpreterFactory
+}
+
+func (view *ObjectsView) requestPropertiesChange(lvl *level.Level,
+	dataRetriever func(level.ObjectID, *level.ObjectMasterEntry) []byte,
+	interpreterFactory lvlobj.InterpreterFactory,
+	key string, modifier func(uint32) uint32) {
 	objectIDs := view.model.selectedObjects.list
+	subKeys := strings.Split(key, ".")
+	valueIndex := len(subKeys) - 1
+
 	for _, id := range objectIDs {
 		obj := lvl.Object(id)
 		if obj != nil {
-			classData := lvl.ObjectClassData(id)
-			modifier(interpreterFactory(obj.Triple(), classData))
+			data := dataRetriever(id, obj)
+			interpreter := interpreterFactory(obj.Triple(), data)
+			for subIndex := 0; subIndex < valueIndex; subIndex++ {
+				interpreter = interpreter.Refined(subKeys[subIndex])
+			}
+			subKey := subKeys[valueIndex]
+			interpreter.Set(subKey, modifier(interpreter.Get(subKey)))
 		}
 	}
 
