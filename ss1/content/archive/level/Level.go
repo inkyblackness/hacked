@@ -161,6 +161,18 @@ func (lvl *Level) ObjectLimit() ObjectID {
 	return ObjectID(size - 1)
 }
 
+// ObjectClassLimit returns the number of possible entries of given class.
+func (lvl *Level) ObjectClassLimit(class object.Class) int {
+	if int(class) >= len(lvl.objectClassTables) {
+		return 0
+	}
+	size := len(lvl.objectClassTables[class])
+	if size == 0 {
+		return 0
+	}
+	return size - 1
+}
+
 // ForEachObject iterates over all active objects and calls the given handler.
 func (lvl *Level) ForEachObject(handler func(ObjectID, ObjectMasterEntry)) {
 	tableSize := len(lvl.objectMasterTable)
@@ -170,6 +182,103 @@ func (lvl *Level) ForEachObject(handler func(ObjectID, ObjectMasterEntry)) {
 			entry := lvl.objectMasterTable[id]
 			handler(id, entry)
 			id = entry.Next
+		}
+	}
+}
+
+// NewObject attempts to allocate a new object for given class.
+// The created object has no place in the world and must be placed.
+// Returns 0 and an error if not possible.
+func (lvl *Level) NewObject(class object.Class) (ObjectID, error) {
+	if int(class) >= len(lvl.objectClassTables) {
+		return 0, errors.New("invalid class specified")
+	}
+	classTable := lvl.objectClassTables[class]
+	classIndex := classTable.Allocate()
+	if classIndex == 0 {
+		return 0, errors.New("no more room for class")
+	}
+	id := lvl.objectMasterTable.Allocate()
+	if id == 0 {
+		classTable.Release(classIndex)
+		return 0, errors.New("no more room for objects")
+	}
+	obj := &lvl.objectMasterTable[id]
+	classEntry := &classTable[classIndex]
+	classEntry.ObjectID = id
+	obj.ClassTableIndex = int16(classIndex)
+	obj.Class = class
+
+	lvl.addCrossReferenceTo(id, obj, -1, 0)
+
+	return id, nil
+}
+
+// UpdateObjectLocation updates the reference table between object and tiles based on its current location.
+func (lvl *Level) UpdateObjectLocation(id ObjectID) {
+	obj := lvl.Object(id)
+	if (obj == nil) || (obj.InUse == 0) {
+		return
+	}
+	lvl.removeCrossReferences(int(obj.CrossReferenceTableIndex), func(entry ObjectCrossReferenceEntry) int { return int(entry.NextTileForObj) })
+	lvl.addCrossReferenceTo(id, obj, int16(obj.X.Tile()), int16(obj.Y.Tile()))
+}
+
+// DelObject removes the identified object from the level.
+func (lvl *Level) DelObject(id ObjectID) {
+	obj := lvl.Object(id)
+	if (obj == nil) || (obj.InUse == 0) {
+		return
+	}
+	lvl.removeCrossReferences(int(obj.CrossReferenceTableIndex), func(entry ObjectCrossReferenceEntry) int { return int(entry.NextTileForObj) })
+	if int(obj.Class) < len(lvl.objectClassTables) {
+		lvl.objectClassTables[obj.Class].Release(int(obj.ClassTableIndex))
+	}
+	lvl.objectMasterTable.Release(id)
+}
+
+func (lvl *Level) addCrossReferenceTo(id ObjectID, obj *ObjectMasterEntry, x, y int16) {
+	newIndex := lvl.objectCrossRefTable.Allocate()
+	if newIndex == 0 {
+		return
+	}
+	entry := &lvl.objectCrossRefTable[newIndex]
+	entry.ObjectID = id
+	entry.TileX = x
+	entry.TileY = y
+
+	tile := lvl.Tile(int(x), int(y))
+	if tile != nil {
+		entry.NextInTile = tile.FirstObjectIndex
+		tile.FirstObjectIndex = entry.NextInTile
+	}
+	entry.NextTileForObj = obj.CrossReferenceTableIndex
+	if obj.CrossReferenceTableIndex != 0 {
+		lvl.objectCrossRefTable[obj.CrossReferenceTableIndex].NextTileForObj = int16(newIndex)
+	}
+	obj.CrossReferenceTableIndex = int16(newIndex)
+}
+
+func (lvl *Level) removeCrossReferences(start int, next func(ObjectCrossReferenceEntry) int) {
+	index := start
+	for (index != 0) && (index < len(lvl.objectCrossRefTable)) {
+		entry := lvl.objectCrossRefTable[index]
+
+		tile := lvl.Tile(int(entry.TileX), int(entry.TileY))
+		// TODO: walk tile chain
+		if (tile != nil) && (tile.FirstObjectIndex == int16(index)) {
+			tile.FirstObjectIndex = entry.NextInTile
+		}
+		obj := lvl.Object(entry.ObjectID)
+		// TODO: walk object chain
+		if (obj != nil) && (obj.CrossReferenceTableIndex == int16(index)) {
+			obj.CrossReferenceTableIndex = entry.NextTileForObj
+		}
+		lvl.objectCrossRefTable.Release(index)
+
+		index = next(entry)
+		if index == start {
+			index = 0
 		}
 	}
 }
