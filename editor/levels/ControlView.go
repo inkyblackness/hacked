@@ -10,6 +10,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
+	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
@@ -25,16 +26,20 @@ type ControlView struct {
 	commander     cmd.Commander
 	eventListener event.Listener
 
+	textCache *text.Cache
+
 	model controlViewModel
 }
 
 // NewControlView returns a new instance.
-func NewControlView(mod *model.Mod, guiScale float32, commander cmd.Commander, eventListener event.Listener, eventRegistry event.Registry) *ControlView {
+func NewControlView(mod *model.Mod, guiScale float32, textCache *text.Cache,
+	commander cmd.Commander, eventListener event.Listener, eventRegistry event.Registry) *ControlView {
 	view := &ControlView{
 		mod:           mod,
 		guiScale:      guiScale,
 		commander:     commander,
 		eventListener: eventListener,
+		textCache:     textCache,
 		model:         freshControlViewModel(),
 	}
 	eventRegistry.RegisterHandler(view.onLevelSelectionSetEvent)
@@ -125,47 +130,51 @@ func (view *ControlView) renderLevelHeight(lvl *level.Level, readOnly bool) {
 	}
 }
 
+func (view *ControlView) textureName(index int) string {
+	key := resource.KeyOf(ids.TextureNames, resource.LangDefault, index)
+	text, err := view.textCache.Text(key)
+	suffix := ""
+	if err == nil {
+		suffix = ": " + text
+	}
+	return fmt.Sprintf("%3d", index) + suffix
+}
+
 func (view *ControlView) renderTextureAtlas(lvl *level.Level, readOnly bool) {
 	imgui.Separator()
 
 	atlas := lvl.TextureAtlas()
-	fcwSelected := ""
-	if (view.model.selectedAtlasIndex >= 0) && (view.model.selectedAtlasIndex < len(atlas)) {
-		fcwSelected = fmt.Sprintf("%d", view.model.selectedAtlasIndex)
-	}
-	if imgui.BeginComboV("Level Textures", fcwSelected, imgui.ComboFlagHeightLarge) {
-		for i := 0; i < len(atlas); i++ {
-			key := resource.KeyOf(ids.LargeTextures.Plus(int(atlas[i])), resource.LangAny, 0)
-			textureID := render.TextureIDForBitmapTexture(key)
-			if imgui.SelectableV(fmt.Sprintf("%2d", i), view.model.selectedAtlasIndex == i, 0, imgui.Vec2{X: 0, Y: 66 * view.guiScale}) {
-				view.model.selectedAtlasIndex = i
-			}
-			imgui.SameLine()
-			imgui.Image(textureID, imgui.Vec2{X: 64 * view.guiScale, Y: 64 * view.guiScale})
-			imgui.SameLine()
-			textureType := "(F/C/W)"
-			if i >= level.FloorCeilingTextureLimit {
-				textureType = "(walls only)"
-			}
-			imgui.Text(textureType)
-		}
-		imgui.EndCombo()
+	{
+		render.TextureSelector("Level Textures", -200, view.guiScale,
+			len(atlas), view.model.selectedAtlasIndex,
+			func(index int) int { return int(atlas[index]) },
+			func(index int) string {
+				textureType := "(F/C/W)"
+				if index >= level.FloorCeilingTextureLimit {
+					textureType = "(walls only)"
+				}
+				return fmt.Sprintf("Atlas Index %2d ", index) + textureType + "\n" + view.textureName(int(atlas[index]))
+			}, func(newIndex int) {
+				view.model.selectedAtlasIndex = newIndex
+			})
+		imgui.SameLine()
+		imgui.Text("Level Textures")
 	}
 	gameTextureIndex := -1
 	if (view.model.selectedAtlasIndex >= 0) && (view.model.selectedAtlasIndex < len(atlas)) {
 		gameTextureIndex = int(atlas[view.model.selectedAtlasIndex])
 	}
-	if !readOnly && imgui.BeginComboV("Game Textures", fmt.Sprintf("%d", gameTextureIndex), imgui.ComboFlagHeightLarge) {
-		for i := 0; i < world.MaxWorldTextures; i++ {
-			key := resource.KeyOf(ids.LargeTextures.Plus(i), resource.LangAny, 0)
-			textureID := render.TextureIDForBitmapTexture(key)
-			if imgui.SelectableV(fmt.Sprintf("%3d", i), gameTextureIndex == i, 0, imgui.Vec2{X: 0, Y: 66 * view.guiScale}) {
-				view.requestSetLevelTexture(lvl, view.model.selectedAtlasIndex, i)
-			}
-			imgui.SameLine()
-			imgui.Image(textureID, imgui.Vec2{X: 64 * view.guiScale, Y: 64 * view.guiScale})
-		}
-		imgui.EndCombo()
+	if !readOnly {
+		render.TextureSelector("Game Textures", -200, view.guiScale,
+			world.MaxWorldTextures, gameTextureIndex,
+			func(index int) int { return index },
+			func(index int) string {
+				return view.textureName(index)
+			}, func(newIndex int) {
+				view.requestSetLevelTexture(lvl, view.model.selectedAtlasIndex, newIndex)
+			})
+		imgui.SameLine()
+		imgui.Text("Game Textures")
 	}
 }
 

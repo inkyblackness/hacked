@@ -110,6 +110,8 @@ var infoList = []ResourceInfo{
 	{SmallTextures, SmallTextures.Plus(1), resource.Bitmap, true, false, true, 293, Texture},
 	{MediumTextures, MediumTextures.Plus(293), resource.Bitmap, true, false, false, 293, Texture},
 	{LargeTextures, LargeTextures.Plus(293), resource.Bitmap, true, false, false, 293, Texture},
+	{TextureNames, TextureNames.Plus(1), resource.Text, true, false, true, 293, CybStrng},
+	{TextureUsages, TextureUsages.Plus(1), resource.Text, true, false, true, 293, CybStrng},
 
 	{ObjectBitmaps, ObjectBitmaps.Plus(1), resource.Bitmap, true, false, true, 0, ObjArt},
 

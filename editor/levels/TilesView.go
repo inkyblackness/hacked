@@ -259,7 +259,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			func(newValue int) {
 				view.requestFloorTextureIndex(lvl, view.model.selectedTiles.list, newValue)
 			})
-		view.renderTextureCombo(readOnly, multiple, "Floor Texture", floorTextureIndexUnifier, atlas, 0, level.FloorCeilingTextureLimit-1,
+		view.renderTextureSelector(readOnly, multiple, "Floor Texture", floorTextureIndexUnifier, atlas, 0, level.FloorCeilingTextureLimit-1,
 			func(newValue int) {
 				view.requestFloorTextureIndex(lvl, view.model.selectedTiles.list, newValue)
 			})
@@ -278,7 +278,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			func(newValue int) {
 				view.requestCeilingTextureIndex(lvl, view.model.selectedTiles.list, newValue)
 			})
-		view.renderTextureCombo(readOnly, multiple, "Ceiling Texture", ceilingTextureIndexUnifier, atlas, 0, level.FloorCeilingTextureLimit-1,
+		view.renderTextureSelector(readOnly, multiple, "Ceiling Texture", ceilingTextureIndexUnifier, atlas, 0, level.FloorCeilingTextureLimit-1,
 			func(newValue int) {
 				view.requestCeilingTextureIndex(lvl, view.model.selectedTiles.list, newValue)
 			})
@@ -297,7 +297,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			func(newValue int) {
 				view.requestWallTextureIndex(lvl, view.model.selectedTiles.list, newValue)
 			})
-		view.renderTextureCombo(readOnly, multiple, "Wall Texture", wallTextureIndexUnifier, atlas, 0, len(atlas)-1,
+		view.renderTextureSelector(readOnly, multiple, "Wall Texture", wallTextureIndexUnifier, atlas, 0, len(atlas)-1,
 			func(newValue int) {
 				view.requestWallTextureIndex(lvl, view.model.selectedTiles.list, newValue)
 			})
@@ -370,32 +370,21 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 	imgui.PopItemWidth()
 }
 
-func (view *TilesView) renderTextureCombo(readOnly, multiple bool, label string, unifier values.Unifier,
+func (view *TilesView) renderTextureSelector(readOnly, multiple bool, label string, unifier values.Unifier,
 	atlas level.TextureAtlas, minIndex, maxIndex int, changeHandler func(int)) {
 	selectedIndex := -1
-	selectedString := ""
 	if unifier.IsUnique() {
 		selectedIndex = unifier.Unified().(int)
-		selectedString = fmt.Sprintf("%d", selectedIndex)
-	} else if multiple {
-		selectedString = "(multiple)"
 	}
-	if readOnly {
-		imgui.LabelText(label, selectedString)
-	} else {
-		if imgui.BeginComboV(label, selectedString, imgui.ComboFlagHeightLarge) {
-			for i := minIndex; (i <= maxIndex) && (i < len(atlas)); i++ {
-				key := resource.KeyOf(ids.LargeTextures.Plus(int(atlas[i])), resource.LangAny, 0)
-				textureID := render.TextureIDForBitmapTexture(key)
-				if imgui.SelectableV(fmt.Sprintf("%2d", i), selectedIndex == i, 0, imgui.Vec2{X: 0, Y: 66 * view.guiScale}) {
-					changeHandler(i)
-				}
-				imgui.SameLine()
-				imgui.Image(textureID, imgui.Vec2{X: 64 * view.guiScale, Y: 64 * view.guiScale})
+
+	render.TextureSelector(label, -1, view.guiScale, maxIndex-minIndex+1, selectedIndex-minIndex,
+		func(index int) int { return int(atlas[minIndex+index]) },
+		func(index int) string { return "" },
+		func(index int) {
+			if !readOnly {
+				changeHandler(index)
 			}
-			imgui.EndCombo()
-		}
-	}
+		})
 }
 
 func (view *TilesView) editingAllowed(id int) bool {

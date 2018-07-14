@@ -140,7 +140,7 @@ func (app *Application) render() {
 		paletteTexture, app.textureCache.Texture,
 		app.levelTilesView.TextureDisplay(), app.levelTilesView.ColorDisplay(activeLevel))
 
-	// imgui.ShowDemoWindow(nil)
+	imgui.ShowDemoWindow(nil)
 
 	app.handleFailure()
 	app.aboutView.Render()
@@ -393,7 +393,7 @@ func (app *Application) modReset() {
 func (app *Application) initView() {
 	app.projectView = project.NewView(app.mod, app.GuiScale, app)
 	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)
-	app.levelControlView = levels.NewControlView(app.mod, app.GuiScale, app, &app.eventQueue, app.eventDispatcher)
+	app.levelControlView = levels.NewControlView(app.mod, app.GuiScale, app.textLineCache, app, &app.eventQueue, app.eventDispatcher)
 	app.levelTilesView = levels.NewTilesView(app.mod, app.GuiScale, app, &app.eventQueue, app.eventDispatcher)
 	app.levelObjectsView = levels.NewObjectsView(app.mod, app.GuiScale, app.textLineCache, app, &app.eventQueue, app.eventDispatcher)
 	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.clipboard, app.GuiScale, app)
