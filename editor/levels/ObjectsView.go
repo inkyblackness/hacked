@@ -257,9 +257,9 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 }
 
 func (view *ObjectsView) renderClassProperties(lvl *level.Level, readOnly bool) {
-	specializer := lvlobj.ForRealWorld
+	interpreterFactory := lvlobj.ForRealWorld
 	if lvl.IsCyberspace() {
-		specializer = lvlobj.ForCyberspace
+		interpreterFactory = lvlobj.ForCyberspace
 	}
 
 	propertyUnifier := make(map[string]*values.Unifier)
@@ -294,7 +294,7 @@ func (view *ObjectsView) renderClassProperties(lvl *level.Level, readOnly bool) 
 		obj := lvl.Object(id)
 		if obj != nil {
 			classData := lvl.ObjectClassData(id)
-			interpreter := specializer(obj.Triple(), classData)
+			interpreter := interpreterFactory(obj.Triple(), classData)
 
 			thisKeys := make(map[string]bool)
 			unifyInterpreter("", interpreter, index == 0, thisKeys)
@@ -331,6 +331,9 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 			func(value int) string { return "%d" },
 			int(minValue), int(maxValue),
 			func(newValue int) {
+				view.requestClassChange(lvl, func(interpreter *interpreters.Instance) {
+					view.setInterpreterValue(interpreter, fullKey, func(oldValue uint32) uint32 { return uint32(newValue) })
+				})
 			})
 	})
 
@@ -346,16 +349,46 @@ func (view *ObjectsView) editingAllowed(id int) bool {
 }
 
 func (view *ObjectsView) requestBaseChange(lvl *level.Level, modifier func(*level.ObjectMasterEntry)) {
-	view.changeObjectMaster(lvl, view.model.selectedObjects.list, modifier)
-}
-
-func (view *ObjectsView) changeObjectMaster(lvl *level.Level, objectIDs []level.ObjectID, modifier func(*level.ObjectMasterEntry)) {
+	objectIDs := view.model.selectedObjects.list
 	for _, id := range objectIDs {
 		obj := lvl.Object(id)
 		if obj != nil {
 			modifier(obj)
 		}
 	}
+
+	view.patchLevel(lvl, objectIDs)
+}
+
+func (view *ObjectsView) setInterpreterValue(interpreter *interpreters.Instance,
+	key string, update func(uint32) uint32) {
+	subKeys := strings.Split(key, ".")
+	valueIndex := len(subKeys) - 1
+	for subIndex := 0; subIndex < valueIndex; subIndex++ {
+		interpreter = interpreter.Refined(subKeys[subIndex])
+	}
+	subKey := subKeys[valueIndex]
+	interpreter.Set(subKey, update(interpreter.Get(subKey)))
+}
+
+func (view *ObjectsView) requestClassChange(lvl *level.Level, modifier func(*interpreters.Instance)) {
+	interpreterFactory := lvlobj.ForRealWorld
+	if lvl.IsCyberspace() {
+		interpreterFactory = lvlobj.ForCyberspace
+	}
+	objectIDs := view.model.selectedObjects.list
+	for _, id := range objectIDs {
+		obj := lvl.Object(id)
+		if obj != nil {
+			classData := lvl.ObjectClassData(id)
+			modifier(interpreterFactory(obj.Triple(), classData))
+		}
+	}
+
+	view.patchLevel(lvl, objectIDs)
+}
+
+func (view *ObjectsView) patchLevel(lvl *level.Level, objectIDs []level.ObjectID) {
 
 	command := patchLevelDataCommand{
 		restoreState: func() {
