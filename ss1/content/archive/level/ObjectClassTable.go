@@ -87,3 +87,46 @@ func (table ObjectClassTable) Code(coder serial.Coder) {
 		table[i].Code(coder)
 	}
 }
+
+// Allocate attempts to reserve an entry in the table and returns the corresponding index.
+// returns 0 if exhausted.
+func (table ObjectClassTable) Allocate() int {
+	if len(table) < 2 {
+		return 0
+	}
+	start := &table[0]
+	if start.Next == 0 {
+		return 0
+	}
+	index := start.Next
+	entry := &table[index]
+	start.Next = entry.Next
+
+	entry.Reset()
+	entry.Next = int16(start.ObjectID)
+	table[start.ObjectID].Prev = index
+	entry.Prev = 0
+	start.ObjectID = ObjectID(index)
+
+	return int(index)
+}
+
+// Release frees the identified entry.
+func (table ObjectClassTable) Release(index int) {
+	if (index < 1) || (index >= len(table)) {
+		return
+	}
+	start := &table[0]
+	entry := &table[index]
+
+	if entry.Prev == 0 {
+		start.ObjectID = ObjectID(entry.Next)
+	} else {
+		table[entry.Prev].Next = entry.Next
+	}
+	table[entry.Next].Prev = entry.Prev
+
+	entry.Reset()
+	entry.Next = start.Next
+	start.Next = int16(index)
+}

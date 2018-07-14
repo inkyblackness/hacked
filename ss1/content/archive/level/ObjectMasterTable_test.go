@@ -9,6 +9,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/serial"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestObjectMasterEntrySerializedSize(t *testing.T) {
@@ -49,4 +50,61 @@ func TestDefaultObjectMasterTable(t *testing.T) {
 
 	assert.Equal(t, 872, len(table), "Table length mismatch")
 	assert.Equal(t, level.ObjectID(1), table[0].Next, "table[0].Next should be 1, the first free entry.")
+}
+
+func TestObjectMasterTableAllocate(t *testing.T) {
+	tt := []int{0, 1, 2, 3, 100}
+
+	for _, tc := range tt {
+		table := make(level.ObjectMasterTable, tc)
+		table.Reset()
+		possible := tc - 1
+
+		for attempt := 0; attempt < possible; attempt++ {
+			id := table.Allocate()
+			assert.NotEqual(t, level.ObjectID(0), id, "could not allocate at attempt %d for size %d", attempt, tc)
+		}
+		last := table.Allocate()
+		assert.Equal(t, level.ObjectID(0), last, "table was not exhausted although it should be")
+	}
+}
+
+func TestObjectMasterTableRelease(t *testing.T) {
+	stats := func(table level.ObjectMasterTable) (used, free int) {
+		for i := 1; i < len(table); i++ {
+			entry := &table[i]
+			if entry.InUse != 0 {
+				used++
+			} else {
+				free++
+			}
+		}
+		return
+	}
+
+	table := make(level.ObjectMasterTable, 10)
+	table.Reset()
+	var allocated []level.ObjectID
+	for i := 0; i < 4; i++ {
+		id := table.Allocate()
+		allocated = append(allocated, id)
+	}
+	used, free := stats(table)
+	require.Equal(t, 4, used, "invalid amount of used entries")
+	require.Equal(t, 5, free, "invalid amount of free entries")
+
+	for _, id := range allocated {
+		table.Release(id)
+	}
+
+	used, free = stats(table)
+	assert.Equal(t, 0, used, "invalid amount of used entries after release")
+	assert.Equal(t, 9, free, "invalid amount of free entries after release")
+
+	table.Release(0)
+	table.Release(20)
+	for i := 0; i < len(table)-1; i++ {
+		id := table.Allocate()
+		assert.NotEqual(t, level.ObjectID(0), id, "should have been able to re-allocate")
+	}
 }
