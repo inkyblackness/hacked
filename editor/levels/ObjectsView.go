@@ -241,6 +241,7 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 		view.renderProperties(lvl, readOnly,
 			func(id level.ObjectID, entry *level.ObjectMasterEntry) []byte { return lvl.ObjectClassData(id) },
 			view.classInterpreterFactory(lvl))
+		view.renderBlockPuzzleControl(lvl, readOnly)
 		imgui.TreePop()
 	}
 
@@ -686,6 +687,91 @@ func (view *ObjectsView) renderTypeCombo(readOnly, multiple bool, label string,
 	}
 }
 
+func (view *ObjectsView) renderBlockPuzzleControl(lvl *level.Level, readOnly bool) {
+	var blockPuzzleData *interpreters.Instance
+
+	if len(view.model.selectedObjects.list) == 1 {
+		id := view.model.selectedObjects.list[0]
+		obj := lvl.Object(id)
+		if (obj != nil) && (obj.InUse != 0) {
+			triple := obj.Triple()
+			classData := lvl.ObjectClassData(id)
+			interpreter := view.classInterpreterFactory(lvl)(triple, classData)
+			isBlockPuzzle := interpreter.Refined("Puzzle").Get("Type") == 0x10
+			if isBlockPuzzle {
+				blockPuzzleData = interpreter.Refined("Puzzle").Refined("Block")
+			}
+		}
+	}
+	if blockPuzzleData != nil {
+		blockPuzzleDataID := level.ObjectID(blockPuzzleData.Get("StateStoreObjectID"))
+		blockPuzzleDataState := lvl.ObjectClassData(blockPuzzleDataID)
+		dataObj := lvl.Object(blockPuzzleDataID)
+		expectedTriple := object.TripleFrom(int(object.ClassTrap), 0, 1)
+
+		imgui.Separator()
+		if (dataObj != nil) && (dataObj.InUse != 0) &&
+			(dataObj.Triple() == expectedTriple) &&
+			(len(blockPuzzleDataState) >= (16 + 6)) {
+			blockLayout := blockPuzzleData.Get("Layout")
+			blockWidth := int((blockLayout >> 20) & 7)
+			blockHeight := int((blockLayout >> 24) & 7)
+			state := level.NewBlockPuzzleState(blockPuzzleDataState[6:6+16], blockHeight, blockWidth)
+			startRow := 1 + (7-blockHeight)/2
+			startColumn := 1 + (7-blockWidth)/2
+			var cells [9][9]string
+
+			placeConnector := func(side, offset int, text string) {
+				xOffsets := []int{offset, offset, -1, blockWidth}
+				yOffsets := []int{-1, blockHeight, offset, offset}
+				y := startRow + yOffsets[side]
+				x := startColumn + xOffsets[side]
+
+				if (x >= 0) && (x < 9) && (y >= 0) && (y < 9) {
+					cells[y][x] = text
+				}
+			}
+			stateMapping := []string{" ", "X", "+", "(+)", "F", "(F)", "H", "(H)"}
+
+			for row := 0; row < blockHeight; row++ {
+				for col := 0; col < blockWidth; col++ {
+					value := state.CellValue(row, col)
+					cells[startRow+row][startColumn+col] = stateMapping[value]
+				}
+			}
+			placeConnector(int((blockLayout>>7)&3), int((blockLayout>>4)&7), "S")
+			placeConnector(int((blockLayout>>15)&3), int((blockLayout>>12)&7), "D")
+
+			cellSize := imgui.Vec2{X: imgui.TextLineHeightWithSpacing() * 1.5, Y: imgui.TextLineHeightWithSpacing() * 1.5}
+			for x := 0; x < 9; x++ {
+				imgui.BeginGroup()
+				for y := 0; y < 9; y++ {
+					cellText := cells[y][x]
+					imgui.PushID(fmt.Sprintf("%d:%d", x, y))
+					if len(cellText) > 0 {
+						if imgui.ButtonV(cellText, cellSize) && !readOnly {
+							clickRow := y - startRow
+							clickCol := x - startColumn
+							if (clickRow >= 0) && (clickRow < blockHeight) && (clickCol >= 0) && (clickCol < blockWidth) {
+								oldValue := state.CellValue(clickRow, clickCol)
+								state.SetCellValue(clickRow, clickCol, (8+oldValue+1)%8)
+								view.patchLevel(lvl, view.model.selectedObjects.list, view.model.selectedObjects.list)
+							}
+						}
+					} else {
+						imgui.Dummy(cellSize)
+					}
+					imgui.PopID()
+				}
+				imgui.EndGroup()
+				imgui.SameLine()
+			}
+		} else {
+			imgui.Text("No proper state store found for block puzzle!\n'StateStoreObjectID' must refer to a " + expectedTriple.String() + " object.")
+		}
+	}
+}
+
 func (view *ObjectsView) editingAllowed(id int) bool {
 	gameStateData := view.mod.ModifiedBlocks(resource.LangAny, ids.GameState)
 	isSavegame := (len(gameStateData) == 1) && (len(gameStateData[0]) == archive.GameStateSize) && (gameStateData[0][0x009C] > 0)
@@ -838,10 +924,10 @@ func (view *ObjectsView) tripleName(triple object.Triple) string {
 
 func (view *ObjectsView) textureName(index int) string {
 	key := resource.KeyOf(ids.TextureNames, resource.LangDefault, index)
-	text, err := view.textCache.Text(key)
+	name, err := view.textCache.Text(key)
 	suffix := ""
 	if err == nil {
-		suffix = ": " + text
+		suffix = ": " + name
 	}
 	return fmt.Sprintf("%3d", index) + suffix
 }
