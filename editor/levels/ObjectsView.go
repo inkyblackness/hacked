@@ -868,7 +868,7 @@ func (view *ObjectsView) requestCreateObject(lvl *level.Level, triple object.Tri
 	}
 	obj := lvl.Object(id)
 	prop, err := view.mod.ObjectProperties().ForObject(triple)
-	if err != nil {
+	if err == nil {
 		obj.Hitpoints = prop.Common.Hitpoints
 	}
 	obj.X = pos.X
