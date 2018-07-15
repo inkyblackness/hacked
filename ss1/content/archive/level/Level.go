@@ -256,11 +256,17 @@ func (lvl *Level) addCrossReferenceTo(id ObjectID, obj *ObjectMasterEntry, x, y 
 	tile := lvl.Tile(int(x), int(y))
 	if tile != nil {
 		entry.NextInTile = tile.FirstObjectIndex
-		tile.FirstObjectIndex = entry.NextInTile
+		tile.FirstObjectIndex = int16(newIndex)
 	}
-	entry.NextTileForObj = obj.CrossReferenceTableIndex
 	if obj.CrossReferenceTableIndex != 0 {
-		lvl.objectCrossRefTable[obj.CrossReferenceTableIndex].NextTileForObj = int16(newIndex)
+		entry.NextTileForObj = obj.CrossReferenceTableIndex
+		endIndex := obj.CrossReferenceTableIndex
+		for lvl.objectCrossRefTable[endIndex].NextTileForObj != obj.CrossReferenceTableIndex {
+			endIndex = lvl.objectCrossRefTable[endIndex].NextTileForObj
+		}
+		lvl.objectCrossRefTable[endIndex].NextTileForObj = int16(newIndex)
+	} else {
+		entry.NextTileForObj = int16(newIndex)
 	}
 	obj.CrossReferenceTableIndex = int16(newIndex)
 }
