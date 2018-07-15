@@ -54,6 +54,9 @@ var ObjArt2 = resource.AnyLanguage("objart2.res")
 // ObjArt3 contains further object art.
 var ObjArt3 = resource.AnyLanguage("objart3.res")
 
+// CitMat contains materials for 3D objects.
+var CitMat = resource.AnyLanguage("citmat.res")
+
 // LowResVideos returns the filename descriptors of all low-res videos.
 func LowResVideos() resource.FilenameList {
 	return []resource.Filename{LowIntr, LowDeth, LowEnd}

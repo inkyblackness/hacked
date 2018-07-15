@@ -20,7 +20,9 @@ const (
 
 // Bitmaps
 const (
-	ObjectBitmaps resource.ID = 0x0546
+	ObjectBitmaps         resource.ID = 0x0546
+	ObjectTextureBitmaps  resource.ID = 0x01DB
+	ObjectMaterialBitmaps resource.ID = 0x0884
 )
 
 // Texts

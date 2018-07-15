@@ -114,6 +114,8 @@ var infoList = []ResourceInfo{
 	{TextureUsages, TextureUsages.Plus(1), resource.Text, true, false, true, 293, CybStrng},
 
 	{ObjectBitmaps, ObjectBitmaps.Plus(1), resource.Bitmap, true, false, true, 0, ObjArt},
+	{ObjectTextureBitmaps, ObjectTextureBitmaps.Plus(64), resource.Bitmap, true, false, false, 64, CitMat},
+	{ObjectMaterialBitmaps, ObjectMaterialBitmaps.Plus(32), resource.Bitmap, true, false, false, 32, CitMat},
 
 	{PaperTextsStart, PaperTextsStart.Plus(16), resource.Text, true, false, false, 16, CybStrng},
 
