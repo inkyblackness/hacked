@@ -36,7 +36,7 @@ var baseDoor = interpreters.New().
 	func(value int64) string {
 		return fmt.Sprintf("%.2f sec  - raw: %d", float64(value)*0.5, value)
 	})).
-	With("OtherObjectIndex", 6, 2).As(interpreters.ObjectID())
+	With("OtherObjectID", 6, 2).As(interpreters.ObjectID())
 
 func initDoors() interpreterRetriever {
 	return newInterpreterLeaf(baseDoor)

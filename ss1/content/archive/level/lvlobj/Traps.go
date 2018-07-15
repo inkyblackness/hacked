@@ -18,9 +18,9 @@ var repulsor = baseTraps.
 
 var aiHint = baseTraps.
 	With("Ignored0000", 0, 1).As(interpreters.SpecialValue("Ignored")).
-	With("NextObjectIndex", 6, 2).As(interpreters.ObjectID()).
+	With("NextObjectID", 6, 2).As(interpreters.ObjectID()).
 	With("TriggerObjectFlag", 18, 2).As(interpreters.EnumValue(map[uint32]string{0: "Off", 1: "On"})).
-	With("TriggerObjectIndex", 20, 2).As(interpreters.ObjectID())
+	With("TriggerObjectID", 20, 2).As(interpreters.ObjectID())
 
 var baseTrigger = baseTraps.
 	Refining("Action", 0, 22, actions.Unconditional(), interpreters.Always)

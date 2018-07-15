@@ -28,7 +28,7 @@ var changeHealthDetails = interpreters.New().
 	With("PowerChangeFlag", 10, 2).As(interpreters.EnumValue(map[uint32]string{0: "Remove Delta", 1: "Add Delta"}))
 
 var cloneMoveObjectDetails = interpreters.New().
-	With("ObjectIndex", 0, 2).As(interpreters.ObjectID()).
+	With("ObjectID", 0, 2).As(interpreters.ObjectID()).
 	With("MoveFlag", 2, 2).As(interpreters.EnumValue(map[uint32]string{
 	0x0000: "Clone Object",
 	0x0001: "Move Object (0x0001)",
@@ -57,13 +57,13 @@ func pointOneSecond(value int64) string {
 }
 
 var triggerOtherObjectsDetails = interpreters.New().
-	With("Object1Index", 0, 2).As(interpreters.ObjectID()).
+	With("Object1ID", 0, 2).As(interpreters.ObjectID()).
 	With("Object1Delay", 2, 2).As(interpreters.FormattedRangedValue(0, 6000, pointOneSecond)).
-	With("Object2Index", 4, 2).As(interpreters.ObjectID()).
+	With("Object2ID", 4, 2).As(interpreters.ObjectID()).
 	With("Object2Delay", 6, 2).As(interpreters.FormattedRangedValue(0, 6000, pointOneSecond)).
-	With("Object3Index", 8, 2).As(interpreters.ObjectID()).
+	With("Object3ID", 8, 2).As(interpreters.ObjectID()).
 	With("Object3Delay", 10, 2).As(interpreters.FormattedRangedValue(0, 6000, pointOneSecond)).
-	With("Object4Index", 12, 2).As(interpreters.ObjectID()).
+	With("Object4ID", 12, 2).As(interpreters.ObjectID()).
 	With("Object4Delay", 14, 2).As(interpreters.FormattedRangedValue(0, 6000, pointOneSecond))
 
 var changeLightingDetails = interpreters.New().
@@ -75,7 +75,7 @@ var changeLightingDetails = interpreters.New().
 	Refining("RadiusExtent", 0, 2, interpreters.New().With("Tiles", 0, 2).As(interpreters.RangedValue(0, 31)), func(inst *interpreters.Instance) bool {
 		return inst.Get("LightType") == 0x03
 	}).
-	With("ReferenceObjectIndex", 2, 2).As(interpreters.ObjectID()).
+	With("ReferenceObjectID", 2, 2).As(interpreters.ObjectID()).
 	With("TransitionType", 4, 2).As(interpreters.EnumValue(map[uint32]string{0x0000: "immediate", 0x0001: "fade", 0x0100: "flicker"})).
 	With("LightModification", 7, 1).As(interpreters.EnumValue(map[uint32]string{0x00: "light on", 0x10: "light off"})).
 	With("LightType", 8, 1).As(interpreters.EnumValue(map[uint32]string{0x00: "rectangular", 0x03: "circular gradient"})).
@@ -120,7 +120,7 @@ var changeTileHeightsDetails = interpreters.New().
 	With("Ignored000C", 12, 4).As(interpreters.SpecialValue("Ignored"))
 
 var randomTimerDetails = interpreters.New().
-	With("ObjectIndex", 0, 4).As(interpreters.ObjectID()).
+	With("ObjectID", 0, 4).As(interpreters.ObjectID()).
 	With("TimeInterval", 4, 4).As(interpreters.FormattedRangedValue(0, 6000,
 	func(value int64) string {
 		return fmt.Sprintf("%.1fs", float64(value)/10.0)
@@ -130,15 +130,15 @@ var randomTimerDetails = interpreters.New().
 	With("Variance", 12, 2).As(interpreters.RangedValue(0, 512))
 
 var cycleObjectsDetails = interpreters.New().
-	With("ObjectIndex1", 0, 4).As(interpreters.ObjectID()).
-	With("ObjectIndex2", 4, 4).As(interpreters.ObjectID()).
-	With("ObjectIndex3", 8, 4).As(interpreters.ObjectID()).
+	With("ObjectID1", 0, 4).As(interpreters.ObjectID()).
+	With("ObjectID2", 4, 4).As(interpreters.ObjectID()).
+	With("ObjectID3", 8, 4).As(interpreters.ObjectID()).
 	With("NextObject", 12, 4).As(interpreters.RangedValue(0, 2))
 
 var deleteObjectsDetails = interpreters.New().
-	With("ObjectIndex1", 0, 2).As(interpreters.ObjectID()).
-	With("ObjectIndex2", 4, 2).As(interpreters.ObjectID()).
-	With("ObjectIndex3", 8, 2).As(interpreters.ObjectID()).
+	With("ObjectID1", 0, 2).As(interpreters.ObjectID()).
+	With("ObjectID2", 4, 2).As(interpreters.ObjectID()).
+	With("ObjectID3", 8, 2).As(interpreters.ObjectID()).
 	With("MessageIndex", 12, 2).As(interpreters.RangedValue(0, 511))
 
 var receiveEmailDetails = interpreters.New().
@@ -151,20 +151,20 @@ var changeEffectDetails = interpreters.New().
 	With("EffectType", 4, 4).As(interpreters.EnumValue(map[uint32]string{4: "Radiation poisoning", 8: "Bio contamination"}))
 
 var setObjectParameterDetails = interpreters.New().
-	With("ObjectIndex", 0, 4).As(interpreters.ObjectID()).
+	With("ObjectID", 0, 4).As(interpreters.ObjectID()).
 	With("Value1", 4, 4).
 	With("Value2", 8, 4).
 	With("Value3", 12, 4)
 
 var setScreenPictureDetails = interpreters.New().
-	With("ScreenObjectIndex1", 0, 2).As(interpreters.ObjectID()).
-	With("ScreenObjectIndex2", 2, 2).As(interpreters.ObjectID()).
+	With("ScreenObjectID1", 0, 2).As(interpreters.ObjectID()).
+	With("ScreenObjectID2", 2, 2).As(interpreters.ObjectID()).
 	With("SingleSequenceSource", 4, 4).
 	With("LoopSequenceSource", 8, 4)
 
 var setCritterStateDetails = interpreters.New().
-	With("ReferenceObjectIndex1", 4, 2).As(interpreters.ObjectID()).
-	With("ReferenceObjectIndex2", 6, 2).As(interpreters.ObjectID()).
+	With("ReferenceObjectID1", 4, 2).As(interpreters.ObjectID()).
+	With("ReferenceObjectID2", 6, 2).As(interpreters.ObjectID()).
 	With("NewState", 8, 1).As(interpreters.EnumValue(map[uint32]string{
 	0: "docile",
 	1: "cautious",
@@ -183,43 +183,43 @@ var trapMessageDetails = interpreters.New().
 
 var spawnObjectsDetails = interpreters.New().
 	With("ObjectType", 0, 4).As(interpreters.SpecialValue("ObjectTriple")).
-	With("ReferenceObject1Index", 4, 2).As(interpreters.ObjectID()).
-	With("ReferenceObject2Index", 6, 2).As(interpreters.ObjectID()).
+	With("ReferenceObject1ID", 4, 2).As(interpreters.ObjectID()).
+	With("ReferenceObject2ID", 6, 2).As(interpreters.ObjectID()).
 	With("NumberOfObjects", 8, 4).As(interpreters.RangedValue(0, 100)).
 	With("Unknown000C", 12, 1).As(interpreters.SpecialValue("Unknown"))
 
 var changeObjectTypeDetails = interpreters.New().
-	With("ObjectIndex", 0, 4).As(interpreters.ObjectID()).
+	With("ObjectID", 0, 4).As(interpreters.ObjectID()).
 	With("NewType", 4, 2).As(interpreters.RangedValue(0, 16)).
 	With("ResetMask", 6, 2).As(interpreters.RangedValue(0, 15))
 
 // Change state block
 
 var toggleRepulsorChange = interpreters.New().
-	With("ObjectIndex", 0, 4).As(interpreters.ObjectID()).
+	With("ObjectID", 0, 4).As(interpreters.ObjectID()).
 	With("OffTextureIndex", 4, 1).As(interpreters.SpecialValue("LevelTexture")).
 	With("OnTextureIndex", 5, 1).As(interpreters.SpecialValue("LevelTexture")).
 	With("ToggleType", 8, 1).As(interpreters.EnumValue(map[uint32]string{0: "Toggle On/Off", 1: "Toggle On, Stay On", 2: "Toggle Off, Stay Off"}))
 
 var showGameCodeDigitChange = interpreters.New().
-	With("ScreenObjectIndex", 0, 4).As(interpreters.ObjectID()).
+	With("ScreenObjectID", 0, 4).As(interpreters.ObjectID()).
 	With("DigitNumber", 4, 4).As(interpreters.RangedValue(1, 6))
 
 var setParameterFromVariableChange = interpreters.New().
-	With("ObjectIndex", 0, 4).As(interpreters.ObjectID()).
+	With("ObjectID", 0, 4).As(interpreters.ObjectID()).
 	With("ParameterNumber", 4, 4).As(interpreters.RangedValue(0, 16)).
 	With("VariableIndex", 8, 4).As(interpreters.SpecialValue("VariableKey"))
 
 var setButtonStateChange = interpreters.New().
-	With("ObjectIndex", 0, 4).As(interpreters.ObjectID()).
+	With("ObjectID", 0, 4).As(interpreters.ObjectID()).
 	With("NewState", 4, 4).As(interpreters.EnumValue(map[uint32]string{0: "Off", 1: "On"}))
 
 var doorControlChange = interpreters.New().
-	With("ObjectIndex", 0, 4).As(interpreters.ObjectID()).
+	With("ObjectID", 0, 4).As(interpreters.ObjectID()).
 	With("ControlValue", 4, 4).As(interpreters.EnumValue(map[uint32]string{1: "open door", 2: "close door", 3: "toggle door", 4: "suppress auto-close"}))
 
 var rotateObjectChange = interpreters.New().
-	With("ObjectIndex", 0, 4).As(interpreters.ObjectID()).
+	With("ObjectID", 0, 4).As(interpreters.ObjectID()).
 	With("Amount", 4, 1).As(interpreters.RangedValue(0, 255)).
 	With("RotationType", 5, 1).As(interpreters.EnumValue(map[uint32]string{0: "Endless", 1: "Back and forth"})).
 	With("Direction", 6, 1).As(interpreters.EnumValue(map[uint32]string{0: "Forward", 1: "Backward"})).
@@ -232,20 +232,20 @@ var removeObjectsChange = interpreters.New().
 	With("Amount", 4, 1).As(interpreters.RangedValue(0, 255))
 
 var setConditionChange = interpreters.New().
-	With("ObjectIndex", 0, 4).As(interpreters.ObjectID()).
+	With("ObjectID", 0, 4).As(interpreters.ObjectID()).
 	With("Condition", 4, 4)
 
 var makeItemRadioactiveChange = interpreters.New().
-	With("ObjectIndex", 0, 4).As(interpreters.ObjectID()).
-	With("WatchedObjectIndex", 4, 2).As(interpreters.ObjectID()).
+	With("ObjectID", 0, 4).As(interpreters.ObjectID()).
+	With("WatchedObjectID", 4, 2).As(interpreters.ObjectID()).
 	With("WatchedObjectTriggerState", 6, 2)
 
 var orientedTriggerObjectChange = interpreters.New().
 	With("HorizontalDirection", 0, 2).As(interpreters.RangedValue(0, 0xFFFF)).
-	With("ObjectIndex", 4, 2).As(interpreters.ObjectID())
+	With("ObjectID", 4, 2).As(interpreters.ObjectID())
 
 var closeDataMfdChange = interpreters.New().
-	With("ObjectIndex", 0, 4).As(interpreters.ObjectID())
+	With("ObjectID", 0, 4).As(interpreters.ObjectID())
 
 var changeObjectTypeGlobalChange = interpreters.New().
 	With("ObjectType", 0, 4).As(interpreters.SpecialValue("ObjectTriple")).

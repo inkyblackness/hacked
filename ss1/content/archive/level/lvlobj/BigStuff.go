@@ -17,14 +17,14 @@ var displayScenery = baseBigStuff.
 
 var displayControlPedestal = baseBigStuff.
 	With("FrameCount", 0, 2).As(interpreters.RangedValue(0, 4)).
-	With("TriggerObjectIndex", 2, 2).As(interpreters.ObjectID()).
+	With("TriggerObjectID", 2, 2).As(interpreters.ObjectID()).
 	With("AlternationType", 4, 2).As(interpreters.EnumValue(map[uint32]string{0: "Don't Alternate", 3: "Alternate Randomly"})).
 	With("PictureSource", 6, 2).As(interpreters.RangedValue(0, 0x01FF)).
 	With("AlternateSource", 8, 2).As(interpreters.RangedValue(0, 0x01FF))
 
 var cabinetFurniture = baseBigStuff.
-	With("Object1Index", 2, 2).As(interpreters.ObjectID()).
-	With("Object2Index", 4, 2).As(interpreters.ObjectID())
+	With("Object1ID", 2, 2).As(interpreters.ObjectID()).
+	With("Object2ID", 4, 2).As(interpreters.ObjectID())
 
 var texturableFurniture = baseBigStuff.
 	With("TextureIndex", 6, 2).As(interpreters.RangedValue(0, 500))
@@ -40,7 +40,7 @@ var textureMapScenery = baseBigStuff.
 	With("TextureIndex", 6, 2).As(interpreters.SpecialValue("LevelTexture"))
 
 var buttonControlPedestal = baseBigStuff.
-	With("TriggerObjectIndex", 2, 2).As(interpreters.ObjectID())
+	With("TriggerObjectID", 2, 2).As(interpreters.ObjectID())
 
 var surgicalMachine = baseBigStuff.
 	With("BrokenState", 2, 1).As(interpreters.EnumValue(map[uint32]string{0x00: "OK", 0xE7: "Broken"})).

@@ -24,9 +24,9 @@ var standardRecepticle = recepticlePanel.
 	Refining("TypeCondition", 2, 4, conditions.ObjectType(), interpreters.Always)
 
 var antennaRelayPanel = recepticlePanel.
-	With("TriggerObjectIndex1", 6, 2).As(interpreters.ObjectID()).
-	With("TriggerObjectIndex2", 10, 2).As(interpreters.ObjectID()).
-	With("DestroyObjectIndex", 14, 2).As(interpreters.ObjectID())
+	With("TriggerObjectID1", 6, 2).As(interpreters.ObjectID()).
+	With("TriggerObjectID2", 10, 2).As(interpreters.ObjectID()).
+	With("DestroyObjectID", 14, 2).As(interpreters.ObjectID())
 
 var retinalIDScanner = recepticlePanel.
 	Refining("Action", 0, 22, actions.Unconditional(), interpreters.Always)
@@ -44,7 +44,7 @@ var energyChargeStation = gameVariablePanel.
 	func(value int64) string {
 		return fmt.Sprintf("%d sec", value)
 	})).
-	With("TriggerObjectIndex", 14, 4).As(interpreters.ObjectID()).
+	With("TriggerObjectID", 14, 4).As(interpreters.ObjectID()).
 	With("RechargedTimestamp", 18, 4)
 
 var inputPanel = gameVariablePanel
@@ -64,7 +64,7 @@ var wirePuzzleStateDescription = interpreters.Bitfield(map[uint32]string{
 	0x38000000: "Wire 5 Right"})
 
 var wirePuzzleData = interpreters.New().
-	With("TargetObjectIndex", 0, 4).As(interpreters.ObjectID()).
+	With("TargetObjectID", 0, 4).As(interpreters.ObjectID()).
 	With("Layout", 4, 1).As(interpreters.Bitfield(map[uint32]string{0x0F: "Wires", 0xF0: "Connectors"})).
 	With("TargetPowerLevel", 5, 1).
 	With("WireProperties", 6, 1).As(interpreters.Bitfield(map[uint32]string{0x01: "Colored", 0xF0: "Solved"})).
@@ -72,8 +72,8 @@ var wirePuzzleData = interpreters.New().
 	With("CurrentState", 12, 4).As(wirePuzzleStateDescription)
 
 var blockPuzzleData = interpreters.New().
-	With("TargetObjectIndex", 0, 4).As(interpreters.ObjectID()).
-	With("StateStoreObjectIndex", 4, 2).As(interpreters.ObjectID()).
+	With("TargetObjectID", 0, 4).As(interpreters.ObjectID()).
+	With("StateStoreObjectID", 4, 2).As(interpreters.ObjectID()).
 	With("Layout", 8, 4).As(interpreters.Bitfield(map[uint32]string{
 	0x00000001: "PuzzleSolved",
 	0x00000070: "SourceCoordinate",
@@ -140,12 +140,12 @@ var elevatorPanel = inputPanel.
 
 var numberPad = inputPanel.
 	With("Combination1", 6, 2).As(interpreters.SpecialValue("BinaryCodedDecimal")).
-	With("TriggerObjectIndex1", 8, 2).As(interpreters.ObjectID()).
+	With("TriggerObjectID1", 8, 2).As(interpreters.ObjectID()).
 	With("Combination2", 10, 2).As(interpreters.SpecialValue("BinaryCodedDecimal")).
-	With("TriggerObjectIndex2", 12, 2).As(interpreters.ObjectID()).
+	With("TriggerObjectID2", 12, 2).As(interpreters.ObjectID()).
 	With("Combination3", 14, 2).As(interpreters.SpecialValue("BinaryCodedDecimal")).
-	With("TriggerObjectIndex3", 16, 2).As(interpreters.ObjectID()).
-	With("FailObjectIndex", 18, 2).As(interpreters.ObjectID())
+	With("TriggerObjectID3", 16, 2).As(interpreters.ObjectID()).
+	With("FailObjectID", 18, 2).As(interpreters.ObjectID())
 
 var inactiveCyberspaceSwitch = gameVariablePanel.
 	Refining("Action", 0, 22, actions.Unconditional(), interpreters.Always)

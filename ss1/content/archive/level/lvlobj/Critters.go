@@ -29,8 +29,8 @@ var baseCritter = interpreters.New().
 	With("AICoordinates001C", 0x1C, 2).As(interpreters.SpecialValue("Unknown")).
 	With("Always255", 0x1E, 1).As(interpreters.RangedValue(0, 255)).
 	With("AICoordinates001F", 0x1F, 1).As(interpreters.SpecialValue("Unknown")).
-	With("LootObjectIndex1", 0x20, 2).As(interpreters.ObjectID()).
-	With("LootObjectIndex2", 0x22, 2).As(interpreters.ObjectID()).
+	With("LootObjectID1", 0x20, 2).As(interpreters.ObjectID()).
+	With("LootObjectID2", 0x22, 2).As(interpreters.ObjectID()).
 	With("Unknown0026", 0x26, 2).As(interpreters.SpecialValue("Unknown"))
 
 func initCritters() interpreterRetriever {

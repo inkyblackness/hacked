@@ -10,17 +10,17 @@ var paperItem = baseItem.
 	With("PaperId", 2, 1)
 
 var briefcaseItem = baseItem.
-	With("ObjectIndex1", 2, 2).As(interpreters.ObjectID()).
-	With("ObjectIndex2", 4, 2).As(interpreters.ObjectID()).
-	With("ObjectIndex3", 6, 2).As(interpreters.ObjectID()).
-	With("ObjectIndex4", 8, 2).As(interpreters.ObjectID())
+	With("ObjectID1", 2, 2).As(interpreters.ObjectID()).
+	With("ObjectID2", 4, 2).As(interpreters.ObjectID()).
+	With("ObjectID3", 6, 2).As(interpreters.ObjectID()).
+	With("ObjectID4", 8, 2).As(interpreters.ObjectID())
 
 var corpseItem = baseItem.
 	With("Unknown0000", 0, 2).As(interpreters.SpecialValue("Unknown")).
-	With("ObjectIndex1", 2, 2).As(interpreters.ObjectID()).
-	With("ObjectIndex2", 4, 2).As(interpreters.ObjectID()).
-	With("ObjectIndex3", 6, 2).As(interpreters.ObjectID()).
-	With("ObjectIndex4", 8, 2).As(interpreters.ObjectID())
+	With("ObjectID1", 2, 2).As(interpreters.ObjectID()).
+	With("ObjectID2", 4, 2).As(interpreters.ObjectID()).
+	With("ObjectID3", 6, 2).As(interpreters.ObjectID()).
+	With("ObjectID4", 8, 2).As(interpreters.ObjectID())
 
 var severedHeadItem = baseItem.
 	With("ImageIndex", 2, 1)
