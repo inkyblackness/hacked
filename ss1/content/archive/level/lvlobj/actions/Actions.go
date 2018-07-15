@@ -25,7 +25,9 @@ var changeHealthDetails = interpreters.New().
 	With("HealthDelta", 4, 1).
 	With("HealthChangeFlag", 6, 2).As(interpreters.EnumValue(map[uint32]string{0: "Remove Delta", 1: "Add Delta"})).
 	With("PowerDelta", 8, 1).
-	With("PowerChangeFlag", 10, 2).As(interpreters.EnumValue(map[uint32]string{0: "Remove Delta", 1: "Add Delta"}))
+	With("PowerChangeFlag", 10, 2).As(interpreters.EnumValue(map[uint32]string{0: "Remove Delta", 1: "Add Delta"})).
+	With("FatigueDelta", 12, 2).As(interpreters.RangedValue(0, 255)).
+	With("FatigueChangeFlag", 14, 2).As(interpreters.EnumValue(map[uint32]string{0: "Add Delta", 1: "Remove Delta"}))
 
 var cloneMoveObjectDetails = interpreters.New().
 	With("ObjectID", 0, 2).As(interpreters.ObjectID()).
@@ -109,17 +111,26 @@ var effectDetails = interpreters.New().
 	0: "none",
 	1: "white flash",
 	2: "pink flash",
-	3: "gray static (endless, don't use)",
-	4: "vertical panning (endless, don't use)"}))
+	3: "gray static",
+	4: "vertical panning"})).
+	With("AdditionalEffectTime", 12, 2).As(interpreters.RangedValue(0, 1000))
 
 var changeTileHeightsDetails = interpreters.New().
 	With("TileX", 0, 4).As(interpreters.RangedValue(1, 63)).
 	With("TileY", 4, 4).As(interpreters.RangedValue(1, 63)).
 	With("TargetFloorHeight", 8, 2).As(interpreters.SpecialValue("MoveTileHeight")).
 	With("TargetCeilingHeight", 10, 2).As(interpreters.SpecialValue("MoveTileHeight")).
-	With("Ignored000C", 12, 4).As(interpreters.SpecialValue("Ignored"))
+	With("FloorSound", 14, 2).As(interpreters.EnumValue(map[uint32]string{0x0000: "Audible", 0x0001: "Silent"}))
 
-var randomTimerDetails = interpreters.New().
+var changeTerrainDetails = interpreters.New().
+	With("TileX", 0, 4).As(interpreters.RangedValue(1, 63)).
+	With("TileY", 4, 4).As(interpreters.RangedValue(1, 63)).
+	With("Type", 8, 1).As(interpreters.SpecialValue("TileType")).
+	With("TypeControl", 9, 1).As(interpreters.EnumValue(map[uint32]string{0x00: "Set type", 0x40: "Keep type"})).
+	With("SlopeHeight", 12, 1).As(interpreters.SpecialValue("TileHeight")).
+	With("SlopeControl", 13, 1).As(interpreters.EnumValue(map[uint32]string{0x00: "Set height", 0x40: "Keep height"}))
+
+var scheduledTrapDetails = interpreters.New().
 	With("ObjectID", 0, 4).As(interpreters.ObjectID()).
 	With("TimeInterval", 4, 4).As(interpreters.FormattedRangedValue(0, 6000,
 	func(value int64) string {
@@ -145,7 +156,7 @@ var receiveEmailDetails = interpreters.New().
 	With("EmailIndex", 0, 2).As(interpreters.RangedValue(0, 1000)).
 	With("DelaySec", 4, 2).As(interpreters.RangedValue(0, 600))
 
-var changeEffectDetails = interpreters.New().
+var exposeDetails = interpreters.New().
 	With("DeltaValue", 0, 2).As(interpreters.RangedValue(0, 1000)).
 	With("EffectChangeFlag", 2, 2).As(interpreters.EnumValue(map[uint32]string{0: "Add Delta", 1: "Remove Delta"})).
 	With("EffectType", 4, 4).As(interpreters.EnumValue(map[uint32]string{4: "Radiation poisoning", 8: "Bio contamination"}))
@@ -186,7 +197,11 @@ var spawnObjectsDetails = interpreters.New().
 	With("ReferenceObject1ID", 4, 2).As(interpreters.ObjectID()).
 	With("ReferenceObject2ID", 6, 2).As(interpreters.ObjectID()).
 	With("NumberOfObjects", 8, 4).As(interpreters.RangedValue(0, 100)).
-	With("Unknown000C", 12, 1).As(interpreters.SpecialValue("Unknown"))
+	With("Flags", 12, 1).As(interpreters.Bitfield(map[uint32]string{
+	0x00000001: "Avoid spawn within 7 tiles",
+	0x00000002: "Avoid spawn in close view",
+	0x00000004: "Avoid spawn in elevator music",
+	0x00000008: "Force spawn in occupied/close tiles"}))
 
 var changeObjectTypeDetails = interpreters.New().
 	With("ObjectID", 0, 4).As(interpreters.ObjectID()).
@@ -210,13 +225,13 @@ var setParameterFromVariableChange = interpreters.New().
 	With("ParameterNumber", 4, 4).As(interpreters.RangedValue(0, 16)).
 	With("VariableIndex", 8, 4).As(interpreters.SpecialValue("VariableKey"))
 
-var setButtonStateChange = interpreters.New().
+var setFrameStateChange = interpreters.New().
 	With("ObjectID", 0, 4).As(interpreters.ObjectID()).
 	With("NewState", 4, 4).As(interpreters.EnumValue(map[uint32]string{0: "Off", 1: "On"}))
 
 var doorControlChange = interpreters.New().
 	With("ObjectID", 0, 4).As(interpreters.ObjectID()).
-	With("ControlValue", 4, 4).As(interpreters.EnumValue(map[uint32]string{1: "open door", 2: "close door", 3: "toggle door", 4: "suppress auto-close"}))
+	With("ControlValue", 4, 4).As(interpreters.EnumValue(map[uint32]string{1: "open door", 2: "close door", 3: "toggle door", 4: "disable auto-close"}))
 
 var rotateObjectChange = interpreters.New().
 	With("ObjectID", 0, 4).As(interpreters.ObjectID()).
@@ -229,7 +244,7 @@ var rotateObjectChange = interpreters.New().
 
 var removeObjectsChange = interpreters.New().
 	With("ObjectType", 0, 4).As(interpreters.SpecialValue("ObjectTriple")).
-	With("Amount", 4, 1).As(interpreters.RangedValue(0, 255))
+	With("Radius", 4, 1).As(interpreters.RangedValue(0, 255))
 
 var setConditionChange = interpreters.New().
 	With("ObjectID", 0, 4).As(interpreters.ObjectID()).
@@ -251,7 +266,7 @@ var changeObjectTypeGlobalChange = interpreters.New().
 	With("ObjectType", 0, 4).As(interpreters.SpecialValue("ObjectTriple")).
 	With("NewType", 4, 1).As(interpreters.RangedValue(0, 16))
 
-var changeStateDetails = interpreters.New().
+var hackDetails = interpreters.New().
 	With("Type", 0, 4).As(interpreters.EnumValue(map[uint32]string{
 	1:  "Toggle Repulsor",
 	2:  "Show Game Code Digit",
@@ -272,7 +287,7 @@ var changeStateDetails = interpreters.New().
 	Refining("ToggleRepulsor", 4, 12, toggleRepulsorChange, forType(1)).
 	Refining("ShowGameCodeDigit", 4, 12, showGameCodeDigitChange, forType(2)).
 	Refining("SetParameterFromVariable", 4, 12, setParameterFromVariableChange, forType(3)).
-	Refining("SetButtonState", 4, 12, setButtonStateChange, forType(4)).
+	Refining("SetFrameState", 4, 12, setFrameStateChange, forType(4)).
 	Refining("DoorControl", 4, 12, doorControlChange, forType(5)).
 	Refining("ReturnToMenu", 4, 12, interpreters.New(), forType(6)).
 	Refining("RotateObject", 4, 12, rotateObjectChange, forType(7)).
@@ -298,7 +313,7 @@ var unconditionalAction = interpreters.New().
 	7:  "Change Lighting",
 	8:  "Effect",
 	9:  "Change Tile Heights",
-	10: "Unknown (10)",
+	10: "Change Terrain",
 	11: "Random Timer",
 	12: "Cycle Objects",
 	13: "Delete Objects",
@@ -323,16 +338,16 @@ var unconditionalAction = interpreters.New().
 	Refining("ChangeLighting", 6, 16, changeLightingDetails, forType(7)).
 	Refining("Effect", 6, 16, effectDetails, forType(8)).
 	Refining("ChangeTileHeights", 6, 16, changeTileHeightsDetails, forType(9)).
-	// 10 unknown
-	Refining("RandomTimer", 6, 16, randomTimerDetails, forType(11)).
+	Refining("ChangeTerrain", 6, 16, changeTerrainDetails, forType(10)).
+	Refining("ScheduledTrap", 6, 16, scheduledTrapDetails, forType(11)).
 	Refining("CycleObjects", 6, 16, cycleObjectsDetails, forType(12)).
 	Refining("DeleteObjects", 6, 16, deleteObjectsDetails, forType(13)).
-	// 14 unknown
+	// 14 unused
 	Refining("ReceiveEmail", 6, 16, receiveEmailDetails, forType(15)).
-	Refining("ChangeEffect", 6, 16, changeEffectDetails, forType(16)).
+	Refining("Expose", 6, 16, exposeDetails, forType(16)).
 	Refining("SetObjectParameter", 6, 16, setObjectParameterDetails, forType(17)).
 	Refining("SetScreenPicture", 6, 16, setScreenPictureDetails, forType(18)).
-	Refining("ChangeState", 6, 16, changeStateDetails, forType(19)).
+	Refining("Hack", 6, 16, hackDetails, forType(19)).
 	// 20 unknown
 	Refining("SetCritterState", 6, 16, setCritterStateDetails, forType(21)).
 	Refining("TrapMessage", 6, 16, trapMessageDetails, forType(22)).

@@ -333,6 +333,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 	key := keys[len(keys)-1]
 	label := key + "###" + fullKey
 	_, _, levelHeight := lvl.Size()
+	tileHeightFormatter := tileHeightFormatterFor(levelHeight)
 	objectHeightFormatter := objectHeightFormatterFor(levelHeight)
 	moveTileHeightFormatter := moveTileHeightFormatterFor(levelHeight)
 
@@ -624,6 +625,15 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 		}
 	})
 
+	simplifier.SetSpecialHandler("TileHeight", func() {
+		values.RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
+			func(u values.Unifier) int { return int(u.Unified().(int32)) },
+			tileHeightFormatter,
+			0, int(level.TileHeightUnitMax-1),
+			func(newValue int) {
+				updater(func(oldValue uint32) uint32 { return uint32(newValue) })
+			})
+	})
 	simplifier.SetSpecialHandler("ObjectHeight", func() {
 		values.RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
 			func(u values.Unifier) int { return int(u.Unified().(int32)) },
@@ -638,6 +648,16 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 			func(u values.Unifier) int { return int(u.Unified().(int32)) },
 			moveTileHeightFormatter,
 			0, 0x0FFF,
+			func(newValue int) {
+				updater(func(oldValue uint32) uint32 { return uint32(newValue) })
+			})
+	})
+
+	simplifier.SetSpecialHandler("TileType", func() {
+		values.RenderUnifiedCombo(readOnly, multiple, label, unifier,
+			func(u values.Unifier) int { return int(u.Unified().(int32)) },
+			func(index int) string { return level.TileType(index).String() },
+			len(level.TileTypes()),
 			func(newValue int) {
 				updater(func(oldValue uint32) uint32 { return uint32(newValue) })
 			})

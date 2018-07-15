@@ -70,6 +70,8 @@ func ObjectID() FieldRange {
 // * ObjectTriple - for 0x00CCSSTT selection
 // * ObjectHeight - for level height value 0..255
 // * MoveTileHeight - for change tile height action
+// * TileHeight - tile heights
+// * TileType - tile types
 // * Unknown - It is unclear whether this field would have any effect, none identified so far
 // * Ignored - Although values have been found in this field, they don't appear to have any effect
 // * Mistake - It is assumed that these values should have been placed somewhere else. Typical example: Container content
