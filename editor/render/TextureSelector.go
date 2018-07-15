@@ -4,20 +4,18 @@ import (
 	"fmt"
 
 	"github.com/inkyblackness/hacked/ss1/resource"
-	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/imgui-go"
 )
 
 // TextureSelector renders a horizontal list of game textures, with selection capability.
 func TextureSelector(label string, width float32, guiScale float32,
-	count int, selectedIndex int, indexResolver func(int) int,
+	count int, selectedIndex int, keyResolver func(int) resource.Key,
 	tooltipText func(int) string,
 	changeCallback func(int)) {
 	if imgui.BeginChildV(label, imgui.Vec2{X: width * guiScale, Y: 110 * guiScale}, true,
 		imgui.WindowFlagsHorizontalScrollbar|imgui.WindowFlagsNoScrollWithMouse) {
 		for i := 0; i < count; i++ {
-			textureIndex := indexResolver(i)
-			key := resource.KeyOf(ids.LargeTextures.Plus(textureIndex), resource.LangAny, 0)
+			key := keyResolver(i)
 			textureID := TextureIDForBitmapTexture(key)
 			if imgui.BeginChildV(fmt.Sprintf("%3d", i), imgui.Vec2{X: 80 * guiScale, Y: 80 * guiScale}, false, 0) {
 				imgui.BeginGroup()

@@ -132,10 +132,10 @@ func (view *ControlView) renderLevelHeight(lvl *level.Level, readOnly bool) {
 
 func (view *ControlView) textureName(index int) string {
 	key := resource.KeyOf(ids.TextureNames, resource.LangDefault, index)
-	text, err := view.textCache.Text(key)
+	name, err := view.textCache.Text(key)
 	suffix := ""
 	if err == nil {
-		suffix = ": " + text
+		suffix = ": " + name
 	}
 	return fmt.Sprintf("%3d", index) + suffix
 }
@@ -147,7 +147,9 @@ func (view *ControlView) renderTextureAtlas(lvl *level.Level, readOnly bool) {
 	{
 		render.TextureSelector("Level Textures", -200, view.guiScale,
 			len(atlas), view.model.selectedAtlasIndex,
-			func(index int) int { return int(atlas[index]) },
+			func(index int) resource.Key {
+				return resource.KeyOf(ids.LargeTextures.Plus(int(atlas[index])), resource.LangAny, 0)
+			},
 			func(index int) string {
 				textureType := "(F/C/W)"
 				if index >= level.FloorCeilingTextureLimit {
@@ -167,7 +169,9 @@ func (view *ControlView) renderTextureAtlas(lvl *level.Level, readOnly bool) {
 	if !readOnly {
 		render.TextureSelector("Game Textures", -200, view.guiScale,
 			world.MaxWorldTextures, gameTextureIndex,
-			func(index int) int { return index },
+			func(index int) resource.Key {
+				return resource.KeyOf(ids.LargeTextures.Plus(index), resource.LangAny, 0)
+			},
 			func(index int) string {
 				return view.textureName(index)
 			}, func(newIndex int) {

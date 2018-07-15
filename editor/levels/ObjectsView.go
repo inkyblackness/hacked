@@ -552,7 +552,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 			selectedIndex = int(unifier.Unified().(int32))
 		}
 
-		values.RenderUnifiedSliderInt(readOnly, multiple, key+" (atlas index)###"+fullKey, unifier,
+		values.RenderUnifiedSliderInt(readOnly, multiple, key+" (atlas index)###"+fullKey+"-atlas", unifier,
 			func(u values.Unifier) int { return int(u.Unified().(int32)) },
 			func(value int) string { return "%d" },
 			0, len(atlas)-1,
@@ -560,13 +560,65 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 				updater(func(oldValue uint32) uint32 { return uint32(newValue) })
 			})
 		render.TextureSelector(label, -1, view.guiScale, len(atlas), selectedIndex,
-			func(index int) int { return int(atlas[index]) },
+			func(index int) resource.Key {
+				return resource.KeyOf(ids.LargeTextures.Plus(int(atlas[index])), resource.LangAny, 0)
+			},
 			func(index int) string { return view.textureName(int(atlas[index])) },
 			func(index int) {
 				if !readOnly {
 					updater(func(oldValue uint32) uint32 { return uint32(index) })
 				}
 			})
+	})
+	simplifier.SetSpecialHandler("MaterialOrLevelTexture", func() {
+		types := []string{"Material", "Level Texture"}
+		selectedType := -1
+		selectedIndex := -1
+		if unifier.IsUnique() {
+			value := int(unifier.Unified().(int32))
+			selectedType = int(value>>7) & 1
+			selectedIndex = value & 0x7F
+		}
+
+		values.RenderUnifiedCombo(readOnly, multiple, key+"###"+fullKey+"-Type", unifier,
+			func(u values.Unifier) int { return selectedType },
+			func(index int) string { return types[index] },
+			len(types),
+			func(newIndex int) {
+				updater(func(oldValue uint32) uint32 {
+					newValue := uint32(0)
+					if newIndex > 0 {
+						newValue = 0x80
+					}
+					return newValue
+				})
+			})
+		selectorLabel := key + "-Texture###" + fullKey + "-Texture"
+		if selectedType == 0 {
+			resInfo, _ := ids.Info(ids.ObjectMaterialBitmaps)
+			render.TextureSelector(selectorLabel, -1, view.guiScale, resInfo.MaxCount, selectedIndex,
+				func(index int) resource.Key {
+					return resource.KeyOf(ids.ObjectMaterialBitmaps.Plus(index), resource.LangAny, 0)
+				},
+				func(index int) string { return fmt.Sprintf("%3d", index) },
+				func(index int) {
+					if !readOnly {
+						updater(func(oldValue uint32) uint32 { return uint32(index) })
+					}
+				})
+		} else {
+			atlas := lvl.TextureAtlas()
+			render.TextureSelector(selectorLabel, -1, view.guiScale, len(atlas), selectedIndex,
+				func(index int) resource.Key {
+					return resource.KeyOf(ids.LargeTextures.Plus(int(atlas[index])), resource.LangAny, 0)
+				},
+				func(index int) string { return view.textureName(int(atlas[index])) },
+				func(index int) {
+					if !readOnly {
+						updater(func(oldValue uint32) uint32 { return uint32(0x80 | index) })
+					}
+				})
+		}
 	})
 
 	simplifier.SetSpecialHandler("ObjectHeight", func() {

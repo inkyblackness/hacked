@@ -378,7 +378,9 @@ func (view *TilesView) renderTextureSelector(readOnly, multiple bool, label stri
 	}
 
 	render.TextureSelector(label, -1, view.guiScale, maxIndex-minIndex+1, selectedIndex-minIndex,
-		func(index int) int { return int(atlas[minIndex+index]) },
+		func(index int) resource.Key {
+			return resource.KeyOf(ids.LargeTextures.Plus(int(atlas[minIndex+index])), resource.LangAny, 0)
+		},
 		func(index int) string { return "" },
 		func(index int) {
 			if !readOnly {
