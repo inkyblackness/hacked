@@ -19,8 +19,8 @@ type ObjectClassEntry struct {
 }
 
 // NewObjectClassEntry returns an instance with the given amount of bytes initialized for data.
-func NewObjectClassEntry(dataSize int) ObjectClassEntry {
-	return ObjectClassEntry{
+func NewObjectClassEntry(dataSize int) *ObjectClassEntry {
+	return &ObjectClassEntry{
 		Data: make([]byte, dataSize),
 	}
 }

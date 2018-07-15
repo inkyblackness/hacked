@@ -22,13 +22,13 @@ func TestObjectClassEntryCanBeSerializedWithCoder(t *testing.T) {
 	entry := level.NewObjectClassEntry(10)
 	buf := bytes.NewBuffer(nil)
 	encoder := serial.NewEncoder(buf)
-	encoder.Code(&entry)
+	encoder.Code(entry)
 	data := buf.Bytes()
 	assert.Equal(t, 10+6, len(data))
 }
 
 func TestObjectClassTableCanBeSerializedWithCoder(t *testing.T) {
-	table := level.ObjectClassTable([]level.ObjectClassEntry{level.NewObjectClassEntry(5), level.NewObjectClassEntry(5)})
+	table := level.ObjectClassTable([]level.ObjectClassEntry{*level.NewObjectClassEntry(5), *level.NewObjectClassEntry(5)})
 	buf := bytes.NewBuffer(nil)
 	encoder := serial.NewEncoder(buf)
 	encoder.Code(table)
@@ -133,6 +133,6 @@ func aRandomObjectClassEntry() level.ObjectClassEntry {
 	var dataSize byte
 	decoder.Code(&dataSize)
 	entry := level.NewObjectClassEntry(int(dataSize) + 1)
-	decoder.Code(&entry)
-	return entry
+	decoder.Code(entry)
+	return *entry
 }
