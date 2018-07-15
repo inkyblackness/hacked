@@ -64,6 +64,8 @@ func (view *ObjectsView) Render(lvl *level.Level) {
 		view.model.windowOpen = true
 	}
 	if view.model.windowOpen {
+		view.model.selectedObjects.filterInvalid(lvl)
+
 		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 500 * view.guiScale}, imgui.ConditionOnce)
 		title := fmt.Sprintf("Level Objects, %d selected", len(view.model.selectedObjects.list))
 		readOnly := !view.editingAllowed(lvl.ID())

@@ -18,6 +18,26 @@ func (coords objectIDs) contains(pos level.ObjectID) bool {
 	return false
 }
 
+func (coords *objectIDs) filterInvalid(lvl *level.Level) {
+	hasInvalid := false
+	for _, id := range coords.list {
+		obj := lvl.Object(id)
+		if (obj == nil) || (obj.InUse == 0) {
+			hasInvalid = true
+		}
+	}
+	if hasInvalid {
+		var newList []level.ObjectID
+		for _, id := range coords.list {
+			obj := lvl.Object(id)
+			if (obj != nil) && (obj.InUse != 0) {
+				newList = append(newList, id)
+			}
+		}
+		coords.list = newList
+	}
+}
+
 func (coords *objectIDs) registerAt(registry event.Registry) {
 	registry.RegisterHandler(coords.onObjectSelectionSetEvent)
 	registry.RegisterHandler(coords.onObjectSelectionAddEvent)

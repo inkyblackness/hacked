@@ -127,6 +127,8 @@ func (display *MapDisplay) Render(properties object.PropertiesTable, lvl *level.
 	textureDisplay TextureDisplay, colorDisplay ColorDisplay) {
 	columns, rows, _ := lvl.Size()
 
+	display.selectedObjects.filterInvalid(lvl)
+
 	display.activeLevel = lvl
 	display.background.Render()
 	if lvl.IsCyberspace() {
