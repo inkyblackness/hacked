@@ -193,12 +193,17 @@ func (view *View) setTextFromClipboard() {
 		return
 	}
 
+	blockedValue := text.Blocked(value)
 	oldData, isList := view.currentModification()
-	newData := view.cp.Encode(value)
 	if isList {
+		newData := view.cp.Encode(blockedValue[0])
 		view.requestSetTextLine(oldData[0], newData)
 	} else {
-		view.requestSetTextPage(oldData, [][]byte{newData})
+		newData := make([][]byte, len(blockedValue))
+		for index, blockLine := range blockedValue {
+			newData[index] = view.cp.Encode(blockLine)
+		}
+		view.requestSetTextPage(oldData, newData)
 	}
 }
 
