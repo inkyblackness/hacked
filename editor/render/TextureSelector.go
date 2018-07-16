@@ -12,18 +12,26 @@ func TextureSelector(label string, width float32, guiScale float32,
 	count int, selectedIndex int, keyResolver func(int) resource.Key,
 	tooltipText func(int) string,
 	changeCallback func(int)) {
-	if imgui.BeginChildV(label, imgui.Vec2{X: width * guiScale, Y: 110 * guiScale}, true,
+	if imgui.BeginChildV(label, imgui.Vec2{X: width * guiScale, Y: 100 * guiScale}, true,
 		imgui.WindowFlagsHorizontalScrollbar|imgui.WindowFlagsNoScrollWithMouse) {
 		for i := 0; i < count; i++ {
 			key := keyResolver(i)
 			textureID := TextureIDForBitmapTexture(key)
-			if imgui.BeginChildV(fmt.Sprintf("%3d", i), imgui.Vec2{X: 80 * guiScale, Y: 80 * guiScale}, false, 0) {
+			imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 0, Y: 0})
+			if imgui.BeginChildV(fmt.Sprintf("%3d", i), imgui.Vec2{X: 80 * guiScale, Y: 64 * guiScale}, false,
+				imgui.WindowFlagsNoNav|imgui.WindowFlagsNoScrollWithMouse) {
 				imgui.BeginGroup()
-				if imgui.SelectableV("", selectedIndex == i, 0, imgui.Vec2{X: 0, Y: 70 * guiScale}) {
+				if imgui.SelectableV("", selectedIndex == i, 0, imgui.Vec2{X: 0, Y: 64 * guiScale}) {
 					changeCallback(i)
 				}
 				imgui.SameLine()
-				imgui.Image(textureID, imgui.Vec2{X: 64 * guiScale, Y: 64 * guiScale})
+				imgui.PushStyleColor(imgui.StyleColorChildBg, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 1})
+				if imgui.BeginChildV(fmt.Sprintf("%3d", i), imgui.Vec2{X: 64 * guiScale, Y: 64 * guiScale}, false,
+					imgui.WindowFlagsNoNav|imgui.WindowFlagsNoInputs|imgui.WindowFlagsNoScrollWithMouse) {
+					imgui.Image(textureID, imgui.Vec2{X: 64 * guiScale, Y: 64 * guiScale})
+				}
+				imgui.EndChild()
+				imgui.PopStyleColor()
 				imgui.EndGroup()
 				if imgui.IsItemHovered() {
 					text := tooltipText(i)
@@ -33,6 +41,7 @@ func TextureSelector(label string, width float32, guiScale float32,
 				}
 			}
 			imgui.EndChild()
+			imgui.PopStyleVar()
 			imgui.SameLine()
 		}
 	}
