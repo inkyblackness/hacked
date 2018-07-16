@@ -364,7 +364,12 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 				}
 				return -1
 			},
-			func(index int) string { return enumValues[valueKeys[index]] },
+			func(index int) string {
+				if index < 0 {
+					return ""
+				}
+				return enumValues[valueKeys[index]]
+			},
 			len(valueKeys),
 			func(newIndex int) {
 				updater(func(oldValue uint32) uint32 { return valueKeys[newIndex] })
