@@ -1,0 +1,58 @@
+package text
+
+import (
+	"errors"
+	"github.com/inkyblackness/hacked/ss1/resource"
+)
+
+// ElectronicMessageCache retrieves messages from a localizer and keeps them decoded until they are invalidated.
+type ElectronicMessageCache struct {
+	cp        Codepage
+	localizer resource.Localizer
+	reader    textReader
+
+	messages map[resource.Key]ElectronicMessage
+}
+
+func NewElectronicMessageCache(cp Codepage, localizer resource.Localizer) *ElectronicMessageCache {
+	cache := &ElectronicMessageCache{
+		cp:        cp,
+		localizer: localizer,
+
+		messages: make(map[resource.Key]ElectronicMessage),
+	}
+	return cache
+}
+
+// InvalidateResources lets the cache remove any texts from resources that are specified in the given slice.
+func (cache *ElectronicMessageCache) InvalidateResources(ids []resource.ID) {
+	for _, id := range ids {
+		for key := range cache.messages {
+			if key.ID == id {
+				delete(cache.messages, key)
+			}
+		}
+	}
+}
+
+// Message retrieves and caches the message of given key.
+func (cache *ElectronicMessageCache) Message(key resource.Key) (ElectronicMessage, error) {
+	value, existing := cache.messages[key]
+	if existing {
+		return value, nil
+	}
+	selector := cache.localizer.LocalizedResources(key.Lang)
+	view, err := selector.Select(key.ID.Plus(key.Index))
+	if err != nil {
+		return EmptyElectronicMessage(), errors.New("no message found")
+	}
+	if (view.ContentType() != resource.Text) || !view.Compound() {
+		return EmptyElectronicMessage(), errors.New("invalid resource type")
+	}
+	value, err = DecodeElectronicMessage(cache.cp, view)
+	if err != nil {
+		return EmptyElectronicMessage(), err
+	}
+	cache.messages[key] = value
+	return value, nil
+}
