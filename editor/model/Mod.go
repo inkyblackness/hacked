@@ -26,6 +26,7 @@ type Mod struct {
 	resetCallback    ModResetCallback
 
 	modPath            string
+	changedFiles       map[string]struct{}
 	localizedResources LocalizedResources
 	objectProperties   object.PropertiesTable
 }
@@ -36,6 +37,7 @@ func NewMod(resourcesChanged resource.ModificationCallback, resetCallback ModRes
 		resourcesChanged:   resourcesChanged,
 		resetCallback:      resetCallback,
 		localizedResources: NewLocalizedResources(),
+		changedFiles:       make(map[string]struct{}),
 	}
 	mod.worldManifest = world.NewManifest(mod.worldChanged)
 
@@ -61,6 +63,20 @@ func (mod *Mod) SetPath(p string) {
 // ModifiedResources returns the current modification state.
 func (mod Mod) ModifiedResources() LocalizedResources {
 	return mod.localizedResources
+}
+
+// ModifiedFilenames returns the list of all filenames suspected of change.
+func (mod Mod) ModifiedFilenames() []string {
+	var result []string
+	for filename := range mod.changedFiles {
+		result = append(result, filename)
+	}
+	return result
+}
+
+// MarkSave clears the list of modified filenames.
+func (mod *Mod) MarkSave() {
+	mod.changedFiles = make(map[string]struct{})
 }
 
 // ModifiedResource retrieves the resource of given language and ID.
@@ -237,14 +253,19 @@ func (mod *Mod) newResource(lang resource.Language, id resource.ID) *MutableReso
 }
 
 func (mod *Mod) delResource(lang resource.Language, id resource.ID) {
-	for _, worldLang := range resource.Languages() {
-		if lang.Includes(worldLang) {
-			delete(mod.localizedResources[worldLang], id)
+	deleteEntry := func(specificLang resource.Language, id resource.ID) {
+		if lang.Includes(specificLang) {
+			res, existing := mod.localizedResources[specificLang][id]
+			if existing {
+				mod.markFileChanged(res.filename)
+				delete(mod.localizedResources[specificLang], id)
+			}
 		}
 	}
-	if lang.Includes(resource.LangAny) {
-		delete(mod.localizedResources[resource.LangAny], id)
+	for _, worldLang := range resource.Languages() {
+		deleteEntry(worldLang, id)
 	}
+	deleteEntry(resource.LangAny, id)
 }
 
 // Reset changes the mod to a new set of resources.
@@ -262,6 +283,11 @@ func (mod *Mod) Reset(newResources LocalizedResources, objectProperties object.P
 
 	mod.localizedResources = newResources
 	mod.objectProperties = objectProperties
+	mod.changedFiles = make(map[string]struct{})
 	mod.resetCallback()
 	mod.resourcesChanged(modifiedIDs.ToList(), nil)
+}
+
+func (mod *Mod) markFileChanged(filename string) {
+	mod.changedFiles[filename] = struct{}{}
 }
