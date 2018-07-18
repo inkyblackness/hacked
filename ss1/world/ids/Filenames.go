@@ -30,8 +30,26 @@ var Archive = resource.AnyLanguage("archive.dat")
 // GamePal contains the game palettes.
 var GamePal = resource.AnyLanguage("gamepal.res")
 
+// GameScr contains big bitmaps.
+var GameScr = resource.AnyLanguage("gamescr.res")
+
 // Texture contains all textures.
 var Texture = resource.AnyLanguage("texture.res")
+
+// VidMail contains all video mails.
+var VidMail = resource.AnyLanguage("vidmail.res")
+
+// Death contains another death video.
+var Death = resource.AnyLanguage("death.res")
+
+// Intro contains another intro video.
+var Intro = resource.AnyLanguage("intro.res")
+
+// Start1 contains ... ?.
+var Start1 = resource.AnyLanguage("start1.res")
+
+// Win1 contains ... ?.
+var Win1 = resource.AnyLanguage("win1.res")
 
 // LowDeth contains the low-res death video.
 var LowDeth = resource.AnyLanguage("lowdeth.res")
@@ -45,6 +63,9 @@ var SvgaDeth = resource.AnyLanguage("svgadeth.res")
 // SvgaEnd contains the high-res end video.
 var SvgaEnd = resource.AnyLanguage("svgaend.res")
 
+// Obj3D contains 3D objects.
+var Obj3D = resource.AnyLanguage("obj3D.res")
+
 // ObjArt contains object art.
 var ObjArt = resource.AnyLanguage("objart.res")
 
@@ -57,9 +78,27 @@ var ObjArt3 = resource.AnyLanguage("objart3.res")
 // CitMat contains materials for 3D objects.
 var CitMat = resource.AnyLanguage("citmat.res")
 
+// CutsPal contains palettes for the cutscenes.
+var CutsPal = resource.AnyLanguage("cutspal.res")
+
+// HandArt contains bitmaps for grabbed things.
+var HandArt = resource.AnyLanguage("handart.res")
+
+// SideArt contains bitmaps for the side buttons.
+var SideArt = resource.AnyLanguage("sideart.res")
+
+// DigiFX contains all the effect sounds.
+var DigiFX = resource.AnyLanguage("digifx.res")
+
+// Splash contains the splash screens.
+var Splash = resource.AnyLanguage("splash.res")
+
+// SplshPal contains the splash screen palettes.
+var SplshPal = resource.AnyLanguage("splspal.res")
+
 // LowResVideos returns the filename descriptors of all low-res videos.
 func LowResVideos() resource.FilenameList {
-	return []resource.Filename{LowIntr, LowDeth, LowEnd}
+	return []resource.Filename{LowIntr, LowDeth, LowEnd, Intro, Start1, Win1}
 }
 
 // HighResVideos returns the filename descriptors of all high-res videos.
