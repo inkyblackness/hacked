@@ -37,8 +37,8 @@ func (command setArchiveDataCommand) perform(trans cmd.Transaction, data map[res
 		} else {
 			trans.DelResource(resource.LangAny, id)
 		}
-		command.model.restoreFocus = true
 	}
+	command.model.restoreFocus = true
 	command.model.selectedLevel = command.selectedLevel
 	return nil
 }
