@@ -50,23 +50,20 @@ func (state *addManifestEntryWaitingState) HandleFiles(names []string) {
 	}
 
 	for _, name := range names {
-		staging.stage(name, true)
+		staging.stage(name, len(names) == 1)
 	}
 	if len(staging.resources) > 0 {
 		entry := &world.ManifestEntry{
 			ID: names[0],
 		}
-		blacklisted := ids.LowResVideos()
 
 		for filename, provider := range staging.resources {
-			if !blacklisted.Matches(filename) {
-				localized := resource.LocalizedResources{
-					ID:       filename,
-					Language: ids.LocalizeFilename(filename),
-					Provider: provider,
-				}
-				entry.Resources = append(entry.Resources, localized)
+			localized := resource.LocalizedResources{
+				ID:       filename,
+				Language: ids.LocalizeFilename(filename),
+				Provider: provider,
 			}
+			entry.Resources = append(entry.Resources, localized)
 		}
 		if len(staging.objectProperties) > 0 {
 			entry.ObjectProperties = staging.objectProperties

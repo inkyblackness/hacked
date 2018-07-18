@@ -5,13 +5,13 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/resource/lgres"
 	"github.com/inkyblackness/hacked/ss1/serial"
 	"github.com/inkyblackness/hacked/ss1/world"
-	"strings"
 )
 
 type fileStaging struct {
@@ -22,7 +22,7 @@ type fileStaging struct {
 	objectProperties object.PropertiesTable
 }
 
-func (staging *fileStaging) stage(name string, enterDir bool) {
+func (staging *fileStaging) stage(name string, isOnlyStagedFile bool) {
 	fileInfo, err := os.Stat(name)
 	if err != nil {
 		staging.failedFiles++
@@ -35,7 +35,7 @@ func (staging *fileStaging) stage(name string, enterDir bool) {
 	defer file.Close() // nolint: errcheck
 
 	if fileInfo.IsDir() {
-		if enterDir {
+		if isOnlyStagedFile {
 			subNames, _ := file.Readdirnames(0)
 			for _, subName := range subNames {
 				staging.stage(filepath.Join(name, subName), false)
@@ -49,14 +49,14 @@ func (staging *fileStaging) stage(name string, enterDir bool) {
 
 		reader, err := lgres.ReaderFrom(bytes.NewReader(fileData))
 		filename := filepath.Base(name)
-		if err == nil {
+		if (err == nil) && (isOnlyStagedFile || fileWhitelist.Matches(filename)) {
 			if world.IsSavegame(reader) {
 				staging.savegames[filename] = reader
 			} else {
 				staging.resources[filename] = reader
 			}
 		}
-		if err != nil && strings.ToLower(filename) == "objprop.dat" {
+		if strings.ToLower(filename) == "objprop.dat" {
 			decoder := serial.NewDecoder(bytes.NewReader(fileData))
 			properties := object.StandardPropertiesTable()
 			properties.Code(decoder)
