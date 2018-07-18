@@ -14,7 +14,9 @@ var shortcuts = []shortcut{
 	{"v", ModControl, KeyPaste},
 	{"z", ModControl, KeyUndo},
 	{"z", ModControl.With(ModShift), KeyRedo},
-	{"y", ModControl, KeyRedo}}
+	{"y", ModControl, KeyRedo},
+	{"s", ModControl, KeySave},
+}
 
 // ResolveShortcut tries to map the given name and modifier combination to a
 // known (common) shortcut key. For instance, Ctrl+C is KeyCopy.

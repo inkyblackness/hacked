@@ -66,6 +66,8 @@ const (
 
 	KeyUndo = Key(390)
 	KeyRedo = Key(391)
+
+	KeySave = Key(400)
 )
 
 var keyToModifier = map[Key]Modifier{
