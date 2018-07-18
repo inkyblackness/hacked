@@ -216,6 +216,8 @@ func (app *Application) onKey(key input.Key, modifier input.Modifier) {
 		app.tryUndo()
 	} else if key == input.KeyRedo {
 		app.tryRedo()
+	} else if key == input.KeySave {
+		app.projectView.StartSavingMod()
 	} else if key == input.KeyF1 {
 		*app.projectView.WindowOpen() = !*app.projectView.WindowOpen()
 	} else if key == input.KeyF2 {

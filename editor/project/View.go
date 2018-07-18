@@ -79,7 +79,7 @@ func (view *View) renderContent() {
 	imgui.BeginGroup()
 	imgui.SameLine()
 	if imgui.ButtonV("Save", imgui.Vec2{X: 100 * view.guiScale, Y: 0}) {
-		view.startSavingMod()
+		view.StartSavingMod()
 	}
 	imgui.SameLine()
 	if imgui.ButtonV("Load...", imgui.Vec2{X: 100 * view.guiScale, Y: 0}) {
@@ -126,7 +126,9 @@ func (view *View) startLoadingMod() {
 	}
 }
 
-func (view *View) startSavingMod() {
+// StartSavingMod initiates to save the mod.
+// It either opens the save-as dialog, or simply saves under the current folder.
+func (view *View) StartSavingMod() {
 	modPath := view.mod.Path()
 	if len(modPath) > 0 {
 		view.requestSaveMod(modPath)
@@ -207,7 +209,7 @@ func (view *View) requestLoadMod(modPath string, resources model.LocalizedResour
 }
 
 func (view *View) requestSaveMod(modPath string) {
-	err := saveModResourcesTo(view.mod.ModifiedResources(), modPath)
+	err := saveModResourcesTo(view.mod.ModifiedResources(), modPath, view.mod.ModifiedFilenames())
 	if err != nil {
 		view.fileState = &saveModFailedState{
 			view: view,

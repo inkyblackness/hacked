@@ -8,7 +8,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/resource/lgres"
 )
 
-func saveModResourcesTo(localized model.LocalizedResources, modPath string) error {
+func saveModResourcesTo(localized model.LocalizedResources, modPath string, filenamesToSave []string) error {
 	resByFile := make(map[string]model.IdentifiedResources)
 	for _, identifiedIn := range localized {
 		for id, res := range identifiedIn {
@@ -21,10 +21,21 @@ func saveModResourcesTo(localized model.LocalizedResources, modPath string) erro
 		}
 	}
 
+	shallBeSaved := func(filename string) bool {
+		for _, toSave := range filenamesToSave {
+			if toSave == filename {
+				return true
+			}
+		}
+		return false
+	}
+
 	for filename, list := range resByFile {
-		err := saveResourcesTo(list, filepath.Join(modPath, filename))
-		if err != nil {
-			return err
+		if shallBeSaved(filename) {
+			err := saveResourcesTo(list, filepath.Join(modPath, filename))
+			if err != nil {
+				return err
+			}
 		}
 	}
 
