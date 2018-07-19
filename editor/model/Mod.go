@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -26,6 +27,7 @@ type Mod struct {
 	resetCallback    ModResetCallback
 
 	modPath            string
+	lastChangeTime     time.Time
 	changedFiles       map[string]struct{}
 	localizedResources LocalizedResources
 	objectProperties   object.PropertiesTable
@@ -74,9 +76,20 @@ func (mod Mod) ModifiedFilenames() []string {
 	return result
 }
 
+// LastChangeTime returns the timestamp of the last change. Zero if not modified.
+func (mod *Mod) LastChangeTime() time.Time {
+	return mod.lastChangeTime
+}
+
+// ResetLastChangeTime clears the last change timestamp. It will be set again at the next modification.
+func (mod *Mod) ResetLastChangeTime() {
+	mod.lastChangeTime = time.Time{}
+}
+
 // MarkSave clears the list of modified filenames.
 func (mod *Mod) MarkSave() {
 	mod.changedFiles = make(map[string]struct{})
+	mod.lastChangeTime = time.Time{}
 }
 
 // ModifiedResource retrieves the resource of given language and ID.
@@ -284,10 +297,12 @@ func (mod *Mod) Reset(newResources LocalizedResources, objectProperties object.P
 	mod.localizedResources = newResources
 	mod.objectProperties = objectProperties
 	mod.changedFiles = make(map[string]struct{})
+	mod.lastChangeTime = time.Time{}
 	mod.resetCallback()
 	mod.resourcesChanged(modifiedIDs.ToList(), nil)
 }
 
 func (mod *Mod) markFileChanged(filename string) {
 	mod.changedFiles[filename] = struct{}{}
+	mod.lastChangeTime = time.Now()
 }
