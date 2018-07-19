@@ -23,6 +23,8 @@ const (
 	ObjectBitmaps         resource.ID = 0x0546
 	ObjectTextureBitmaps  resource.ID = 0x01DB
 	ObjectMaterialBitmaps resource.ID = 0x0884
+
+	MfdDataBitmaps resource.ID = 0x0028
 )
 
 // Texts
@@ -39,6 +41,13 @@ const (
 	DataletMessageTexts  resource.ID = 0x087A
 
 	ObjectLongNames resource.ID = 0x0024
+)
+
+// Messages
+const (
+	MailsStart     resource.ID = 0x0989
+	LogsStart      resource.ID = 0x09B8
+	FragmentsStart resource.ID = 0x0A98
 )
 
 // Archives

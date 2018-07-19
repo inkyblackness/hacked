@@ -117,6 +117,8 @@ var infoList = []ResourceInfo{
 	{ObjectTextureBitmaps, ObjectTextureBitmaps.Plus(64), resource.Bitmap, true, false, false, 64, CitMat},
 	{ObjectMaterialBitmaps, ObjectMaterialBitmaps.Plus(32), resource.Bitmap, true, false, false, 32, CitMat},
 
+	{MfdDataBitmaps, MfdDataBitmaps.Plus(1), resource.Bitmap, true, true, true, 256, MfdArt},
+
 	{PaperTextsStart, PaperTextsStart.Plus(16), resource.Text, true, false, false, 16, CybStrng},
 
 	{TrapMessageTexts, TrapMessageTexts.Plus(1), resource.Text, true, false, true, 512, CybStrng},
@@ -128,6 +130,10 @@ var infoList = []ResourceInfo{
 	{InfoNodeMessageTexts, InfoNodeMessageTexts.Plus(1), resource.Text, true, false, true, 256, CybStrng},
 	{AccessCardNameTexts, AccessCardNameTexts.Plus(1), resource.Text, true, false, true, 32 * 2, CybStrng},
 	{DataletMessageTexts, DataletMessageTexts.Plus(1), resource.Text, true, false, true, 256, CybStrng},
+
+	{MailsStart, MailsStart.Plus(47), resource.Text, true, false, false, 47, CybStrng},
+	{LogsStart, LogsStart.Plus(224), resource.Text, true, false, false, 224, CybStrng},
+	{FragmentsStart, FragmentsStart.Plus(16), resource.Text, true, false, false, 16, CybStrng},
 
 	{ObjectLongNames, ObjectLongNames.Plus(1), resource.Text, true, false, true, 0, CybStrng},
 
