@@ -48,6 +48,9 @@ const (
 	MailsStart     resource.ID = 0x0989
 	LogsStart      resource.ID = 0x09B8
 	FragmentsStart resource.ID = 0x0A98
+
+	MailsAudioStart resource.ID = 0x0989 + 300
+	LogsAudioStart  resource.ID = 0x09B8 + 300
 )
 
 // Archives

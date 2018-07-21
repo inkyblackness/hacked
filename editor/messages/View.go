@@ -8,6 +8,8 @@ import (
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
+	"github.com/inkyblackness/hacked/ss1/content/audio"
+	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
@@ -31,6 +33,7 @@ type View struct {
 	mod          *model.Mod
 	messageCache *text.ElectronicMessageCache
 	cp           text.Codepage
+	movieCache   *movie.Cache
 	imageCache   *graphics.TextureCache
 
 	clipboard external.Clipboard
@@ -41,12 +44,14 @@ type View struct {
 }
 
 // NewMessagesView returns a new instance.
-func NewMessagesView(mod *model.Mod, messageCache *text.ElectronicMessageCache, cp text.Codepage, imageCache *graphics.TextureCache,
+func NewMessagesView(mod *model.Mod, messageCache *text.ElectronicMessageCache, cp text.Codepage,
+	movieCache *movie.Cache, imageCache *graphics.TextureCache,
 	clipboard external.Clipboard, guiScale float32, commander cmd.Commander) *View {
 	view := &View{
 		mod:          mod,
 		messageCache: messageCache,
 		cp:           cp,
+		movieCache:   movieCache,
 		imageCache:   imageCache,
 
 		clipboard: clipboard,
@@ -119,6 +124,15 @@ func (view *View) renderContent() {
 			}
 		} else {
 			imgui.Text("(read-only)")
+		}
+		if view.hasAudio() {
+			imgui.Separator()
+			sound := view.currentSound()
+			if len(sound.Samples) > 0 {
+				imgui.LabelText("Audio", fmt.Sprintf("%.2f sec", float32(len(sound.Samples))/sound.SampleRate))
+			} else {
+				imgui.LabelText("Audio", "(no sound)")
+			}
 		}
 		imgui.Separator()
 
@@ -219,6 +233,19 @@ func (view *View) renderContent() {
 func (view View) currentMessage() (msg text.ElectronicMessage, readOnly bool) {
 	msg = view.messageOf(view.model.currentKey)
 	readOnly = len(view.mod.ModifiedBlocks(view.model.currentKey.Lang, view.model.currentKey.ID.Plus(view.model.currentKey.Index))) == 0
+	return
+}
+
+func (view View) hasAudio() bool {
+	return (view.model.currentKey.ID == ids.MailsStart) || (view.model.currentKey.ID == ids.LogsStart)
+}
+
+func (view *View) currentSound() (sound audio.L8) {
+	if view.hasAudio() {
+		key := view.model.currentKey
+		key.ID = key.ID.Plus(300)
+		sound, _ = view.movieCache.Audio(key)
+	}
 	return
 }
 

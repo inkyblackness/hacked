@@ -9,11 +9,11 @@ import (
 type ElectronicMessageCache struct {
 	cp        Codepage
 	localizer resource.Localizer
-	reader    textReader
 
 	messages map[resource.Key]ElectronicMessage
 }
 
+// NewElectronicMessageCache returns a new instance.
 func NewElectronicMessageCache(cp Codepage, localizer resource.Localizer) *ElectronicMessageCache {
 	cache := &ElectronicMessageCache{
 		cp:        cp,

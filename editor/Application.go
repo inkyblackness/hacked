@@ -15,6 +15,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/texts"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
+	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
@@ -57,6 +58,7 @@ type Application struct {
 	messagesCache *text.ElectronicMessageCache
 	paletteCache  *graphics.PaletteCache
 	textureCache  *graphics.TextureCache
+	movieCache    *movie.Cache
 
 	mapDisplay *levels.MapDisplay
 
@@ -376,6 +378,7 @@ func (app *Application) initModel() {
 	app.textLineCache = text.NewLineCache(app.cp, app.mod)
 	app.textPageCache = text.NewPageCache(app.cp, app.mod)
 	app.messagesCache = text.NewElectronicMessageCache(app.cp, app.mod)
+	app.movieCache = movie.NewCache(app.mod)
 
 	for i := 0; i < archive.MaxLevels; i++ {
 		app.levels[i] = level.NewLevel(ids.LevelResourcesStart, i, app.mod)
@@ -389,6 +392,7 @@ func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []
 	app.textLineCache.InvalidateResources(modifiedIDs)
 	app.textPageCache.InvalidateResources(modifiedIDs)
 	app.messagesCache.InvalidateResources(modifiedIDs)
+	app.movieCache.InvalidateResources(modifiedIDs)
 	for _, lvl := range app.levels {
 		lvl.InvalidateResources(modifiedIDs)
 	}
@@ -406,7 +410,7 @@ func (app *Application) initView() {
 	app.levelControlView = levels.NewControlView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.levelTilesView = levels.NewTilesView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.levelObjectsView = levels.NewObjectsView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
-	app.messagesView = messages.NewMessagesView(app.mod, app.messagesCache, app.cp, app.textureCache, app.clipboard, app.GuiScale, app)
+	app.messagesView = messages.NewMessagesView(app.mod, app.messagesCache, app.cp, app.movieCache, app.textureCache, app.clipboard, app.GuiScale, app)
 	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 
