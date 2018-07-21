@@ -53,6 +53,11 @@ const (
 	LogsAudioStart  resource.ID = 0x09B8 + 300
 )
 
+// Sounds
+const (
+	TrapMessagesAudioStart resource.ID = 0x0C1C
+)
+
 // Archives
 const (
 	ArchiveName resource.ID = 0x0FA0

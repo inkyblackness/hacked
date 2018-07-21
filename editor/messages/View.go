@@ -137,16 +137,12 @@ func (view *View) renderContent() {
 				if imgui.Button("Export") {
 					view.requestExportAudio(sound)
 				}
+				imgui.SameLine()
 			} else {
 				imgui.LabelText("Audio", "(no sound)")
 			}
-			if !readOnly {
-				if hasSound {
-					imgui.SameLine()
-				}
-				if imgui.Button("Import") {
-					view.requestImportAudio()
-				}
+			if imgui.Button("Import") {
+				view.requestImportAudio()
 			}
 		}
 		imgui.Separator()
