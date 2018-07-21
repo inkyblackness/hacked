@@ -25,7 +25,7 @@ func NewView(clipboard external.Clipboard, guiScale float32, version string) *Vi
 	}
 }
 
-// Show requets to show the about view.
+// Show requests to show the about view.
 func (view *View) Show() {
 	view.model.windowOpen = true
 }
@@ -59,6 +59,8 @@ func (view *View) renderContent() {
 	urlLine("User guide", userguideURL)
 	urlLine("Community", communityURL)
 	urlLine("Project", projectURL)
+	imgui.Separator()
+	imgui.Text("Thanks to: @3RDPlayer: testing, @ToxicFrog: name idea")
 
 	if imgui.Button("OK") {
 		imgui.CloseCurrentPopup()
