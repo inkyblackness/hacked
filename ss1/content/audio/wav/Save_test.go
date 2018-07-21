@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/inkyblackness/hacked/ss1/content/audio/wav"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSaveStoresBytes(t *testing.T) {
@@ -14,8 +15,9 @@ func TestSaveStoresBytes(t *testing.T) {
 	samples := []byte{0x00, 0x40, 0x80, 0xC0, 0xFF}
 	buf := bytes.NewBuffer(nil)
 
-	wav.Save(buf, sampleRate, samples)
+	err := wav.Save(buf, sampleRate, samples)
 
+	require.Nil(t, err)
 	assert.Equal(t, []byte{
 		0x52, 0x49, 0x46, 0x46, // "RIFF"
 		0x2B, 0x00, 0x00, 0x00, // len(RIFF)

@@ -103,8 +103,8 @@ func (loader *waveLoader) loadFormat(size uint32) {
 	var header formatHeader
 
 	loader.formatRead = true
-	binary.Read(headerReader, binary.LittleEndian, &header.base)
-	binary.Read(headerReader, binary.LittleEndian, &header.extension.BitsPerSample)
+	loader.err = binary.Read(headerReader, binary.LittleEndian, &header.base)
+	loader.err = binary.Read(headerReader, binary.LittleEndian, &header.extension.BitsPerSample)
 	loader.sampleRate = float32(header.base.SamplesPerSec)
 
 	if header.extension.BitsPerSample == 16 {

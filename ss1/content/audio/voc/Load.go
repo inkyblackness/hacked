@@ -10,7 +10,6 @@ import (
 
 // Load reads from the provided source a Creative Voice Sound and returns the data.
 func Load(source io.Reader) (data audio.L8, err error) {
-
 	if source == nil {
 		return data, fmt.Errorf("source is nil")
 	}
@@ -28,10 +27,22 @@ func readAndVerifyHeader(source io.Reader) error {
 	version := uint16(0)
 	versionValidity := uint16(0)
 
-	source.Read(start)
-	binary.Read(source, binary.LittleEndian, &headerSize)
-	binary.Read(source, binary.LittleEndian, &version)
-	binary.Read(source, binary.LittleEndian, &versionValidity)
+	_, err := source.Read(start)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(source, binary.LittleEndian, &headerSize)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(source, binary.LittleEndian, &version)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(source, binary.LittleEndian, &versionValidity)
+	if err != nil {
+		return err
+	}
 
 	calculated := uint16(^version + versionCheckValue)
 	if calculated != versionValidity {
@@ -39,8 +50,8 @@ func readAndVerifyHeader(source io.Reader) error {
 	}
 
 	skip := make([]byte, headerSize-standardHeaderSize)
-	source.Read(skip)
-	return nil
+	_, err = source.Read(skip)
+	return err
 }
 
 func readSoundData(source io.Reader) (data audio.L8, err error) {
@@ -51,17 +62,26 @@ func readSoundData(source io.Reader) (data audio.L8, err error) {
 	for !done {
 		blockStart := make([]byte, 4)
 
-		source.Read(blockStart)
+		_, err = source.Read(blockStart)
+		if err != nil {
+			return
+		}
 		switch blockType(blockStart[0]) {
 		case soundData:
 			{
 				meta := make([]byte, 2)
-				source.Read(meta)
+				_, err = source.Read(meta)
+				if err != nil {
+					return
+				}
 				sampleRate = divisorToSampleRate(meta[0])
 
 				newCount := lengthFromBlockStart(blockStart) - len(meta)
 				buf := make([]byte, newCount)
-				source.Read(buf)
+				_, err = source.Read(buf)
+				if err != nil {
+					return
+				}
 
 				oldCount := len(samples)
 				newSamples := make([]byte, oldCount+newCount)
