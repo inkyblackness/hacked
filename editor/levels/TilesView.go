@@ -170,7 +170,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 	values.RenderUnifiedSliderInt(readOnly, multiple, "Ceiling Height (abs)", ceilingHeightUnifier,
 		func(u values.Unifier) int { return int(u.Unified().(level.TileHeightUnit)) },
 		tileHeightFormatter,
-		0, int(level.TileHeightUnitMax)-1,
+		1, int(level.TileHeightUnitMax),
 		func(newValue int) {
 			view.requestSetCeilingHeight(lvl, view.model.selectedTiles.list, level.TileHeightUnit(newValue))
 		})
