@@ -73,6 +73,8 @@ type Application struct {
 	textsView        *texts.View
 	aboutView        *about.View
 
+	modalState gui.ModalStateWrapper
+
 	failureMessage string
 	failurePending bool
 }
@@ -151,6 +153,8 @@ func (app *Application) render() {
 	app.handleFailure()
 	app.aboutView.Render()
 
+	app.modalState.Render()
+
 	app.guiContext.Render(app.bitmapTextureForUI)
 }
 
@@ -214,6 +218,7 @@ func (app *Application) onWindowResize(width int, height int) {
 
 func (app *Application) onFilesDropped(names []string) {
 	app.projectView.HandleFiles(names)
+	app.modalState.HandleFiles(names)
 }
 
 func (app *Application) onKey(key input.Key, modifier input.Modifier) {
@@ -410,7 +415,7 @@ func (app *Application) initView() {
 	app.levelControlView = levels.NewControlView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.levelTilesView = levels.NewTilesView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.levelObjectsView = levels.NewObjectsView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
-	app.messagesView = messages.NewMessagesView(app.mod, app.messagesCache, app.cp, app.movieCache, app.textureCache, app.clipboard, app.GuiScale, app)
+	app.messagesView = messages.NewMessagesView(app.mod, app.messagesCache, app.cp, app.movieCache, app.textureCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 

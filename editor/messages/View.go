@@ -2,6 +2,9 @@ package messages
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"
@@ -9,6 +12,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
 	"github.com/inkyblackness/hacked/ss1/content/audio"
+	"github.com/inkyblackness/hacked/ss1/content/audio/wav"
 	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -36,9 +40,10 @@ type View struct {
 	movieCache   *movie.Cache
 	imageCache   *graphics.TextureCache
 
-	clipboard external.Clipboard
-	guiScale  float32
-	commander cmd.Commander
+	modalStateMachine gui.ModalStateMachine
+	clipboard         external.Clipboard
+	guiScale          float32
+	commander         cmd.Commander
 
 	model viewModel
 }
@@ -46,7 +51,8 @@ type View struct {
 // NewMessagesView returns a new instance.
 func NewMessagesView(mod *model.Mod, messageCache *text.ElectronicMessageCache, cp text.Codepage,
 	movieCache *movie.Cache, imageCache *graphics.TextureCache,
-	clipboard external.Clipboard, guiScale float32, commander cmd.Commander) *View {
+	modalStateMachine gui.ModalStateMachine, clipboard external.Clipboard,
+	guiScale float32, commander cmd.Commander) *View {
 	view := &View{
 		mod:          mod,
 		messageCache: messageCache,
@@ -54,9 +60,10 @@ func NewMessagesView(mod *model.Mod, messageCache *text.ElectronicMessageCache, 
 		movieCache:   movieCache,
 		imageCache:   imageCache,
 
-		clipboard: clipboard,
-		guiScale:  guiScale,
-		commander: commander,
+		modalStateMachine: modalStateMachine,
+		clipboard:         clipboard,
+		guiScale:          guiScale,
+		commander:         commander,
 
 		model: freshViewModel(),
 	}
@@ -128,10 +135,22 @@ func (view *View) renderContent() {
 		if view.hasAudio() {
 			imgui.Separator()
 			sound := view.currentSound()
-			if len(sound.Samples) > 0 {
+			hasSound := len(sound.Samples) > 0
+			if hasSound {
 				imgui.LabelText("Audio", fmt.Sprintf("%.2f sec", float32(len(sound.Samples))/sound.SampleRate))
+				if imgui.Button("Export") {
+					view.requestExportAudio(false)
+				}
 			} else {
 				imgui.LabelText("Audio", "(no sound)")
+			}
+			if !readOnly {
+				if hasSound {
+					imgui.SameLine()
+				}
+				if imgui.Button("Import") {
+					view.requestImportAudio()
+				}
 			}
 		}
 		imgui.Separator()
@@ -315,6 +334,36 @@ func (view *View) renderSideImage(label string, index int) {
 	}
 	imgui.PopStyleVar()
 	imgui.EndChild()
+}
+
+func (view *View) exportFilename() string {
+	return fmt.Sprintf("%05d_%s.wav",
+		view.model.currentKey.ID.Plus(view.model.currentKey.Index).Plus(300).Value(),
+		view.model.currentKey.Lang.String())
+}
+
+func (view *View) requestExportAudio(withError bool) {
+	info := "File to be written: " + view.exportFilename()
+	external.Export(view.modalStateMachine, info, view.exportAudioTo, withError)
+}
+
+func (view *View) exportAudioTo(dirname string) {
+	filename := view.exportFilename()
+	sound := view.currentSound()
+	writer, err := os.Create(filepath.Join(dirname, filename))
+	if err != nil {
+		view.requestExportAudio(true)
+		return
+	}
+	defer func() { _ = writer.Close() }()
+	err = wav.Save(writer, sound.SampleRate, sound.Samples)
+	if err != nil {
+		view.requestExportAudio(true)
+	}
+}
+
+func (view *View) requestImportAudio() {
+
 }
 
 func (view *View) requestClear() {
