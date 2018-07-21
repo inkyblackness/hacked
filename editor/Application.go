@@ -9,6 +9,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/levels"
+	"github.com/inkyblackness/hacked/editor/messages"
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/project"
 	"github.com/inkyblackness/hacked/editor/texts"
@@ -53,6 +54,7 @@ type Application struct {
 	cp            text.Codepage
 	textLineCache *text.Cache
 	textPageCache *text.Cache
+	messagesCache *text.ElectronicMessageCache
 	paletteCache  *graphics.PaletteCache
 	textureCache  *graphics.TextureCache
 
@@ -65,6 +67,7 @@ type Application struct {
 	levelControlView *levels.ControlView
 	levelTilesView   *levels.TilesView
 	levelObjectsView *levels.ObjectsView
+	messagesView     *messages.View
 	textsView        *texts.View
 	aboutView        *about.View
 
@@ -133,6 +136,7 @@ func (app *Application) render() {
 	app.levelControlView.Render(activeLevel)
 	app.levelTilesView.Render(activeLevel)
 	app.levelObjectsView.Render(activeLevel)
+	app.messagesView.Render()
 	app.textsView.Render()
 
 	paletteTexture, _ := app.paletteCache.Palette(0)
@@ -226,6 +230,8 @@ func (app *Application) onKey(key input.Key, modifier input.Modifier) {
 		*app.levelTilesView.WindowOpen() = !*app.levelTilesView.WindowOpen()
 	} else if key == input.KeyF4 {
 		*app.levelObjectsView.WindowOpen() = !*app.levelObjectsView.WindowOpen()
+	} else if key == input.KeyF5 {
+		*app.messagesView.WindowOpen() = !*app.messagesView.WindowOpen()
 	}
 }
 
@@ -369,6 +375,7 @@ func (app *Application) initModel() {
 	app.cp = text.DefaultCodepage()
 	app.textLineCache = text.NewLineCache(app.cp, app.mod)
 	app.textPageCache = text.NewPageCache(app.cp, app.mod)
+	app.messagesCache = text.NewElectronicMessageCache(app.cp, app.mod)
 
 	for i := 0; i < archive.MaxLevels; i++ {
 		app.levels[i] = level.NewLevel(ids.LevelResourcesStart, i, app.mod)
@@ -381,6 +388,7 @@ func (app *Application) initModel() {
 func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) {
 	app.textLineCache.InvalidateResources(modifiedIDs)
 	app.textPageCache.InvalidateResources(modifiedIDs)
+	app.messagesCache.InvalidateResources(modifiedIDs)
 	for _, lvl := range app.levels {
 		lvl.InvalidateResources(modifiedIDs)
 	}
@@ -395,9 +403,10 @@ func (app *Application) modReset() {
 func (app *Application) initView() {
 	app.projectView = project.NewView(app.mod, app.GuiScale, app)
 	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)
-	app.levelControlView = levels.NewControlView(app.mod, app.GuiScale, app.textLineCache, app, &app.eventQueue, app.eventDispatcher)
-	app.levelTilesView = levels.NewTilesView(app.mod, app.GuiScale, app, &app.eventQueue, app.eventDispatcher)
-	app.levelObjectsView = levels.NewObjectsView(app.mod, app.GuiScale, app.textLineCache, app, &app.eventQueue, app.eventDispatcher)
+	app.levelControlView = levels.NewControlView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
+	app.levelTilesView = levels.NewTilesView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
+	app.levelObjectsView = levels.NewObjectsView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
+	app.messagesView = messages.NewMessagesView(app.mod, app.messagesCache, app.cp, app.textureCache, app.clipboard, app.GuiScale, app)
 	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 
@@ -460,6 +469,7 @@ func (app *Application) renderMainMenu() {
 			windowEntry("Level Control", "F2", app.levelControlView.WindowOpen())
 			windowEntry("Level Tiles", "F3", app.levelTilesView.WindowOpen())
 			windowEntry("Level Objects", "F4", app.levelObjectsView.WindowOpen())
+			windowEntry("Messages", "F5", app.messagesView.WindowOpen())
 			windowEntry("Texts", "", app.textsView.WindowOpen())
 			imgui.EndMenu()
 		}

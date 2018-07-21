@@ -7,6 +7,7 @@ import (
 
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/event"
+	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
@@ -24,8 +25,9 @@ import (
 
 // ObjectsView is for object properties.
 type ObjectsView struct {
-	mod       *model.Mod
-	textCache *text.Cache
+	mod          *model.Mod
+	textCache    *text.Cache
+	textureCache *graphics.TextureCache
 
 	guiScale      float32
 	commander     cmd.Commander
@@ -35,11 +37,12 @@ type ObjectsView struct {
 }
 
 // NewObjectsView returns a new instance.
-func NewObjectsView(mod *model.Mod, guiScale float32, textCache *text.Cache,
+func NewObjectsView(mod *model.Mod, guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
 	commander cmd.Commander, eventListener event.Listener, eventRegistry event.Registry) *ObjectsView {
 	view := &ObjectsView{
-		mod:       mod,
-		textCache: textCache,
+		mod:          mod,
+		textCache:    textCache,
+		textureCache: textureCache,
 
 		guiScale:      guiScale,
 		commander:     commander,
@@ -569,6 +572,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 				updater(func(oldValue uint32) uint32 { return uint32(newValue) })
 			})
 		render.TextureSelector(label, -1, view.guiScale, len(atlas), selectedIndex,
+			view.textureCache,
 			func(index int) resource.Key {
 				return resource.KeyOf(ids.LargeTextures.Plus(int(atlas[index])), resource.LangAny, 0)
 			},
@@ -606,6 +610,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 		if selectedType == 0 {
 			resInfo, _ := ids.Info(ids.ObjectMaterialBitmaps)
 			render.TextureSelector(selectorLabel, -1, view.guiScale, resInfo.MaxCount, selectedIndex,
+				view.textureCache,
 				func(index int) resource.Key {
 					return resource.KeyOf(ids.ObjectMaterialBitmaps.Plus(index), resource.LangAny, 0)
 				},
@@ -618,6 +623,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 		} else {
 			atlas := lvl.TextureAtlas()
 			render.TextureSelector(selectorLabel, -1, view.guiScale, len(atlas), selectedIndex,
+				view.textureCache,
 				func(index int) resource.Key {
 					return resource.KeyOf(ids.LargeTextures.Plus(int(atlas[index])), resource.LangAny, 0)
 				},

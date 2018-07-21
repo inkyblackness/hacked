@@ -5,12 +5,14 @@ import (
 
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/event"
+	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
+	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/imgui-go"
@@ -18,7 +20,9 @@ import (
 
 // TilesView is for tile properties.
 type TilesView struct {
-	mod *model.Mod
+	mod          *model.Mod
+	textCache    *text.Cache
+	textureCache *graphics.TextureCache
 
 	guiScale      float32
 	commander     cmd.Commander
@@ -28,9 +32,13 @@ type TilesView struct {
 }
 
 // NewTilesView returns a new instance.
-func NewTilesView(mod *model.Mod, guiScale float32, commander cmd.Commander, eventListener event.Listener, eventRegistry event.Registry) *TilesView {
+func NewTilesView(mod *model.Mod, guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
+	commander cmd.Commander, eventListener event.Listener, eventRegistry event.Registry) *TilesView {
 	view := &TilesView{
-		mod:           mod,
+		mod:          mod,
+		textCache:    textCache,
+		textureCache: textureCache,
+
 		guiScale:      guiScale,
 		commander:     commander,
 		eventListener: eventListener,
@@ -377,16 +385,31 @@ func (view *TilesView) renderTextureSelector(readOnly, multiple bool, label stri
 		selectedIndex = unifier.Unified().(int)
 	}
 
-	render.TextureSelector(label, -1, view.guiScale, maxIndex-minIndex+1, selectedIndex-minIndex,
+	count := maxIndex - minIndex + 1
+	if count > len(atlas) {
+		count = len(atlas)
+	}
+	render.TextureSelector(label, -1, view.guiScale, count, selectedIndex-minIndex,
+		view.textureCache,
 		func(index int) resource.Key {
 			return resource.KeyOf(ids.LargeTextures.Plus(int(atlas[minIndex+index])), resource.LangAny, 0)
 		},
-		func(index int) string { return "" },
+		func(index int) string { return view.textureName(int(atlas[minIndex+index])) },
 		func(index int) {
 			if !readOnly {
 				changeHandler(index)
 			}
 		})
+}
+
+func (view *TilesView) textureName(index int) string {
+	key := resource.KeyOf(ids.TextureNames, resource.LangDefault, index)
+	name, err := view.textCache.Text(key)
+	suffix := ""
+	if err == nil {
+		suffix = ": " + name
+	}
+	return fmt.Sprintf("%3d", index) + suffix
 }
 
 func (view *TilesView) editingAllowed(id int) bool {

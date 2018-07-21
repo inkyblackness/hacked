@@ -5,6 +5,7 @@ import (
 
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/event"
+	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
@@ -26,13 +27,14 @@ type ControlView struct {
 	commander     cmd.Commander
 	eventListener event.Listener
 
-	textCache *text.Cache
+	textCache    *text.Cache
+	textureCache *graphics.TextureCache
 
 	model controlViewModel
 }
 
 // NewControlView returns a new instance.
-func NewControlView(mod *model.Mod, guiScale float32, textCache *text.Cache,
+func NewControlView(mod *model.Mod, guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
 	commander cmd.Commander, eventListener event.Listener, eventRegistry event.Registry) *ControlView {
 	view := &ControlView{
 		mod:           mod,
@@ -40,6 +42,7 @@ func NewControlView(mod *model.Mod, guiScale float32, textCache *text.Cache,
 		commander:     commander,
 		eventListener: eventListener,
 		textCache:     textCache,
+		textureCache:  textureCache,
 		model:         freshControlViewModel(),
 	}
 	eventRegistry.RegisterHandler(view.onLevelSelectionSetEvent)
@@ -147,6 +150,7 @@ func (view *ControlView) renderTextureAtlas(lvl *level.Level, readOnly bool) {
 	{
 		render.TextureSelector("Level Textures", -200, view.guiScale,
 			len(atlas), view.model.selectedAtlasIndex,
+			view.textureCache,
 			func(index int) resource.Key {
 				return resource.KeyOf(ids.LargeTextures.Plus(int(atlas[index])), resource.LangAny, 0)
 			},
@@ -169,6 +173,7 @@ func (view *ControlView) renderTextureAtlas(lvl *level.Level, readOnly bool) {
 	if !readOnly {
 		render.TextureSelector("Game Textures", -200, view.guiScale,
 			world.MaxWorldTextures, gameTextureIndex,
+			view.textureCache,
 			func(index int) resource.Key {
 				return resource.KeyOf(ids.LargeTextures.Plus(index), resource.LangAny, 0)
 			},
