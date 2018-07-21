@@ -223,7 +223,9 @@ func (app *Application) onFilesDropped(names []string) {
 
 func (app *Application) onKey(key input.Key, modifier input.Modifier) {
 	app.lastModifier = modifier
-	if key == input.KeyUndo {
+	if key == input.KeyEscape {
+		app.modalState.SetState(nil)
+	} else if key == input.KeyUndo {
 		app.tryUndo()
 	} else if key == input.KeyRedo {
 		app.tryRedo()
@@ -246,8 +248,12 @@ func (app *Application) onModifier(modifier input.Modifier) {
 	app.lastModifier = modifier
 }
 
+func (app *Application) modalActive() bool {
+	return (app.modalState.State != nil) || (len(app.failureMessage) > 0)
+}
+
 func (app *Application) tryUndo() {
-	if !app.cmdStack.CanUndo() {
+	if !app.cmdStack.CanUndo() || app.modalActive() {
 		return
 	}
 	err := app.modifyModByCommand(app.cmdStack.Undo)
@@ -257,7 +263,7 @@ func (app *Application) tryUndo() {
 }
 
 func (app *Application) tryRedo() {
-	if !app.cmdStack.CanRedo() {
+	if !app.cmdStack.CanRedo() || app.modalActive() {
 		return
 	}
 	err := app.modifyModByCommand(app.cmdStack.Redo)

@@ -103,6 +103,11 @@ func (view *View) renderContent() {
 			}
 			imgui.EndCombo()
 		}
+		info, _ := ids.Info(view.model.currentKey.ID)
+		index := view.model.currentKey.Index
+		if gui.StepSliderInt("Index", &index, 0, info.MaxCount-1) {
+			view.model.currentKey.Index = index
+		}
 		if imgui.BeginCombo("Language", view.model.currentKey.Lang.String()) {
 			languages := resource.Languages()
 			for _, lang := range languages {
@@ -111,11 +116,6 @@ func (view *View) renderContent() {
 				}
 			}
 			imgui.EndCombo()
-		}
-		info, _ := ids.Info(view.model.currentKey.ID)
-		index := view.model.currentKey.Index
-		if gui.StepSliderInt("Index", &index, 0, info.MaxCount-1) {
-			view.model.currentKey.Index = index
 		}
 
 		message, readOnly := view.currentMessage()
@@ -149,7 +149,7 @@ func (view *View) renderContent() {
 					imgui.SameLine()
 				}
 				if imgui.Button("Import") {
-					view.requestImportAudio()
+					view.requestImportAudio(false)
 				}
 			}
 		}
@@ -362,25 +362,52 @@ func (view *View) exportAudioTo(dirname string) {
 	}
 }
 
-func (view *View) requestImportAudio() {
+func (view *View) requestImportAudio(withError bool) {
+	info := "File must be a WAV file, 22050 Hz, 8-bit or 16-bit, uncompressed."
+	external.Import(view.modalStateMachine, info, view.importAudioFrom, withError)
+}
 
+func (view *View) importAudioFrom(filename string) {
+	reader, err := os.Open(filename)
+	if err != nil {
+		view.requestImportAudio(true)
+		return
+	}
+	defer func() { _ = reader.Close() }()
+	sound, err := wav.Load(reader)
+	if err != nil {
+		view.requestImportAudio(true)
+		return
+	}
+	movieData := movie.ContainSoundData(sound)
+	view.requestAudioChange(movieData)
 }
 
 func (view *View) requestClear() {
-	view.requestPropertyChange(func(msg *text.ElectronicMessage) {
-		*msg = text.EmptyElectronicMessage()
-	})
+	view.requestWipe(text.EmptyElectronicMessage().Encode(view.cp))
 }
 
 func (view *View) requestRemove() {
-	entries := make(map[resource.Language]messageDataEntry)
+	view.requestWipe(nil)
+}
+
+func (view *View) requestWipe(newTextData [][]byte) {
+	textEntries := make(map[resource.Language]messageDataEntry)
+	audioEntries := make(map[resource.Language]messageDataEntry)
+	textID := view.model.currentKey.ID.Plus(view.model.currentKey.Index)
 	for lang := resource.Language(0); lang < resource.LanguageCount; lang++ {
-		entries[lang] = messageDataEntry{
-			oldData: view.mod.ModifiedBlocks(lang, view.model.currentKey.ID.Plus(view.model.currentKey.Index)),
-			newData: nil,
+		textEntries[lang] = messageDataEntry{
+			oldData: view.mod.ModifiedBlocks(lang, textID),
+			newData: newTextData,
+		}
+		if view.hasAudio() {
+			audioEntries[lang] = messageDataEntry{
+				oldData: view.mod.ModifiedBlocks(lang, textID.Plus(300)),
+				newData: nil,
+			}
 		}
 	}
-	view.requestSetMessageData(entries)
+	view.requestSetMessageData(textEntries, audioEntries)
 }
 
 func (view *View) requestTextChange(modifier func(*text.ElectronicMessage)) {
@@ -392,7 +419,7 @@ func (view *View) requestTextChange(modifier func(*text.ElectronicMessage)) {
 		oldData: view.mod.ModifiedBlocks(view.model.currentKey.Lang, view.model.currentKey.ID.Plus(view.model.currentKey.Index)),
 		newData: msg.Encode(view.cp),
 	}
-	view.requestSetMessageData(entries)
+	view.requestSetMessageData(entries, nil)
 }
 
 func (view *View) requestPropertyChange(modifier func(*text.ElectronicMessage)) {
@@ -408,15 +435,26 @@ func (view *View) requestPropertyChange(modifier func(*text.ElectronicMessage)) 
 			newData: msg.Encode(view.cp),
 		}
 	}
-	view.requestSetMessageData(entries)
+	view.requestSetMessageData(entries, nil)
 }
 
-func (view *View) requestSetMessageData(entries map[resource.Language]messageDataEntry) {
+func (view *View) requestAudioChange(movieData []byte) {
+	entries := make(map[resource.Language]messageDataEntry)
+
+	entries[view.model.currentKey.Lang] = messageDataEntry{
+		oldData: view.mod.ModifiedBlocks(view.model.currentKey.Lang, view.model.currentKey.ID.Plus(view.model.currentKey.Index).Plus(300)),
+		newData: [][]byte{movieData},
+	}
+	view.requestSetMessageData(nil, entries)
+}
+
+func (view *View) requestSetMessageData(textEntries map[resource.Language]messageDataEntry, audioEntries map[resource.Language]messageDataEntry) {
 	command := setMessageDataCommand{
 		key:             view.model.currentKey,
 		showVerboseText: view.model.showVerboseText,
 		model:           &view.model,
-		entries:         entries,
+		textEntries:     textEntries,
+		audioEntries:    audioEntries,
 	}
 	view.commander.Queue(command)
 }
