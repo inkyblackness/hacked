@@ -135,7 +135,7 @@ func (view *View) renderContent() {
 			if hasSound {
 				imgui.LabelText("Audio", fmt.Sprintf("%.2f sec", float32(len(sound.Samples))/sound.SampleRate))
 				if imgui.Button("Export") {
-					view.requestExportAudio()
+					view.requestExportAudio(sound)
 				}
 			} else {
 				imgui.LabelText("Audio", "(no sound)")
@@ -332,11 +332,10 @@ func (view *View) renderSideImage(label string, index int) {
 	imgui.EndChild()
 }
 
-func (view *View) requestExportAudio() {
+func (view *View) requestExportAudio(sound audio.L8) {
 	filename := fmt.Sprintf("%05d_%s.wav",
 		view.model.currentKey.ID.Plus(view.model.currentKey.Index).Plus(300).Value(),
 		view.model.currentKey.Lang.String())
-	sound := view.currentSound()
 
 	external.ExportAudio(view.modalStateMachine, filename, sound)
 }
