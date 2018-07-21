@@ -233,7 +233,7 @@ func (view *View) setTextFromClipboard() {
 	oldData, isList := view.currentModification()
 	if isList {
 		newData := view.cp.Encode(blockedValue[0])
-		view.requestSetTextLine(oldData[0], newData)
+		view.requestSetTextLine(oldData[0], newData, false)
 	} else {
 		newData := make([][]byte, len(blockedValue))
 		for index, blockLine := range blockedValue {
@@ -247,7 +247,7 @@ func (view *View) clearText() {
 	emptyLine := view.cp.Encode("")
 	currentModification, isList := view.currentModification()
 	if isList && !bytes.Equal(currentModification[0], emptyLine) {
-		view.requestSetTextLine(currentModification[0], emptyLine)
+		view.requestSetTextLine(currentModification[0], emptyLine, true)
 	} else if !isList && ((len(currentModification) != 1) || !bytes.Equal(currentModification[0], []byte{0x00})) {
 		view.requestSetTextPage(currentModification, [][]byte{emptyLine})
 	}
@@ -256,7 +256,7 @@ func (view *View) clearText() {
 func (view *View) removeText() {
 	currentModification, isList := view.currentModification()
 	if isList && (len(currentModification[0]) > 0) {
-		view.requestSetTextLine(currentModification[0], nil)
+		view.requestSetTextLine(currentModification[0], nil, true)
 	} else if !isList && (len(currentModification) > 0) {
 		view.requestSetTextPage(currentModification, nil)
 	}
@@ -277,18 +277,35 @@ func (view *View) requestImportAudio() {
 	})
 }
 
-func (view *View) requestSetAudio(data []byte) {
+func (view *View) setAudioCommand(data []byte) cmd.Command {
+	dataKey := resource.KeyOf(textToAudio[view.model.currentKey.ID].Plus(view.model.currentKey.Index), view.model.currentKey.Lang, 0)
+	return setAudioCommand{
+		restoreKey: view.model.currentKey,
+		model:      &view.model,
 
+		dataKey: dataKey,
+		oldData: view.mod.ModifiedBlocks(dataKey.Lang, dataKey.ID),
+		newData: [][]byte{data},
+	}
 }
 
-func (view *View) requestSetTextLine(oldData []byte, newData []byte) {
-	command := setTextLineCommand{
-		key:     view.model.currentKey,
-		model:   &view.model,
-		oldData: oldData,
-		newData: newData,
+func (view *View) requestSetAudio(data []byte) {
+	view.commander.Queue(view.setAudioCommand(data))
+}
+
+func (view *View) requestSetTextLine(oldData []byte, newData []byte, clearAudio bool) {
+	commands := cmd.List{
+		setTextLineCommand{
+			key:     view.model.currentKey,
+			model:   &view.model,
+			oldData: oldData,
+			newData: newData,
+		},
 	}
-	view.commander.Queue(command)
+	if clearAudio && view.hasAudio() {
+		commands = append(commands, view.setAudioCommand(nil))
+	}
+	view.commander.Queue(commands)
 }
 
 func (view *View) requestSetTextPage(oldData [][]byte, newData [][]byte) {
