@@ -2,9 +2,6 @@ package messages
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"
@@ -12,7 +9,6 @@ import (
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
 	"github.com/inkyblackness/hacked/ss1/content/audio"
-	"github.com/inkyblackness/hacked/ss1/content/audio/wav"
 	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -139,7 +135,7 @@ func (view *View) renderContent() {
 			if hasSound {
 				imgui.LabelText("Audio", fmt.Sprintf("%.2f sec", float32(len(sound.Samples))/sound.SampleRate))
 				if imgui.Button("Export") {
-					view.requestExportAudio(false)
+					view.requestExportAudio()
 				}
 			} else {
 				imgui.LabelText("Audio", "(no sound)")
@@ -149,7 +145,7 @@ func (view *View) renderContent() {
 					imgui.SameLine()
 				}
 				if imgui.Button("Import") {
-					view.requestImportAudio(false)
+					view.requestImportAudio()
 				}
 			}
 		}
@@ -336,51 +332,20 @@ func (view *View) renderSideImage(label string, index int) {
 	imgui.EndChild()
 }
 
-func (view *View) exportFilename() string {
-	return fmt.Sprintf("%05d_%s.wav",
+func (view *View) requestExportAudio() {
+	filename := fmt.Sprintf("%05d_%s.wav",
 		view.model.currentKey.ID.Plus(view.model.currentKey.Index).Plus(300).Value(),
 		view.model.currentKey.Lang.String())
-}
-
-func (view *View) requestExportAudio(withError bool) {
-	info := "File to be written: " + view.exportFilename()
-	external.Export(view.modalStateMachine, info, view.exportAudioTo, withError)
-}
-
-func (view *View) exportAudioTo(dirname string) {
-	filename := view.exportFilename()
 	sound := view.currentSound()
-	writer, err := os.Create(filepath.Join(dirname, filename))
-	if err != nil {
-		view.requestExportAudio(true)
-		return
-	}
-	defer func() { _ = writer.Close() }()
-	err = wav.Save(writer, sound.SampleRate, sound.Samples)
-	if err != nil {
-		view.requestExportAudio(true)
-	}
+
+	external.ExportAudio(view.modalStateMachine, filename, sound)
 }
 
-func (view *View) requestImportAudio(withError bool) {
-	info := "File must be a WAV file, 22050 Hz, 8-bit or 16-bit, uncompressed."
-	external.Import(view.modalStateMachine, info, view.importAudioFrom, withError)
-}
-
-func (view *View) importAudioFrom(filename string) {
-	reader, err := os.Open(filename)
-	if err != nil {
-		view.requestImportAudio(true)
-		return
-	}
-	defer func() { _ = reader.Close() }()
-	sound, err := wav.Load(reader)
-	if err != nil {
-		view.requestImportAudio(true)
-		return
-	}
-	movieData := movie.ContainSoundData(sound)
-	view.requestAudioChange(movieData)
+func (view *View) requestImportAudio() {
+	external.ImportAudio(view.modalStateMachine, func(sound audio.L8) {
+		movieData := movie.ContainSoundData(sound)
+		view.requestAudioChange(movieData)
+	})
 }
 
 func (view *View) requestClear() {
