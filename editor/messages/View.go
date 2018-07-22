@@ -28,7 +28,7 @@ var knownMessageTypes = map[resource.ID]messageInfo{
 }
 var knownMessageTypesOrder = []resource.ID{ids.MailsStart, ids.LogsStart, ids.FragmentsStart}
 
-// View provides edit controls for texts.
+// View provides edit controls for messages.
 type View struct {
 	mod          *model.Mod
 	messageCache *text.ElectronicMessageCache

@@ -5,6 +5,7 @@ import (
 
 	"github.com/inkyblackness/hacked/editor/about"
 	"github.com/inkyblackness/hacked/editor/archives"
+	"github.com/inkyblackness/hacked/editor/bitmaps"
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/graphics"
@@ -71,6 +72,7 @@ type Application struct {
 	levelObjectsView *levels.ObjectsView
 	messagesView     *messages.View
 	textsView        *texts.View
+	bitmapsView      *bitmaps.View
 	aboutView        *about.View
 
 	modalState gui.ModalStateWrapper
@@ -142,6 +144,7 @@ func (app *Application) render() {
 	app.levelObjectsView.Render(activeLevel)
 	app.messagesView.Render()
 	app.textsView.Render()
+	app.bitmapsView.Render()
 
 	paletteTexture, _ := app.paletteCache.Palette(0)
 	app.mapDisplay.Render(app.mod.ObjectProperties(), activeLevel,
@@ -423,6 +426,7 @@ func (app *Application) initView() {
 	app.levelObjectsView = levels.NewObjectsView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.messagesView = messages.NewMessagesView(app.mod, app.messagesCache, app.cp, app.movieCache, app.textureCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.movieCache, &app.modalState, app.clipboard, app.GuiScale, app)
+	app.bitmapsView = bitmaps.NewBitmapsView(app.mod, app.textureCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 
 	app.eventDispatcher.RegisterHandler(app.onLevelObjectRequestCreateEvent)
@@ -486,6 +490,7 @@ func (app *Application) renderMainMenu() {
 			windowEntry("Level Objects", "F4", app.levelObjectsView.WindowOpen())
 			windowEntry("Messages", "F5", app.messagesView.WindowOpen())
 			windowEntry("Texts", "", app.textsView.WindowOpen())
+			windowEntry("Bitmaps", "", app.bitmapsView.WindowOpen())
 			imgui.EndMenu()
 		}
 		if imgui.BeginMenu("Help") {
