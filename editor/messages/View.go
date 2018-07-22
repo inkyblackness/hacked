@@ -210,8 +210,8 @@ func (view *View) renderContent() {
 
 		view.renderSideImage("LeftMFD", message.LeftDisplay)
 		imgui.SameLineV(0, 0)
+		textToDisplay := message.VerboseText
 		if imgui.BeginChildV("Text", imgui.Vec2{X: -250 * view.guiScale, Y: 190 * view.guiScale}, true, 0) {
-			textToDisplay := message.VerboseText
 			if !view.model.showVerboseText {
 				textToDisplay = message.TerseText
 			}
@@ -225,17 +225,17 @@ func (view *View) renderContent() {
 				imgui.Text(textToDisplay)
 			}
 			imgui.PopTextWrapPos()
-			view.clipboardPopup(readOnly, "Text", textToDisplay, func(newValue string) {
-				view.requestTextChange(func(msg *text.ElectronicMessage) {
-					if view.model.showVerboseText {
-						msg.VerboseText = newValue
-					} else {
-						msg.TerseText = newValue
-					}
-				})
-			})
 		}
 		imgui.EndChild()
+		view.clipboardPopup(readOnly, "Text", textToDisplay, func(newValue string) {
+			view.requestTextChange(func(msg *text.ElectronicMessage) {
+				if view.model.showVerboseText {
+					msg.VerboseText = newValue
+				} else {
+					msg.TerseText = newValue
+				}
+			})
+		})
 		imgui.SameLineV(0, 0)
 		view.renderSideImage("RightMFD", message.RightDisplay)
 	}
