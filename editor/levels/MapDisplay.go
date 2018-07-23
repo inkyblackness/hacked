@@ -324,7 +324,7 @@ func (display *MapDisplay) colorQueryFor(lvl *level.Level, tileToColor func(*lev
 
 func (display *MapDisplay) renderPositionOverlay(lvl *level.Level) {
 	imgui.SetNextWindowPosV(display.positionPopupPos, imgui.ConditionAlways, imgui.Vec2{X: 1.0, Y: 1.0})
-	imgui.SetNextWindowSize(imgui.Vec2{X: 120 * display.guiScale, Y: 0})
+	imgui.SetNextWindowSize(imgui.Vec2{X: 140 * display.guiScale, Y: 0})
 	imgui.SetNextWindowBgAlpha(0.3)
 	if imgui.BeginV("Position", nil, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoResize|imgui.WindowFlagsAlwaysAutoResize|
 		imgui.WindowFlagsNoSavedSettings|imgui.WindowFlagsNoFocusOnAppearing|imgui.WindowFlagsNoNav) {
@@ -335,6 +335,9 @@ func (display *MapDisplay) renderPositionOverlay(lvl *level.Level) {
 		hasFloor := false
 		var floorRaw int
 		floorString := "???"
+		hasCeiling := false
+		var ceilingRaw int
+		ceilingString := "???"
 
 		if display.activeHoverItem != nil {
 			pos = display.activeHoverItem.Pos()
@@ -346,13 +349,21 @@ func (display *MapDisplay) renderPositionOverlay(lvl *level.Level) {
 				tile := lvl.Tile(int(pos.X.Tile()), int(pos.Y.Tile()))
 				if (tile != nil) && (tile.Type != level.TileTypeSolid) {
 					_, _, heightShift := lvl.Size()
-					height := tile.Floor.AbsoluteHeight()
-					heightInTiles, err := heightShift.ValueFromTileHeight(height)
+					floorHeight := tile.Floor.AbsoluteHeight()
+					floorHeightInTiles, err := heightShift.ValueFromTileHeight(floorHeight)
 					if err == nil {
-						floorString = fmt.Sprintf("%2.3f", heightInTiles)
+						floorString = fmt.Sprintf("%2.3f", floorHeightInTiles)
 					}
-					floorRaw = int(height)
+					floorRaw = int(floorHeight)
 					hasFloor = true
+
+					ceilingHeight := tile.Ceiling.AbsoluteHeight()
+					ceilingHeightInTiles, err := heightShift.ValueFromTileHeight(ceilingHeight)
+					if err == nil {
+						ceilingString = fmt.Sprintf("%2.3f", ceilingHeightInTiles)
+					}
+					ceilingRaw = int(ceilingHeight)
+					hasCeiling = true
 				}
 			} else if objectItem, isObjectItem := display.activeHoverItem.(objectHoverItem); isObjectItem {
 				_, _, heightShift := lvl.Size()
@@ -380,6 +391,11 @@ func (display *MapDisplay) renderPositionOverlay(lvl *level.Level) {
 			imgui.Text(fmt.Sprintf("F: %3d = %s", floorRaw, floorString))
 		} else {
 			imgui.Text("F: -- = --.---")
+		}
+		if hasCeiling {
+			imgui.Text(fmt.Sprintf("C: %3d = %s", ceilingRaw, ceilingString))
+		} else {
+			imgui.Text("C: -- = --.---")
 		}
 		imgui.End()
 	}
