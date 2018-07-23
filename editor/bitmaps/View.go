@@ -25,10 +25,16 @@ type bitmapInfo struct {
 }
 
 var knownBitmapTypes = map[resource.ID]bitmapInfo{
-	ids.MfdDataBitmaps: {"MFD Data Images", true},
+	ids.MfdDataBitmaps:        {"MFD Data Images", true},
+	ids.ObjectMaterialBitmaps: {"Object Materials", false},
+	ids.ObjectTextureBitmaps:  {"Object Textures", false},
 }
 
-var knownBitmapTypesOrder = []resource.ID{ids.MfdDataBitmaps}
+var knownBitmapTypesOrder = []resource.ID{
+	ids.MfdDataBitmaps,
+	ids.ObjectMaterialBitmaps,
+	ids.ObjectTextureBitmaps,
+}
 
 // View provides edit controls for bitmaps.
 type View struct {
@@ -118,14 +124,14 @@ func (view *View) renderContent() {
 		render.TextureSelector("###"+"IndexBitmap", -1, view.guiScale, info.MaxCount,
 			view.model.currentKey.Index, view.imageCache,
 			func(index int) resource.Key {
-				return resource.KeyOf(view.model.currentKey.ID, view.model.currentKey.Lang, index)
+				return view.indexedResourceKey(index)
 			},
 			func(index int) string { return fmt.Sprintf("%d", index) },
 			func(newValue int) {
 				view.model.currentKey.Index = newValue
 			})
 
-		tex, err := view.imageCache.Texture(view.model.currentKey)
+		tex, err := view.imageCache.Texture(view.currentResourceKey())
 
 		if imgui.Button("Clear") {
 			view.requestClear()
@@ -155,18 +161,33 @@ func (view *View) renderContent() {
 	}
 	imgui.EndChild()
 	imgui.SameLine()
-	render.TextureImage("Big texture", view.imageCache, view.model.currentKey, imgui.Vec2{X: 320 * view.guiScale, Y: 240 * view.guiScale})
+	render.TextureImage("Big texture", view.imageCache, view.currentResourceKey(), imgui.Vec2{X: 320 * view.guiScale, Y: 240 * view.guiScale})
+}
+
+func (view *View) currentResourceKey() resource.Key {
+	return view.indexedResourceKey(view.model.currentKey.Index)
+}
+
+func (view *View) indexedResourceKey(index int) resource.Key {
+	key := view.model.currentKey
+	info, _ := ids.Info(view.model.currentKey.ID)
+	if !info.List {
+		key.ID = key.ID.Plus(index)
+		key.Index = 0
+	} else {
+		key.Index = index
+	}
+	return key
 }
 
 func (view *View) hasModCurrentBitmap() bool {
-	return len(view.mod.ModifiedBlock(view.model.currentKey.Lang, view.model.currentKey.ID, view.model.currentKey.Index)) > 0
+	key := view.currentResourceKey()
+	return len(view.mod.ModifiedBlock(key.Lang, key.ID, key.Index)) > 0
 }
 
 func (view *View) requestExport(withError bool) {
-	filename := fmt.Sprintf("%05d_%03d_%s.png",
-		view.model.currentKey.ID.Value(),
-		view.model.currentKey.Index,
-		view.model.currentKey.Lang.String())
+	key := view.currentResourceKey()
+	filename := fmt.Sprintf("%05d_%03d_%s.png", key.ID.Value(), key.Index, key.Lang.String())
 	info := "File to be written: " + filename
 	var exportTo func(string)
 
@@ -178,7 +199,7 @@ func (view *View) requestExport(withError bool) {
 		}
 		defer func() { _ = writer.Close() }()
 
-		texture, err := view.imageCache.Texture(view.model.currentKey)
+		texture, err := view.imageCache.Texture(key)
 		if err != nil {
 			external.Export(view.modalStateMachine, "Image not available.\n"+info, exportTo, true)
 			return
@@ -266,12 +287,15 @@ func (view *View) requestSetBitmap(bmp bitmap.Bitmap) {
 }
 
 func (view *View) requestSetBitmapData(newData []byte) {
-	command := setBitmapCommand{
-		key:   view.model.currentKey,
-		model: &view.model,
+	resourceKey := view.currentResourceKey()
 
-		oldData: view.mod.ModifiedBlock(view.model.currentKey.Lang, view.model.currentKey.ID, view.model.currentKey.Index),
-		newData: newData,
+	command := setBitmapCommand{
+		displayKey: view.model.currentKey,
+		model:      &view.model,
+
+		resourceKey: resourceKey,
+		oldData:     view.mod.ModifiedBlock(resourceKey.Lang, resourceKey.ID, resourceKey.Index),
+		newData:     newData,
 	}
 	view.commander.Queue(command)
 }

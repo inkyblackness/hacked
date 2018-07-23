@@ -8,10 +8,11 @@ import (
 type setBitmapCommand struct {
 	model *viewModel
 
-	key resource.Key
+	displayKey resource.Key
 
-	oldData []byte
-	newData []byte
+	resourceKey resource.Key
+	oldData     []byte
+	newData     []byte
 }
 
 func (cmd setBitmapCommand) Do(trans cmd.Transaction) error {
@@ -23,9 +24,9 @@ func (cmd setBitmapCommand) Undo(trans cmd.Transaction) error {
 }
 
 func (cmd setBitmapCommand) perform(trans cmd.Transaction, data []byte) error {
-	trans.SetResourceBlock(cmd.key.Lang, cmd.key.ID, cmd.key.Index, data)
+	trans.SetResourceBlock(cmd.resourceKey.Lang, cmd.resourceKey.ID, cmd.resourceKey.Index, data)
 
 	cmd.model.restoreFocus = true
-	cmd.model.currentKey = cmd.key
+	cmd.model.currentKey = cmd.displayKey
 	return nil
 }
