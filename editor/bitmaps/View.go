@@ -28,12 +28,16 @@ var knownBitmapTypes = map[resource.ID]bitmapInfo{
 	ids.MfdDataBitmaps:        {"MFD Data Images", true},
 	ids.ObjectMaterialBitmaps: {"Object Materials", false},
 	ids.ObjectTextureBitmaps:  {"Object Textures", false},
+	ids.IconBitmaps:           {"Wall Icons", false},
+	ids.GraffitiBitmaps:       {"Graffiti", false},
 }
 
 var knownBitmapTypesOrder = []resource.ID{
 	ids.MfdDataBitmaps,
 	ids.ObjectMaterialBitmaps,
 	ids.ObjectTextureBitmaps,
+	ids.IconBitmaps,
+	ids.GraffitiBitmaps,
 }
 
 // View provides edit controls for bitmaps.

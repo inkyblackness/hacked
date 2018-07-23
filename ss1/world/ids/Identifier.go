@@ -24,6 +24,9 @@ const (
 	ObjectTextureBitmaps  resource.ID = 0x01DB
 	ObjectMaterialBitmaps resource.ID = 0x0884
 
+	IconBitmaps     resource.ID = 0x004E
+	GraffitiBitmaps resource.ID = 0x004F
+
 	MfdDataBitmaps resource.ID = 0x0028
 )
 
