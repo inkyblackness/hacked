@@ -6,6 +6,9 @@ import (
 	"os"
 	"time"
 
+	_ "image/gif"
+	_ "image/png"
+
 	"github.com/inkyblackness/hacked/editor"
 	"github.com/inkyblackness/hacked/ui/native"
 )

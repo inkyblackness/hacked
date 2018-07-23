@@ -9,6 +9,16 @@ type RGB struct {
 	Blue  uint8
 }
 
+// Color returns the RGB data as a regular Color entry.
+func (col RGB) Color(alpha byte) color.Color {
+	return color.RGBA{
+		R: col.Red,
+		G: col.Green,
+		B: col.Blue,
+		A: alpha,
+	}
+}
+
 // Palette describes a list of colors to be used by bitmaps.
 // It is an array of 256 RGB values.
 type Palette [256]RGB
@@ -21,12 +31,7 @@ func (pal Palette) ColorPalette(firstIndexTransparent bool) color.Palette {
 		if (index == 0) && firstIndexTransparent {
 			alpha = 0x00
 		}
-		result[index] = color.RGBA{
-			R: col.Red,
-			G: col.Green,
-			B: col.Blue,
-			A: alpha,
-		}
+		result[index] = col.Color(alpha)
 	}
 	return result
 }

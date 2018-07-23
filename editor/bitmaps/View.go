@@ -12,6 +12,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/render"
+	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
@@ -124,18 +125,41 @@ func (view *View) renderContent() {
 				view.model.currentKey.Index = newValue
 			})
 
-		if imgui.Button("Export") {
-			view.requestExport(false)
+		tex, err := view.imageCache.Texture(view.model.currentKey)
+
+		if imgui.Button("Clear") {
+			view.requestClear()
 		}
 		imgui.SameLine()
 		if imgui.Button("Import") {
-
+			view.requestImport(false)
 		}
+		if err == nil {
+			imgui.SameLine()
+			if imgui.Button("Export") {
+				view.requestExport(false)
+			}
+			if view.hasModCurrentBitmap() {
+				imgui.SameLine()
+				if imgui.Button("Remove") {
+					view.requestSetBitmapData(nil)
+				}
+			}
+
+			width, height := tex.Size()
+			imgui.LabelText("Width", fmt.Sprintf("%d", int(width)))
+			imgui.LabelText("Height", fmt.Sprintf("%d", int(height)))
+		}
+
 		imgui.PopItemWidth()
 	}
 	imgui.EndChild()
 	imgui.SameLine()
 	render.TextureImage("Big texture", view.imageCache, view.model.currentKey, imgui.Vec2{X: 320 * view.guiScale, Y: 240 * view.guiScale})
+}
+
+func (view *View) hasModCurrentBitmap() bool {
+	return len(view.mod.ModifiedBlock(view.model.currentKey.Lang, view.model.currentKey.ID, view.model.currentKey.Index)) > 0
 }
 
 func (view *View) requestExport(withError bool) {
@@ -149,19 +173,19 @@ func (view *View) requestExport(withError bool) {
 	exportTo = func(dirname string) {
 		writer, err := os.Create(filepath.Join(dirname, filename))
 		if err != nil {
-			external.Export(view.modalStateMachine, info, exportTo, true)
+			external.Export(view.modalStateMachine, "Could not create file.\n"+info, exportTo, true)
 			return
 		}
 		defer func() { _ = writer.Close() }()
 
 		texture, err := view.imageCache.Texture(view.model.currentKey)
 		if err != nil {
-			external.Export(view.modalStateMachine, info, exportTo, true)
+			external.Export(view.modalStateMachine, "Image not available.\n"+info, exportTo, true)
 			return
 		}
 		palette, err := view.paletteCache.Palette(0)
 		if err != nil {
-			external.Export(view.modalStateMachine, info, exportTo, true)
+			external.Export(view.modalStateMachine, "Palette not available.\n"+info, exportTo, true)
 			return
 		}
 
@@ -178,4 +202,76 @@ func (view *View) requestExport(withError bool) {
 	}
 
 	external.Export(view.modalStateMachine, info, exportTo, withError)
+}
+
+func (view *View) requestImport(withError bool) {
+	info := "File should be either a PNG or a GIF file."
+
+	var fileHandler func(string)
+
+	fileHandler = func(filename string) {
+		palette, err := view.paletteCache.Palette(0)
+		if err != nil {
+			external.Export(view.modalStateMachine, "No palette loaded.\n"+info, fileHandler, true)
+			return
+		}
+		reader, err := os.Open(filename)
+		if err != nil {
+			external.Import(view.modalStateMachine, "Could not open file.\n"+info, fileHandler, true)
+			return
+		}
+		defer func() { _ = reader.Close() }()
+		img, _, err := image.Decode(reader)
+		if err != nil {
+			external.Import(view.modalStateMachine, "File not recognized as image.\n"+info, fileHandler, true)
+			return
+		}
+
+		bitmapper := bitmap.NewBitmapper(palette.Palette())
+		bmp := bitmapper.Map(img)
+		view.requestSetBitmap(bmp)
+	}
+
+	external.Import(view.modalStateMachine, info, fileHandler, false)
+}
+
+func (view *View) requestClear() {
+	bmp := bitmap.Bitmap{
+		Header: bitmap.Header{
+			Width:  1,
+			Height: 1,
+		},
+		Pixels: []byte{0x00},
+	}
+	view.requestSetBitmap(bmp)
+}
+
+func (view *View) requestSetBitmap(bmp bitmap.Bitmap) {
+	highestBitShift := func(value int16) (result byte) {
+		if value != 0 {
+			for (value >> result) != 1 {
+				result++
+			}
+		}
+		return
+	}
+
+	bmp.Header.Flags = bitmap.FlagTransparent
+	bmp.Header.Type = bitmap.TypeCompressed8Bit
+	bmp.Header.WidthFactor = highestBitShift(bmp.Header.Width)
+	bmp.Header.HeightFactor = highestBitShift(bmp.Header.Height)
+	bmp.Header.Stride = uint16(bmp.Header.Width)
+	data := bitmap.Encode(&bmp, 0)
+	view.requestSetBitmapData(data)
+}
+
+func (view *View) requestSetBitmapData(newData []byte) {
+	command := setBitmapCommand{
+		key:   view.model.currentKey,
+		model: &view.model,
+
+		oldData: view.mod.ModifiedBlock(view.model.currentKey.Lang, view.model.currentKey.ID, view.model.currentKey.Index),
+		newData: newData,
+	}
+	view.commander.Queue(command)
 }
