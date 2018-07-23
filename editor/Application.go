@@ -426,7 +426,7 @@ func (app *Application) initView() {
 	app.levelObjectsView = levels.NewObjectsView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.messagesView = messages.NewMessagesView(app.mod, app.messagesCache, app.cp, app.movieCache, app.textureCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.movieCache, &app.modalState, app.clipboard, app.GuiScale, app)
-	app.bitmapsView = bitmaps.NewBitmapsView(app.mod, app.textureCache, &app.modalState, app.clipboard, app.GuiScale, app)
+	app.bitmapsView = bitmaps.NewBitmapsView(app.mod, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 
 	app.eventDispatcher.RegisterHandler(app.onLevelObjectRequestCreateEvent)

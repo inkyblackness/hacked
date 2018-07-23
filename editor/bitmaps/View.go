@@ -2,6 +2,10 @@ package bitmaps
 
 import (
 	"fmt"
+	"image"
+	"image/png"
+	"os"
+	"path/filepath"
 
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/external"
@@ -27,8 +31,9 @@ var knownBitmapTypesOrder = []resource.ID{ids.MfdDataBitmaps}
 
 // View provides edit controls for bitmaps.
 type View struct {
-	mod        *model.Mod
-	imageCache *graphics.TextureCache
+	mod          *model.Mod
+	imageCache   *graphics.TextureCache
+	paletteCache *graphics.PaletteCache
 
 	modalStateMachine gui.ModalStateMachine
 	clipboard         external.Clipboard
@@ -39,12 +44,13 @@ type View struct {
 }
 
 // NewBitmapsView returns a new instance.
-func NewBitmapsView(mod *model.Mod, imageCache *graphics.TextureCache,
+func NewBitmapsView(mod *model.Mod, imageCache *graphics.TextureCache, paletteCache *graphics.PaletteCache,
 	modalStateMachine gui.ModalStateMachine, clipboard external.Clipboard,
 	guiScale float32, commander cmd.Commander) *View {
 	view := &View{
-		mod:        mod,
-		imageCache: imageCache,
+		mod:          mod,
+		imageCache:   imageCache,
+		paletteCache: paletteCache,
 
 		modalStateMachine: modalStateMachine,
 		clipboard:         clipboard,
@@ -119,7 +125,7 @@ func (view *View) renderContent() {
 			})
 
 		if imgui.Button("Export") {
-
+			view.requestExport(false)
 		}
 		imgui.SameLine()
 		if imgui.Button("Import") {
@@ -130,4 +136,46 @@ func (view *View) renderContent() {
 	imgui.EndChild()
 	imgui.SameLine()
 	render.TextureImage("Big texture", view.imageCache, view.model.currentKey, imgui.Vec2{X: 320 * view.guiScale, Y: 240 * view.guiScale})
+}
+
+func (view *View) requestExport(withError bool) {
+	filename := fmt.Sprintf("%05d_%03d_%s.png",
+		view.model.currentKey.ID.Value(),
+		view.model.currentKey.Index,
+		view.model.currentKey.Lang.String())
+	info := "File to be written: " + filename
+	var exportTo func(string)
+
+	exportTo = func(dirname string) {
+		writer, err := os.Create(filepath.Join(dirname, filename))
+		if err != nil {
+			external.Export(view.modalStateMachine, info, exportTo, true)
+			return
+		}
+		defer func() { _ = writer.Close() }()
+
+		texture, err := view.imageCache.Texture(view.model.currentKey)
+		if err != nil {
+			external.Export(view.modalStateMachine, info, exportTo, true)
+			return
+		}
+		palette, err := view.paletteCache.Palette(0)
+		if err != nil {
+			external.Export(view.modalStateMachine, info, exportTo, true)
+			return
+		}
+
+		width, height := texture.Size()
+		imageRect := image.Rect(0, 0, int(width), int(height))
+		imagePal := palette.Palette().ColorPalette(true)
+		paletted := image.NewPaletted(imageRect, imagePal)
+		paletted.Pix = texture.PixelData()
+		err = png.Encode(writer, paletted)
+		if err != nil {
+			external.Export(view.modalStateMachine, info, exportTo, true)
+			return
+		}
+	}
+
+	external.Export(view.modalStateMachine, info, exportTo, withError)
 }

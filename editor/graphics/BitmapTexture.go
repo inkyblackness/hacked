@@ -9,6 +9,8 @@ type BitmapTexture struct {
 
 	width, height float32
 	u, v          float32
+
+	pixelData []byte
 }
 
 func powerOfTwo(value int) int {
@@ -27,9 +29,13 @@ func NewBitmapTexture(gl opengl.OpenGL, width, height int, pixelData []byte) *Bi
 	textureHeight := powerOfTwo(height)
 	tex := &BitmapTexture{
 		gl:     gl,
+		handle: gl.GenTextures(1)[0],
+
 		width:  float32(width),
 		height: float32(height),
-		handle: gl.GenTextures(1)[0]}
+
+		pixelData: pixelData,
+	}
 	tex.u = tex.width / float32(textureWidth)
 	tex.v = tex.height / float32(textureHeight)
 
@@ -66,6 +72,11 @@ func (tex *BitmapTexture) Dispose() {
 // Handle returns the texture handle.
 func (tex *BitmapTexture) Handle() uint32 {
 	return tex.handle
+}
+
+// PixelData returns the original paletted pixel data.
+func (tex *BitmapTexture) PixelData() []byte {
+	return tex.pixelData
 }
 
 // Size returns the dimensions of the bitmap, in pixels.
