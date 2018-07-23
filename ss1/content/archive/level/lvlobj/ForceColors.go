@@ -1,6 +1,6 @@
 package lvlobj
 
-var forceColors = map[int64]string{
+var forceColors = map[int]string{
 	0: "Default (red)",
 
 	247: "Gray, medium",

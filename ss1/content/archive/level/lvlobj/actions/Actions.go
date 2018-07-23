@@ -54,7 +54,7 @@ var showCutsceneDetails = interpreters.New().
 	With("CutsceneIndex", 0, 4).As(interpreters.EnumValue(map[uint32]string{0: "Death", 1: "Intro", 2: "Ending"})).
 	With("EndGameFlag", 4, 4).As(interpreters.EnumValue(map[uint32]string{0: "No (not working)", 1: "Yes"}))
 
-func pointOneSecond(value int64) string {
+func pointOneSecond(value int) string {
 	return fmt.Sprintf("%.1f sec", float64(value)*0.1)
 }
 
@@ -132,10 +132,7 @@ var changeTerrainDetails = interpreters.New().
 
 var scheduledTrapDetails = interpreters.New().
 	With("ObjectID", 0, 4).As(interpreters.ObjectID()).
-	With("TimeInterval", 4, 4).As(interpreters.FormattedRangedValue(0, 6000,
-	func(value int64) string {
-		return fmt.Sprintf("%.1fs", float64(value)/10.0)
-	})).
+	With("TimeInterval", 4, 4).As(interpreters.FormattedRangedValue(0, 6000, pointOneSecond)).
 	With("ActivationValue", 8, 4).As(interpreters.EnumValue(map[uint32]string{0: "Off",
 	0xFFFF: "On (0xFFFF)", 0x10000: "On (0x10000)", 0x11111: "On (0x11111)"})).
 	With("Variance", 12, 2).As(interpreters.RangedValue(0, 512))

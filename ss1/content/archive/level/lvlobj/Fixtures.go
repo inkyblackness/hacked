@@ -41,7 +41,7 @@ var cyberspaceTerminal = gameVariablePanel.
 var energyChargeStation = gameVariablePanel.
 	With("EnergyDelta", 6, 4).As(interpreters.RangedValue(0, 255)).
 	With("RechargeTime", 10, 4).As(interpreters.FormattedRangedValue(0, 3600,
-	func(value int64) string {
+	func(value int) string {
 		return fmt.Sprintf("%d sec", value)
 	})).
 	With("TriggerObjectID", 14, 4).As(interpreters.ObjectID()).

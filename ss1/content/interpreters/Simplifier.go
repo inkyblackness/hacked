@@ -1,12 +1,13 @@
 package interpreters
 
 import (
-	"fmt"
 	"math"
 )
 
-// RawValueFormatter converts a raw value to a textual form.
-type RawValueFormatter func(value int64) string
+// RawValueFormatter provides the format function for given value.
+// If nothing special is to be displayed, an empty string should be returned.
+// The handler is responsible for adding the number value representation.
+type RawValueFormatter func(value int) string
 
 // RawValueHandler is for a simple value range.
 type RawValueHandler func(minValue, maxValue int64, formatter RawValueFormatter)
@@ -23,8 +24,8 @@ type ObjectIDHandler func()
 // SpecialHandler is for rare occasions.
 type SpecialHandler func()
 
-func basicToString(value int64) string {
-	return fmt.Sprintf("%v", value)
+func basicToString(value int) string {
+	return ""
 }
 
 // RangedValue creates a field range for specific minimum and maximum values.

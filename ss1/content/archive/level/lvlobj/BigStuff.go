@@ -59,11 +59,11 @@ var forceBridge = baseBigStuff.
 	With("Size", 2, 1).As(interpreters.Bitfield(map[uint32]string{0x0F: "X", 0xF0: "Y"})).
 	With("Height", 3, 1).As(interpreters.SpecialValue("ObjectHeight")).
 	With("Color", 6, 1).As(interpreters.FormattedRangedValue(0, 255,
-	func(value int64) (result string) {
+	func(value int) (result string) {
 		if colorText, defined := forceColors[value]; defined {
-			result = fmt.Sprintf("%s  - raw: %d", colorText, value)
+			result = fmt.Sprintf("%s", colorText)
 		} else {
-			result = fmt.Sprintf("%d", value)
+			result = ""
 		}
 		return result
 	}))
