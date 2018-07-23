@@ -10,6 +10,7 @@ import (
 type saveModAsWaitingState struct {
 	view        *View
 	failureTime time.Time
+	errorInfo   string
 }
 
 func (state *saveModAsWaitingState) Render() {
@@ -20,6 +21,9 @@ func (state *saveModAsWaitingState) Render() {
 		if !state.failureTime.IsZero() {
 			imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 0, Z: 0, W: 1})
 			imgui.Text("Previous attempt failed, not a proper folder.\nPlease check and try again.")
+			if len(state.errorInfo) > 0 {
+				imgui.Text(state.errorInfo)
+			}
 			imgui.PopStyleColor()
 			if time.Since(state.failureTime).Seconds() > 5 {
 				state.failureTime = time.Time{}

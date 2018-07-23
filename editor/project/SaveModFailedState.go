@@ -7,7 +7,8 @@ import (
 )
 
 type saveModFailedState struct {
-	view *View
+	view      *View
+	errorInfo string
 }
 
 func (state saveModFailedState) Render() {
@@ -15,6 +16,7 @@ func (state saveModFailedState) Render() {
 	state.view.fileState = &saveModAsWaitingState{
 		view:        state.view,
 		failureTime: time.Now(),
+		errorInfo:   state.errorInfo,
 	}
 	state.view.fileState.Render()
 }

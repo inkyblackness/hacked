@@ -227,7 +227,8 @@ func (view *View) requestSaveMod(modPath string) {
 	err := saveModResourcesTo(view.mod.ModifiedResources(), modPath, view.mod.ModifiedFilenames())
 	if err != nil {
 		view.fileState = &saveModFailedState{
-			view: view,
+			view:      view,
+			errorInfo: err.Error(),
 		}
 	} else {
 		view.mod.SetPath(modPath)
