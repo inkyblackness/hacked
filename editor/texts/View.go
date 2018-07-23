@@ -145,6 +145,7 @@ func (view *View) renderContent() {
 			view.requestImportAudio()
 		}
 	}
+	imgui.Separator()
 
 	imgui.PopItemWidth()
 
@@ -198,12 +199,23 @@ func (view View) hasAudio() bool {
 	return view.model.currentKey.ID == ids.TrapMessageTexts
 }
 
-func (view *View) currentSound() (sound audio.L8) {
-	if view.hasAudio() {
-		key := view.model.currentKey
-		key.ID = textToAudio[key.ID]
-		sound, _ = view.movieCache.Audio(key)
+func (view *View) currentSoundKey() (key resource.Key, hasAudio bool) {
+	if !view.hasAudio() {
+		return key, false
 	}
+	key = view.model.currentKey
+	key.ID = textToAudio[key.ID].Plus(key.Index)
+	key.Index = 0
+	return key, true
+
+}
+
+func (view *View) currentSound() (sound audio.L8) {
+	key, hasAudio := view.currentSoundKey()
+	if !hasAudio {
+		return
+	}
+	sound, _ = view.movieCache.Audio(key)
 	return
 }
 
@@ -233,7 +245,7 @@ func (view *View) setTextFromClipboard() {
 	oldData, isList := view.currentModification()
 	if isList {
 		newData := view.cp.Encode(blockedValue[0])
-		view.requestSetTextLine(oldData[0], newData, false)
+		view.requestSetTextLine(oldData[0], newData, false, nil)
 	} else {
 		newData := make([][]byte, len(blockedValue))
 		for index, blockLine := range blockedValue {
@@ -247,7 +259,7 @@ func (view *View) clearText() {
 	emptyLine := view.cp.Encode("")
 	currentModification, isList := view.currentModification()
 	if isList && !bytes.Equal(currentModification[0], emptyLine) {
-		view.requestSetTextLine(currentModification[0], emptyLine, true)
+		view.requestSetTextLine(currentModification[0], emptyLine, true, &audio.L8{SampleRate: 22050, Samples: []byte{0x80}})
 	} else if !isList && ((len(currentModification) != 1) || !bytes.Equal(currentModification[0], []byte{0x00})) {
 		view.requestSetTextPage(currentModification, [][]byte{emptyLine})
 	}
@@ -256,44 +268,49 @@ func (view *View) clearText() {
 func (view *View) removeText() {
 	currentModification, isList := view.currentModification()
 	if isList && (len(currentModification[0]) > 0) {
-		view.requestSetTextLine(currentModification[0], nil, true)
+		view.requestSetTextLine(currentModification[0], nil, true, nil)
 	} else if !isList && (len(currentModification) > 0) {
 		view.requestSetTextPage(currentModification, nil)
 	}
 }
 
 func (view *View) requestExportAudio(sound audio.L8) {
-	filename := fmt.Sprintf("%05d_%s.wav",
-		textToAudio[view.model.currentKey.ID].Plus(view.model.currentKey.Index).Value(),
-		view.model.currentKey.Lang.String())
+	key, hasAudio := view.currentSoundKey()
+	if !hasAudio {
+		return
+	}
+	filename := fmt.Sprintf("%05d_%s.wav", key.ID.Value(), view.model.currentKey.Lang.String())
 
 	external.ExportAudio(view.modalStateMachine, filename, sound)
 }
 
 func (view *View) requestImportAudio() {
 	external.ImportAudio(view.modalStateMachine, func(sound audio.L8) {
-		movieData := movie.ContainSoundData(sound)
-		view.requestSetAudio(movieData)
+		view.requestSetAudio(sound)
 	})
 }
 
-func (view *View) setAudioCommand(data []byte) cmd.Command {
-	dataKey := resource.KeyOf(textToAudio[view.model.currentKey.ID].Plus(view.model.currentKey.Index), view.model.currentKey.Lang, 0)
-	return setAudioCommand{
+func (view *View) setAudioCommand(sound *audio.L8) cmd.Command {
+	dataKey, _ := view.currentSoundKey()
+	command := setAudioCommand{
 		restoreKey: view.model.currentKey,
 		model:      &view.model,
 
 		dataKey: dataKey,
 		oldData: view.mod.ModifiedBlocks(dataKey.Lang, dataKey.ID),
-		newData: [][]byte{data},
 	}
+	if sound != nil {
+		movieData := movie.ContainSoundData(*sound)
+		command.newData = [][]byte{movieData}
+	}
+	return command
 }
 
-func (view *View) requestSetAudio(data []byte) {
-	view.commander.Queue(view.setAudioCommand(data))
+func (view *View) requestSetAudio(sound audio.L8) {
+	view.commander.Queue(view.setAudioCommand(&sound))
 }
 
-func (view *View) requestSetTextLine(oldData []byte, newData []byte, clearAudio bool) {
+func (view *View) requestSetTextLine(oldData []byte, newData []byte, withAudio bool, sound *audio.L8) {
 	commands := cmd.List{
 		setTextLineCommand{
 			key:     view.model.currentKey,
@@ -302,8 +319,8 @@ func (view *View) requestSetTextLine(oldData []byte, newData []byte, clearAudio 
 			newData: newData,
 		},
 	}
-	if clearAudio && view.hasAudio() {
-		commands = append(commands, view.setAudioCommand(nil))
+	if withAudio && view.hasAudio() {
+		commands = append(commands, view.setAudioCommand(sound))
 	}
 	view.commander.Queue(commands)
 }
