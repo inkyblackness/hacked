@@ -60,7 +60,7 @@ func (view *View) renderContent() {
 	urlLine("Community", communityURL)
 	urlLine("Project", projectURL)
 	imgui.Separator()
-	imgui.Text("Thanks to: @3RDPlayer: testing, @ToxicFrog: name idea")
+	imgui.Text("Thanks to: 3RDPlayer: testing, ToxicFrog: name idea")
 
 	if imgui.Button("OK") {
 		imgui.CloseCurrentPopup()
