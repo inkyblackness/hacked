@@ -43,22 +43,22 @@ func (view *LicensesView) renderContent() {
 		imgui.Text("System Shock by Night Dive Studios, LLC.\nOriginally by Looking Glass Technologies")
 		imgui.TreePop()
 	}
-	if imgui.TreeNode("InkyBlackness - HackEd") {
-		imgui.Text(inkyblacknessHackedLicense)
-		imgui.TreePop()
+	add := func(title, license string) {
+		if imgui.TreeNode(title) {
+			imgui.Text(license)
+			imgui.TreePop()
+		}
 	}
-	if imgui.TreeNode("InkyBlackness - imgui") {
-		imgui.Text(inkyblacknessImGuiLicense)
-		imgui.TreePop()
-	}
-	if imgui.TreeNode("Dear ImGui") {
-		imgui.Text(dearImGuiLicense)
-		imgui.TreePop()
-	}
-	if imgui.TreeNode("MinGW-w64") {
-		imgui.Text(mingwLicense)
-		imgui.TreePop()
-	}
+
+	add("InkyBlackness - HackEd", inkyblacknessHackedLicense)
+	add("InkyBlackness - imgui", inkyblacknessImGuiLicense)
+	add("go-gl/glfw - Go bindings for GLFW 3", goglGlfwLicense)
+	add("go-gl/gl", goglOpenGLLicense)
+	add("go-gl/mathgl", goglMathGLLicense)
+	add("Dear ImGui", dearImGuiLicense)
+	add("GLFW", glfwLicense)
+	add("MinGW-w64", mingwLicense)
+
 	imgui.Separator()
 	if imgui.Button("OK") {
 		imgui.CloseCurrentPopup()
