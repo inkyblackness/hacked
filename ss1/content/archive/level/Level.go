@@ -277,15 +277,39 @@ func (lvl *Level) removeCrossReferences(start int, next func(ObjectCrossReferenc
 		entry := lvl.objectCrossRefTable[index]
 
 		tile := lvl.Tile(int(entry.TileX), int(entry.TileY))
-		// TODO: walk tile chain
-		if (tile != nil) && (tile.FirstObjectIndex == int16(index)) {
-			tile.FirstObjectIndex = entry.NextInTile
+		if tile != nil {
+			if tile.FirstObjectIndex == int16(index) {
+				tile.FirstObjectIndex = entry.NextInTile
+			} else {
+				otherIndex := tile.FirstObjectIndex
+				for otherIndex != 0 {
+					otherEntry := &lvl.objectCrossRefTable[otherIndex]
+					otherIndex = otherEntry.NextInTile
+					if otherEntry.NextInTile == int16(index) {
+						otherEntry.NextInTile = entry.NextInTile
+					}
+				}
+			}
 		}
+
 		obj := lvl.Object(entry.ObjectID)
-		// TODO: walk object chain
-		if (obj != nil) && (obj.CrossReferenceTableIndex == int16(index)) {
-			obj.CrossReferenceTableIndex = entry.NextTileForObj
+		if obj != nil {
+			if entry.NextTileForObj == int16(index) {
+				obj.CrossReferenceTableIndex = 0
+			} else if obj.CrossReferenceTableIndex == int16(index) {
+				obj.CrossReferenceTableIndex = entry.NextTileForObj
+			} else {
+				otherIndex := obj.CrossReferenceTableIndex
+				for otherIndex != 0 {
+					otherEntry := &lvl.objectCrossRefTable[otherIndex]
+					otherIndex = otherEntry.NextTileForObj
+					if otherEntry.NextTileForObj == int16(index) {
+						otherEntry.NextTileForObj = entry.NextTileForObj
+					}
+				}
+			}
 		}
+
 		lvl.objectCrossRefTable.Release(index)
 
 		index = next(entry)

@@ -826,7 +826,11 @@ func (view *ObjectsView) requestBaseChange(lvl *level.Level, modifier func(*leve
 	for _, id := range objectIDs {
 		obj := lvl.Object(id)
 		if obj != nil {
+			oldX, oldY := obj.X.Tile(), obj.Y.Tile()
 			modifier(obj)
+			if (oldX != obj.X.Tile()) || (oldY != obj.Y.Tile()) {
+				lvl.UpdateObjectLocation(id)
+			}
 		}
 	}
 
