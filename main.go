@@ -9,6 +9,7 @@ import (
 	_ "image/gif"
 	_ "image/png"
 
+	"github.com/inkyblackness/hacked/crash"
 	"github.com/inkyblackness/hacked/editor"
 	"github.com/inkyblackness/hacked/ui/native"
 )
@@ -31,7 +32,10 @@ func main() {
 	}
 	deferrer := make(chan func(), 100)
 
-	err := native.Run(app.InitializeWindow, "InkyBlackness - HackEd - "+app.Version, 30.0, deferrer)
+	versionInfo := "InkyBlackness - HackEd - " + app.Version
+	defer crash.Handler(versionInfo)
+
+	err := native.Run(app.InitializeWindow, versionInfo, 30.0, deferrer)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to run application: %v\n", err)
 	}
