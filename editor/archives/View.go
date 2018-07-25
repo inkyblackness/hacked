@@ -154,7 +154,7 @@ func (view *View) requestRemoveLevel(id int) {
 		}
 
 		levelIDBegin := ids.LevelResourcesStart.Plus(lvlids.PerLevel * id)
-		for offset := 0; offset < lvlids.PerLevel; offset++ {
+		for offset := lvlids.FirstUsed; offset < lvlids.PerLevel; offset++ {
 			resourceID := levelIDBegin.Plus(offset)
 			oldData := view.mod.ModifiedBlock(resource.LangAny, resourceID, 0)
 			if len(oldData) > 0 {
