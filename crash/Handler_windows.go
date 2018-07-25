@@ -1,6 +1,6 @@
 package crash
 
-//#include <Windows.h>
+//#include <windows.h>
 import "C"
 import (
 	"fmt"
