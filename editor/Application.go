@@ -74,6 +74,7 @@ type Application struct {
 	textsView        *texts.View
 	bitmapsView      *bitmaps.View
 	aboutView        *about.View
+	licensesView     *about.LicensesView
 
 	modalState gui.ModalStateWrapper
 
@@ -155,6 +156,7 @@ func (app *Application) render() {
 
 	app.handleFailure()
 	app.aboutView.Render()
+	app.licensesView.Render()
 
 	app.modalState.Render()
 
@@ -428,6 +430,7 @@ func (app *Application) initView() {
 	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.movieCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.bitmapsView = bitmaps.NewBitmapsView(app.mod, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
+	app.licensesView = about.NewLicensesView(app.GuiScale)
 
 	app.eventDispatcher.RegisterHandler(app.onLevelObjectRequestCreateEvent)
 }
@@ -496,6 +499,9 @@ func (app *Application) renderMainMenu() {
 		if imgui.BeginMenu("Help") {
 			if imgui.MenuItem("About...") {
 				app.aboutView.Show()
+			}
+			if imgui.MenuItem("Licenses") {
+				app.licensesView.Show()
 			}
 			imgui.EndMenu()
 		}

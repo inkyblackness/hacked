@@ -60,8 +60,9 @@ func (view *View) renderContent() {
 	urlLine("Community", communityURL)
 	urlLine("Project", projectURL)
 	imgui.Separator()
-	imgui.Text("Thanks to: 3RDPlayer: testing, ToxicFrog: name idea")
-
+	imgui.Text("Thanks to: 3RDPlayer: testing, ToxicFrog: name idea.")
+	imgui.Text("Written in Go. Because I can.")
+	imgui.Separator()
 	if imgui.Button("OK") {
 		imgui.CloseCurrentPopup()
 	}
