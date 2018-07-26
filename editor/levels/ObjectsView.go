@@ -342,7 +342,13 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 
 	simplifier := interpreters.NewSimplifier(func(minValue, maxValue int64, formatter interpreters.RawValueFormatter) {
 		values.RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
-			func(u values.Unifier) int { return int(u.Unified().(int32)) },
+			func(u values.Unifier) int {
+				unifiedValue := u.Unified().(int32)
+				if (minValue == -1) && (maxValue == 0x7FFF) {
+					unifiedValue = int32(int16(unifiedValue))
+				}
+				return int(unifiedValue)
+			},
 			func(value int) string {
 				result := formatter(value)
 				if len(result) == 0 {
