@@ -55,9 +55,8 @@ type unifierMatchedState struct {
 func (state unifierMatchedState) add(value interface{}) unifierState {
 	if state.value == value {
 		return state
-	} else {
-		return unifierMismatchedState{}
 	}
+	return unifierMismatchedState{}
 }
 
 func (state unifierMatchedState) unified() interface{} {

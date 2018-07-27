@@ -10,7 +10,7 @@ import (
 // could not be read/decoded properly.
 func UnpackControlWords(data []byte) (words []ControlWord, err error) {
 	if len(data) < 4 {
-		return nil, FormatError
+		return nil, ErrFormat
 	}
 
 	var controlBytes uint32
@@ -21,7 +21,7 @@ func UnpackControlWords(data []byte) (words []ControlWord, err error) {
 		return
 	}
 	if controlBytes%bytesPerControlWord != 0 {
-		return nil, FormatError
+		return nil, ErrFormat
 	}
 	wordCount := int(controlBytes / bytesPerControlWord)
 	unpacked := 0
@@ -35,7 +35,7 @@ func UnpackControlWords(data []byte) (words []ControlWord, err error) {
 		}
 		times := packed.Times()
 		if times > len(words)-unpacked {
-			return nil, FormatError
+			return nil, ErrFormat
 		}
 		for i := 0; i < times; i++ {
 			words[unpacked+i] = packed.Value()

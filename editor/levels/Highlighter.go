@@ -9,7 +9,7 @@ import (
 	"github.com/inkyblackness/hacked/ui/opengl"
 )
 
-var HighlighterVertexShaderSource = `
+var highlighterVertexShaderSource = `
 #version 150
 precision mediump float;
 
@@ -24,7 +24,7 @@ void main(void) {
 }
 `
 
-var HighlighterFragmentShaderSource = `
+var highlighterFragmentShaderSource = `
 #version 150
 precision mediump float;
 
@@ -53,7 +53,7 @@ type Highlighter struct {
 // NewHighlighter returns a new instance of Highlighter.
 func NewHighlighter(context *render.Context) *Highlighter {
 	gl := context.OpenGL
-	program, programErr := opengl.LinkNewStandardProgram(gl, HighlighterVertexShaderSource, HighlighterFragmentShaderSource)
+	program, programErr := opengl.LinkNewStandardProgram(gl, highlighterVertexShaderSource, highlighterFragmentShaderSource)
 
 	if programErr != nil {
 		panic(fmt.Errorf("highlighter shader failed: %v", programErr))

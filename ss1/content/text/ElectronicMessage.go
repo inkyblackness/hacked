@@ -49,7 +49,7 @@ type ElectronicMessage struct {
 	TerseText string
 }
 
-// NewElectronicMessage returns an instance of an empty electronic message.
+// EmptyElectronicMessage returns an instance of an empty electronic message.
 func EmptyElectronicMessage() ElectronicMessage {
 	message := ElectronicMessage{
 		NextMessage:  -1,

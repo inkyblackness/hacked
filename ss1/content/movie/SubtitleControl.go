@@ -3,6 +3,7 @@ package movie
 // SubtitleControl specifies how to interpret a subtitle entry.
 type SubtitleControl uint32
 
+// Subtitle constants
 const (
 	SubtitleArea    = SubtitleControl(0x41455241)
 	SubtitleTextStd = SubtitleControl(0x20445453)

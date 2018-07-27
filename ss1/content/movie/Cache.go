@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 )
 
+// Cache retrieves movie container from a localizer and keeps them decoded until they are invalidated.
 type Cache struct {
 	localizer resource.Localizer
 

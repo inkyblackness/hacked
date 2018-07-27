@@ -4,4 +4,5 @@ import (
 	"fmt"
 )
 
-var FormatError = fmt.Errorf("format Error")
+// ErrFormat indicates errors in the compression format.
+var ErrFormat = fmt.Errorf("format Error")

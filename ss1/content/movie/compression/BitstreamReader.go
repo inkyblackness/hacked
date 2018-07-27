@@ -12,7 +12,7 @@ type BitstreamReader struct {
 	bitsBuffered uint64
 }
 
-// NewBitsreamReader returns a new instance of a bistream reader using the provided byte slice as source.
+// NewBitstreamReader returns a new instance of a bistream reader using the provided byte slice as source.
 func NewBitstreamReader(data []byte) *BitstreamReader {
 	return &BitstreamReader{
 		source:       data,

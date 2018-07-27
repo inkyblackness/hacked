@@ -32,8 +32,7 @@ func moveTileHeightFormatterFor(levelHeight level.HeightShift) func(int) string 
 	return func(value int) string {
 		if (value >= 0) && (value < int(level.TileHeightUnitMax)) {
 			return normalFormatter(value)
-		} else {
-			return "Don't change  - raw: %d"
 		}
+		return "Don't change  - raw: %d"
 	}
 }

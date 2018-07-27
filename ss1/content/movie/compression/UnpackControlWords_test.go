@@ -12,19 +12,19 @@ import (
 func TestUnpackControlWordsFormatErrorForEmptyArray(t *testing.T) {
 	_, err := compression.UnpackControlWords(nil)
 
-	assert.Equal(t, compression.FormatError, err)
+	assert.Equal(t, compression.ErrFormat, err)
 }
 
 func TestUnpackControlWordsFormatErrorForTooSmallSizeField(t *testing.T) {
 	_, err := compression.UnpackControlWords(make([]byte, 3))
 
-	assert.Equal(t, compression.FormatError, err)
+	assert.Equal(t, compression.ErrFormat, err)
 }
 
 func TestUnpackControlWordsFormatErrorForSizeValueNotMultipleOfThree(t *testing.T) {
 	_, err := compression.UnpackControlWords([]byte{0x02, 0x00, 0x00, 0x00, 0xCC, 0xBB, 0xAA, 0x01})
 
-	assert.Equal(t, compression.FormatError, err)
+	assert.Equal(t, compression.ErrFormat, err)
 }
 
 func TestUnpackControlWordsEmptyResultForNoEntries(t *testing.T) {

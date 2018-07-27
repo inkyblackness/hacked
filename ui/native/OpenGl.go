@@ -149,7 +149,7 @@ func (native *OpenGL) DrawArrays(mode uint32, first int32, count int32) {
 
 // DrawElements implements the opengl.OpenGL interface.
 func (native *OpenGL) DrawElements(mode uint32, count int32, elementType uint32, indices uintptr) {
-	gl.DrawElements(mode, count, elementType, unsafe.Pointer(indices)) // nolint: vet,gas
+	gl.DrawElements(mode, count, elementType, unsafe.Pointer(indices)) // nolint: govet,gas
 }
 
 // Enable implements the opengl.OpenGL interface.

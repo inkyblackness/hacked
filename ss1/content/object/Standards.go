@@ -6,7 +6,7 @@ func StandardPropertiesTable() PropertiesTable {
 	return NewPropertiesTable(StandardDescriptors())
 }
 
-// StandardProperties returns an array of class descriptors that represent the standard
+// StandardDescriptors returns an array of class descriptors that represent the standard
 // configuration of the existing objprop.dat file.
 func StandardDescriptors() Descriptors {
 	var result Descriptors

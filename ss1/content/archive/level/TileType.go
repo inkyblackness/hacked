@@ -20,9 +20,8 @@ func (t TileType) Info() TileTypeInfo {
 func (t TileType) String() string {
 	if int(t) < len(tileTypeInfoList) {
 		return tileTypeInfoList[t].Name
-	} else {
-		return fmt.Sprintf("Unknown%02X", int(t))
 	}
+	return fmt.Sprintf("Unknown%02X", int(t))
 }
 
 // Tiles come in different forms:
