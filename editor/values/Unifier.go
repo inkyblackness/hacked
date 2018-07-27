@@ -7,7 +7,7 @@ type Unifier struct {
 
 // NewUnifier returns a new instance.
 func NewUnifier() Unifier {
-	return Unifier{unifierInitState{}}
+	return Unifier{state: unifierInitState{}}
 }
 
 // Add unifies the given value to the current state.
@@ -37,7 +37,7 @@ type unifierState interface {
 type unifierInitState struct{}
 
 func (state unifierInitState) add(value interface{}) unifierState {
-	return unifierMatchedState{value}
+	return unifierMatchedState{value: value}
 }
 
 func (state unifierInitState) unified() interface{} {

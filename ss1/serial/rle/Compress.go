@@ -5,7 +5,7 @@ import "io"
 // Compress compresses the given byte array into the given writer.
 // The optional reference array is used as a delta basis. If provided, bytes will be skipped
 // where the data equals the reference.
-func Compress(writer io.Writer, data []byte, reference []byte) {
+func Compress(writer io.Writer, data []byte, reference []byte) error {
 	end := len(data)
 	refLen := len(reference)
 	ref := func(index int) byte {
@@ -44,10 +44,16 @@ func Compress(writer io.Writer, data []byte, reference []byte) {
 		constByteCount := countConstantBytes(start, data[start])
 
 		if identicalByteCount > 3 {
-			skipBytes(writer, identicalByteCount)
+			err := skipBytes(writer, identicalByteCount)
+			if err != nil {
+				return err
+			}
 			start += identicalByteCount
 		} else if constByteCount > 3 {
-			writeConstant(writer, constByteCount, data[start])
+			err := writeConstant(writer, constByteCount, data[start])
+			if err != nil {
+				return err
+			}
 			start += constByteCount
 		} else {
 			diffByteCount := 0
@@ -67,64 +73,91 @@ func Compress(writer io.Writer, data []byte, reference []byte) {
 					abort = true
 				}
 			}
-			writeRaw(writer, data[start:start+diffByteCount])
+			err := writeRaw(writer, data[start:start+diffByteCount])
+			if err != nil {
+				return err
+			}
 			start += diffByteCount
 		}
 	}
-	writeExtended(writer, 0x0000)
+	return writeExtended(writer, 0x0000)
 }
 
-func writeExtended(writer io.Writer, control uint16, extra ...byte) {
-	writer.Write([]byte{0x80, byte(control & 0xFF), byte((control >> 8) & 0xFF)})
-	writer.Write(extra)
+func writeExtended(writer io.Writer, control uint16, extra ...byte) error {
+	_, err := writer.Write([]byte{0x80, byte(control & 0xFF), byte((control >> 8) & 0xFF)})
+	if err != nil {
+		return err
+	}
+	_, err = writer.Write(extra)
+	return err
 }
 
-func skipBytes(writer io.Writer, size int) {
+func skipBytes(writer io.Writer, size int) error {
 	remain := size
 
 	for remain > 0 {
 		if remain < 0x80 {
-			writer.Write([]byte{byte(0x80 + remain)})
+			_, err := writer.Write([]byte{byte(0x80 + remain)})
+			if err != nil {
+				return err
+			}
 			remain = 0
 		} else {
 			lenControl := 0x7FFF
 			if remain < lenControl {
 				lenControl = remain
 			}
-			writeExtended(writer, uint16(lenControl))
+			err := writeExtended(writer, uint16(lenControl))
+			if err != nil {
+				return err
+			}
 			remain -= lenControl
 		}
 	}
+	return nil
 }
 
-func writeConstant(writer io.Writer, size int, value byte) {
+func writeConstant(writer io.Writer, size int, value byte) error {
 	start := 0
 
 	for start < size {
 		remain := size - start
 		if remain < 0x100 {
-			writer.Write([]byte{0x00, byte(remain), value})
+			_, err := writer.Write([]byte{0x00, byte(remain), value})
+			if err != nil {
+				return err
+			}
 			start = size
 		} else {
 			lenControl := 0x3FFF
 			if remain < lenControl {
 				lenControl = remain
 			}
-			writeExtended(writer, 0xC000+uint16(lenControl), value)
+			err := writeExtended(writer, 0xC000+uint16(lenControl), value)
+			if err != nil {
+				return err
+			}
 			start += lenControl
 		}
 	}
+	return nil
 }
 
-func writeRaw(writer io.Writer, data []byte) {
+func writeRaw(writer io.Writer, data []byte) error {
 	end := len(data)
 	start := 0
 
 	for start < end {
 		remain := end - start
 		if remain < 0x80 {
-			writer.Write([]byte{byte(remain)})
-			writer.Write(data[start:])
+			_, err := writer.Write([]byte{byte(remain)})
+			if err != nil {
+				return err
+			}
+			_, err = writer.Write(data[start:])
+			if err != nil {
+				return err
+			}
 			start = end
 		} else {
 			lenControl := 0x3FFF
@@ -132,8 +165,12 @@ func writeRaw(writer io.Writer, data []byte) {
 			if remain < lenControl {
 				lenControl = remain
 			}
-			writeExtended(writer, 0x8000+uint16(lenControl), data[start:start+lenControl]...)
+			err := writeExtended(writer, 0x8000+uint16(lenControl), data[start:start+lenControl]...)
+			if err != nil {
+				return err
+			}
 			start += lenControl
 		}
 	}
+	return nil
 }

@@ -182,7 +182,7 @@ func (suite *StackSuite) TestPerformPanicsIfStackIsInUse() {
 			times++
 
 			assert.Panics(suite.T(), func() {
-				suite.stack.Perform(suite.aCommand(name+"-nested"), nil)
+				_ = suite.stack.Perform(suite.aCommand(name+"-nested"), nil)
 			}, "Perform during function <"+name+"> should panic")
 		}
 	}
@@ -198,7 +198,7 @@ func (suite *StackSuite) TestUndoPanicsIfStackIsInUse() {
 			times++
 
 			assert.Panics(suite.T(), func() {
-				suite.stack.Undo(nil)
+				_ = suite.stack.Undo(nil)
 			}, "Undo during function <"+name+"> should panic")
 		}
 	}
@@ -214,7 +214,7 @@ func (suite *StackSuite) TestRedoPanicsIfStackIsInUse() {
 			times++
 
 			assert.Panics(suite.T(), func() {
-				suite.stack.Undo(nil)
+				_ = suite.stack.Undo(nil)
 			}, "Redo during function <"+name+"> should panic")
 		}
 	}
@@ -242,13 +242,13 @@ func (suite *StackSuite) givenCommandWasPerformed(name string) {
 
 func (suite *StackSuite) givenUndoWasCalledTimes(times int) {
 	for i := 0; i < times; i++ {
-		suite.stack.Undo(nil)
+		_ = suite.stack.Undo(nil)
 	}
 }
 
 func (suite *StackSuite) givenRedoWasCalledTimes(times int) {
 	for i := 0; i < times; i++ {
-		suite.stack.Redo(nil)
+		_ = suite.stack.Redo(nil)
 	}
 }
 
@@ -262,15 +262,15 @@ func (suite *StackSuite) givenCommandExecutes(name string, task func()) {
 }
 
 func (suite *StackSuite) whenUndoing() {
-	suite.stack.Undo(nil)
+	_ = suite.stack.Undo(nil)
 }
 
 func (suite *StackSuite) whenRedoing() {
-	suite.stack.Redo(nil)
+	_ = suite.stack.Redo(nil)
 }
 
 func (suite *StackSuite) whenPerforming(command cmd.Command) {
-	suite.stack.Perform(command, nil)
+	_ = suite.stack.Perform(command, nil)
 }
 
 func (suite *StackSuite) thenStackShouldSupportRedo() {

@@ -21,11 +21,11 @@ type testingStickyKeysListener struct {
 }
 
 func (listener *testingStickyKeysListener) Key(key input.Key, modifier input.Modifier) {
-	listener.addEvent(keyEvent{true, key, modifier})
+	listener.addEvent(keyEvent{isKey: true, key: key, mod: modifier})
 }
 
 func (listener *testingStickyKeysListener) Modifier(modifier input.Modifier) {
-	listener.addEvent(keyEvent{false, 0, modifier})
+	listener.addEvent(keyEvent{isKey: false, key: 0, mod: modifier})
 }
 
 func (listener *testingStickyKeysListener) addEvent(event keyEvent) {
@@ -55,8 +55,8 @@ func (suite *StickyKeyBufferSuite) TestRegularEventsAreForwarded_A() {
 	suite.buffer.KeyDown(input.KeyF2, input.ModNone)
 	suite.buffer.KeyUp(input.KeyF2, input.ModNone)
 
-	assert.Equal(suite.T(), []keyEvent{{true, input.KeyF1, input.ModNone}}, suite.listener.eventMap[input.KeyF1])
-	assert.Equal(suite.T(), []keyEvent{{true, input.KeyF2, input.ModNone}}, suite.listener.eventMap[input.KeyF2])
+	assert.Equal(suite.T(), []keyEvent{{isKey: true, key: input.KeyF1, mod: input.ModNone}}, suite.listener.eventMap[input.KeyF1])
+	assert.Equal(suite.T(), []keyEvent{{isKey: true, key: input.KeyF2, mod: input.ModNone}}, suite.listener.eventMap[input.KeyF2])
 }
 
 func (suite *StickyKeyBufferSuite) TestRegularEventsAreForwarded_B() {
@@ -65,9 +65,12 @@ func (suite *StickyKeyBufferSuite) TestRegularEventsAreForwarded_B() {
 	suite.buffer.KeyUp(input.KeyF2, input.ModNone)
 	suite.buffer.KeyUp(input.KeyF1, input.ModNone)
 
-	assert.Equal(suite.T(), []keyEvent{{true, input.KeyF1, input.ModNone}}, suite.listener.eventMap[input.KeyF1])
-	assert.Equal(suite.T(), []keyEvent{{true, input.KeyF2, input.ModNone}}, suite.listener.eventMap[input.KeyF2])
-	assert.Equal(suite.T(), []keyEvent{{true, input.KeyF1, input.ModNone}, {true, input.KeyF2, input.ModNone}}, suite.listener.events)
+	assert.Equal(suite.T(), []keyEvent{{isKey: true, key: input.KeyF1, mod: input.ModNone}}, suite.listener.eventMap[input.KeyF1])
+	assert.Equal(suite.T(), []keyEvent{{isKey: true, key: input.KeyF2, mod: input.ModNone}}, suite.listener.eventMap[input.KeyF2])
+	assert.Equal(suite.T(), []keyEvent{
+		{isKey: true, key: input.KeyF1, mod: input.ModNone},
+		{isKey: true, key: input.KeyF2, mod: input.ModNone},
+	}, suite.listener.events)
 }
 
 func (suite *StickyKeyBufferSuite) TestIdenticalKeysAreReportedOnlyOnce() {
@@ -78,8 +81,8 @@ func (suite *StickyKeyBufferSuite) TestIdenticalKeysAreReportedOnlyOnce() {
 	suite.buffer.KeyUp(input.KeyF1, input.ModNone)
 	suite.buffer.KeyUp(input.KeyF1, input.ModNone)
 
-	assert.Equal(suite.T(), []keyEvent{{true, input.KeyF1, input.ModNone}}, suite.listener.eventMap[input.KeyF1])
-	assert.Equal(suite.T(), []keyEvent{{true, input.KeyF1, input.ModNone}}, suite.listener.events)
+	assert.Equal(suite.T(), []keyEvent{{isKey: true, key: input.KeyF1, mod: input.ModNone}}, suite.listener.eventMap[input.KeyF1])
+	assert.Equal(suite.T(), []keyEvent{{isKey: true, key: input.KeyF1, mod: input.ModNone}}, suite.listener.events)
 }
 
 func (suite *StickyKeyBufferSuite) TestSuperfluousReleasesAreIgnored() {
@@ -92,11 +95,14 @@ func (suite *StickyKeyBufferSuite) TestSuperfluousReleasesAreIgnored() {
 	suite.buffer.KeyUp(input.KeyF1, input.ModNone)
 
 	assert.Equal(suite.T(), []keyEvent{
-		{true, input.KeyF1, input.ModNone}, {true, input.KeyF1, input.ModNone}}, suite.listener.eventMap[input.KeyF1])
+		{isKey: true, key: input.KeyF1, mod: input.ModNone},
+		{isKey: true, key: input.KeyF1, mod: input.ModNone},
+	}, suite.listener.eventMap[input.KeyF1])
 	assert.Equal(suite.T(), []keyEvent{
-		{true, input.KeyF1, input.ModNone},
-		{true, input.KeyF2, input.ModNone},
-		{true, input.KeyF1, input.ModNone}}, suite.listener.events)
+		{isKey: true, key: input.KeyF1, mod: input.ModNone},
+		{isKey: true, key: input.KeyF2, mod: input.ModNone},
+		{isKey: true, key: input.KeyF1, mod: input.ModNone},
+	}, suite.listener.events)
 }
 
 func (suite *StickyKeyBufferSuite) TestReleaseAllResetsRegularKeys() {
@@ -106,9 +112,13 @@ func (suite *StickyKeyBufferSuite) TestReleaseAllResetsRegularKeys() {
 	suite.buffer.ReleaseAll()
 	suite.buffer.KeyDown(input.KeyTab, input.ModNone)
 
-	assert.Equal(suite.T(), []keyEvent{{true, input.KeyEnter, input.ModNone}}, suite.listener.eventMap[input.KeyEnter])
-	assert.Equal(suite.T(), []keyEvent{{true, input.KeyTab, input.ModNone}, {true, input.KeyTab, input.ModNone}},
-		suite.listener.eventMap[input.KeyTab])
+	assert.Equal(suite.T(), []keyEvent{
+		{isKey: true, key: input.KeyEnter, mod: input.ModNone},
+	}, suite.listener.eventMap[input.KeyEnter])
+	assert.Equal(suite.T(), []keyEvent{
+		{isKey: true, key: input.KeyTab, mod: input.ModNone},
+		{isKey: true, key: input.KeyTab, mod: input.ModNone},
+	}, suite.listener.eventMap[input.KeyTab])
 }
 
 func (suite *StickyKeyBufferSuite) TestModifierEventsAreConvertedToModifierStates_DownAugmented() {
@@ -121,10 +131,10 @@ func (suite *StickyKeyBufferSuite) TestModifierEventsAreConvertedToModifierState
 	assert.Equal(suite.T(), 0, len(suite.listener.eventMap[input.KeyAlt]))
 	assert.Equal(suite.T(),
 		[]keyEvent{
-			{false, 0, input.ModShift},
-			{false, 0, input.ModShift.With(input.ModAlt)},
-			{false, 0, input.ModShift},
-			{false, 0, input.ModNone},
+			{isKey: false, key: 0, mod: input.ModShift},
+			{isKey: false, key: 0, mod: input.ModShift.With(input.ModAlt)},
+			{isKey: false, key: 0, mod: input.ModShift},
+			{isKey: false, key: 0, mod: input.ModNone},
 		},
 		suite.listener.events)
 }
@@ -139,10 +149,10 @@ func (suite *StickyKeyBufferSuite) TestModifierEventsAreConvertedToModifierState
 	assert.Equal(suite.T(), 0, len(suite.listener.eventMap[input.KeyAlt]))
 	assert.Equal(suite.T(),
 		[]keyEvent{
-			{false, 0, input.ModShift},
-			{false, 0, input.ModShift.With(input.ModAlt)},
-			{false, 0, input.ModShift},
-			{false, 0, input.ModNone},
+			{isKey: false, key: 0, mod: input.ModShift},
+			{isKey: false, key: 0, mod: input.ModShift.With(input.ModAlt)},
+			{isKey: false, key: 0, mod: input.ModShift},
+			{isKey: false, key: 0, mod: input.ModNone},
 		},
 		suite.listener.events)
 }
@@ -155,9 +165,9 @@ func (suite *StickyKeyBufferSuite) TestReleaseAllReleasesModifiers() {
 
 	assert.Equal(suite.T(),
 		[]keyEvent{
-			{false, 0, input.ModShift},
-			{false, 0, input.ModShift.With(input.ModAlt)},
-			{false, 0, input.ModNone},
+			{isKey: false, key: 0, mod: input.ModShift},
+			{isKey: false, key: 0, mod: input.ModShift.With(input.ModAlt)},
+			{isKey: false, key: 0, mod: input.ModNone},
 		},
 		suite.listener.events)
 }
@@ -177,9 +187,9 @@ func (suite *StickyKeyBufferSuite) TestModifierAreUpdatedOnOtherKeys_A() {
 
 	assert.Equal(suite.T(),
 		[]keyEvent{
-			{false, 0, input.ModShift},
-			{false, 0, input.ModNone},
-			{true, input.KeyTab, input.ModNone},
+			{isKey: false, key: 0, mod: input.ModShift},
+			{isKey: false, key: 0, mod: input.ModNone},
+			{isKey: true, key: input.KeyTab, mod: input.ModNone},
 		},
 		suite.listener.events)
 }
@@ -191,9 +201,9 @@ func (suite *StickyKeyBufferSuite) TestModifierAreUpdatedOnOtherKeys_B() {
 
 	assert.Equal(suite.T(),
 		[]keyEvent{
-			{true, input.KeyTab, input.ModNone},
-			{false, 0, input.ModShift},
-			{false, 0, input.ModNone},
+			{isKey: true, key: input.KeyTab, mod: input.ModNone},
+			{isKey: false, key: 0, mod: input.ModShift},
+			{isKey: false, key: 0, mod: input.ModNone},
 		},
 		suite.listener.events)
 }
@@ -203,5 +213,5 @@ func (suite *StickyKeyBufferSuite) TestModifierAreUpdatedOnOtherKeysWithoutThems
 	suite.buffer.KeyDown(input.KeyShift, input.ModShift)
 	suite.buffer.KeyUp(input.KeyShift, input.ModShift)
 
-	assert.Equal(suite.T(), []keyEvent{{false, 0, input.ModShift}}, suite.listener.events)
+	assert.Equal(suite.T(), []keyEvent{{isKey: false, key: 0, mod: input.ModShift}}, suite.listener.events)
 }

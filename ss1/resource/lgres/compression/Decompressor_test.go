@@ -9,6 +9,7 @@ import (
 
 	"github.com/inkyblackness/hacked/ss1/serial"
 
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
@@ -93,8 +94,11 @@ func (suite *DecompressorSuite) verify(input []byte) {
 	suite.store = serial.NewByteStore()
 	suite.compressor = NewCompressor(serial.NewEncoder(suite.store))
 
-	suite.compressor.Write(input)
-	suite.compressor.Close()
+	n, err := suite.compressor.Write(input)
+	assert.Nil(suite.T(), err, "no error expected writing")
+	assert.Equal(suite.T(), len(input), n, "invalid number written")
+	err = suite.compressor.Close()
+	assert.Nil(suite.T(), err, "no error expected closing")
 
 	suite.verifyOutput(input)
 }
@@ -103,8 +107,10 @@ func (suite *DecompressorSuite) verifyOutput(expected []byte) {
 	output := suite.buffer(len(expected))
 	source := bytes.NewReader(suite.store.Data())
 	decompressor := NewDecompressor(source)
-	decompressor.Read(output)
+	read, err := decompressor.Read(output)
 
+	assert.True(suite.T(), (err == nil) || (err == io.EOF), fmt.Sprintf("unexpected error: %v", err))
+	assert.Equal(suite.T(), len(output), read, "unexpected number of bytes read")
 	assert.Equal(suite.T(), expected, output)
 }
 

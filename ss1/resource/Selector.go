@@ -27,7 +27,7 @@ func (merger Selector) Select(id ID) (view View, err error) {
 	if (merger.As == nil) || !merger.As.IsCompoundList(id) {
 		view = list[len(list)-1]
 	} else {
-		view = &listMerger{list}
+		view = &listMerger{list: list}
 	}
 
 	return view, nil

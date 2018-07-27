@@ -13,7 +13,7 @@ import (
 func TestDefaultParametersSerialized(t *testing.T) {
 	buf := bytes.NewBuffer(nil)
 	param := level.DefaultParameters()
-	binary.Write(buf, binary.LittleEndian, &param)
+	_ = binary.Write(buf, binary.LittleEndian, &param)
 
 	data := buf.Bytes()
 	assert.Equal(t, level.ParametersSize, len(data), "length mismatch")

@@ -13,7 +13,7 @@ import (
 func TestDefaultBaseInfoSerialized(t *testing.T) {
 	buf := bytes.NewBuffer(nil)
 	info := level.DefaultBaseInfo(true)
-	binary.Write(buf, binary.LittleEndian, &info)
+	_ = binary.Write(buf, binary.LittleEndian, &info)
 
 	data := buf.Bytes()
 	assert.Equal(t, 58, len(data), "length mismatch")

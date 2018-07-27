@@ -30,9 +30,10 @@ func TestWriterFinishWithoutAddingResourcesCreatesValidFileWithoutResources(t *t
 func TestWriterFinishReturnsErrorWhenAlreadyFinished(t *testing.T) {
 	writer, _ := NewWriter(serial.NewByteStore())
 
-	writer.Finish()
-
 	err := writer.Finish()
+	assert.Nil(t, err, "no error expected finishing")
+
+	err = writer.Finish()
 	assert.Equal(t, errWriterFinished, err)
 }
 
@@ -41,9 +42,11 @@ func TestWriterUncompressedSingleBlockResourceCanBeWritten(t *testing.T) {
 	store := serial.NewByteStore()
 	writer, _ := NewWriter(store)
 	resourceWriter, err := writer.CreateResource(resource.ID(0x1234), resource.ContentType(0x0A), false)
-	assert.Nil(t, err, "no error expected")
-	resourceWriter.Write(data)
-	writer.Finish()
+	assert.Nil(t, err, "no error expected creating resource")
+	_, err = resourceWriter.Write(data)
+	assert.Nil(t, err, "no error expected writing")
+	err = writer.Finish()
+	assert.Nil(t, err, "no error expected finishing")
 
 	result := store.Data()
 
@@ -66,10 +69,11 @@ func TestWriterUncompressedCompoundResourceCanBeWritten(t *testing.T) {
 	store := serial.NewByteStore()
 	writer, _ := NewWriter(store)
 	resourceWriter, err := writer.CreateCompoundResource(resource.ID(0x5678), resource.ContentType(0x0B), false)
-	assert.Nil(t, err, "no error expected")
-	resourceWriter.CreateBlock().Write(blockData1)
-	resourceWriter.CreateBlock().Write(blockData2)
-	writer.Finish()
+	assert.Nil(t, err, "no error expected creating resource")
+	_, _ = resourceWriter.CreateBlock().Write(blockData1)
+	_, _ = resourceWriter.CreateBlock().Write(blockData2)
+	err = writer.Finish()
+	assert.Nil(t, err, "no error expected finishing")
 
 	result := store.Data()
 
@@ -97,10 +101,11 @@ func TestWriterUncompressedCompoundResourceCanBeWrittenWithPaddingForSpecialID(t
 	store := serial.NewByteStore()
 	writer, _ := NewWriter(store)
 	resourceWriter, err := writer.CreateCompoundResource(resource.ID(0x08FD), resource.ContentType(0x0B), false)
-	assert.Nil(t, err, "no error expected")
-	resourceWriter.CreateBlock().Write(blockData1)
-	resourceWriter.CreateBlock().Write(blockData2)
-	writer.Finish()
+	assert.Nil(t, err, "no error expected creating resource")
+	_, _ = resourceWriter.CreateBlock().Write(blockData1)
+	_, _ = resourceWriter.CreateBlock().Write(blockData2)
+	err = writer.Finish()
+	assert.Nil(t, err, "no error expected finishing")
 
 	result := store.Data()
 
@@ -128,9 +133,10 @@ func TestWriterCompressedSingleBlockResourceCanBeWritten(t *testing.T) {
 	store := serial.NewByteStore()
 	writer, _ := NewWriter(store)
 	resourceWriter, err := writer.CreateResource(resource.ID(0x1122), resource.ContentType(0x0C), true)
-	assert.Nil(t, err, "no error expected")
-	resourceWriter.Write(data)
-	writer.Finish()
+	assert.Nil(t, err, "no error expected creating resource")
+	_, _ = resourceWriter.Write(data)
+	err = writer.Finish()
+	assert.Nil(t, err, "no error expected finishing")
 
 	result := store.Data()
 
@@ -154,10 +160,11 @@ func TestWriterCompressedCompoundResourceCanBeWritten(t *testing.T) {
 	store := serial.NewByteStore()
 	writer, _ := NewWriter(store)
 	resourceWriter, err := writer.CreateCompoundResource(resource.ID(0x5544), resource.ContentType(0x09), true)
-	assert.Nil(t, err, "no error expected")
-	resourceWriter.CreateBlock().Write(blockData1)
-	resourceWriter.CreateBlock().Write(blockData2)
-	writer.Finish()
+	assert.Nil(t, err, "no error expected creating resource")
+	_, _ = resourceWriter.CreateBlock().Write(blockData1)
+	_, _ = resourceWriter.CreateBlock().Write(blockData2)
+	err = writer.Finish()
+	assert.Nil(t, err, "no error expected finishing")
 
 	result := store.Data()
 

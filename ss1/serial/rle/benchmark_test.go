@@ -14,15 +14,15 @@ func benchmarkRecompression(b *testing.B, size int, chanceLimit byte, nameSuffix
 	reference := make([]byte, size)
 	var chance [1]byte
 
-	rand.Seed(seed)
+	rand.Seed(seed) // nolint:gas
 
 	b.ResetTimer()
 	for run := 0; run < b.N; run++ {
 		b.StopTimer()
-		rand.Read(input)
+		rand.Read(input) // nolint:gas
 		copy(reference, input)
 		for i := 0; i < size; i++ {
-			rand.Read(chance[:])
+			rand.Read(chance[:]) // nolint:gas
 			if chance[0] < chanceLimit {
 				input[i] = chance[0]
 			}
@@ -30,11 +30,14 @@ func benchmarkRecompression(b *testing.B, size int, chanceLimit byte, nameSuffix
 		buf := bytes.NewBuffer(nil)
 		b.StartTimer()
 
-		rle.Compress(buf, input, reference)
-
-		err := rle.Decompress(bytes.NewReader(buf.Bytes()), reference)
+		err := rle.Compress(buf, input, reference)
 		if err != nil {
-			b.Errorf("Failed for %s in run %d of seed %v", nameSuffix, run, seed)
+			b.Errorf("Failed compression for %s in run %d of seed %v", nameSuffix, run, seed)
+		}
+
+		err = rle.Decompress(bytes.NewReader(buf.Bytes()), reference)
+		if err != nil {
+			b.Errorf("Failed decompression for %s in run %d of seed %v", nameSuffix, run, seed)
 		}
 		if !bytes.Equal(input, reference) {
 			b.Errorf("Data mismatch in %s in run %d of seed %v", nameSuffix, run, seed)

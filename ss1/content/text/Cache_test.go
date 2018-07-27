@@ -127,7 +127,8 @@ func (suite *CacheSuite) givenResourcesAre(resources ...resource.LocalizedResour
 }
 
 func (suite *CacheSuite) givenTextWasRetrieved(key resource.Key) {
-	suite.instance.Text(key)
+	_, err := suite.instance.Text(key)
+	assert.Nil(suite.T(), err, "no error expected")
 }
 
 func (suite *CacheSuite) whenResourcesAre(resources ...resource.LocalizedResources) {

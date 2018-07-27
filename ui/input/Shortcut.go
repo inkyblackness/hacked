@@ -9,13 +9,13 @@ type shortcut struct {
 }
 
 var shortcuts = []shortcut{
-	{"c", ModControl, KeyCopy},
-	{"x", ModControl, KeyCut},
-	{"v", ModControl, KeyPaste},
-	{"z", ModControl, KeyUndo},
-	{"z", ModControl.With(ModShift), KeyRedo},
-	{"y", ModControl, KeyRedo},
-	{"s", ModControl, KeySave},
+	{keyName: "c", modifier: ModControl, key: KeyCopy},
+	{keyName: "x", modifier: ModControl, key: KeyCut},
+	{keyName: "v", modifier: ModControl, key: KeyPaste},
+	{keyName: "z", modifier: ModControl, key: KeyUndo},
+	{keyName: "z", modifier: ModControl.With(ModShift), key: KeyRedo},
+	{keyName: "y", modifier: ModControl, key: KeyRedo},
+	{keyName: "s", modifier: ModControl, key: KeySave},
 }
 
 // ResolveShortcut tries to map the given name and modifier combination to a

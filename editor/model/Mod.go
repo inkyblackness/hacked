@@ -125,11 +125,17 @@ func (mod Mod) CreateBlockPatch(lang resource.Language, id resource.ID, index in
 	}
 
 	forwardData := bytes.NewBuffer(nil)
-	rle.Compress(forwardData, newData, oldData)
+	err := rle.Compress(forwardData, newData, oldData)
+	if err != nil {
+		return patch, false, err
+	}
 	patch.ForwardData = forwardData.Bytes()
 
 	reverseData := bytes.NewBuffer(nil)
-	rle.Compress(reverseData, oldData, newData)
+	err = rle.Compress(reverseData, oldData, newData)
+	if err != nil {
+		return patch, false, err
+	}
 	patch.ReverseData = reverseData.Bytes()
 
 	patch.BlockIndex = index

@@ -22,16 +22,16 @@ type textInfo struct {
 }
 
 var knownTextTypes = []textInfo{
-	{ids.TrapMessageTexts, "Trap Messages"},
-	{ids.WordTexts, "Words"},
-	{ids.LogCategoryTexts, "Log Categories"},
-	{ids.VariousMessageTexts, "Various Messages"},
-	{ids.ScreenMessageTexts, "Screen Messages"},
-	{ids.InfoNodeMessageTexts, "Info Node Message Texts (8/5/6)"},
-	{ids.AccessCardNameTexts, "Access Card Names"},
-	{ids.DataletMessageTexts, "Datalet Messages (8/5/8)"},
-	{ids.PaperTextsStart, "Papers"},
-	{ids.PanelNameTexts, "Panel Names"},
+	{id: ids.TrapMessageTexts, title: "Trap Messages"},
+	{id: ids.WordTexts, title: "Words"},
+	{id: ids.LogCategoryTexts, title: "Log Categories"},
+	{id: ids.VariousMessageTexts, title: "Various Messages"},
+	{id: ids.ScreenMessageTexts, title: "Screen Messages"},
+	{id: ids.InfoNodeMessageTexts, title: "Info Node Message Texts (8/5/6)"},
+	{id: ids.AccessCardNameTexts, title: "Access Card Names"},
+	{id: ids.DataletMessageTexts, title: "Datalet Messages (8/5/8)"},
+	{id: ids.PaperTextsStart, title: "Papers"},
+	{id: ids.PanelNameTexts, title: "Panel Names"},
 }
 
 var textToAudio = map[resource.ID]resource.ID{

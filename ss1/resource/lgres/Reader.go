@@ -187,7 +187,7 @@ func (reader *Reader) newCompoundResourceReader(entry *resourceDirectoryEntry,
 		Compound:      true,
 		ContentType:   contentType,
 		Compressed:    compressed,
-		BlockProvider: &blockReader{len(blockList), blockFunc}}, nil
+		BlockProvider: &blockReader{blockCount: len(blockList), blockFunc: blockFunc}}, nil
 }
 
 func (reader *Reader) readBlockList(source io.Reader) (uint32, []blockListEntry, error) {
@@ -228,5 +228,5 @@ func (reader *Reader) newSingleBlockResourceReader(entry *resourceDirectoryEntry
 		Compound:      false,
 		ContentType:   contentType,
 		Compressed:    compressed,
-		BlockProvider: &blockReader{1, blockFunc}}, nil
+		BlockProvider: &blockReader{blockCount: 1, blockFunc: blockFunc}}, nil
 }

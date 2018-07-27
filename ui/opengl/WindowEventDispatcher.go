@@ -53,7 +53,7 @@ func NullWindowEventDispatcher() WindowEventDispatcher {
 // StickyKeyListener returns an instance of a listener acting as an adapter
 // for the key-down/-up callbacks.
 func (window *WindowEventDispatcher) StickyKeyListener() input.StickyKeyListener {
-	return &keyDeferrer{window}
+	return &keyDeferrer{window: window}
 }
 
 // OnClosing implements the WindowEventDispatcher interface.

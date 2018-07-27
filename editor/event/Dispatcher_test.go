@@ -46,7 +46,7 @@ func (suite *DispatcherSuite) TestRegisterHandlerPanicsWithWrongHandlerType() {
 
 func (suite *DispatcherSuite) TestEventDispatchesGivenEventToRegisteredHandler() {
 	type testedEvent struct{ key int }
-	eventA := testedEvent{123}
+	eventA := testedEvent{key: 123}
 	var received *testedEvent
 	suite.givenRegisteredHandler(func(e testedEvent) { received = &e })
 	suite.whenEventIsDispatched(eventA)
@@ -56,7 +56,7 @@ func (suite *DispatcherSuite) TestEventDispatchesGivenEventToRegisteredHandler()
 
 func (suite *DispatcherSuite) TestEventHandlerCanBeUnregistered() {
 	type testedEvent struct{ key int }
-	eventA := testedEvent{123}
+	eventA := testedEvent{key: 123}
 	var received *testedEvent
 	handler := func(e testedEvent) { received = &e }
 	suite.givenRegisteredHandler(handler)
@@ -68,8 +68,8 @@ func (suite *DispatcherSuite) TestEventHandlerCanBeUnregistered() {
 func (suite *DispatcherSuite) TestDeregistrationKeepsOtherHandlersAlive() {
 	type testedEvent struct{ key int }
 	type differentEvent struct{ key int }
-	event1 := testedEvent{123}
-	event2 := differentEvent{456}
+	event1 := testedEvent{key: 123}
+	event2 := differentEvent{key: 456}
 	var receivedA *testedEvent
 	var receivedB *testedEvent
 	var receivedC *testedEvent
@@ -91,7 +91,7 @@ func (suite *DispatcherSuite) TestDeregistrationKeepsOtherHandlersAlive() {
 
 func (suite *DispatcherSuite) TestDeregistrationOfHandlerDuringDispatchIsConsidered() {
 	type testedEvent struct{ key int }
-	eventA := testedEvent{123}
+	eventA := testedEvent{key: 123}
 	calls := 0
 	handler := func(e testedEvent) { calls++ }
 	deregisteringHandler := func(e testedEvent) { suite.dispatcher.UnregisterHandler(handler) }
@@ -105,7 +105,7 @@ func (suite *DispatcherSuite) TestDeregistrationOfHandlerDuringDispatchIsConside
 
 func (suite *DispatcherSuite) TestRegistrationOfHandlerDuringDispatchIsIgnored() {
 	type testedEvent struct{ key int }
-	eventA := testedEvent{123}
+	eventA := testedEvent{key: 123}
 	var received *testedEvent
 	handler := func(e testedEvent) { received = &e }
 	registeringHandler := func(e testedEvent) { suite.dispatcher.RegisterHandler(handler) }
@@ -118,8 +118,8 @@ func (suite *DispatcherSuite) TestRegistrationOfHandlerDuringDispatchIsIgnored()
 
 func (suite *DispatcherSuite) TestEventCanNotBeDispatchedDuringDispatch() {
 	type testedEvent struct{ key int }
-	eventA := testedEvent{123}
-	eventB := testedEvent{456}
+	eventA := testedEvent{key: 123}
+	eventB := testedEvent{key: 456}
 	calls := 0
 	handler := func(e testedEvent) {
 		calls++
@@ -136,7 +136,7 @@ func (suite *DispatcherSuite) TestEventCanNotBeDispatchedDuringDispatch() {
 
 func (suite *DispatcherSuite) TestRegistrationAndDeregistrationCanBeStackedAndStillBeAsExpected_A() {
 	type testedEvent struct{ key int }
-	eventA := testedEvent{123}
+	eventA := testedEvent{key: 123}
 	calls := 0
 	handler := func(e testedEvent) { calls++ }
 	registeringHandler := func(e testedEvent) { suite.dispatcher.RegisterHandler(handler) }
@@ -152,7 +152,7 @@ func (suite *DispatcherSuite) TestRegistrationAndDeregistrationCanBeStackedAndSt
 
 func (suite *DispatcherSuite) TestRegistrationAndDeregistrationCanBeStackedAndStillBeAsExpected_B() {
 	type testedEvent struct{ key int }
-	eventA := testedEvent{123}
+	eventA := testedEvent{key: 123}
 	calls := 0
 	handler := func(e testedEvent) { calls++ }
 	registeringHandler := func(e testedEvent) { suite.dispatcher.RegisterHandler(handler) }
@@ -168,7 +168,7 @@ func (suite *DispatcherSuite) TestRegistrationAndDeregistrationCanBeStackedAndSt
 
 func (suite *DispatcherSuite) TestRegistrationAndDeregistrationCanBeStackedAndStillBeAsExpected_C() {
 	type testedEvent struct{ key int }
-	eventA := testedEvent{123}
+	eventA := testedEvent{key: 123}
 	calls := 0
 	handler := func(e testedEvent) { calls++ }
 	registeringHandler := func(e testedEvent) { suite.dispatcher.RegisterHandler(handler) }
@@ -184,7 +184,7 @@ func (suite *DispatcherSuite) TestRegistrationAndDeregistrationCanBeStackedAndSt
 
 func (suite *DispatcherSuite) TestRegistrationReturnsDeregisterShortcut() {
 	type testedEvent struct{ key int }
-	eventA := testedEvent{123}
+	eventA := testedEvent{key: 123}
 	calls := 0
 	handler := func(e testedEvent) { calls++ }
 	unreg := suite.dispatcher.RegisterHandler(handler)
@@ -195,7 +195,7 @@ func (suite *DispatcherSuite) TestRegistrationReturnsDeregisterShortcut() {
 
 func (suite *DispatcherSuite) TestEventIsIgnoredIfNoHandlerRegistered() {
 	type testedEvent struct{ key int }
-	eventA := testedEvent{123}
+	eventA := testedEvent{key: 123}
 	assert.NotPanics(suite.T(), func() { suite.whenEventIsDispatched(eventA) })
 }
 

@@ -65,10 +65,10 @@ func TestUnifier_Types(t *testing.T) {
 		expectedValue   interface{}
 		expectedUnified bool
 	}{
-		{[]simpleType{{1, "a"}, {1, "a"}, {1, "a"}}, simpleType{1, "a"}, true},
+		{[]simpleType{{value: 1, text: "a"}, {value: 1, text: "a"}, {value: 1, text: "a"}}, simpleType{value: 1, text: "a"}, true},
 		{[]simpleType{}, nil, false},
-		{[]simpleType{{1, "a"}, {1, "a"}, {2, "a"}}, nil, false},
-		{[]simpleType{{1, "a"}, {1, "a"}, {1, "b"}}, nil, false},
+		{[]simpleType{{value: 1, text: "a"}, {value: 1, text: "a"}, {value: 2, text: "a"}}, nil, false},
+		{[]simpleType{{value: 1, text: "a"}, {value: 1, text: "a"}, {value: 1, text: "b"}}, nil, false},
 	}
 
 	for tn, tc := range tt {

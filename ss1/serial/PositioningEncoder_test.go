@@ -78,7 +78,7 @@ func (suite *PositioningEncoderSuite) TestCurPosIsNotChangedOnSetError() {
 }
 
 func (suite *PositioningEncoderSuite) TestCurPosIsRelativeToConstructionTime() {
-	suite.store.Write([]byte{0x01, 0x02, 0x03})
+	_, _ = suite.store.Write([]byte{0x01, 0x02, 0x03})
 
 	assert.Equal(suite.T(), uint32(0), suite.coder.CurPos(), "CurPos should be zero at the start")
 	suite.coder.Code(uint16(0xAAAA))
@@ -105,9 +105,11 @@ func (suite *PositioningEncoderSuite) TestSeekReturnsErrorForWrongWhence() {
 
 func (suite *PositioningEncoderSuite) TestSeekAbsolute() {
 	suite.coder.Code(uint32(0))
-	suite.coder.Seek(1, io.SeekStart)
-	suite.coder.Code(uint16(0xAABB))
+	pos, err := suite.coder.Seek(1, io.SeekStart)
+	assert.Nil(suite.T(), err, "no error expected")
+	assert.Equal(suite.T(), int64(1), pos, "invalid position returned")
 
+	suite.coder.Code(uint16(0xAABB))
 	result := suite.store.Data()
 	assert.Equal(suite.T(), []byte{0x00, 0xBB, 0xAA, 0x00}, result)
 	assert.Equal(suite.T(), uint32(3), suite.coder.CurPos(), "should update current position")
@@ -131,7 +133,7 @@ func (suite *PositioningEncoderSuite) TestSeekDoesNothingOnPreviousError() {
 	suite.coder = serial.NewPositioningEncoder(&target)
 	target.errorOnNextCall = true
 	suite.coder.Code(uint32(0))
-	suite.coder.Seek(0, io.SeekStart)
+	_, _ = suite.coder.Seek(0, io.SeekStart)
 
 	assert.Equal(suite.T(), target.callCounter, 1)
 	assert.EqualError(suite.T(), suite.coder.FirstError(), "errorBuffer on call number 1")
@@ -142,7 +144,7 @@ func (suite *PositioningEncoderSuite) TestSeekRegistersReturnedError() {
 	suite.coder = serial.NewPositioningEncoder(&target)
 	suite.coder.Code(uint32(0))
 	target.errorOnNextCall = true
-	suite.coder.Seek(1, io.SeekStart)
+	_, _ = suite.coder.Seek(1, io.SeekStart)
 
 	pos, err := suite.coder.Seek(1, io.SeekStart)
 

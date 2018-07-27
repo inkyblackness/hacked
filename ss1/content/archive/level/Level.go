@@ -368,13 +368,6 @@ func (lvl *Level) EncodeState() [lvlids.PerLevel][]byte {
 	return levelData
 }
 
-func (lvl Level) encode(data interface{}) []byte {
-	buf := bytes.NewBuffer(nil)
-	encoder := serial.NewEncoder(buf)
-	encoder.Code(data)
-	return buf.Bytes()
-}
-
 func (lvl *Level) onLevelResourceDataChanged(id int) {
 	switch id {
 	case lvlids.Information:

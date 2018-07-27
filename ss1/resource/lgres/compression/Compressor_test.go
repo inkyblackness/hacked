@@ -8,6 +8,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/serial"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -27,19 +28,28 @@ func (suite *CompressorSuite) SetupTest() {
 }
 
 func (suite *CompressorSuite) TestWriteCompressesFirstReocurrence() {
-	suite.compressor.Write([]byte{0x00, 0x01})
-	suite.compressor.Write([]byte{0x00, 0x01})
+	suite.givenWrittenData([]byte{0x00, 0x01})
+	suite.givenWrittenData([]byte{0x00, 0x01})
 
-	suite.compressor.Close()
+	err := suite.compressor.Close()
+	assert.Nil(suite.T(), err, "no error expected")
 
 	suite.thenWordsShouldBe(word(0x0000), word(0x0001), word(0x0100))
 }
 
 func (suite *CompressorSuite) TestWriteCompressesTest1() {
-	suite.compressor.Write([]byte{0x00, 0x01, 0x00, 0x02, 0x01, 0x00, 0x01})
-	suite.compressor.Close()
+	suite.givenWrittenData([]byte{0x00, 0x01, 0x00, 0x02, 0x01, 0x00, 0x01})
+
+	err := suite.compressor.Close()
+	assert.Nil(suite.T(), err, "no error expected")
 
 	suite.thenWordsShouldBe(word(0x0000), word(0x0001), word(0x0000), word(0x0002), word(0x0101), word(0x0001))
+}
+
+func (suite *CompressorSuite) givenWrittenData(data []byte) {
+	written, err := suite.compressor.Write(data)
+	require.Nil(suite.T(), err, "no error expected writing")
+	require.Equal(suite.T(), len(data), written, "expected all bytes to be written")
 }
 
 func (suite *CompressorSuite) thenWordsShouldBe(expected ...word) {

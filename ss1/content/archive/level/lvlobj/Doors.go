@@ -14,19 +14,14 @@ var baseDoor = interpreters.New().
 	})).
 	With("ForceDoorColor", 3, 1).As(interpreters.FormattedRangedValue(0, 255,
 	func(value int) (result string) {
-		if colorText, defined := forceColors[value]; defined {
-			result = fmt.Sprintf("%s", colorText)
-		} else {
-			result = ""
-		}
-		return result
+		return forceColors[value]
 	})).
 	With("RequiredAccessLevel", 4, 1).As(interpreters.FormattedRangedValue(0, 255,
 	func(value int) (result string) {
 		if value == 255 {
-			result = fmt.Sprintf("SHODAN")
+			result = "SHODAN"
 		} else if accessLevel, known := accessLevelMasks[1<<uint32(value)]; known {
-			result = fmt.Sprintf("%s", accessLevel)
+			result = accessLevel
 		} else {
 			result = "Unknown"
 		}

@@ -27,7 +27,7 @@ func (stack *Stack) Perform(cmd Command, trans Transaction) error {
 	if err != nil {
 		return err
 	}
-	stack.undoList = &stackEntry{stack.undoList, cmd}
+	stack.undoList = &stackEntry{link: stack.undoList, cmd: cmd}
 	stack.redoList = nil
 	return nil
 }

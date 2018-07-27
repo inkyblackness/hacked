@@ -25,11 +25,11 @@ type bitmapInfo struct {
 }
 
 var knownBitmapTypes = map[resource.ID]bitmapInfo{
-	ids.MfdDataBitmaps:        {"MFD Data Images", true},
-	ids.ObjectMaterialBitmaps: {"Object Materials", false},
-	ids.ObjectTextureBitmaps:  {"Object Textures", false},
-	ids.IconBitmaps:           {"Wall Icons", false},
-	ids.GraffitiBitmaps:       {"Graffiti", false},
+	ids.MfdDataBitmaps:        {title: "MFD Data Images", languageSpecific: true},
+	ids.ObjectMaterialBitmaps: {title: "Object Materials", languageSpecific: false},
+	ids.ObjectTextureBitmaps:  {title: "Object Textures", languageSpecific: false},
+	ids.IconBitmaps:           {title: "Wall Icons", languageSpecific: false},
+	ids.GraffitiBitmaps:       {title: "Graffiti", languageSpecific: false},
 }
 
 var knownBitmapTypesOrder = []resource.ID{

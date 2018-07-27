@@ -121,7 +121,8 @@ func (suite *ElectronicMessageCacheSuite) givenResourcesAre(resources ...resourc
 }
 
 func (suite *ElectronicMessageCacheSuite) givenMessageWasRetrieved(key resource.Key) {
-	suite.instance.Message(key)
+	_, err := suite.instance.Message(key)
+	assert.Nil(suite.T(), err, "no error expected")
 }
 
 func (suite *ElectronicMessageCacheSuite) whenResourcesAre(resources ...resource.LocalizedResources) {

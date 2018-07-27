@@ -100,23 +100,19 @@ func (suite *DecoderSuite) TestReadFromReader() {
 	suite.whenDecodingFrom([]byte{0x78, 0x12, 0x34})
 
 	value := make([]byte, 3)
-	suite.coder.Read(value)
+	read, err := suite.coder.Read(value)
 
+	assert.Nil(suite.T(), err, "no error expected")
+	assert.Equal(suite.T(), 3, read, "unexpected length read")
 	assert.Equal(suite.T(), []byte{0x78, 0x12, 0x34}, value)
-}
-
-func (suite *DecoderSuite) TestReadReturnsReadAmount() {
-	suite.whenDecodingFrom([]byte{0x78, 0x12, 0x34})
-	n, _ := suite.coder.Read(make([]byte, 3))
-	assert.Equal(suite.T(), 3, n)
 }
 
 func (suite *DecoderSuite) TestReadHandlesErrors() {
 	suite.whenDecodingWithErrors()
 
 	suite.errorBuf.errorOnNextCall = true
-	suite.coder.Read(make([]byte, 3))
-	suite.coder.Read(make([]byte, 5))
+	_, _ = suite.coder.Read(make([]byte, 3))
+	_, _ = suite.coder.Read(make([]byte, 5))
 	assert.Equal(suite.T(), 1, suite.errorBuf.callCounter)
 	assert.NotNil(suite.T(), suite.coder.FirstError())
 }

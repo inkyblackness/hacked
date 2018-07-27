@@ -119,7 +119,7 @@ func (suite *StoreSuite) TestPutAddsNewResourcesAtEnd() {
 }
 
 func (suite *StoreSuite) givenProviderHas(id resource.ID, res *resource.Resource) {
-	suite.provider = append(suite.provider, IdentifiedResource{id, res})
+	suite.provider = append(suite.provider, IdentifiedResource{id: id, res: res})
 }
 
 func (suite *StoreSuite) givenAnInstance() {

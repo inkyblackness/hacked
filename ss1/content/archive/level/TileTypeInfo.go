@@ -27,6 +27,7 @@ type TileTypeInfo struct {
 	SlopeInvertedType TileType
 }
 
+// nolint: govet
 var tileTypeInfoList = []TileTypeInfo{
 	{"Solid", DirNorth.Plus(DirEast).Plus(DirSouth).Plus(DirWest), SlopeFactors{0, 0, 0, 0, 0, 0, 0, 0}, TileTypeSolid},
 	{"Open", 0, SlopeFactors{0, 0, 0, 0, 0, 0, 0, 0}, TileTypeOpen},

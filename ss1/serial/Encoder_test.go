@@ -99,13 +99,10 @@ func (suite *EncoderSuite) TestImplementsWriterInterface() {
 }
 
 func (suite *EncoderSuite) TestWriteToWriter() {
-	suite.coder.Write([]byte{0x0A, 0x0B, 0x0C})
+	written, err := suite.coder.Write([]byte{0x0A, 0x0B, 0x0C})
+	assert.Nil(suite.T(), err, "no error expected")
+	assert.Equal(suite.T(), 3, written, "unexpected length written")
 	suite.verifyData([]byte{0x0A, 0x0B, 0x0C})
-}
-
-func (suite *EncoderSuite) TestWriteReturnsWrittenAmount() {
-	n, _ := suite.coder.Write([]byte{0x0A, 0x0B, 0x0C})
-	assert.Equal(suite.T(), 3, n)
 }
 
 func (suite *EncoderSuite) TestWriteDoesNothingOnPreviousError() {
@@ -113,7 +110,7 @@ func (suite *EncoderSuite) TestWriteDoesNothingOnPreviousError() {
 	suite.coder = serial.NewEncoder(&target)
 	target.errorOnNextCall = true
 	suite.coder.Code(uint32(0))
-	suite.coder.Write([]byte{0x0A, 0x0B, 0x0C})
+	_, _ = suite.coder.Write([]byte{0x0A, 0x0B, 0x0C})
 
 	assert.Equal(suite.T(), target.callCounter, 1)
 }

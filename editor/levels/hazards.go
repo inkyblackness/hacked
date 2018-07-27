@@ -27,8 +27,8 @@ type ceilingHazardInfo struct {
 }
 
 var ceilingHazards = []ceilingHazardInfo{
-	{"Off", false, rawHazardValue},
-	{"Radiation", true, lbpHazardValue},
+	{title: "Off", radiationRegister: false, formatter: rawHazardValue},
+	{title: "Radiation", radiationRegister: true, formatter: lbpHazardValue},
 }
 
 func currentCeilingHazard(param *level.Parameters) ceilingHazardInfo {
@@ -47,9 +47,9 @@ type floorHazardInfo struct {
 }
 
 var floorHazards = []floorHazardInfo{
-	{"Off", false, false, rawHazardValue},
-	{"Gravity", false, true, percentHazardValue},
-	{"Biohazard", true, false, lbpHazardValue},
+	{title: "Off", biohazardRegister: false, isGravity: false, formatter: rawHazardValue},
+	{title: "Gravity", biohazardRegister: false, isGravity: true, formatter: percentHazardValue},
+	{title: "Biohazard", biohazardRegister: true, isGravity: false, formatter: lbpHazardValue},
 }
 
 func currentFloorHazard(param *level.Parameters) floorHazardInfo {

@@ -64,7 +64,7 @@ func Encode(bmp *Bitmap, offsetBase int) []byte {
 	rawData := bmp.Pixels
 	if bmp.Header.Type == TypeCompressed8Bit {
 		buf := bytes.NewBuffer(nil)
-		rle.Compress(buf, rawData, nil)
+		_ = rle.Compress(buf, rawData, nil)
 		rawData = buf.Bytes()
 	}
 	header := bmp.Header

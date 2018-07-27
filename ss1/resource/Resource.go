@@ -44,5 +44,5 @@ func (res Resource) Block(index int) (io.Reader, error) {
 
 // ToView returns a view of this resource.
 func (res Resource) ToView() View {
-	return simpleView{&res}
+	return simpleView{res: &res}
 }

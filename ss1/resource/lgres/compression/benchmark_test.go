@@ -18,7 +18,7 @@ var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 func rawData(size int) []byte {
 	data := make([]byte, size)
-	rand.Read(data)
+	rand.Read(data) // nolint:gas
 	return data
 }
 
@@ -29,7 +29,7 @@ func initProfiling(b *testing.B, nameSuffix string) func() {
 		if err != nil {
 			b.Fatal(err)
 		}
-		pprof.StartCPUProfile(f)
+		_ = pprof.StartCPUProfile(f)
 		return func() { pprof.StopCPUProfile() }
 	}
 	return func() {}
@@ -42,7 +42,7 @@ func BenchmarkRawDataStorage(b *testing.B) {
 	b.ResetTimer()
 	for run := 0; run < b.N; run++ {
 		encoder := serial.NewEncoder(serial.NewByteStore())
-		encoder.Write(data)
+		_, _ = encoder.Write(data)
 	}
 }
 
@@ -53,8 +53,8 @@ func benchmarkCompression(b *testing.B, size int, nameSuffix string) {
 	b.ResetTimer()
 	for run := 0; run < b.N; run++ {
 		compressor := compression.NewCompressor(serial.NewByteStore())
-		compressor.Write(data)
-		compressor.Close()
+		_, _ = compressor.Write(data)
+		_ = compressor.Close()
 	}
 }
 
@@ -87,11 +87,11 @@ func benchmarkCompressionDecompression(b *testing.B, size int, nameSuffix string
 	for run := 0; run < b.N; run++ {
 		store := serial.NewByteStore()
 		compressor := compression.NewCompressor(store)
-		compressor.Write(data)
-		compressor.Close()
-		store.Seek(0, io.SeekStart)
+		_, _ = compressor.Write(data)
+		_ = compressor.Close()
+		_, _ = store.Seek(0, io.SeekStart)
 		decompressor := compression.NewDecompressor(store)
-		decompressor.Read(output)
+		_, _ = decompressor.Read(output)
 	}
 }
 

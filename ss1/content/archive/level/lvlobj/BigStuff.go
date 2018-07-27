@@ -1,8 +1,6 @@
 package lvlobj
 
 import (
-	"fmt"
-
 	"github.com/inkyblackness/hacked/ss1/content/interpreters"
 )
 
@@ -60,12 +58,7 @@ var forceBridge = baseBigStuff.
 	With("Height", 3, 1).As(interpreters.SpecialValue("ObjectHeight")).
 	With("Color", 6, 1).As(interpreters.FormattedRangedValue(0, 255,
 	func(value int) (result string) {
-		if colorText, defined := forceColors[value]; defined {
-			result = fmt.Sprintf("%s", colorText)
-		} else {
-			result = ""
-		}
-		return result
+		return forceColors[value]
 	}))
 
 func initBigStuff() interpreterRetriever {

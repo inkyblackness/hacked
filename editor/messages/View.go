@@ -22,9 +22,9 @@ type messageInfo struct {
 }
 
 var knownMessageTypes = map[resource.ID]messageInfo{
-	ids.MailsStart:     {"Mails"},
-	ids.LogsStart:      {"Logs"},
-	ids.FragmentsStart: {"Fragments"},
+	ids.MailsStart:     {title: "Mails"},
+	ids.LogsStart:      {title: "Logs"},
+	ids.FragmentsStart: {title: "Fragments"},
 }
 var knownMessageTypesOrder = []resource.ID{ids.MailsStart, ids.LogsStart, ids.FragmentsStart}
 

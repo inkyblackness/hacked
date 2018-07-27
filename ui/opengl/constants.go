@@ -1,7 +1,7 @@
 package opengl
 
 // Buffer Bits
-// nolint: golint
+// nolint: golint,megacheck
 const (
 	DEPTH_BUFFER_BIT   uint32 = 0x00000100
 	STENCIL_BUFFER_BIT        = 0x00000400
@@ -9,7 +9,7 @@ const (
 )
 
 // Draw Types
-// nolint: golint
+// nolint: golint,megacheck
 const (
 	POINTS         uint32 = 0x0000
 	LINES                 = 0x0001
@@ -21,28 +21,28 @@ const (
 )
 
 // Shader Types
-// nolint: golint
+// nolint: golint,megacheck
 const (
 	FRAGMENT_SHADER uint32 = 0x8B30
 	VERTEX_SHADER          = 0x8B31
 )
 
 // Status Values
-// nolint: golint
+// nolint: golint,megacheck
 const (
 	COMPILE_STATUS uint32 = 0x8B81
 	LINK_STATUS           = 0x8B82
 )
 
 // Buffer Types
-// nolint: golint
+// nolint: golint,megacheck
 const (
 	ARRAY_BUFFER         uint32 = 0x8892
 	ELEMENT_ARRAY_BUFFER        = 0x8893
 )
 
 // Draw Types
-// nolint: golint
+// nolint: golint,megacheck
 const (
 	STREAM_DRAW  uint32 = 0x88E0
 	STATIC_DRAW         = 0x88E4
@@ -50,7 +50,7 @@ const (
 )
 
 // Features
-// nolint: golint
+// nolint: golint,megacheck
 const (
 	BLEND        uint32 = 0x0BE2
 	DEPTH_TEST          = 0x0B71
@@ -78,7 +78,7 @@ const (
 )
 
 // Alpha constants
-// nolint: golint
+// nolint: golint,megacheck
 const (
 	SRC_ALPHA           uint32 = 0x0302
 	ONE_MINUS_SRC_ALPHA        = 0x0303
@@ -88,7 +88,7 @@ const (
 )
 
 // Data Types
-// nolint: golint
+// nolint: golint,megacheck
 const (
 	BYTE           uint32 = 0x1400
 	UNSIGNED_BYTE         = 0x1401
@@ -100,7 +100,7 @@ const (
 )
 
 // Texture Constants
-// nolint: golint
+// nolint: golint,megacheck
 const (
 	TEXTURE_2D uint32 = 0x0DE1
 
@@ -116,7 +116,7 @@ const (
 )
 
 // Errors
-// nolint: golint
+// nolint: golint,megacheck
 const (
 	NO_ERROR                      uint32 = 0
 	INVALID_ENUM                         = 0x0500
@@ -129,7 +129,7 @@ const (
 )
 
 // Color Types
-// nolint: golint
+// nolint: golint,megacheck
 const (
 	ALPHA uint32 = 0x1906
 	RGBA         = 0x1908

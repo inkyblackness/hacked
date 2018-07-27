@@ -62,7 +62,7 @@ func (trans *ModTransaction) PatchResourceBlock(lang resource.Language, id resou
 	trans.actions = append(trans.actions, func(mod *Mod) {
 		res := mod.ensureResource(lang, id)
 		if res.isBlockIndexValid(index) && (len(res.blocks[index]) == expectedLength) {
-			rle.Decompress(bytes.NewReader(patch), res.blocks[index])
+			_ = rle.Decompress(bytes.NewReader(patch), res.blocks[index])
 			mod.markFileChanged(res.filename)
 		}
 	})

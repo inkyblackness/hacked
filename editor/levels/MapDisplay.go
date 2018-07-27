@@ -288,30 +288,6 @@ func (display *MapDisplay) nearestHoverItems(lvl *level.Level, ref MapPosition) 
 	return items
 }
 
-func (display *MapDisplay) locateNearestSelectable(lvl *level.Level, ref MapPosition) (MapPosition, float32) {
-	refVec := mgl.Vec2{float32(ref.X), float32(ref.Y)}
-	var closestObject MapPosition
-	shortest := float32(-1)
-	lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMasterEntry) {
-		entryVec := mgl.Vec2{float32(entry.X), float32(entry.Y)}
-		distance := refVec.Sub(entryVec).Len()
-		if distance < fineCoordinatesPerTileSide/4 {
-			if (shortest < 0) || (shortest > distance) {
-				shortest = distance
-				closestObject = MapPosition{X: entry.X, Y: entry.Y}
-			}
-		}
-	})
-	if shortest < 0 {
-		return MapPosition{
-			X: level.CoordinateAt(ref.X.Tile(), 128),
-			Y: level.CoordinateAt(ref.Y.Tile(), 128),
-		}, fineCoordinatesPerTileSide
-	} else {
-		return closestObject, fineCoordinatesPerTileSide / 4
-	}
-}
-
 func (display *MapDisplay) colorQueryFor(lvl *level.Level, tileToColor func(*level.TileMapEntry) [4]float32) func(int, int) [4]float32 {
 	return func(x, y int) [4]float32 {
 		tile := lvl.Tile(x, y)
