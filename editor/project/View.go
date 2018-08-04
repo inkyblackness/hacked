@@ -47,26 +47,26 @@ func (view *View) Render() {
 		view.model.restoreFocus = false
 		view.model.windowOpen = true
 	}
-	if view.model.windowOpen {
-		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 300 * view.guiScale}, imgui.ConditionOnce)
-		title := "Project"
-		changedFiles := len(view.mod.ModifiedFilenames())
-		if changedFiles > 0 {
-			title += fmt.Sprintf(" - %d file(s) pending save", changedFiles)
-			lastChangeTime := view.mod.LastChangeTime()
+	title := "Project"
+	changedFiles := len(view.mod.ModifiedFilenames())
+	if changedFiles > 0 {
+		title += fmt.Sprintf(" - %d file(s) pending save", changedFiles)
+		lastChangeTime := view.mod.LastChangeTime()
 
-			if (len(view.mod.Path()) > 0) && !lastChangeTime.IsZero() {
-				saveAt := lastChangeTime.Add(time.Duration(view.model.autosaveTimeoutSec) * time.Second)
-				autoSaveIn := time.Until(saveAt)
-				if autoSaveIn.Seconds() < 4 {
-					title += fmt.Sprintf(" - auto-save in %d", int(math.Max(autoSaveIn.Seconds(), 0.0)))
-				}
-				if autoSaveIn.Seconds() <= 0 {
-					view.mod.ResetLastChangeTime()
-					view.StartSavingMod()
-				}
+		if (len(view.mod.Path()) > 0) && !lastChangeTime.IsZero() {
+			saveAt := lastChangeTime.Add(time.Duration(view.model.autosaveTimeoutSec) * time.Second)
+			autoSaveIn := time.Until(saveAt)
+			if autoSaveIn.Seconds() < 4 {
+				title += fmt.Sprintf(" - auto-save in %d", int(math.Max(autoSaveIn.Seconds(), 0.0)))
+			}
+			if autoSaveIn.Seconds() <= 0 {
+				view.mod.ResetLastChangeTime()
+				view.StartSavingMod()
 			}
 		}
+	}
+	if view.model.windowOpen {
+		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 300 * view.guiScale}, imgui.ConditionOnce)
 		if imgui.BeginV(title+"###Project", view.WindowOpen(), 0) {
 			view.renderContent()
 		}
