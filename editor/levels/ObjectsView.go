@@ -126,6 +126,16 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 	if !readOnly {
 		classString := func(class object.Class) string {
 			active, limit := lvl.ObjectClassStats(class)
+			if class == object.ClassSmallStuff {
+				// The engine backs up inventory items in the level during a level transition.
+				// For this it requires space. If there is none, bugs do appear.
+				// This limit could apply for several classes, yet only small stuff is being used.
+				practicalLimit := 0
+				if limit > level.InventorySize {
+					practicalLimit = limit - level.InventorySize
+				}
+				return fmt.Sprintf("%2d: %v -- %d/%d (%d)", int(class), class, active, practicalLimit, limit)
+			}
 			return fmt.Sprintf("%2d: %v -- %d/%d", int(class), class, active, limit)
 		}
 		if imgui.BeginCombo("New Object Class", classString(view.model.newObjectTriple.Class)) {

@@ -7,6 +7,9 @@ const (
 	ObjectVersion int32 = 27
 	// SavefileVersion is the version of the save.
 	SavefileVersion int32 = 13
+
+	// InventorySize specifies how many items the inventory could hold.
+	InventorySize int = 20
 )
 
 var mapVersionValue = MapVersion
