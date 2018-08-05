@@ -905,16 +905,28 @@ func (view *ObjectsView) requestCreateObject(lvl *level.Level, triple object.Tri
 	if err != nil {
 		return
 	}
+	const DefaultHeight = 1.0 / float32(0xbd00)
+	const PhysicsScale = 96.0
+	objHeight := DefaultHeight
 	obj := lvl.Object(id)
 	prop, err := view.mod.ObjectProperties().ForObject(triple)
 	if err == nil {
 		obj.Hitpoints = prop.Common.Hitpoints
+		if (prop.Common.RenderType == object.RenderTypeTextPoly) || (prop.Common.RenderType == object.RenderTypeSpecial) {
+			objHeight = 0
+		} else if prop.Common.PhysicsZ != 0 {
+			objHeight = float32(prop.Common.PhysicsZ) / PhysicsScale
+		} else if prop.Common.PhysicsXR != 0 {
+			objHeight = float32(prop.Common.PhysicsXR) / PhysicsScale
+		}
 	}
 	obj.X = pos.X
 	obj.Y = pos.Y
 	tile := lvl.Tile(int(pos.X.Tile()), int(pos.Y.Tile()))
 	if tile != nil {
-		obj.Z = level.HeightUnit((int(tile.Floor.AbsoluteHeight()) * 0xFF) / int(level.TileHeightUnitMax))
+		_, _, height := lvl.Size()
+		floorHeight, _ := height.ValueFromTileHeight(tile.Floor.AbsoluteHeight())
+		obj.Z = height.ValueToObjectHeight(floorHeight + objHeight)
 	}
 	obj.Subclass = triple.Subclass
 	obj.Type = triple.Type

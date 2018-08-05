@@ -10,7 +10,7 @@ type CommonProperties struct {
 	Mass          int32
 	Hitpoints     int16
 	Armor         byte
-	RenderType    byte
+	RenderType    RenderType
 	PhysicsModel  byte
 	Hardness      byte
 	Pep           byte
