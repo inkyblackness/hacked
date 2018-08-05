@@ -2,6 +2,7 @@ package levels
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 
@@ -925,13 +926,41 @@ func (view *ObjectsView) requestCreateObject(lvl *level.Level, triple object.Tri
 	tile := lvl.Tile(int(pos.X.Tile()), int(pos.Y.Tile()))
 	if tile != nil {
 		_, _, height := lvl.Size()
-		floorHeight, _ := height.ValueFromTileHeight(tile.Floor.AbsoluteHeight())
+		floorHeight := view.floorHeightAtFine(tile, pos, height)
 		obj.Z = height.ValueToObjectHeight(floorHeight + objHeight)
 	}
 	obj.Subclass = triple.Subclass
 	obj.Type = triple.Type
 	lvl.UpdateObjectLocation(id)
 	view.patchLevel(lvl, []level.ObjectID{id}, view.model.selectedObjects.list)
+}
+
+func (view *ObjectsView) floorHeightAtFine(tile *level.TileMapEntry, pos MapPosition, height level.HeightShift) float32 {
+	floorHeight, _ := height.ValueFromTileHeight(tile.Floor.AbsoluteHeight())
+	slopeHeight, _ := height.ValueFromTileHeight(tile.SlopeHeight)
+	info := tile.Type.Info()
+
+	// The following algorithm is not correct, yet a viable approximation.
+	// In order to do a proper linear calculation, each slope would need to be taken into account,
+	// and also comparing the slope scenario (ridge vs valley).
+
+	eastFactor := float32(pos.X.Fine()) / 255.0
+	northFactor := float32(pos.Y.Fine()) / 255.0
+
+	// determine the height at the sides
+	heightNorth := info.SlopeFloorFactors[level.DirNorthWest] + (info.SlopeFloorFactors[level.DirNorthEast]-info.SlopeFloorFactors[level.DirNorthWest])*eastFactor
+	heightSouth := info.SlopeFloorFactors[level.DirSouthWest] + (info.SlopeFloorFactors[level.DirSouthEast]-info.SlopeFloorFactors[level.DirSouthWest])*eastFactor
+	heightEast := info.SlopeFloorFactors[level.DirSouthEast] + (info.SlopeFloorFactors[level.DirNorthEast]-info.SlopeFloorFactors[level.DirSouthEast])*northFactor
+	heightWest := info.SlopeFloorFactors[level.DirSouthWest] + (info.SlopeFloorFactors[level.DirNorthWest]-info.SlopeFloorFactors[level.DirSouthWest])*northFactor
+
+	// interpolate between the parallel sides
+	heightSouthNorth := heightSouth + (heightNorth-heightSouth)*northFactor
+	heightWestEast := heightWest + (heightEast-heightWest)*eastFactor
+
+	// take the maximum of both interpolations
+	fineHeight := slopeHeight * float32(math.Max(float64(heightSouthNorth), float64(heightWestEast)))
+
+	return floorHeight + fineHeight
 }
 
 func (view *ObjectsView) requestDeleteObjects(lvl *level.Level, objectIDs []level.ObjectID) {
