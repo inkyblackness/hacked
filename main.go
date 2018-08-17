@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime/pprof"
 	"time"
 
 	_ "image/gif"
@@ -20,6 +21,7 @@ func main() {
 	scale := flag.Float64("scale", 1.0, "factor for scaling the UI (0.5 .. 10.0). 1080p displays should use default. 4K most likely 2.0.")
 	fontFile := flag.String("fontfile", "", "Path to font file (.TTF) to use instead of the default font. Useful for HiDPI displays.")
 	fontSize := flag.Float64("fontsize", 0.0, "Size of the font to use. If not specified, a default height will be used.")
+	cpuprofile := flag.String("cpuprofile", "", "write cpu profile to file")
 	flag.Parse()
 	var app editor.Application
 	app.FontFile = *fontFile
@@ -35,8 +37,26 @@ func main() {
 	versionInfo := "InkyBlackness - HackEd - " + app.Version
 	defer crash.Handler(versionInfo)
 
-	err := native.Run(app.InitializeWindow, versionInfo, 30.0, deferrer)
+	profileFin, err := initProfiling(*cpuprofile)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to start CPU profiling: %v\n", err)
+	}
+	defer profileFin()
+
+	err = native.Run(app.InitializeWindow, versionInfo, 30.0, deferrer)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to run application: %v\n", err)
 	}
+}
+
+func initProfiling(filename string) (func(), error) {
+	if filename != "" {
+		f, err := os.Create(filename)
+		if err != nil {
+			return func() {}, err
+		}
+		err = pprof.StartCPUProfile(f)
+		return func() { pprof.StopCPUProfile() }, err
+	}
+	return func() {}, nil
 }
