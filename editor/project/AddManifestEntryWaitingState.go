@@ -65,9 +65,8 @@ func (state *addManifestEntryWaitingState) HandleFiles(names []string) {
 			}
 			entry.Resources = append(entry.Resources, localized)
 		}
-		if len(staging.objectProperties) > 0 {
-			entry.ObjectProperties = staging.objectProperties
-		}
+		entry.ObjectProperties = staging.objectProperties
+		entry.TextureProperties = staging.textureProperties
 
 		state.view.requestAddManifestEntry(entry)
 		state.view.fileState = &idlePopupState{}

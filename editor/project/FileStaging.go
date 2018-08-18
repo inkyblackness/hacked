@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/inkyblackness/hacked/ss1/content/object"
+	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/resource/lgres"
 	"github.com/inkyblackness/hacked/ss1/serial"
@@ -19,7 +20,8 @@ type fileStaging struct {
 	savegames   map[string]resource.Provider
 	resources   map[string]resource.Provider
 
-	objectProperties object.PropertiesTable
+	objectProperties  object.PropertiesTable
+	textureProperties texture.PropertiesList
 }
 
 func (staging *fileStaging) stage(name string, isOnlyStagedFile bool) {
@@ -63,6 +65,16 @@ func (staging *fileStaging) stage(name string, isOnlyStagedFile bool) {
 			err = decoder.FirstError()
 			if err == nil {
 				staging.objectProperties = properties
+			}
+		}
+		if strings.ToLower(filename) == "textprop.dat" && (len(fileData) > 4) {
+			decoder := serial.NewDecoder(bytes.NewReader(fileData))
+			entryCount := (len(fileData) - 4) / texture.PropertiesSize
+			properties := make(texture.PropertiesList, entryCount)
+			properties.Code(decoder)
+			err = decoder.FirstError()
+			if err == nil {
+				staging.textureProperties = properties
 			}
 		}
 

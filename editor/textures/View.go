@@ -2,12 +2,16 @@ package textures
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/inkyblackness/hacked/editor/cmd"
+	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/render"
+	"github.com/inkyblackness/hacked/editor/values"
 	"github.com/inkyblackness/hacked/ss1/content/text"
+	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
@@ -23,6 +27,7 @@ type View struct {
 	paletteCache *graphics.PaletteCache
 
 	modalStateMachine gui.ModalStateMachine
+	clipboard         external.Clipboard
 	guiScale          float32
 	commander         cmd.Commander
 
@@ -32,7 +37,7 @@ type View struct {
 // NewTexturesView returns a new instance.
 func NewTexturesView(mod *model.Mod, textCache *text.Cache, imageCache *graphics.TextureCache, paletteCache *graphics.PaletteCache,
 	modalStateMachine gui.ModalStateMachine,
-	guiScale float32, commander cmd.Commander) *View {
+	clipboard external.Clipboard, guiScale float32, commander cmd.Commander) *View {
 	view := &View{
 		mod:          mod,
 		textCache:    textCache,
@@ -40,6 +45,7 @@ func NewTexturesView(mod *model.Mod, textCache *text.Cache, imageCache *graphics
 		paletteCache: paletteCache,
 
 		modalStateMachine: modalStateMachine,
+		clipboard:         clipboard,
 		guiScale:          guiScale,
 		commander:         commander,
 
@@ -70,8 +76,8 @@ func (view *View) Render() {
 }
 
 func (view *View) renderContent() {
-	if imgui.BeginChildV("Properties", imgui.Vec2{X: 350 * view.guiScale, Y: 0}, false, 0) {
-		imgui.PushItemWidth(-150 * view.guiScale)
+	if imgui.BeginChildV("Properties", imgui.Vec2{X: -300 * view.guiScale, Y: 0}, false, imgui.WindowFlagsHorizontalScrollbar) {
+		imgui.PushItemWidth(-200 * view.guiScale)
 
 		gui.StepSliderInt("Index", &view.model.currentIndex, 0, world.MaxWorldTextures-1)
 
@@ -80,12 +86,34 @@ func (view *View) renderContent() {
 			func(index int) resource.Key {
 				return view.indexedResourceKey(ids.LargeTextures, index)
 			},
-			func(index int) string { return view.textureName(index) },
+			func(index int) string { return view.textureTooltip(index) },
 			func(newValue int) {
 				view.model.currentIndex = newValue
 			})
 
+		readOnly := !view.mod.HasModifyableTextureProperties()
+
 		imgui.Separator()
+		if imgui.BeginCombo("Language", view.model.currentLang.String()) {
+			languages := resource.Languages()
+			for _, lang := range languages {
+				if imgui.SelectableV(lang.String(), lang == view.model.currentLang, 0, imgui.Vec2{}) {
+					view.model.currentLang = lang
+				}
+			}
+			imgui.EndCombo()
+		}
+
+		nameKey := resource.KeyOf(ids.TextureNames, view.model.currentLang, view.model.currentIndex)
+		name, _ := view.textCache.Text(nameKey)
+		view.renderText(readOnly, "Name", name, func(string) {})
+
+		useKey := resource.KeyOf(ids.TextureUsages, view.model.currentLang, view.model.currentIndex)
+		use, _ := view.textCache.Text(useKey)
+		view.renderText(readOnly, "Use", use, func(string) {})
+
+		imgui.Separator()
+		view.renderTextureProperties(readOnly)
 
 		imgui.PopItemWidth()
 	}
@@ -98,6 +126,68 @@ func (view *View) renderContent() {
 	view.renderTextureSample("Small", ids.SmallTextures, 32)
 	view.renderTextureSample("Icon", ids.IconTextures, 16)
 	imgui.EndGroup()
+}
+
+func (view *View) renderText(readOnly bool, label string, value string, changeCallback func(string)) {
+	imgui.LabelText(label, value)
+	view.clipboardPopup(readOnly, label, value, changeCallback)
+}
+
+func (view *View) clipboardPopup(readOnly bool, label string, value string, changeCallback func(string)) {
+	if imgui.BeginPopupContextItemV(label+"-Popup", 1) {
+		if imgui.Selectable("Copy to Clipboard") {
+			view.clipboard.SetString(value)
+		}
+		if !readOnly && imgui.Selectable("Copy from Clipboard") {
+			newValue, err := view.clipboard.String()
+			if err == nil {
+				changeCallback(newValue)
+			}
+		}
+		imgui.EndPopup()
+	}
+}
+
+func (view *View) renderTextureProperties(readOnly bool) {
+	list := view.mod.TextureProperties()
+	distanceUnifier := values.NewUnifier()
+	climbableUnifier := values.NewUnifier()
+	transparencyControlUnifier := values.NewUnifier()
+	animationGroupUnifier := values.NewUnifier()
+	animationIndexUnifier := values.NewUnifier()
+	if view.model.currentIndex < len(list) {
+		properties := list[view.model.currentIndex]
+		distanceUnifier.Add(int(properties.DistanceModifier))
+		climbableUnifier.Add(properties.Climbable != 0)
+		transparencyControlUnifier.Add(int(properties.TransparencyControl))
+		animationGroupUnifier.Add(int(properties.AnimationGroup))
+		animationIndexUnifier.Add(int(properties.AnimationIndex))
+	}
+
+	values.RenderUnifiedSliderInt(readOnly, false, "Distance Modifier", distanceUnifier,
+		func(u values.Unifier) int { return u.Unified().(int) },
+		func(value int) string { return "%d" },
+		math.MinInt16, math.MaxInt16,
+		func(newValue int) {})
+
+	values.RenderUnifiedCheckboxCombo(readOnly, false, "Climbable", climbableUnifier, func(newValue bool) {})
+
+	values.RenderUnifiedCombo(readOnly, false, "Transparency Control", transparencyControlUnifier,
+		func(u values.Unifier) int { return u.Unified().(int) },
+		func(index int) string { return texture.TransparencyControl(index).String() },
+		len(texture.TransparencyControls()),
+		func(newValue int) {})
+
+	values.RenderUnifiedSliderInt(readOnly, false, "Animation Group", animationGroupUnifier,
+		func(u values.Unifier) int { return u.Unified().(int) },
+		func(value int) string { return "%d" },
+		0, 3,
+		func(newValue int) {})
+	values.RenderUnifiedSliderInt(readOnly, false, "Animation Index", animationIndexUnifier,
+		func(u values.Unifier) int { return u.Unified().(int) },
+		func(value int) string { return "%d" },
+		0, 3,
+		func(newValue int) {})
 }
 
 func (view *View) renderTextureSample(label string, id resource.ID, sideLength float32) {
@@ -152,7 +242,7 @@ func (view *View) indexedResourceKey(id resource.ID, index int) resource.Key {
 	return resource.KeyOf(id.Plus(index), resource.LangAny, 0)
 }
 
-func (view *View) textureName(index int) string {
+func (view *View) textureTooltip(index int) string {
 	key := resource.KeyOf(ids.TextureNames, resource.LangDefault, index)
 	name, err := view.textCache.Text(key)
 	suffix := ""

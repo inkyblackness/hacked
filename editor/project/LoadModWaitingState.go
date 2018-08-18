@@ -62,7 +62,7 @@ func (state *loadModWaitingState) HandleFiles(names []string) {
 		}
 
 		state.view.fileState = &idlePopupState{}
-		state.view.requestLoadMod(names[0], res, staging.objectProperties)
+		state.view.requestLoadMod(names[0], res, staging.objectProperties, staging.textureProperties)
 	} else {
 		state.failureTime = time.Now()
 	}

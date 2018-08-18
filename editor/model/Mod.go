@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/inkyblackness/hacked/ss1/content/object"
+	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/serial/rle"
 	"github.com/inkyblackness/hacked/ss1/world"
@@ -31,6 +32,7 @@ type Mod struct {
 	changedFiles       map[string]struct{}
 	localizedResources LocalizedResources
 	objectProperties   object.PropertiesTable
+	textureProperties  texture.PropertiesList
 }
 
 // NewMod returns a new instance.
@@ -219,6 +221,19 @@ func (mod *Mod) ObjectProperties() object.PropertiesTable {
 	return mod.worldManifest.ObjectProperties()
 }
 
+// TextureProperties returns the list of texture properties.
+func (mod *Mod) TextureProperties() texture.PropertiesList {
+	if len(mod.textureProperties) > 0 {
+		return mod.textureProperties
+	}
+	return mod.worldManifest.TextureProperties()
+}
+
+// HasModifyableTextureProperties returns true if the mod has dedicated texture properties.
+func (mod *Mod) HasModifyableTextureProperties() bool {
+	return len(mod.textureProperties) > 0
+}
+
 func (mod *Mod) modifyAndNotify(modifier func(), modifiedIDs []resource.ID) {
 	notifier := resource.ChangeNotifier{
 		Callback:  mod.resourcesChanged,
@@ -288,7 +303,7 @@ func (mod *Mod) delResource(lang resource.Language, id resource.ID) {
 }
 
 // Reset changes the mod to a new set of resources.
-func (mod *Mod) Reset(newResources LocalizedResources, objectProperties object.PropertiesTable) {
+func (mod *Mod) Reset(newResources LocalizedResources, objectProperties object.PropertiesTable, textureProperties texture.PropertiesList) {
 	modifiedIDs := make(resource.IDMarkerMap)
 	collectIDs := func(res LocalizedResources) {
 		for _, resMap := range res {
@@ -302,6 +317,7 @@ func (mod *Mod) Reset(newResources LocalizedResources, objectProperties object.P
 
 	mod.localizedResources = newResources
 	mod.objectProperties = objectProperties
+	mod.textureProperties = textureProperties
 	mod.changedFiles = make(map[string]struct{})
 	mod.lastChangeTime = time.Time{}
 	mod.resetCallback()

@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/inkyblackness/hacked/ss1/content/object"
+	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
@@ -135,6 +136,17 @@ func (manifest *Manifest) ObjectProperties() object.PropertiesTable {
 		}
 	}
 	return table
+}
+
+// TextureProperties returns the table of texture properties.
+func (manifest *Manifest) TextureProperties() texture.PropertiesList {
+	var list texture.PropertiesList
+	for _, entry := range manifest.entries {
+		if len(entry.TextureProperties) > 0 {
+			list = entry.TextureProperties
+		}
+	}
+	return list
 }
 
 func (manifest *Manifest) listIDs(entry *ManifestEntry) (ids []resource.ID) {
