@@ -2,7 +2,6 @@ package levels
 
 import (
 	"fmt"
-	"math"
 	"sort"
 	"strings"
 
@@ -906,20 +905,12 @@ func (view *ObjectsView) requestCreateObject(lvl *level.Level, triple object.Tri
 	if err != nil {
 		return
 	}
-	const DefaultHeight = 1.0 / float32(0xbd00)
-	const PhysicsScale = 96.0
-	objHeight := DefaultHeight
+	var objPivot float32
 	obj := lvl.Object(id)
 	prop, err := view.mod.ObjectProperties().ForObject(triple)
 	if err == nil {
 		obj.Hitpoints = prop.Common.Hitpoints
-		if (prop.Common.RenderType == object.RenderTypeTextPoly) || (prop.Common.RenderType == object.RenderTypeSpecial) {
-			objHeight = 0
-		} else if prop.Common.PhysicsZ != 0 {
-			objHeight = float32(prop.Common.PhysicsZ) / PhysicsScale
-		} else if prop.Common.PhysicsXR != 0 {
-			objHeight = float32(prop.Common.PhysicsXR) / PhysicsScale
-		}
+		objPivot = object.Pivot(prop.Common)
 	}
 	obj.X = pos.X
 	obj.Y = pos.Y
@@ -927,7 +918,7 @@ func (view *ObjectsView) requestCreateObject(lvl *level.Level, triple object.Tri
 	if tile != nil {
 		_, _, height := lvl.Size()
 		floorHeight := view.floorHeightAtFine(tile, pos, height)
-		obj.Z = height.ValueToObjectHeight(floorHeight + objHeight)
+		obj.Z = height.ValueToObjectHeight(floorHeight + objPivot)
 	}
 	obj.Subclass = triple.Subclass
 	obj.Type = triple.Type
@@ -937,30 +928,79 @@ func (view *ObjectsView) requestCreateObject(lvl *level.Level, triple object.Tri
 
 func (view *ObjectsView) floorHeightAtFine(tile *level.TileMapEntry, pos MapPosition, height level.HeightShift) float32 {
 	floorHeight, _ := height.ValueFromTileHeight(tile.Floor.AbsoluteHeight())
+	if tile.Flags.SlopeControl() == level.TileSlopeControlFloorFlat {
+		return floorHeight
+	}
+
 	slopeHeight, _ := height.ValueFromTileHeight(tile.SlopeHeight)
-	info := tile.Type.Info()
-
-	// The following algorithm is not correct, yet a viable approximation.
-	// In order to do a proper linear calculation, each slope would need to be taken into account,
-	// and also comparing the slope scenario (ridge vs valley).
-
-	eastFactor := float32(pos.X.Fine()) / 255.0
-	northFactor := float32(pos.Y.Fine()) / 255.0
-
-	// determine the height at the sides
-	heightNorth := info.SlopeFloorFactors[level.DirNorthWest] + (info.SlopeFloorFactors[level.DirNorthEast]-info.SlopeFloorFactors[level.DirNorthWest])*eastFactor
-	heightSouth := info.SlopeFloorFactors[level.DirSouthWest] + (info.SlopeFloorFactors[level.DirSouthEast]-info.SlopeFloorFactors[level.DirSouthWest])*eastFactor
-	heightEast := info.SlopeFloorFactors[level.DirSouthEast] + (info.SlopeFloorFactors[level.DirNorthEast]-info.SlopeFloorFactors[level.DirSouthEast])*northFactor
-	heightWest := info.SlopeFloorFactors[level.DirSouthWest] + (info.SlopeFloorFactors[level.DirNorthWest]-info.SlopeFloorFactors[level.DirSouthWest])*northFactor
-
-	// interpolate between the parallel sides
-	heightSouthNorth := heightSouth + (heightNorth-heightSouth)*northFactor
-	heightWestEast := heightWest + (heightEast-heightWest)*eastFactor
-
-	// take the maximum of both interpolations
-	fineHeight := slopeHeight * float32(math.Max(float64(heightSouthNorth), float64(heightWestEast)))
-
+	fineHeight := slopeHeight * view.slopeFactorAtFine(tile.Type, pos)
 	return floorHeight + fineHeight
+}
+
+func (view *ObjectsView) ceilingHeightAtFine(tile *level.TileMapEntry, pos MapPosition, height level.HeightShift) float32 {
+	ceilingHeight, _ := height.ValueFromTileHeight(tile.Ceiling.AbsoluteHeight())
+	slopeControl := tile.Flags.SlopeControl()
+	if slopeControl == level.TileSlopeControlCeilingFlat {
+		return ceilingHeight
+	}
+
+	slopeHeight, _ := height.ValueFromTileHeight(tile.SlopeHeight)
+	var slopeFactor float32
+	if slopeControl == level.TileSlopeControlCeilingMirrored {
+		slopeFactor = view.slopeFactorAtFine(tile.Type, pos)
+	} else {
+		slopeFactor = view.slopeFactorAtFine(tile.Type.Info().SlopeInvertedType, pos)
+	}
+	fineHeight := slopeHeight * slopeFactor
+	return ceilingHeight - fineHeight
+}
+
+func (view *ObjectsView) slopeFactorAtFine(tileType level.TileType, pos MapPosition) float32 {
+	southToNorth := float32(pos.Y.Fine()) / 255
+	westToEast := float32(pos.X.Fine()) / 255
+	swneDiag := func(northWest, southEast float32) float32 {
+		if pos.X.Fine() < pos.Y.Fine() {
+			return northWest
+		}
+		return southEast
+	}
+	nwseDiag := func(southWest, northEast float32) float32 {
+		if (255 - pos.X.Fine()) < pos.Y.Fine() {
+			return northEast
+		}
+		return southWest
+	}
+
+	switch tileType {
+	case level.TileTypeSlopeSouthToNorth:
+		return southToNorth
+	case level.TileTypeSlopeWestToEast:
+		return westToEast
+	case level.TileTypeSlopeNorthToSouth:
+		return 1 - southToNorth
+	case level.TileTypeSlopeEastToWest:
+		return 1 - westToEast
+
+	case level.TileTypeValleySouthEastToNorthWest:
+		return nwseDiag(1-westToEast, southToNorth)
+	case level.TileTypeValleySouthWestToNorthEast:
+		return swneDiag(southToNorth, westToEast)
+	case level.TileTypeValleyNorthWestToSouthEast:
+		return nwseDiag(1-southToNorth, westToEast)
+	case level.TileTypeValleyNorthEastToSouthWest:
+		return swneDiag(1-westToEast, 1-southToNorth)
+
+	case level.TileTypeRidgeNorthWestToSouthEast:
+		return nwseDiag(westToEast, 1-southToNorth)
+	case level.TileTypeRidgeNorthEastToSouthWest:
+		return swneDiag(1-southToNorth, 1-westToEast)
+	case level.TileTypeRidgeSouthEastToNorthWest:
+		return nwseDiag(southToNorth, 1-westToEast)
+	case level.TileTypeRidgeSouthWestToNorthEast:
+		return swneDiag(westToEast, southToNorth)
+	}
+
+	return 0.0
 }
 
 func (view *ObjectsView) requestDeleteObjects(lvl *level.Level, objectIDs []level.ObjectID) {
@@ -1032,4 +1072,46 @@ func (view *ObjectsView) textureName(index int) string {
 		suffix = ": " + name
 	}
 	return fmt.Sprintf("%3d", index) + suffix
+}
+
+// PlaceSelectedObjectsOnFloor puts all selected objects to sit on the floor.
+func (view *ObjectsView) PlaceSelectedObjectsOnFloor(lvl *level.Level) {
+	_, _, height := lvl.Size()
+	view.placeSelectedObjects(lvl, func(tile *level.TileMapEntry, pos MapPosition, objPivot float32) level.HeightUnit {
+		floorHeight := view.floorHeightAtFine(tile, pos, height)
+		return height.ValueToObjectHeight(floorHeight + objPivot)
+	})
+}
+
+// PlaceSelectedObjectsOnFloor puts all selected objects to be at eye level (approximately).
+func (view *ObjectsView) PlaceSelectedObjectsOnEyeLevel(lvl *level.Level) {
+	_, _, height := lvl.Size()
+	view.placeSelectedObjects(lvl, func(tile *level.TileMapEntry, pos MapPosition, objPivot float32) level.HeightUnit {
+		floorHeight := view.floorHeightAtFine(tile, pos, height)
+		return height.ValueToObjectHeight(floorHeight + 0.75 - objPivot)
+	})
+}
+
+// PlaceSelectedObjectsOnFloor puts all selected objects to hang from the ceiling.
+func (view *ObjectsView) PlaceSelectedObjectsOnCeiling(lvl *level.Level) {
+	_, _, height := lvl.Size()
+	view.placeSelectedObjects(lvl, func(tile *level.TileMapEntry, pos MapPosition, objPivot float32) level.HeightUnit {
+		ceilingHeight := view.ceilingHeightAtFine(tile, pos, height)
+		return height.ValueToObjectHeight(ceilingHeight - objPivot)
+	})
+}
+
+func (view *ObjectsView) placeSelectedObjects(lvl *level.Level,
+	atHeight func(tile *level.TileMapEntry, pos MapPosition, objPivot float32) level.HeightUnit) {
+	view.requestBaseChange(lvl, func(obj *level.ObjectMasterEntry) {
+		var objPivot float32
+		prop, err := view.mod.ObjectProperties().ForObject(obj.Triple())
+		if err == nil {
+			objPivot = object.Pivot(prop.Common)
+		}
+		tile := lvl.Tile(int(obj.X.Tile()), int(obj.Y.Tile()))
+		if tile != nil {
+			obj.Z = atHeight(tile, MapPosition{X: obj.X, Y: obj.Y}, objPivot)
+		}
+	})
 }

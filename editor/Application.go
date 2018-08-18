@@ -119,6 +119,7 @@ func (app *Application) initWindowCallbacks() {
 	app.window.OnResize(app.onWindowResize)
 
 	app.window.OnKey(app.onKey)
+	app.window.OnCharCallback(app.onChar)
 	app.window.OnModifier(app.onModifier)
 
 	app.window.OnMouseMove(app.onMouseMove)
@@ -246,6 +247,20 @@ func (app *Application) onKey(key input.Key, modifier input.Modifier) {
 		*app.levelObjectsView.WindowOpen() = !*app.levelObjectsView.WindowOpen()
 	} else if key == input.KeyF5 {
 		*app.messagesView.WindowOpen() = !*app.messagesView.WindowOpen()
+	}
+}
+
+func (app *Application) onChar(char rune) {
+	if !app.guiContext.IsUsingKeyboard() {
+		activeLevel := app.levels[app.levelControlView.SelectedLevel()]
+		switch char {
+		case 'v':
+			app.levelObjectsView.PlaceSelectedObjectsOnFloor(activeLevel)
+		case 'f':
+			app.levelObjectsView.PlaceSelectedObjectsOnEyeLevel(activeLevel)
+		case 'r':
+			app.levelObjectsView.PlaceSelectedObjectsOnCeiling(activeLevel)
+		}
 	}
 }
 

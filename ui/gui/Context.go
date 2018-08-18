@@ -82,6 +82,12 @@ func (context Context) IsUsingMouse() bool {
 	return imgui.CurrentIO().WantCaptureMouse()
 }
 
+// IsUsingKeyboard returns true if the UI is currently capturing keyboard input.
+// The application should not process keyboard input events in this case.
+func (context Context) IsUsingKeyboard() bool {
+	return imgui.CurrentIO().WantTextInput()
+}
+
 // NewFrame must be called at the start of rendering.
 func (context *Context) NewFrame() {
 	io := imgui.CurrentIO()
