@@ -231,7 +231,7 @@ func (view *View) renderTextureSample(label string, id resource.ID, sideLength f
 		tex, err := view.imageCache.Texture(key)
 
 		if imgui.Button("Clear") {
-			view.requestClear(id, view.model.currentIndex)
+			view.requestClear(id, view.model.currentIndex, int(sideLength))
 		}
 		imgui.SameLine()
 		if imgui.Button("Import") {
@@ -398,11 +398,11 @@ func (view *View) requestImport(withError bool) {
 	*/
 }
 
-func (view *View) requestClear(id resource.ID, index int) {
+func (view *View) requestClear(id resource.ID, index int, sideLength int) {
 	bmp := bitmap.Bitmap{
 		Header: bitmap.Header{
-			Width:  1,
-			Height: 1,
+			Width:  int16(sideLength),
+			Height: int16(sideLength),
 		},
 		Pixels: []byte{0x00},
 	}
