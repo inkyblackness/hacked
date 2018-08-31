@@ -67,7 +67,7 @@ func (staging *fileStaging) stage(name string, isOnlyStagedFile bool) {
 				staging.objectProperties = properties
 			}
 		}
-		if strings.ToLower(filename) == "textprop.dat" && (len(fileData) > 4) {
+		if strings.ToLower(filename) == world.TexturePropertiesFilename && (len(fileData) > 4) {
 			decoder := serial.NewDecoder(bytes.NewReader(fileData))
 			entryCount := (len(fileData) - 4) / texture.PropertiesSize
 			properties := make(texture.PropertiesList, entryCount)

@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"github.com/inkyblackness/hacked/ss1/content/archive/level"
+	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
@@ -33,4 +35,7 @@ type Transaction interface {
 	//
 	// After the deletion, all the underlying data of the world will become visible again.
 	DelResource(lang resource.Language, id resource.ID)
+
+	// SetTextureProperties updates the properties of a specific texture.
+	SetTextureProperties(textureIndex level.TextureIndex, properties texture.Properties)
 }

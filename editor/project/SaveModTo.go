@@ -1,14 +1,20 @@
 package project
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 
 	"github.com/inkyblackness/hacked/editor/model"
+	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/resource/lgres"
+	"github.com/inkyblackness/hacked/ss1/serial"
+	"github.com/inkyblackness/hacked/ss1/world"
 )
 
-func saveModResourcesTo(localized model.LocalizedResources, modPath string, filenamesToSave []string) error {
+func saveModResourcesTo(mod *model.Mod, modPath string) error {
+	localized := mod.ModifiedResources()
+	filenamesToSave := mod.ModifiedFilenames()
 	resByFile := make(map[string]model.IdentifiedResources)
 	for _, identifiedIn := range localized {
 		for id, res := range identifiedIn {
@@ -38,6 +44,12 @@ func saveModResourcesTo(localized model.LocalizedResources, modPath string, file
 			}
 		}
 	}
+	if shallBeSaved(world.TexturePropertiesFilename) {
+		err := saveTexturePropertiesTo(mod.TextureProperties(), filepath.Join(modPath, world.TexturePropertiesFilename))
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -51,5 +63,25 @@ func saveResourcesTo(list model.IdentifiedResources, absFilename string) error {
 		_ = file.Close() // nolint: gas
 	}()
 	err = lgres.Write(file, list)
+	return err
+}
+
+func saveTexturePropertiesTo(list texture.PropertiesList, absFilename string) error {
+	buffer := bytes.NewBuffer(nil)
+	encoder := serial.NewEncoder(buffer)
+	list.Code(encoder)
+	err := encoder.FirstError()
+	if err != nil {
+		return err
+	}
+
+	file, err := os.Create(absFilename)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = file.Close() // nolint: gas
+	}()
+	_, err = file.Write(buffer.Bytes())
 	return err
 }

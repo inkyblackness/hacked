@@ -226,7 +226,7 @@ func (view *View) requestLoadMod(modPath string, resources model.LocalizedResour
 }
 
 func (view *View) requestSaveMod(modPath string) {
-	err := saveModResourcesTo(view.mod.ModifiedResources(), modPath, view.mod.ModifiedFilenames())
+	err := saveModResourcesTo(view.mod, modPath)
 	if err != nil {
 		view.fileState = &saveModFailedState{
 			view:      view,

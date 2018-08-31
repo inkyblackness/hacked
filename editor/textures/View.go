@@ -10,6 +10,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
+	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -23,6 +24,7 @@ import (
 type View struct {
 	mod          *model.Mod
 	textCache    *text.Cache
+	cp           text.Codepage
 	imageCache   *graphics.TextureCache
 	paletteCache *graphics.PaletteCache
 
@@ -35,12 +37,14 @@ type View struct {
 }
 
 // NewTexturesView returns a new instance.
-func NewTexturesView(mod *model.Mod, textCache *text.Cache, imageCache *graphics.TextureCache, paletteCache *graphics.PaletteCache,
+func NewTexturesView(mod *model.Mod, textCache *text.Cache, cp text.Codepage,
+	imageCache *graphics.TextureCache, paletteCache *graphics.PaletteCache,
 	modalStateMachine gui.ModalStateMachine,
 	clipboard external.Clipboard, guiScale float32, commander cmd.Commander) *View {
 	view := &View{
 		mod:          mod,
 		textCache:    textCache,
+		cp:           cp,
 		imageCache:   imageCache,
 		paletteCache: paletteCache,
 
@@ -106,11 +110,11 @@ func (view *View) renderContent() {
 
 		nameKey := resource.KeyOf(ids.TextureNames, view.model.currentLang, view.model.currentIndex)
 		name, _ := view.textCache.Text(nameKey)
-		view.renderText(readOnly, "Name", name, func(string) {})
+		view.renderText(readOnly, "Name", name, view.requestSetTextureName)
 
 		useKey := resource.KeyOf(ids.TextureUsages, view.model.currentLang, view.model.currentIndex)
 		use, _ := view.textCache.Text(useKey)
-		view.renderText(readOnly, "Use", use, func(string) {})
+		view.renderText(readOnly, "Use", use, view.requestSetTextureUsage)
 
 		imgui.Separator()
 		view.renderTextureProperties(readOnly)
@@ -168,26 +172,50 @@ func (view *View) renderTextureProperties(readOnly bool) {
 		func(u values.Unifier) int { return u.Unified().(int) },
 		func(value int) string { return "%d" },
 		math.MinInt16, math.MaxInt16,
-		func(newValue int) {})
+		func(newValue int) {
+			view.requestChangeProperties(func(prop *texture.Properties) {
+				prop.DistanceModifier = int16(newValue)
+			})
+		})
 
-	values.RenderUnifiedCheckboxCombo(readOnly, false, "Climbable", climbableUnifier, func(newValue bool) {})
+	values.RenderUnifiedCheckboxCombo(readOnly, false, "Climbable", climbableUnifier,
+		func(newValue bool) {
+			view.requestChangeProperties(func(prop *texture.Properties) {
+				prop.Climbable = 0
+				if newValue {
+					prop.Climbable = 1
+				}
+			})
+		})
 
 	values.RenderUnifiedCombo(readOnly, false, "Transparency Control", transparencyControlUnifier,
 		func(u values.Unifier) int { return u.Unified().(int) },
 		func(index int) string { return texture.TransparencyControl(index).String() },
 		len(texture.TransparencyControls()),
-		func(newValue int) {})
+		func(newValue int) {
+			view.requestChangeProperties(func(prop *texture.Properties) {
+				prop.TransparencyControl = texture.TransparencyControl(newValue)
+			})
+		})
 
 	values.RenderUnifiedSliderInt(readOnly, false, "Animation Group", animationGroupUnifier,
 		func(u values.Unifier) int { return u.Unified().(int) },
 		func(value int) string { return "%d" },
 		0, 3,
-		func(newValue int) {})
+		func(newValue int) {
+			view.requestChangeProperties(func(prop *texture.Properties) {
+				prop.AnimationGroup = byte(newValue)
+			})
+		})
 	values.RenderUnifiedSliderInt(readOnly, false, "Animation Index", animationIndexUnifier,
 		func(u values.Unifier) int { return u.Unified().(int) },
 		func(value int) string { return "%d" },
 		0, 3,
-		func(newValue int) {})
+		func(newValue int) {
+			view.requestChangeProperties(func(prop *texture.Properties) {
+				prop.AnimationIndex = byte(newValue)
+			})
+		})
 }
 
 func (view *View) renderTextureSample(label string, id resource.ID, sideLength float32) {
@@ -255,6 +283,43 @@ func (view *View) textureTooltip(index int) string {
 func (view *View) hasModCurrentBitmap() bool {
 	key := view.currentResourceKey()
 	return len(view.mod.ModifiedBlock(key.Lang, key.ID, key.Index)) > 0
+}
+
+func (view *View) requestChangeProperties(modifier func(*texture.Properties)) {
+	list := view.mod.TextureProperties()
+	if view.model.currentIndex < len(list) {
+		command := setTexturePropertiesCommand{
+			model:         &view.model,
+			textureIndex:  level.TextureIndex(view.model.currentIndex),
+			oldProperties: list[view.model.currentIndex],
+			newProperties: list[view.model.currentIndex],
+		}
+		modifier(&command.newProperties)
+		view.commander.Queue(command)
+	}
+}
+
+func (view *View) requestSetTextureName(value string) {
+	view.requestSetTextureText(ids.TextureNames, value)
+}
+
+func (view *View) requestSetTextureUsage(value string) {
+	view.requestSetTextureText(ids.TextureUsages, value)
+}
+
+func (view *View) requestSetTextureText(id resource.ID, newValue string) {
+	key := resource.KeyOf(id, view.model.currentLang, view.model.currentIndex)
+	oldValue, _ := view.textCache.Text(key)
+
+	if oldValue != newValue {
+		command := setTextureTextCommand{
+			model:   &view.model,
+			key:     key,
+			oldData: view.cp.Encode(oldValue),
+			newData: view.cp.Encode(text.Blocked(newValue)[0]),
+		}
+		view.commander.Queue(command)
+	}
 }
 
 func (view *View) requestExport(withError bool) {

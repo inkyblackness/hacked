@@ -1,6 +1,8 @@
 package textures
 
-import "github.com/inkyblackness/hacked/ss1/resource"
+import (
+	"github.com/inkyblackness/hacked/ss1/resource"
+)
 
 type viewModel struct {
 	windowOpen   bool

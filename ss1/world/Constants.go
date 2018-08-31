@@ -12,3 +12,8 @@ const (
 	// Note that this value is equal to that of the resource limits in package ids. It is actually based on them.
 	MaxWorldTextures = 293
 )
+
+const (
+	// TexturePropertiesFilename contains the lowercase name of the file containing texture properties.
+	TexturePropertiesFilename = "textprop.dat"
+)
