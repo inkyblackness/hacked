@@ -11,6 +11,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
+	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -219,7 +220,7 @@ func (view *View) renderTextureProperties(readOnly bool) {
 }
 
 func (view *View) renderTextureSample(label string, id resource.ID, sideLength float32) {
-	if imgui.BeginChildV(label, imgui.Vec2{X: -1, Y: 128 * view.guiScale}, true, imgui.WindowFlagsNoScrollbar) {
+	if imgui.BeginChildV(label, imgui.Vec2{X: -1, Y: (128 + 7) * view.guiScale}, true, imgui.WindowFlagsNoScrollbar) {
 		key := view.indexedResourceKey(id, view.model.currentIndex)
 		render.TextureImage("Texture Bitmap", view.imageCache, key,
 			imgui.Vec2{X: sideLength * view.guiScale, Y: sideLength * view.guiScale})
@@ -230,27 +231,25 @@ func (view *View) renderTextureSample(label string, id resource.ID, sideLength f
 		tex, err := view.imageCache.Texture(key)
 
 		if imgui.Button("Clear") {
-			//view.requestClear()
+			view.requestClear(id, view.model.currentIndex)
 		}
 		imgui.SameLine()
 		if imgui.Button("Import") {
 			//view.requestImport(false)
 		}
 		if err == nil {
-			imgui.SameLine()
 			if imgui.Button("Export") {
 				//view.requestExport(false)
 			}
 			if view.hasModCurrentBitmap() {
 				imgui.SameLine()
 				if imgui.Button("Remove") {
-					//view.requestSetBitmapData(nil)
+					view.requestSetBitmapData(id, view.model.currentIndex, nil)
 				}
 			}
 
 			width, height := tex.Size()
-			imgui.LabelText("Width", fmt.Sprintf("%d", int(width)))
-			imgui.LabelText("Height", fmt.Sprintf("%d", int(height)))
+			imgui.Text(fmt.Sprintf("%d x %d px", int(width), int(height)))
 		}
 
 		imgui.EndGroup()
@@ -399,15 +398,44 @@ func (view *View) requestImport(withError bool) {
 	*/
 }
 
-func (view *View) requestClear() {
-	/*
-		bmp := bitmap.Bitmap{
-			Header: bitmap.Header{
-				Width:  1,
-				Height: 1,
-			},
-			Pixels: []byte{0x00},
+func (view *View) requestClear(id resource.ID, index int) {
+	bmp := bitmap.Bitmap{
+		Header: bitmap.Header{
+			Width:  1,
+			Height: 1,
+		},
+		Pixels: []byte{0x00},
+	}
+	view.requestSetBitmap(id, index, bmp)
+}
+
+func (view *View) requestSetBitmap(id resource.ID, index int, bmp bitmap.Bitmap) {
+	highestBitShift := func(value int16) (result byte) {
+		if value != 0 {
+			for (value >> result) != 1 {
+				result++
+			}
 		}
-		view.requestSetBitmap(bmp)
-	*/
+		return
+	}
+
+	bmp.Header.Flags = bitmap.FlagTransparent
+	bmp.Header.Type = bitmap.TypeCompressed8Bit
+	bmp.Header.WidthFactor = highestBitShift(bmp.Header.Width)
+	bmp.Header.HeightFactor = highestBitShift(bmp.Header.Height)
+	bmp.Header.Stride = uint16(bmp.Header.Width)
+	data := bitmap.Encode(&bmp, 0)
+	view.requestSetBitmapData(id, index, data)
+}
+
+func (view *View) requestSetBitmapData(id resource.ID, index int, newData []byte) {
+	resourceKey := view.indexedResourceKey(id, index)
+	command := setTextureBitmapCommand{
+		model:        &view.model,
+		id:           id,
+		textureIndex: index,
+		oldData:      view.mod.ModifiedBlock(resource.LangAny, resourceKey.ID, resourceKey.Index),
+		newData:      newData,
+	}
+	view.commander.Queue(command)
 }
