@@ -294,7 +294,7 @@ func (lvl *Level) removeCrossReferences(start int, next func(ObjectCrossReferenc
 
 		obj := lvl.Object(entry.ObjectID)
 		if obj != nil {
-			if entry.NextTileForObj == int16(index) {
+			if entry.NextTileForObj == int16(start) {
 				obj.CrossReferenceTableIndex = 0
 			} else if obj.CrossReferenceTableIndex == int16(index) {
 				obj.CrossReferenceTableIndex = entry.NextTileForObj
