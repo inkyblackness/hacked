@@ -82,16 +82,22 @@ func (bitmapper *Bitmapper) Map(img image.Image) Bitmap {
 // MapColor maps the provided color to the nearest index in the palette.
 func (bitmapper *Bitmapper) MapColor(clr color.Color) (palIndex byte) {
 	_, _, _, a := clr.RGBA()
+	indexWithin := func(index, from, to int) bool {
+		return (index >= from) && (index <= to)
+	}
 
 	if a > 0 {
 		clrEntry := labEntryFromColor(clr)
 		palDistance := 1000.0
 
 		for colorIndex, palEntry := range bitmapper.pal {
-			distance := palEntry.distanceTo(clrEntry)
-			if distance < palDistance {
-				palDistance = distance
-				palIndex = byte(colorIndex)
+			isRegularColor := indexWithin(colorIndex, 0x01, 0x02) || indexWithin(colorIndex, 0x08, 0x0A) || indexWithin(colorIndex, 0x20, 0xFF)
+			if isRegularColor {
+				distance := palEntry.distanceTo(clrEntry)
+				if distance < palDistance {
+					palDistance = distance
+					palIndex = byte(colorIndex)
+				}
 			}
 		}
 	}
