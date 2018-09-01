@@ -3,9 +3,7 @@ package bitmaps
 import (
 	"fmt"
 	"image"
-	"image/png"
 	"os"
-	"path/filepath"
 
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/external"
@@ -142,12 +140,12 @@ func (view *View) renderContent() {
 		}
 		imgui.SameLine()
 		if imgui.Button("Import") {
-			view.requestImport(false)
+			view.requestImport()
 		}
 		if err == nil {
 			imgui.SameLine()
 			if imgui.Button("Export") {
-				view.requestExport(false)
+				view.requestExport()
 			}
 			if view.hasModCurrentBitmap() {
 				imgui.SameLine()
@@ -189,44 +187,29 @@ func (view *View) hasModCurrentBitmap() bool {
 	return len(view.mod.ModifiedBlock(key.Lang, key.ID, key.Index)) > 0
 }
 
-func (view *View) requestExport(withError bool) {
+func (view *View) requestExport() {
 	key := view.currentResourceKey()
+	texture, err := view.imageCache.Texture(key)
+	if err != nil {
+		return
+	}
+	palette, err := view.paletteCache.Palette(0)
+	if err != nil {
+		return
+	}
+	rawPalette := palette.Palette()
 	filename := fmt.Sprintf("%05d_%03d_%s.png", key.ID.Value(), key.Index, key.Lang.String())
-	info := "File to be written: " + filename
-	var exportTo func(string)
-
-	exportTo = func(dirname string) {
-		writer, err := os.Create(filepath.Join(dirname, filename))
-		if err != nil {
-			external.Export(view.modalStateMachine, "Could not create file.\n"+info, exportTo, true)
-			return
-		}
-		defer func() { _ = writer.Close() }()
-
-		texture, err := view.imageCache.Texture(key)
-		if err != nil {
-			external.Export(view.modalStateMachine, "Image not available.\n"+info, exportTo, true)
-			return
-		}
-		palette, err := view.paletteCache.Palette(0)
-		if err != nil {
-			external.Export(view.modalStateMachine, "Palette not available.\n"+info, exportTo, true)
-			return
-		}
-
-		width, height := texture.Size()
-		imageRect := image.Rect(0, 0, int(width), int(height))
-		imagePal := palette.Palette().ColorPalette(true)
-		paletted := image.NewPaletted(imageRect, imagePal)
-		paletted.Pix = texture.PixelData()
-		err = png.Encode(writer, paletted)
-		if err != nil {
-			external.Export(view.modalStateMachine, info, exportTo, true)
-			return
-		}
+	width, height := texture.Size()
+	bmp := bitmap.Bitmap{
+		Header: bitmap.Header{
+			Width:  int16(width),
+			Height: int16(height),
+		},
+		Pixels:  texture.PixelData(),
+		Palette: &rawPalette,
 	}
 
-	external.Export(view.modalStateMachine, info, exportTo, withError)
+	external.ExportImage(view.modalStateMachine, filename, bmp)
 }
 
 func (view *View) requestImport(withError bool) {

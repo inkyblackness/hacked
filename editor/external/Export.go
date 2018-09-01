@@ -1,6 +1,9 @@
 package external
 
 import (
+	"github.com/inkyblackness/hacked/ss1/content/bitmap"
+	"image"
+	"image/png"
 	"os"
 	"path/filepath"
 
@@ -38,4 +41,31 @@ func ExportAudio(machine gui.ModalStateMachine, filename string, sound audio.L8)
 	}
 
 	Export(machine, info, dirHandler, false)
+}
+
+// ExportImage is a helper wrapper for exporting single images.
+func ExportImage(machine gui.ModalStateMachine, filename string, bmp bitmap.Bitmap) {
+	info := "File to be written: " + filename
+	var exportTo func(string)
+
+	exportTo = func(dirname string) {
+		writer, err := os.Create(filepath.Join(dirname, filename))
+		if err != nil {
+			Export(machine, "Could not create file.\n"+info, exportTo, true)
+			return
+		}
+		defer func() { _ = writer.Close() }()
+
+		imageRect := image.Rect(0, 0, int(bmp.Header.Width), int(bmp.Header.Height))
+		imagePal := bmp.Palette.ColorPalette(true)
+		paletted := image.NewPaletted(imageRect, imagePal)
+		paletted.Pix = bmp.Pixels
+		err = png.Encode(writer, paletted)
+		if err != nil {
+			Export(machine, info, exportTo, true)
+			return
+		}
+	}
+
+	Export(machine, info, exportTo, false)
 }
