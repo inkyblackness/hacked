@@ -2,9 +2,6 @@ package bitmaps
 
 import (
 	"fmt"
-	"image"
-	"os"
-
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"
@@ -213,34 +210,16 @@ func (view *View) requestExport() {
 }
 
 func (view *View) requestImport(withError bool) {
-	info := "File should be either a PNG or a GIF file."
-
-	var fileHandler func(string)
-
-	fileHandler = func(filename string) {
+	paletteRetriever := func() (bitmap.Palette, error) {
 		palette, err := view.paletteCache.Palette(0)
 		if err != nil {
-			external.Export(view.modalStateMachine, "No palette loaded.\n"+info, fileHandler, true)
-			return
+			return bitmap.Palette{}, err
 		}
-		reader, err := os.Open(filename)
-		if err != nil {
-			external.Import(view.modalStateMachine, "Could not open file.\n"+info, fileHandler, true)
-			return
-		}
-		defer func() { _ = reader.Close() }()
-		img, _, err := image.Decode(reader)
-		if err != nil {
-			external.Import(view.modalStateMachine, "File not recognized as image.\n"+info, fileHandler, true)
-			return
-		}
-
-		bitmapper := bitmap.NewBitmapper(palette.Palette())
-		bmp := bitmapper.Map(img)
-		view.requestSetBitmap(bmp)
+		return palette.Palette(), nil
 	}
-
-	external.Import(view.modalStateMachine, info, fileHandler, false)
+	external.ImportImage(view.modalStateMachine, paletteRetriever, func(bmp bitmap.Bitmap) {
+		view.requestSetBitmap(bmp)
+	})
 }
 
 func (view *View) requestClear() {

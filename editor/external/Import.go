@@ -1,10 +1,13 @@
 package external
 
 import (
+	"image"
+	"math"
 	"os"
 
 	"github.com/inkyblackness/hacked/ss1/content/audio"
 	"github.com/inkyblackness/hacked/ss1/content/audio/wav"
+	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ui/gui"
 )
 
@@ -36,6 +39,51 @@ func ImportAudio(machine gui.ModalStateMachine, callback func(l8 audio.L8)) {
 			return
 		}
 		callback(sound)
+	}
+
+	Import(machine, info, fileHandler, false)
+}
+
+// ImportImage is a helper to handle image file import. The callback is called with the loaded image.
+func ImportImage(machine gui.ModalStateMachine, paletteRetriever func() (bitmap.Palette, error), callback func(bitmap.Bitmap)) {
+	info := "File should be either a PNG or a GIF file.\nPaletted images are taken 1:1, others are mapped to game's palette."
+	var fileHandler func(string)
+
+	fileHandler = func(filename string) {
+		reader, err := os.Open(filename)
+		if err != nil {
+			Import(machine, "Could not open file.\n"+info, fileHandler, true)
+			return
+		}
+		defer func() { _ = reader.Close() }()
+		img, _, err := image.Decode(reader)
+		if err != nil {
+			Import(machine, "File not recognized as image.\n"+info, fileHandler, true)
+			return
+		}
+
+		var bmp bitmap.Bitmap
+		if palettedImg, isPaletted := img.(image.PalettedImage); isPaletted {
+			bounds := img.Bounds()
+
+			bmp.Header.Width = int16(math.Max(0, math.Min(float64(bounds.Dx()), math.MaxInt16)))
+			bmp.Header.Height = int16(math.Max(0, math.Min(float64(bounds.Dy()), math.MaxInt16)))
+			bmp.Pixels = make([]byte, int(bmp.Header.Width)*int(bmp.Header.Height))
+			for row := 0; row < int(bmp.Header.Height); row++ {
+				for column := 0; column < int(bmp.Header.Width); column++ {
+					bmp.Pixels[row*int(bmp.Header.Width)+column] = palettedImg.ColorIndexAt(column, row)
+				}
+			}
+		} else {
+			rawPalette, err := paletteRetriever()
+			if err != nil {
+				Import(machine, "Can not import image without having a palette loaded.\n"+info, fileHandler, true)
+				return
+			}
+			bitmapper := bitmap.NewBitmapper(rawPalette)
+			bmp = bitmapper.Map(img)
+		}
+		callback(bmp)
 	}
 
 	Import(machine, info, fileHandler, false)

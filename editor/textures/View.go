@@ -235,7 +235,7 @@ func (view *View) renderTextureSample(label string, id resource.ID, sideLength f
 		}
 		imgui.SameLine()
 		if imgui.Button("Import") {
-			//view.requestImport(false)
+			view.requestImport(id, view.model.currentIndex)
 		}
 		if err == nil {
 			if imgui.Button("Export") {
@@ -346,38 +346,18 @@ func (view *View) requestExport(id resource.ID, index int, sizeID string) {
 	external.ExportImage(view.modalStateMachine, filename, bmp)
 }
 
-func (view *View) requestImport(withError bool) {
-	// TODO allow import of four bitmaps at once
-	/*
-		info := "File should be either a PNG or a GIF file."
-
-		var fileHandler func(string)
-
-		fileHandler = func(filename string) {
-			palette, err := view.paletteCache.Palette(0)
-			if err != nil {
-				external.Export(view.modalStateMachine, "No palette loaded.\n"+info, fileHandler, true)
-				return
-			}
-			reader, err := os.Open(filename)
-			if err != nil {
-				external.Import(view.modalStateMachine, "Could not open file.\n"+info, fileHandler, true)
-				return
-			}
-			defer func() { _ = reader.Close() }()
-			img, _, err := image.Decode(reader)
-			if err != nil {
-				external.Import(view.modalStateMachine, "File not recognized as image.\n"+info, fileHandler, true)
-				return
-			}
-
-			bitmapper := bitmap.NewBitmapper(palette.Palette())
-			bmp := bitmapper.Map(img)
-			view.requestSetBitmap(bmp)
+func (view *View) requestImport(id resource.ID, index int) {
+	paletteRetriever := func() (bitmap.Palette, error) {
+		palette, err := view.paletteCache.Palette(0)
+		if err != nil {
+			return bitmap.Palette{}, err
 		}
+		return palette.Palette(), nil
+	}
 
-		external.Import(view.modalStateMachine, info, fileHandler, false)
-	*/
+	external.ImportImage(view.modalStateMachine, paletteRetriever, func(bmp bitmap.Bitmap) {
+		view.requestSetBitmap(id, index, bmp)
+	})
 }
 
 func (view *View) requestClear(id resource.ID, index int, sideLength int) {
