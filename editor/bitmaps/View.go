@@ -140,7 +140,7 @@ func (view *View) renderContent() {
 		}
 		imgui.SameLine()
 		if imgui.Button("Import") {
-			view.requestImport()
+			view.requestImport(false)
 		}
 		if err == nil {
 			imgui.SameLine()

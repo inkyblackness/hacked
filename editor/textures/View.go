@@ -126,10 +126,10 @@ func (view *View) renderContent() {
 	imgui.SameLine()
 
 	imgui.BeginGroup()
-	view.renderTextureSample("Large", ids.LargeTextures, 128)
-	view.renderTextureSample("Medium", ids.MediumTextures, 64)
-	view.renderTextureSample("Small", ids.SmallTextures, 32)
-	view.renderTextureSample("Icon", ids.IconTextures, 16)
+	view.renderTextureSample("Large", ids.LargeTextures, 128, "Large")
+	view.renderTextureSample("Medium", ids.MediumTextures, 64, "Medium")
+	view.renderTextureSample("Small", ids.SmallTextures, 32, "Small")
+	view.renderTextureSample("Icon", ids.IconTextures, 16, "Icon")
 	imgui.EndGroup()
 }
 
@@ -219,7 +219,7 @@ func (view *View) renderTextureProperties(readOnly bool) {
 		})
 }
 
-func (view *View) renderTextureSample(label string, id resource.ID, sideLength float32) {
+func (view *View) renderTextureSample(label string, id resource.ID, sideLength float32, sizeID string) {
 	if imgui.BeginChildV(label, imgui.Vec2{X: -1, Y: (128 + 7) * view.guiScale}, true, imgui.WindowFlagsNoScrollbar) {
 		key := view.indexedResourceKey(id, view.model.currentIndex)
 		render.TextureImage("Texture Bitmap", view.imageCache, key,
@@ -239,7 +239,7 @@ func (view *View) renderTextureSample(label string, id resource.ID, sideLength f
 		}
 		if err == nil {
 			if imgui.Button("Export") {
-				//view.requestExport(false)
+				view.requestExport(id, view.model.currentIndex, sizeID)
 			}
 			if view.hasModCurrentBitmap() {
 				imgui.SameLine()
@@ -321,47 +321,29 @@ func (view *View) requestSetTextureText(id resource.ID, newValue string) {
 	}
 }
 
-func (view *View) requestExport(withError bool) {
-	// TODO needs four textures to be exported?
-	/*
-		key := view.currentResourceKey()
-		filename := fmt.Sprintf("%05d_%03d_%s.png", key.ID.Value(), key.Index, key.Lang.String())
-		info := "File to be written: " + filename
-		var exportTo func(string)
+func (view *View) requestExport(id resource.ID, index int, sizeID string) {
+	key := view.indexedResourceKey(id, index)
+	tex, err := view.imageCache.Texture(key)
+	if err != nil {
+		return
+	}
+	palette, err := view.paletteCache.Palette(0)
+	if err != nil {
+		return
+	}
+	rawPalette := palette.Palette()
+	filename := fmt.Sprintf("Texture_%03d_%s.png", index, sizeID)
+	width, height := tex.Size()
+	bmp := bitmap.Bitmap{
+		Header: bitmap.Header{
+			Width:  int16(width),
+			Height: int16(height),
+		},
+		Pixels:  tex.PixelData(),
+		Palette: &rawPalette,
+	}
 
-		exportTo = func(dirname string) {
-			writer, err := os.Create(filepath.Join(dirname, filename))
-			if err != nil {
-				external.Export(view.modalStateMachine, "Could not create file.\n"+info, exportTo, true)
-				return
-			}
-			defer func() { _ = writer.Close() }()
-
-			texture, err := view.imageCache.Texture(key)
-			if err != nil {
-				external.Export(view.modalStateMachine, "Image not available.\n"+info, exportTo, true)
-				return
-			}
-			palette, err := view.paletteCache.Palette(0)
-			if err != nil {
-				external.Export(view.modalStateMachine, "Palette not available.\n"+info, exportTo, true)
-				return
-			}
-
-			width, height := texture.Size()
-			imageRect := image.Rect(0, 0, int(width), int(height))
-			imagePal := palette.Palette().ColorPalette(true)
-			paletted := image.NewPaletted(imageRect, imagePal)
-			paletted.Pix = texture.PixelData()
-			err = png.Encode(writer, paletted)
-			if err != nil {
-				external.Export(view.modalStateMachine, info, exportTo, true)
-				return
-			}
-		}
-
-		external.Export(view.modalStateMachine, info, exportTo, withError)
-	*/
+	external.ExportImage(view.modalStateMachine, filename, bmp)
 }
 
 func (view *View) requestImport(withError bool) {
