@@ -67,8 +67,8 @@ func (bitmapper *Bitmapper) Map(img image.Image) Bitmap {
 	var bmp Bitmap
 	bounds := img.Bounds()
 
-	bmp.Header.Width = int16(bounds.Dx())
-	bmp.Header.Height = int16(bounds.Dy())
+	bmp.Header.Width = int16(math.Max(0, math.Min(float64(bounds.Dx()), math.MaxInt16)))
+	bmp.Header.Height = int16(math.Max(0, math.Min(float64(bounds.Dy()), math.MaxInt16)))
 	bmp.Pixels = make([]byte, int(bmp.Header.Width)*int(bmp.Header.Height))
 	for row := 0; row < int(bmp.Header.Height); row++ {
 		for column := 0; column < int(bmp.Header.Width); column++ {
