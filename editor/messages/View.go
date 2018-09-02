@@ -306,7 +306,7 @@ func (view *View) renderDisplayGallery(readOnly bool, label string, index, avail
 		func(int) string { return "%d" },
 		-1, availableDisplays-1,
 		changeCallback)
-	render.TextureSelector("###"+label+" Texture", -1, view.guiScale, availableDisplays-1,
+	render.TextureSelector("###"+label+" Texture", -1, view.guiScale, availableDisplays,
 		index, view.imageCache,
 		func(index int) resource.Key {
 			return resource.KeyOf(ids.MfdDataBitmaps, view.model.currentKey.Lang, index)
