@@ -33,7 +33,7 @@ func (command setTextureBitmapCommand) perform(trans cmd.Transaction, data []byt
 	}
 	resourceID := command.id
 	blockIndex := command.textureIndex
-	if info.List {
+	if !info.List {
 		resourceID = resourceID.Plus(blockIndex)
 		blockIndex = 0
 	}
