@@ -2,6 +2,7 @@ package external
 
 import (
 	"image"
+	"image/color"
 	"math"
 	"os"
 
@@ -46,7 +47,7 @@ func ImportAudio(machine gui.ModalStateMachine, callback func(l8 audio.L8)) {
 
 // ImportImage is a helper to handle image file import. The callback is called with the loaded image.
 func ImportImage(machine gui.ModalStateMachine, paletteRetriever func() (bitmap.Palette, error), callback func(bitmap.Bitmap)) {
-	info := "File should be either a PNG or a GIF file.\nPaletted images are taken 1:1, others are mapped to game's palette."
+	info := "File should be either a PNG or a GIF file.\nPaletted images matching game palette are taken 1:1,\nothers are mapped closest fitting."
 	var fileHandler func(string)
 
 	fileHandler = func(filename string) {
@@ -63,23 +64,29 @@ func ImportImage(machine gui.ModalStateMachine, paletteRetriever func() (bitmap.
 		}
 
 		var bmp bitmap.Bitmap
+		importMapped := true
+		rawPalette, err := paletteRetriever()
+		if err != nil {
+			Import(machine, "Can not import image without having a palette loaded.\n"+info, fileHandler, true)
+			return
+		}
 		if palettedImg, isPaletted := img.(image.PalettedImage); isPaletted {
-			bounds := img.Bounds()
+			imgPalette, hasPalette := palettedImg.ColorModel().(color.Palette)
+			if hasPalette && paletteMatches(imgPalette, rawPalette.ColorPalette(false)) {
+				bounds := img.Bounds()
 
-			bmp.Header.Width = int16(math.Max(0, math.Min(float64(bounds.Dx()), math.MaxInt16)))
-			bmp.Header.Height = int16(math.Max(0, math.Min(float64(bounds.Dy()), math.MaxInt16)))
-			bmp.Pixels = make([]byte, int(bmp.Header.Width)*int(bmp.Header.Height))
-			for row := 0; row < int(bmp.Header.Height); row++ {
-				for column := 0; column < int(bmp.Header.Width); column++ {
-					bmp.Pixels[row*int(bmp.Header.Width)+column] = palettedImg.ColorIndexAt(column, row)
+				bmp.Header.Width = int16(math.Max(0, math.Min(float64(bounds.Dx()), math.MaxInt16)))
+				bmp.Header.Height = int16(math.Max(0, math.Min(float64(bounds.Dy()), math.MaxInt16)))
+				bmp.Pixels = make([]byte, int(bmp.Header.Width)*int(bmp.Header.Height))
+				for row := 0; row < int(bmp.Header.Height); row++ {
+					for column := 0; column < int(bmp.Header.Width); column++ {
+						bmp.Pixels[row*int(bmp.Header.Width)+column] = palettedImg.ColorIndexAt(column, row)
+					}
 				}
+				importMapped = false
 			}
-		} else {
-			rawPalette, err := paletteRetriever()
-			if err != nil {
-				Import(machine, "Can not import image without having a palette loaded.\n"+info, fileHandler, true)
-				return
-			}
+		}
+		if importMapped {
 			bitmapper := bitmap.NewBitmapper(rawPalette)
 			bmp = bitmapper.Map(img)
 		}
@@ -87,4 +94,21 @@ func ImportImage(machine gui.ModalStateMachine, paletteRetriever func() (bitmap.
 	}
 
 	Import(machine, info, fileHandler, false)
+}
+
+func paletteMatches(imgPalette color.Palette, rawPalette color.Palette) bool {
+	if len(imgPalette) > len(rawPalette) {
+		return false
+	}
+
+	for index, clr := range imgPalette {
+		imgR, imgG, imgB, _ := clr.RGBA()
+		rawR, rawG, rawB, _ := rawPalette[index].RGBA()
+
+		if (imgR != rawR) || (imgG != rawG) || (imgB != rawB) {
+			return false
+		}
+	}
+
+	return true
 }
