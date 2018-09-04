@@ -381,8 +381,8 @@ func (view *View) requestSetBitmap(id resource.ID, index int, bmp bitmap.Bitmap)
 		return
 	}
 
-	bmp.Header.Flags = bitmap.FlagTransparent
-	bmp.Header.Type = bitmap.TypeCompressed8Bit
+	bmp.Header.Flags = 0
+	bmp.Header.Type = bitmap.TypeFlat8Bit
 	bmp.Header.WidthFactor = highestBitShift(bmp.Header.Width)
 	bmp.Header.HeightFactor = highestBitShift(bmp.Header.Height)
 	bmp.Header.Stride = uint16(bmp.Header.Width)
