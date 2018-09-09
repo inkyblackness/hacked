@@ -17,14 +17,16 @@ import (
 type bitmapInfo struct {
 	title            string
 	languageSpecific bool
+	bitmapType       bitmap.Type
+	bitmapFlags      bitmap.Flag
 }
 
 var knownBitmapTypes = map[resource.ID]bitmapInfo{
-	ids.MfdDataBitmaps:        {title: "MFD Data Images", languageSpecific: true},
-	ids.ObjectMaterialBitmaps: {title: "Object Materials", languageSpecific: false},
-	ids.ObjectTextureBitmaps:  {title: "Object Textures", languageSpecific: false},
-	ids.IconBitmaps:           {title: "Wall Icons", languageSpecific: false},
-	ids.GraffitiBitmaps:       {title: "Graffiti", languageSpecific: false},
+	ids.MfdDataBitmaps:        {title: "MFD Data Images", languageSpecific: true, bitmapType: bitmap.TypeCompressed8Bit, bitmapFlags: bitmap.FlagTransparent},
+	ids.ObjectMaterialBitmaps: {title: "Object Materials", languageSpecific: false, bitmapType: bitmap.TypeFlat8Bit, bitmapFlags: 0},
+	ids.ObjectTextureBitmaps:  {title: "Object Textures", languageSpecific: false, bitmapType: bitmap.TypeFlat8Bit, bitmapFlags: 0},
+	ids.IconBitmaps:           {title: "Wall Icons", languageSpecific: false, bitmapType: bitmap.TypeCompressed8Bit, bitmapFlags: bitmap.FlagTransparent},
+	ids.GraffitiBitmaps:       {title: "Graffiti", languageSpecific: false, bitmapType: bitmap.TypeCompressed8Bit, bitmapFlags: bitmap.FlagTransparent},
 }
 
 var knownBitmapTypesOrder = []resource.ID{
@@ -133,11 +135,11 @@ func (view *View) renderContent() {
 		tex, err := view.imageCache.Texture(view.currentResourceKey())
 
 		if imgui.Button("Clear") {
-			view.requestClear()
+			view.requestClear(selectedType)
 		}
 		imgui.SameLine()
 		if imgui.Button("Import") {
-			view.requestImport(false)
+			view.requestImport(selectedType)
 		}
 		if err == nil {
 			imgui.SameLine()
@@ -209,7 +211,7 @@ func (view *View) requestExport() {
 	external.ExportImage(view.modalStateMachine, filename, bmp)
 }
 
-func (view *View) requestImport(withError bool) {
+func (view *View) requestImport(bmpInfo bitmapInfo) {
 	paletteRetriever := func() (bitmap.Palette, error) {
 		palette, err := view.paletteCache.Palette(0)
 		if err != nil {
@@ -218,11 +220,11 @@ func (view *View) requestImport(withError bool) {
 		return palette.Palette(), nil
 	}
 	external.ImportImage(view.modalStateMachine, paletteRetriever, func(bmp bitmap.Bitmap) {
-		view.requestSetBitmap(bmp)
+		view.requestSetBitmap(bmp, bmpInfo)
 	})
 }
 
-func (view *View) requestClear() {
+func (view *View) requestClear(bmpInfo bitmapInfo) {
 	bmp := bitmap.Bitmap{
 		Header: bitmap.Header{
 			Width:  1,
@@ -230,10 +232,10 @@ func (view *View) requestClear() {
 		},
 		Pixels: []byte{0x00},
 	}
-	view.requestSetBitmap(bmp)
+	view.requestSetBitmap(bmp, bmpInfo)
 }
 
-func (view *View) requestSetBitmap(bmp bitmap.Bitmap) {
+func (view *View) requestSetBitmap(bmp bitmap.Bitmap, bmpInfo bitmapInfo) {
 	highestBitShift := func(value int16) (result byte) {
 		if value != 0 {
 			for (value >> result) != 1 {
@@ -243,8 +245,8 @@ func (view *View) requestSetBitmap(bmp bitmap.Bitmap) {
 		return
 	}
 
-	bmp.Header.Flags = bitmap.FlagTransparent
-	bmp.Header.Type = bitmap.TypeCompressed8Bit
+	bmp.Header.Flags = bmpInfo.bitmapFlags
+	bmp.Header.Type = bmpInfo.bitmapType
 	bmp.Header.WidthFactor = highestBitShift(bmp.Header.Width)
 	bmp.Header.HeightFactor = highestBitShift(bmp.Header.Height)
 	bmp.Header.Stride = uint16(bmp.Header.Width)
