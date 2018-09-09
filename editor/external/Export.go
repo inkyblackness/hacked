@@ -57,7 +57,7 @@ func ExportImage(machine gui.ModalStateMachine, filename string, bmp bitmap.Bitm
 		defer func() { _ = writer.Close() }()
 
 		imageRect := image.Rect(0, 0, int(bmp.Header.Width), int(bmp.Header.Height))
-		imagePal := bmp.Palette.ColorPalette(true)
+		imagePal := bmp.Palette.ColorPalette(false)
 		paletted := image.NewPaletted(imageRect, imagePal)
 		paletted.Pix = bmp.Pixels
 		err = png.Encode(writer, paletted)
