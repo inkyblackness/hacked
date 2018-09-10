@@ -2,8 +2,13 @@ package animations
 
 import (
 	"fmt"
+	"image"
+	"image/gif"
+	"os"
+	"path/filepath"
 
 	"github.com/inkyblackness/hacked/editor/cmd"
+	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/render"
@@ -110,15 +115,24 @@ func (view *View) renderContent() {
 	imgui.EndChild()
 	imgui.SameLine()
 
-	anim, hasAnim, _ := view.currentAnimation()
+	if imgui.BeginChildV("Frames", imgui.Vec2{X: -1, Y: 0}, false, 0) {
 
-	if hasAnim {
-		frameKey := resource.KeyOf(anim.ResourceID, resource.LangAny, view.model.currentFrame)
-		if view.cacheFrame(frameKey) {
-			render.TextureImage("Frame", view.imageCache, frameKey,
-				imgui.Vec2{X: float32(anim.Width) * view.guiScale, Y: float32(anim.Height) * view.guiScale})
+		anim, hasAnim, _ := view.currentAnimation()
+
+		if hasAnim {
+			frameKey := resource.KeyOf(anim.ResourceID, resource.LangAny, view.model.currentFrame)
+			if view.cacheFrame(frameKey) {
+
+				render.TextureImage("Frame", view.imageCache, frameKey,
+					imgui.Vec2{X: float32(anim.Width) * view.guiScale, Y: float32(anim.Height) * view.guiScale})
+				if imgui.Button("Export") {
+					view.requestExport()
+				}
+			}
+
 		}
 	}
+	imgui.EndChild()
 }
 
 func (view *View) cacheFrame(key resource.Key) bool {
@@ -160,4 +174,68 @@ func (view *View) currentAnimation() (bitmap.Animation, bool, bool) {
 	}
 	readOnly := len(view.mod.ModifiedBlocks(resource.LangAny, key.ID)) == 0
 	return anim, true, readOnly
+}
+
+func (view *View) requestExport() {
+	anim, hasAnim, _ := view.currentAnimation()
+	if hasAnim {
+		filename := fmt.Sprintf("Anim%04X.gif", int(view.model.currentKey.ID.Plus(view.model.currentKey.Index)))
+		view.exportTo(filename, anim)
+	}
+}
+
+func (view *View) exportTo(filename string, anim bitmap.Animation) {
+	info := "File to be written: " + filename
+	var exportTo func(string)
+
+	exportTo = func(dirname string) {
+		writer, err := os.Create(filepath.Join(dirname, filename))
+		if err != nil {
+			external.Export(view.modalStateMachine, "Could not create file.\n"+info, exportTo, true)
+			return
+		}
+		defer func() { _ = writer.Close() }()
+
+		palTex, err := view.paletteCache.Palette(0)
+		if err != nil {
+			external.Export(view.modalStateMachine, "Could not create file. No palette loaded.\n"+info, exportTo, true)
+			return
+		}
+
+		colorPalette := palTex.Palette().ColorPalette(false)
+		data := gif.GIF{
+			Config: image.Config{
+				Width:      int(anim.Width),
+				Height:     int(anim.Height),
+				ColorModel: colorPalette,
+			},
+			LoopCount: -1,
+		}
+
+		imageRect := image.Rect(0, 0, data.Config.Width, data.Config.Height)
+		frameIndex := 0
+		for _, entry := range anim.Entries {
+			for frameIndex <= int(entry.LastFrame) {
+				frameKey := resource.KeyOf(anim.ResourceID, resource.LangAny, frameIndex)
+				if !view.cacheFrame(frameKey) {
+					external.Export(view.modalStateMachine, "Failed to cache frame.\n"+info, exportTo, true)
+					return
+				}
+				frameTex, _ := view.imageCache.Texture(frameKey)
+				frameImg := image.NewPaletted(imageRect, colorPalette)
+				frameImg.Pix = frameTex.PixelData()
+				data.Image = append(data.Image, frameImg)
+				data.Delay = append(data.Delay, int(entry.FrameTime)/10)
+				frameIndex++
+			}
+		}
+
+		err = gif.EncodeAll(writer, &data)
+		if err != nil {
+			external.Export(view.modalStateMachine, info, exportTo, true)
+			return
+		}
+	}
+
+	external.Export(view.modalStateMachine, info, exportTo, false)
 }
