@@ -19,6 +19,15 @@ type Bitmap struct {
 // Decode tries to read a bitmap from given reader.
 // Should the bitmap be a compressed bitmap, then a reference image with pixel data all 0x00 is assumed.
 func Decode(reader io.Reader) (*Bitmap, error) {
+	return DecodeReferenced(reader, func(width, height int16) ([]byte, error) {
+		return make([]byte, int(width)*int(height)), nil
+	})
+}
+
+// DecodeReferenced tries to read a bitmap from given reader.
+// If the serialized bitmap describes a compressed bitmap, then the pixels from the reference are used as a basis for the result.
+// The returned byte array from the provider will be used as pixel buffer for the new bitmap.
+func DecodeReferenced(reader io.Reader, provider func(width, height int16) ([]byte, error)) (*Bitmap, error) {
 	if reader == nil {
 		return nil, errors.New("reader is nil")
 	}
@@ -29,10 +38,17 @@ func Decode(reader io.Reader) (*Bitmap, error) {
 	if err != nil {
 		return nil, err
 	}
-	bmp.Pixels = make([]byte, int(bmp.Header.Height)*int(bmp.Header.Stride))
 	if bmp.Header.Type == TypeCompressed8Bit {
+		if bmp.Header.Stride != uint16(bmp.Header.Width) {
+			return nil, errors.New("stride not equal to width for compressed bitmap")
+		}
+		bmp.Pixels, err = provider(bmp.Header.Width, bmp.Header.Height)
+		if err != nil {
+			return nil, err
+		}
 		err = rle.Decompress(reader, bmp.Pixels)
 	} else {
+		bmp.Pixels = make([]byte, int(bmp.Header.Height)*int(bmp.Header.Stride))
 		_, err = reader.Read(bmp.Pixels)
 	}
 	if err != nil {
@@ -50,12 +66,6 @@ func Decode(reader io.Reader) (*Bitmap, error) {
 	}
 
 	return &bmp, nil
-}
-
-// DecodeReferenced tries to read a bitmap from given reader.
-// If the serialized bitmap describes a compressed bitmap, then the pixels from the reference are used as a basis for the result.
-func DecodeReferenced(reader io.Reader, reference *Bitmap) (*Bitmap, error) {
-	return nil, errors.New("not implemented")
 }
 
 // Encode writes the bitmap to a byte array and returns it.
@@ -81,10 +91,4 @@ func Encode(bmp *Bitmap, offsetBase int) []byte {
 	}
 
 	return buf.Bytes()
-}
-
-// EncodeReferenced writes the bitmap to a byte array and returns it.
-// If the bitmap is a compressed one, the compression takes the pixels of the reference bitmap as a basis.
-func EncodeReferenced(bmp *Bitmap, offsetBase int, reference *Bitmap) []byte {
-	panic("not implemented")
 }
