@@ -30,6 +30,12 @@ const (
 	MfdDataBitmaps resource.ID = 0x0028
 )
 
+// Animations and videos
+const (
+	VideoMailBitmapsStart    resource.ID = 0x0A40
+	VideoMailAnimationsStart resource.ID = 0x0A4C
+)
+
 // Texts
 const (
 	PaperTextsStart      resource.ID = 0x003C

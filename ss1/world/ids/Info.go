@@ -123,6 +123,9 @@ var infoList = []ResourceInfo{
 
 	{MfdDataBitmaps, MfdDataBitmaps.Plus(1), resource.Bitmap, true, true, true, 256, MfdArt},
 
+	{VideoMailBitmapsStart, VideoMailBitmapsStart.Plus(12), resource.Bitmap, true, false, false, 12, VidMail},
+	{VideoMailAnimationsStart, VideoMailAnimationsStart.Plus(12), resource.Animation, true, false, false, 12, VidMail},
+
 	{PaperTextsStart, PaperTextsStart.Plus(16), resource.Text, true, false, false, 16, CybStrng},
 
 	{TrapMessageTexts, TrapMessageTexts.Plus(1), resource.Text, true, false, true, 256, CybStrng},

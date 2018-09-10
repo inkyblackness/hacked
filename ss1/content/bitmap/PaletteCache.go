@@ -41,7 +41,7 @@ func (cache *PaletteCache) InvalidateResources(ids []resource.ID) {
 	}
 }
 
-// Palette tries to look up given palette
+// Palette tries to look up given palette.
 func (cache *PaletteCache) Palette(key resource.Key) (pal Palette, err error) {
 	pal, existing := cache.palettes[key]
 	if existing {
