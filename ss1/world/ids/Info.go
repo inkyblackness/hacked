@@ -141,7 +141,7 @@ var infoList = []ResourceInfo{
 	{DataletMessageTexts, DataletMessageTexts.Plus(1), resource.Text, true, false, true, 256, CybStrng},
 
 	{MailsStart, MailsStart.Plus(47), resource.Text, true, false, false, 47, CybStrng},
-	{LogsStart, LogsStart.Plus(224), resource.Text, true, false, false, 224, CybStrng},
+	{LogsStart, LogsStart.Plus(136), resource.Text, true, false, false, 136, CybStrng},
 	{FragmentsStart, FragmentsStart.Plus(16), resource.Text, true, false, false, 16, CybStrng},
 	{MailsAudioStart, MailsAudioStart.Plus(47), resource.Movie, false, false, false, 47, CitALog},
 	{LogsAudioStart, LogsAudioStart.Plus(224), resource.Movie, false, false, false, 224, CitALog},

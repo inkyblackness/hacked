@@ -2,6 +2,7 @@ package bitmaps
 
 import (
 	"fmt"
+
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"

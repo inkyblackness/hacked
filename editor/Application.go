@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/inkyblackness/hacked/editor/about"
+	"github.com/inkyblackness/hacked/editor/animations"
 	"github.com/inkyblackness/hacked/editor/archives"
 	"github.com/inkyblackness/hacked/editor/bitmaps"
 	"github.com/inkyblackness/hacked/editor/cmd"
@@ -17,6 +18,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/textures"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
+	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -52,15 +54,16 @@ type Application struct {
 	eventQueue      event.Queue
 	eventDispatcher *event.Dispatcher
 
-	cmdStack      *cmd.Stack
-	mod           *model.Mod
-	cp            text.Codepage
-	textLineCache *text.Cache
-	textPageCache *text.Cache
-	messagesCache *text.ElectronicMessageCache
-	paletteCache  *graphics.PaletteCache
-	textureCache  *graphics.TextureCache
-	movieCache    *movie.Cache
+	cmdStack       *cmd.Stack
+	mod            *model.Mod
+	cp             text.Codepage
+	textLineCache  *text.Cache
+	textPageCache  *text.Cache
+	messagesCache  *text.ElectronicMessageCache
+	paletteCache   *graphics.PaletteCache
+	textureCache   *graphics.TextureCache
+	animationCache *bitmap.AnimationCache
+	movieCache     *movie.Cache
 
 	mapDisplay *levels.MapDisplay
 
@@ -75,6 +78,7 @@ type Application struct {
 	textsView        *texts.View
 	bitmapsView      *bitmaps.View
 	texturesView     *textures.View
+	animationsView   *animations.View
 	aboutView        *about.View
 	licensesView     *about.LicensesView
 
@@ -150,6 +154,7 @@ func (app *Application) render() {
 	app.textsView.Render()
 	app.bitmapsView.Render()
 	app.texturesView.Render()
+	app.animationsView.Render()
 
 	paletteTexture, _ := app.paletteCache.Palette(0)
 	app.mapDisplay.Render(app.mod.ObjectProperties(), activeLevel,
@@ -420,6 +425,7 @@ func (app *Application) initModel() {
 
 	app.paletteCache = graphics.NewPaletteCache(app.gl, app.mod)
 	app.textureCache = graphics.NewTextureCache(app.gl, app.mod)
+	app.animationCache = bitmap.NewAnimationCache(app.mod)
 }
 
 func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) {
@@ -432,6 +438,7 @@ func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []
 	}
 	app.paletteCache.InvalidateResources(modifiedIDs)
 	app.textureCache.InvalidateResources(modifiedIDs)
+	app.animationCache.InvalidateResources(modifiedIDs)
 }
 
 func (app *Application) modReset() {
@@ -448,6 +455,7 @@ func (app *Application) initView() {
 	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.movieCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.bitmapsView = bitmaps.NewBitmapsView(app.mod, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.texturesView = textures.NewTexturesView(app.mod, app.textLineCache, app.cp, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
+	app.animationsView = animations.NewAnimationsView(app.mod, app.textureCache, app.paletteCache, app.animationCache, &app.modalState, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 	app.licensesView = about.NewLicensesView(app.GuiScale)
 
@@ -514,6 +522,7 @@ func (app *Application) renderMainMenu() {
 			windowEntry("Texts", "", app.textsView.WindowOpen())
 			windowEntry("Bitmaps", "", app.bitmapsView.WindowOpen())
 			windowEntry("Textures", "", app.texturesView.WindowOpen())
+			windowEntry("Animations", "", app.animationsView.WindowOpen())
 			imgui.EndMenu()
 		}
 		if imgui.BeginMenu("Help") {
