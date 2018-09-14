@@ -51,7 +51,7 @@ func (trans *ModTransaction) SetResource(id resource.ID,
 func (trans *ModTransaction) SetResourceBlock(lang resource.Language, id resource.ID, index int, data []byte) {
 	trans.actions = append(trans.actions, func(mod *Mod) {
 		res := mod.ensureResource(lang, id)
-		res.setBlock(index, data)
+		res.SetBlock(index, data)
 		mod.markFileChanged(res.filename)
 	})
 	trans.modifiedIDs.Add(id)
@@ -76,7 +76,7 @@ func (trans *ModTransaction) PatchResourceBlock(lang resource.Language, id resou
 func (trans *ModTransaction) SetResourceBlocks(lang resource.Language, id resource.ID, data [][]byte) {
 	trans.actions = append(trans.actions, func(mod *Mod) {
 		res := mod.ensureResource(lang, id)
-		res.setBlocks(data)
+		res.SetBlocks(data)
 		mod.markFileChanged(res.filename)
 	})
 	trans.modifiedIDs.Add(id)

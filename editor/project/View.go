@@ -223,9 +223,12 @@ func (view *View) requestLoadMod(modPath string, resources model.LocalizedResour
 	objectProperties object.PropertiesTable, textureProperties texture.PropertiesList) {
 	view.mod.SetPath(modPath)
 	view.mod.Reset(resources, objectProperties, textureProperties)
+	// fix list resources for any "old" mod.
+	view.mod.FixListResources()
 }
 
 func (view *View) requestSaveMod(modPath string) {
+	view.mod.FixListResources()
 	err := saveModResourcesTo(view.mod, modPath)
 	if err != nil {
 		view.fileState = &saveModFailedState{

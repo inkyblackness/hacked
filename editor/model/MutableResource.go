@@ -53,7 +53,7 @@ func MutableResourcesFromProvider(filename string, provider resource.Provider) I
 		}
 		blockCount := res.BlockCount()
 		for blockIndex := 0; blockIndex < blockCount; blockIndex++ {
-			mutable.setBlock(blockIndex, readBlock(res, blockIndex))
+			mutable.SetBlock(blockIndex, readBlock(res, blockIndex))
 		}
 		mutables[id] = mutable
 	}
@@ -105,25 +105,23 @@ func (res MutableResource) Block(index int) (io.Reader, error) {
 	return bytes.NewReader(res.blocks[index]), nil
 }
 
-func (res *MutableResource) setBlocks(data [][]byte) {
+// SetBlocks sets the data of all the blocks, essentially resetting the resource.
+func (res *MutableResource) SetBlocks(data [][]byte) {
 	res.blockCount = 0
 	res.blocks = make(map[int][]byte)
 	for index, blockData := range data {
-		res.setBlock(index, blockData)
+		res.SetBlock(index, blockData)
 	}
 }
 
-func (res *MutableResource) setBlock(index int, data []byte) {
+// SetBlock sets the data of the identified block.
+func (res *MutableResource) SetBlock(index int, data []byte) {
 	if index < 0 {
 		return
 	}
-	if len(data) == 0 {
-		res.delBlock(index)
-	} else {
-		res.blocks[index] = data
-		if index >= res.blockCount {
-			res.blockCount = index + 1
-		}
+	res.blocks[index] = data
+	if index >= res.blockCount {
+		res.blockCount = index + 1
 	}
 }
 
@@ -132,16 +130,8 @@ func (res *MutableResource) delBlock(index int) {
 		return
 	}
 	delete(res.blocks, index)
-	for (res.blockCount > 0) && !res.hasBlock(res.blockCount-1) {
-		res.blockCount--
-	}
 }
 
 func (res MutableResource) isBlockIndexValid(index int) bool {
 	return (index >= 0) && (index < res.blockCount)
-}
-
-func (res MutableResource) hasBlock(index int) bool {
-	_, existing := res.blocks[index]
-	return existing
 }

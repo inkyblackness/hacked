@@ -348,3 +348,25 @@ func (mod *Mod) setTextureProperties(index level.TextureIndex, properties textur
 		mod.markFileChanged(world.TexturePropertiesFilename)
 	}
 }
+
+// FixListResources ensures all resources that contain resource lists to
+// have maximum size. This is done to ensure compatibility with layered modding in the
+// Source Port branch of engines.
+// These engines will have "lower" mods bleed through only if the block is empty in a
+// "higher" mod. This even counts for entries past the last modified one in the higher mod.
+func (mod *Mod) FixListResources() {
+	mod.Modify(func(trans *ModTransaction) {
+		for lang, localized := range mod.localizedResources {
+			for id, res := range localized {
+				info, known := ids.Info(id)
+				if known && info.List {
+					baseCount := res.BlockCount()
+					required := info.MaxCount - baseCount
+					for i := 0; i < required; i++ {
+						trans.SetResourceBlock(lang, id, baseCount+i, nil)
+					}
+				}
+			}
+		}
+	})
+}
