@@ -91,7 +91,7 @@ func (view *View) renderContent() {
 			func(index int) resource.Key {
 				return view.indexedResourceKey(ids.LargeTextures, index)
 			},
-			func(index int) string { return view.textureTooltip(index) },
+			view.textureTooltip,
 			func(newValue int) {
 				view.model.currentIndex = newValue
 			})
