@@ -12,11 +12,11 @@ type resourceHashes map[ID]resourceHash
 type resourceHashSnapshot map[Language]resourceHashes
 
 // IDMarkerMap is used to collect IDs.
-type IDMarkerMap map[ID]interface{}
+type IDMarkerMap map[ID]struct{}
 
 // Add adds the given ID to the map.
 func (marker IDMarkerMap) Add(id ID) {
-	marker[id] = nil
+	marker[id] = struct{}{}
 }
 
 // ToList converts the map to a de-duplicated list.
