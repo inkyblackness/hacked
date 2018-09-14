@@ -95,6 +95,18 @@ func (mod *Mod) MarkSave() {
 	mod.lastChangeTime = time.Time{}
 }
 
+// IDs returns an array of currently modified IDs for given language.
+func (mod Mod) IDs(lang resource.Language) []resource.ID {
+	localized := mod.localizedResources[lang]
+	var result []resource.ID
+	for id, res := range localized {
+		if res.BlockCount() > 0 {
+			result = append(result, id)
+		}
+	}
+	return result
+}
+
 // ModifiedResource retrieves the resource of given language and ID.
 // There is no fallback lookup, it will return the exact resource stored under the provided identifier.
 // Returns nil if the resource does not exist.
