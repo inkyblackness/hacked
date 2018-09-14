@@ -1,7 +1,30 @@
 package resource
 
+import "fmt"
+
 // ContentType identifies how resource data shall be interpreted.
 type ContentType byte
+
+var contentTypeNames = map[ContentType]string{
+	Palette:   "Palette",
+	Text:      "Text",
+	Bitmap:    "Bitmap",
+	Font:      "Font",
+	Animation: "Animation",
+	Sound:     "Sound",
+	Geometry:  "Geometry",
+	Movie:     "Movie",
+	Archive:   "Archive",
+}
+
+// String returns the textual representation of the type.
+func (t ContentType) String() string {
+	s, existing := contentTypeNames[t]
+	if existing {
+		return s
+	}
+	return fmt.Sprintf("Unknown%02X", int(t))
+}
 
 const (
 	// Palette refers to color tables.
