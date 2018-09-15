@@ -19,7 +19,7 @@ func FromBinaryCodedDecimal(bcd uint16) (value uint16) {
 
 	for _, factor := range factors {
 		value += (bcd & 0xF) * factor
-		bcd = bcd >> 4
+		bcd >>= 4
 	}
 
 	return
