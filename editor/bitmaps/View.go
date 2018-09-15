@@ -125,9 +125,7 @@ func (view *View) renderContent() {
 
 		render.TextureSelector("###"+"IndexBitmap", -1, view.guiScale, info.MaxCount,
 			view.model.currentKey.Index, view.imageCache,
-			func(index int) resource.Key {
-				return view.indexedResourceKey(index)
-			},
+			view.indexedResourceKey,
 			func(index int) string { return fmt.Sprintf("%d", index) },
 			func(newValue int) {
 				view.model.currentKey.Index = newValue

@@ -177,9 +177,8 @@ func (view *ControlView) renderTextureAtlas(lvl *level.Level, readOnly bool) {
 			func(index int) resource.Key {
 				return resource.KeyOf(ids.LargeTextures.Plus(index), resource.LangAny, 0)
 			},
-			func(index int) string {
-				return view.textureName(index)
-			}, func(newIndex int) {
+			view.textureName,
+			func(newIndex int) {
 				view.requestSetLevelTexture(lvl, view.model.selectedAtlasIndex, newIndex)
 			})
 		imgui.SameLine()
