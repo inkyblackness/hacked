@@ -98,7 +98,6 @@ func (view *View) renderContent() {
 			}
 			imgui.EndCombo()
 		}
-		// selectedType := knownAnimationTypes[view.model.currentKey.ID]
 
 		info, _ := ids.Info(view.model.currentKey.ID)
 
