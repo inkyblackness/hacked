@@ -141,12 +141,12 @@ func (view *View) renderContent() {
 }
 
 func (view *View) cacheFrame(key resource.Key) bool {
-	lastKey := resource.KeyOf(key.ID, key.Lang, 0)
-	_, err := view.imageCache.Texture(lastKey)
-	for index := 1; (index <= key.Index) && (err == nil); index++ {
+	var err error
+	var lastKey *resource.Key
+	for index := 0; (index <= key.Index) && (err == nil); index++ {
 		nextKey := resource.KeyOf(key.ID, key.Lang, index)
 		_, err = view.imageCache.TextureReferenced(nextKey, lastKey)
-		lastKey = nextKey
+		lastKey = &nextKey
 	}
 	return err == nil
 }

@@ -40,13 +40,13 @@ func (cache *TextureCache) InvalidateResources(ids []resource.ID) {
 
 // Texture returns the texture with given key - if available.
 func (cache *TextureCache) Texture(key resource.Key) (*BitmapTexture, error) {
-	return cache.TextureReferenced(key, resource.KeyOf(0, 0, 0))
+	return cache.TextureReferenced(key, nil)
 }
 
 // TextureReferenced returns the texture with given key - if available.
 // Should the underlying bitmap have to be loaded, then the given reference is taken as a basis for compressed bitmaps.
-// If reference is a key of all zeroes, then no reference is used.
-func (cache *TextureCache) TextureReferenced(key resource.Key, reference resource.Key) (*BitmapTexture, error) {
+// If reference is nil, then no reference is used.
+func (cache *TextureCache) TextureReferenced(key resource.Key, reference *resource.Key) (*BitmapTexture, error) {
 	tex, existing := cache.textures[key]
 	if existing {
 		return tex, nil
@@ -65,10 +65,10 @@ func (cache *TextureCache) TextureReferenced(key resource.Key, reference resourc
 	}
 	bmp, err := bitmap.DecodeReferenced(reader, func(width, height int16) ([]byte, error) {
 		buf := make([]byte, int(width)*int(height))
-		if reference == resource.KeyOf(0, 0, 0) {
+		if reference == nil {
 			return buf, nil
 		}
-		refTex, refExisting := cache.textures[reference]
+		refTex, refExisting := cache.textures[*reference]
 		if !refExisting {
 			return nil, errors.New("reference not existing")
 		}
