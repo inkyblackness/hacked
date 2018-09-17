@@ -28,6 +28,18 @@ var knownMessageTypes = map[resource.ID]messageInfo{
 }
 var knownMessageTypesOrder = []resource.ID{ids.MailsStart, ids.LogsStart, ids.FragmentsStart}
 
+var knownMailTypes = []string{
+	"Audio/Text",
+	"VMail: 'Shield' (0)",
+	"VMail: 'Grove' (1)",
+	"VMail: 'Bridge' (2)",
+	"VMail: 'Laser' (3, 4)",
+	"VMail: 'Status' (11)",
+	"VMail: 'Explode' (5..9)",
+}
+
+const videoMailDisplayBase = 256
+
 // View provides edit controls for messages.
 type View struct {
 	mod          *model.Mod
@@ -192,14 +204,40 @@ func (view *View) renderContent() {
 				view.requestPropertyChange(func(msg *text.ElectronicMessage) { msg.ColorIndex = newValue })
 			})
 
-		view.renderDisplayGallery(readOnly, "Left Display", message.LeftDisplay, availableDisplays,
-			func(newValue int) {
-				view.requestPropertyChange(func(msg *text.ElectronicMessage) { msg.LeftDisplay = newValue })
-			})
-		view.renderDisplayGallery(readOnly, "Right Display", message.RightDisplay, availableDisplays,
-			func(newValue int) {
-				view.requestPropertyChange(func(msg *text.ElectronicMessage) { msg.RightDisplay = newValue })
-			})
+		if view.model.currentKey.ID == ids.MailsStart {
+			mailType := message.LeftDisplay - videoMailDisplayBase + 1
+			selectedType := fmt.Sprintf("Unknown (0x%03X)", message.LeftDisplay)
+			if mailType < 0 {
+				mailType = 0
+			}
+			if mailType < len(knownMailTypes) {
+				selectedType = knownMailTypes[mailType]
+			}
+			if readOnly {
+				imgui.LabelText("Mail Type", selectedType)
+			} else if imgui.BeginCombo("Mail Type", selectedType) {
+				for typeIndex, typeString := range knownMailTypes {
+					if imgui.SelectableV(typeString, mailType == typeIndex, 0, imgui.Vec2{}) {
+						newIndex := -1
+						if typeIndex > 0 {
+							newIndex = videoMailDisplayBase + (typeIndex - 1)
+						}
+						view.requestPropertyChange(func(msg *text.ElectronicMessage) { msg.LeftDisplay = newIndex })
+					}
+				}
+				imgui.EndCombo()
+			}
+		}
+		if message.LeftDisplay < videoMailDisplayBase {
+			view.renderDisplayGallery(readOnly, "Left Display", message.LeftDisplay, availableDisplays,
+				func(newValue int) {
+					view.requestPropertyChange(func(msg *text.ElectronicMessage) { msg.LeftDisplay = newValue })
+				})
+			view.renderDisplayGallery(readOnly, "Right Display", message.RightDisplay, availableDisplays,
+				func(newValue int) {
+					view.requestPropertyChange(func(msg *text.ElectronicMessage) { msg.RightDisplay = newValue })
+				})
+		}
 
 		imgui.PopItemWidth()
 	}
