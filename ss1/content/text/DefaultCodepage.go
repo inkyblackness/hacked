@@ -23,7 +23,7 @@ var cp850ToRune = [256]rune{
 func DefaultCodepage() Codepage {
 	cp850ToByte := make(map[rune]byte)
 
-	for index, rune := range cp850ToRune {
+	for index, rune := range &cp850ToRune {
 		cp850ToByte[rune] = byte(index)
 	}
 

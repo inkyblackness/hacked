@@ -129,7 +129,7 @@ func (view *View) requestClearLevel(id int) {
 
 		levelData := level.EmptyLevelData(param)
 		levelIDBegin := ids.LevelResourcesStart.Plus(lvlids.PerLevel * id)
-		for offset, newData := range levelData {
+		for offset, newData := range &levelData {
 			resourceID := levelIDBegin.Plus(offset)
 			oldData := view.mod.ModifiedBlock(resource.LangAny, resourceID, 0)
 			if len(oldData) > 0 {

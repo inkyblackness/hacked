@@ -1027,7 +1027,7 @@ func (view *ObjectsView) patchLevel(lvl *level.Level, forwardObjectIDs []level.O
 	}
 
 	newDataSet := lvl.EncodeState()
-	for id, newData := range newDataSet {
+	for id, newData := range &newDataSet {
 		if len(newData) > 0 {
 			resourceID := ids.LevelResourcesStart.Plus(lvlids.PerLevel*lvl.ID() + id)
 			patch, changed, err := view.mod.CreateBlockPatch(resource.LangAny, resourceID, 0, newData)
