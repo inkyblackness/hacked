@@ -1,6 +1,8 @@
 package animations
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"image"
 	"image/gif"
@@ -14,6 +16,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/serial/rle"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/imgui-go"
@@ -128,7 +131,10 @@ func (view *View) renderContent() {
 					view.requestExport()
 				}
 			}
-
+			imgui.SameLine()
+			if imgui.Button("Import") {
+				view.requestImport()
+			}
 		}
 	}
 	imgui.EndChild()
@@ -173,6 +179,77 @@ func (view *View) currentAnimation() (bitmap.Animation, bool, bool) {
 	}
 	readOnly := len(view.mod.ModifiedBlocks(resource.LangAny, key.ID)) == 0
 	return anim, true, readOnly
+}
+
+func (view *View) requestImport() {
+	info := "File must be an animated GIF file.\nIdeally, it matches the game palette 1:1,\nothers are mapped closest fitting."
+	var fileHandler func(string)
+
+	fileHandler = func(filename string) {
+		reader, err := os.Open(filename)
+		if err != nil {
+			external.Import(view.modalStateMachine, "Could not open file.\n"+info, fileHandler, true)
+			return
+		}
+		defer func() { _ = reader.Close() }()
+		data, err := gif.DecodeAll(reader)
+		if err != nil {
+			external.Import(view.modalStateMachine, "File not recognized as GIF.\n"+info, fileHandler, true)
+			return
+		}
+
+		palette, err := view.paletteCache.Palette(0)
+		if err != nil {
+			external.Import(view.modalStateMachine, "Can not import image without having a palette loaded.\n"+info, fileHandler, true)
+			return
+		}
+		anim := bitmap.Animation{
+			Width:      int16(data.Config.Width),
+			Height:     int16(data.Config.Height),
+			ResourceID: view.model.currentKey.ID.Plus(view.model.currentKey.Index).Plus(-12),
+			IntroFlag:  0,
+		}
+		var frames [][]byte
+		rawPalette := palette.Palette()
+
+		highestBitShift := func(value int16) (result byte) {
+			if value != 0 {
+				for (value >> result) != 1 {
+					result++
+				}
+			}
+			return
+		}
+
+		var prevFrame []byte
+		for index, img := range data.Image {
+			if (img.Bounds().Max.X == data.Config.Width) && (img.Bounds().Max.Y == data.Config.Height) {
+				bitmapper := bitmap.NewBitmapper(rawPalette)
+				bmp := bitmapper.Map(img)
+				entry := bitmap.AnimationEntry{
+					FirstFrame: byte(index),
+					LastFrame:  byte(index),
+					FrameTime:  int16(data.Delay[index] * 10),
+				}
+				anim.Entries = append(anim.Entries, entry)
+				bmp.Header.Type = bitmap.TypeCompressed8Bit
+				bmp.Header.WidthFactor = highestBitShift(bmp.Header.Width)
+				bmp.Header.HeightFactor = highestBitShift(bmp.Header.Height)
+				bmp.Header.Area = [4]int16{0, 0, anim.Width, anim.Height}
+				bmp.Header.Stride = uint16(bmp.Header.Width)
+
+				buf := bytes.NewBuffer(nil)
+				_ = binary.Write(buf, binary.LittleEndian, &bmp.Header)
+				rle.Compress(buf, bmp.Pixels, prevFrame)
+				prevFrame = bmp.Pixels
+				frames = append(frames, buf.Bytes())
+			}
+		}
+
+		view.requestSetAnimation(anim, frames)
+	}
+
+	external.Import(view.modalStateMachine, info, fileHandler, false)
 }
 
 func (view *View) requestExport() {
@@ -237,4 +314,25 @@ func (view *View) exportTo(filename string, anim bitmap.Animation) {
 	}
 
 	external.Export(view.modalStateMachine, info, exportTo, false)
+}
+
+func (view *View) requestSetAnimation(newAnim bitmap.Animation, newFrames [][]byte) {
+	encodeAnim := func(anim bitmap.Animation) []byte {
+		buf := bytes.NewBuffer(nil)
+		_ = bitmap.WriteAnimation(buf, anim)
+		return buf.Bytes()
+	}
+	command := setAnimationCommand{
+		model:        &view.model,
+		animationKey: view.model.currentKey,
+		newAnimation: encodeAnim(newAnim),
+		newFrames:    newFrames,
+		framesID:     newAnim.ResourceID,
+	}
+	oldAnim, oldExisting, _ := view.currentAnimation()
+	if oldExisting {
+		command.oldAnimation = encodeAnim(oldAnim)
+	}
+	command.oldFrames = view.mod.ModifiedBlocks(view.model.currentKey.Lang, newAnim.ResourceID)
+	view.commander.Queue(command)
 }
