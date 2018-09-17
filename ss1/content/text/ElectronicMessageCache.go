@@ -37,12 +37,13 @@ func (cache *ElectronicMessageCache) InvalidateResources(ids []resource.ID) {
 
 // Message retrieves and caches the message of given key.
 func (cache *ElectronicMessageCache) Message(key resource.Key) (ElectronicMessage, error) {
-	value, existing := cache.messages[key]
+	cacheKey := resource.KeyOf(key.ID.Plus(key.Index), key.Lang, 0)
+	value, existing := cache.messages[cacheKey]
 	if existing {
 		return value, nil
 	}
 	selector := cache.localizer.LocalizedResources(key.Lang)
-	view, err := selector.Select(key.ID.Plus(key.Index))
+	view, err := selector.Select(cacheKey.ID)
 	if err != nil {
 		return EmptyElectronicMessage(), errors.New("no message found")
 	}
@@ -53,6 +54,6 @@ func (cache *ElectronicMessageCache) Message(key resource.Key) (ElectronicMessag
 	if err != nil {
 		return EmptyElectronicMessage(), err
 	}
-	cache.messages[key] = value
+	cache.messages[cacheKey] = value
 	return value, nil
 }
