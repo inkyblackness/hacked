@@ -40,8 +40,8 @@ func (builder *ContainerBuilder) VideoWidth(value uint16) *ContainerBuilder {
 }
 
 // StartPalette sets the initial palette of the new container
-func (builder *ContainerBuilder) StartPalette(palette bitmap.Palette) *ContainerBuilder {
-	builder.container.startPalette = palette
+func (builder *ContainerBuilder) StartPalette(palette *bitmap.Palette) *ContainerBuilder {
+	builder.container.startPalette = *palette
 	return builder
 }
 

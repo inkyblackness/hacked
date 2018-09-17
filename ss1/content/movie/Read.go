@@ -65,7 +65,7 @@ func readPalette(source io.Reader, builder *ContainerBuilder) error {
 		return decoder.FirstError()
 	}
 
-	builder.StartPalette(pal)
+	builder.StartPalette(&pal)
 	return nil
 }
 

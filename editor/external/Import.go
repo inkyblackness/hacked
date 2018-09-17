@@ -87,7 +87,7 @@ func ImportImage(machine gui.ModalStateMachine, paletteRetriever func() (bitmap.
 			}
 		}
 		if importMapped {
-			bitmapper := bitmap.NewBitmapper(rawPalette)
+			bitmapper := bitmap.NewBitmapper(&rawPalette)
 			bmp = bitmapper.Map(img)
 		}
 		callback(bmp)

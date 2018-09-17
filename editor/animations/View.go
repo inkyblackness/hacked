@@ -224,7 +224,7 @@ func (view *View) requestImport() {
 		var prevFrame []byte
 		for index, img := range data.Image {
 			if (img.Bounds().Max.X == data.Config.Width) && (img.Bounds().Max.Y == data.Config.Height) {
-				bitmapper := bitmap.NewBitmapper(rawPalette)
+				bitmapper := bitmap.NewBitmapper(&rawPalette)
 				bmp := bitmapper.Map(img)
 				entry := bitmap.AnimationEntry{
 					FirstFrame: byte(index),

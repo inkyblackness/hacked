@@ -65,7 +65,7 @@ func (cache *PaletteCache) Palette(index int) (*PaletteTexture, error) {
 		return nil, err
 	}
 
-	pal = NewPaletteTexture(cache.gl, palette)
+	pal = NewPaletteTexture(cache.gl, &palette)
 	cache.palettes[key] = pal
 
 	return pal, nil

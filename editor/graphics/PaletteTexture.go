@@ -14,7 +14,7 @@ type PaletteTexture struct {
 }
 
 // NewPaletteTexture creates a new PaletteTexture instance.
-func NewPaletteTexture(gl opengl.OpenGL, palette bitmap.Palette) *PaletteTexture {
+func NewPaletteTexture(gl opengl.OpenGL, palette *bitmap.Palette) *PaletteTexture {
 	tex := &PaletteTexture{
 		gl:     gl,
 		handle: gl.GenTextures(1)[0],
@@ -44,7 +44,7 @@ func (tex *PaletteTexture) Handle() uint32 {
 }
 
 // Update reloads the palette.
-func (tex *PaletteTexture) Update(palette bitmap.Palette) {
+func (tex *PaletteTexture) Update(palette *bitmap.Palette) {
 	gl := tex.gl
 	const bytesPerRGBA = 4
 	const colors = 256
@@ -66,5 +66,5 @@ func (tex *PaletteTexture) Update(palette bitmap.Palette) {
 	gl.GenerateMipmap(opengl.TEXTURE_2D)
 	gl.BindTexture(opengl.TEXTURE_2D, 0)
 
-	tex.palette = palette
+	tex.palette = *palette
 }

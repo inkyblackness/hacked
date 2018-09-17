@@ -37,7 +37,8 @@ func NewMediaDispatcher(container Container, handler MediaHandler) *MediaDispatc
 		frameBuffer:    make([]byte, width*height),
 		decoderBuilder: compression.NewFrameDecoderBuilder(width, height)}
 
-	dispatcher.setPalette(container.StartPalette())
+	startPalette := container.StartPalette()
+	dispatcher.setPalette(&startPalette)
 	dispatcher.decoderBuilder.ForStandardFrame(dispatcher.frameBuffer, width)
 
 	return dispatcher
@@ -81,7 +82,7 @@ func (dispatcher *MediaDispatcher) process(entry Entry) (dispatched bool, err er
 			decoder := serial.NewDecoder(bytes.NewReader(entry.Data()))
 			decoder.Code(&pal)
 			if decoder.FirstError() == nil {
-				dispatcher.setPalette(pal)
+				dispatcher.setPalette(&pal)
 				dispatcher.clearFrameBuffer()
 			} else {
 				err = decoder.FirstError()
@@ -141,8 +142,8 @@ func (dispatcher *MediaDispatcher) process(entry Entry) (dispatched bool, err er
 	return
 }
 
-func (dispatcher *MediaDispatcher) setPalette(newPalette bitmap.Palette) {
-	dispatcher.palette = newPalette
+func (dispatcher *MediaDispatcher) setPalette(newPalette *bitmap.Palette) {
+	dispatcher.palette = *newPalette
 }
 
 func (dispatcher *MediaDispatcher) clearFrameBuffer() {

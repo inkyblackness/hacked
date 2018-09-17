@@ -52,7 +52,7 @@ type Bitmapper struct {
 }
 
 // NewBitmapper returns a new bitmapper instance based on the given palette.
-func NewBitmapper(palette Palette) *Bitmapper {
+func NewBitmapper(palette *Palette) *Bitmapper {
 	bitmapper := &Bitmapper{}
 
 	for _, clr := range palette {
