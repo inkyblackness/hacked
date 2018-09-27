@@ -1,17 +1,21 @@
 package project
 
-import "github.com/inkyblackness/imgui-go"
+import (
+	"github.com/inkyblackness/hacked/ui/gui"
+	"github.com/inkyblackness/imgui-go"
+)
 
 type addManifestEntryStartState struct {
-	view *View
+	machine gui.ModalStateMachine
+	view    *View
 }
 
 func (state addManifestEntryStartState) Render() {
 	imgui.OpenPopup("Add static world data")
-	state.view.fileState = &addManifestEntryWaitingState{
-		view: state.view,
-	}
-	state.view.fileState.Render()
+	state.machine.SetState(&addManifestEntryWaitingState{
+		machine: state.machine,
+		view:    state.view,
+	})
 }
 
 func (state addManifestEntryStartState) HandleFiles(names []string) {

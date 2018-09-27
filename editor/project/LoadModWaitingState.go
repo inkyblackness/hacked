@@ -6,10 +6,12 @@ import (
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
+	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/imgui-go"
 )
 
 type loadModWaitingState struct {
+	machine     gui.ModalStateMachine
 	view        *View
 	failureTime time.Time
 }
@@ -35,12 +37,12 @@ use the main "data" directory of the game.
 		imgui.Text("This action will clear the undo/redo buffer\nand you will lose any unsaved changes.")
 		imgui.Separator()
 		if imgui.Button("Cancel") {
-			state.view.fileState = &idlePopupState{}
+			state.machine.SetState(nil)
 			imgui.CloseCurrentPopup()
 		}
 		imgui.EndPopup()
 	} else {
-		state.view.fileState = &idlePopupState{}
+		state.machine.SetState(nil)
 	}
 }
 
@@ -61,7 +63,7 @@ func (state *loadModWaitingState) HandleFiles(names []string) {
 			res[lang].Add(model.MutableResourcesFromProvider(filename, provider))
 		}
 
-		state.view.fileState = &idlePopupState{}
+		state.machine.SetState(nil)
 		state.view.requestLoadMod(names[0], res, staging.objectProperties, staging.textureProperties)
 	} else {
 		state.failureTime = time.Now()

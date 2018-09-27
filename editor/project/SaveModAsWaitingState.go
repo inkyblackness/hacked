@@ -4,10 +4,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/imgui-go"
 )
 
 type saveModAsWaitingState struct {
+	machine     gui.ModalStateMachine
 	view        *View
 	failureTime time.Time
 	errorInfo   string
@@ -37,19 +39,19 @@ where to save the data into the editor window.
 		imgui.PopStyleColor()
 		imgui.Separator()
 		if imgui.Button("Cancel") {
-			state.view.fileState = &idlePopupState{}
+			state.machine.SetState(nil)
 			imgui.CloseCurrentPopup()
 		}
 		imgui.EndPopup()
 	} else {
-		state.view.fileState = &idlePopupState{}
+		state.machine.SetState(nil)
 	}
 }
 
 func (state *saveModAsWaitingState) HandleFiles(names []string) {
 	modPath, ok := state.verifyDir(names)
 	if ok {
-		state.view.fileState = &idlePopupState{}
+		state.machine.SetState(nil)
 		state.view.requestSaveMod(modPath)
 	} else {
 		state.failureTime = time.Now()

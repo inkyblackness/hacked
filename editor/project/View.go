@@ -10,29 +10,32 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/world"
+	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/imgui-go"
 )
 
 // View handles the project display.
 type View struct {
-	mod       *model.Mod
-	guiScale  float32
-	commander cmd.Commander
+	mod *model.Mod
+
+	modalStateMachine gui.ModalStateMachine
+	guiScale          float32
+	commander         cmd.Commander
 
 	model viewModel
-
-	fileState popupState
 }
 
 // NewView creates a new instance for the project display.
-func NewView(mod *model.Mod, guiScale float32, commander cmd.Commander) *View {
+func NewView(mod *model.Mod, modalStateMachine gui.ModalStateMachine,
+	guiScale float32, commander cmd.Commander) *View {
 	return &View{
-		mod:       mod,
-		guiScale:  guiScale,
-		commander: commander,
+		mod: mod,
 
-		model:     freshViewModel(),
-		fileState: &idlePopupState{},
+		modalStateMachine: modalStateMachine,
+		guiScale:          guiScale,
+		commander:         commander,
+
+		model: freshViewModel(),
 	}
 }
 
@@ -73,8 +76,6 @@ func (view *View) Render() {
 		}
 		imgui.End()
 	}
-
-	view.fileState.Render()
 }
 
 func (view *View) renderContent() {
@@ -131,15 +132,11 @@ func (view *View) renderContent() {
 	imgui.EndGroup()
 }
 
-// HandleFiles is called when the user wants to add the given files to the library.
-func (view *View) HandleFiles(names []string) {
-	view.fileState.HandleFiles(names)
-}
-
 func (view *View) startLoadingMod() {
-	view.fileState = &loadModStartState{
-		view: view,
-	}
+	view.modalStateMachine.SetState(&loadModStartState{
+		machine: view.modalStateMachine,
+		view:    view,
+	})
 }
 
 // StartSavingMod initiates to save the mod.
@@ -149,16 +146,18 @@ func (view *View) StartSavingMod() {
 	if len(modPath) > 0 {
 		view.requestSaveMod(modPath)
 	} else {
-		view.fileState = &saveModAsStartState{
-			view: view,
-		}
+		view.modalStateMachine.SetState(&saveModAsStartState{
+			machine: view.modalStateMachine,
+			view:    view,
+		})
 	}
 }
 
 func (view *View) startAddingManifestEntry() {
-	view.fileState = &addManifestEntryStartState{
-		view: view,
-	}
+	view.modalStateMachine.SetState(&addManifestEntryStartState{
+		machine: view.modalStateMachine,
+		view:    view,
+	})
 }
 
 func (view *View) requestMoveManifestEntryUp() {
@@ -231,10 +230,11 @@ func (view *View) requestSaveMod(modPath string) {
 	view.mod.FixListResources()
 	err := saveModResourcesTo(view.mod, modPath)
 	if err != nil {
-		view.fileState = &saveModFailedState{
+		view.modalStateMachine.SetState(&saveModFailedState{
+			machine:   view.modalStateMachine,
 			view:      view,
 			errorInfo: err.Error(),
-		}
+		})
 	} else {
 		view.mod.SetPath(modPath)
 		view.mod.MarkSave()

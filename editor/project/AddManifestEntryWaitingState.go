@@ -6,10 +6,12 @@ import (
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
+	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/imgui-go"
 )
 
 type addManifestEntryWaitingState struct {
+	machine     gui.ModalStateMachine
 	view        *View
 	failureTime time.Time
 }
@@ -34,12 +36,12 @@ Typically, you would use the main "data" directory of the game
 `)
 		imgui.Separator()
 		if imgui.Button("Cancel") {
-			state.view.fileState = &idlePopupState{}
+			state.machine.SetState(nil)
 			imgui.CloseCurrentPopup()
 		}
 		imgui.EndPopup()
 	} else {
-		state.view.fileState = &idlePopupState{}
+		state.machine.SetState(nil)
 	}
 }
 
@@ -69,7 +71,7 @@ func (state *addManifestEntryWaitingState) HandleFiles(names []string) {
 		entry.TextureProperties = staging.textureProperties
 
 		state.view.requestAddManifestEntry(entry)
-		state.view.fileState = &idlePopupState{}
+		state.machine.SetState(nil)
 	} else {
 		state.failureTime = time.Now()
 	}

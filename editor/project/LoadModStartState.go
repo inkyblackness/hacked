@@ -1,17 +1,21 @@
 package project
 
-import "github.com/inkyblackness/imgui-go"
+import (
+	"github.com/inkyblackness/hacked/ui/gui"
+	"github.com/inkyblackness/imgui-go"
+)
 
 type loadModStartState struct {
-	view *View
+	machine gui.ModalStateMachine
+	view    *View
 }
 
 func (state loadModStartState) Render() {
 	imgui.OpenPopup("Load mod")
-	state.view.fileState = &loadModWaitingState{
-		view: state.view,
-	}
-	state.view.fileState.Render()
+	state.machine.SetState(&loadModWaitingState{
+		machine: state.machine,
+		view:    state.view,
+	})
 }
 
 func (state loadModStartState) HandleFiles(names []string) {

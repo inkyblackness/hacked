@@ -229,7 +229,6 @@ func (app *Application) onWindowResize(width int, height int) {
 }
 
 func (app *Application) onFilesDropped(names []string) {
-	app.projectView.HandleFiles(names)
 	app.modalState.HandleFiles(names)
 }
 
@@ -444,7 +443,7 @@ func (app *Application) modReset() {
 }
 
 func (app *Application) initView() {
-	app.projectView = project.NewView(app.mod, app.GuiScale, app)
+	app.projectView = project.NewView(app.mod, &app.modalState, app.GuiScale, app)
 	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)
 	app.levelControlView = levels.NewControlView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.levelTilesView = levels.NewTilesView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
