@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/inkyblackness/hacked/editor/model"
-	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/imgui-go"
@@ -47,14 +46,10 @@ use the main "data" directory of the game.
 }
 
 func (state *loadModWaitingState) HandleFiles(names []string) {
-	staging := fileStaging{
-		resources: make(map[string]resource.Provider),
-		savegames: make(map[string]resource.Provider),
-	}
+	staging := newFileStaging()
 
-	for _, name := range names {
-		staging.stage(name, len(names) == 1)
-	}
+	staging.stageAll(names)
+
 	if len(staging.resources) > 0 {
 		res := model.NewLocalizedResources()
 

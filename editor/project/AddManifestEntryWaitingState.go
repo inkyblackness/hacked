@@ -46,14 +46,10 @@ Typically, you would use the main "data" directory of the game
 }
 
 func (state *addManifestEntryWaitingState) HandleFiles(names []string) {
-	staging := fileStaging{
-		resources: make(map[string]resource.Provider),
-		savegames: make(map[string]resource.Provider),
-	}
+	staging := newFileStaging()
 
-	for _, name := range names {
-		staging.stage(name, len(names) == 1)
-	}
+	staging.stageAll(names)
+
 	if len(staging.resources) > 0 {
 		entry := &world.ManifestEntry{
 			ID: names[0],
