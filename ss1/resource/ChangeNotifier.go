@@ -5,6 +5,7 @@ import (
 	"crypto/md5" // nolint: gas
 	"encoding/binary"
 	"io"
+	"sync"
 )
 
 type resourceHash []byte
@@ -66,26 +67,41 @@ func (notifier ChangeNotifier) ModifyAndNotify(modifier func(), affectedIDs ...[
 func (notifier ChangeNotifier) hashAll(ids []ID) (hashes resourceHashSnapshot, failedIDs []ID) {
 	failedMap := make(IDMarkerMap)
 	hashes = make(resourceHashSnapshot)
+	var selectMutex sync.Mutex
+	var mapMutex sync.Mutex
 	for _, lang := range Languages() {
 		hashByResourceID := make(resourceHashes)
 		hashes[lang] = hashByResourceID
 		selector := notifier.Localizer.LocalizedResources(lang)
+		selectorFunc := func(id ID) (View, error) {
+			selectMutex.Lock()
+			defer selectMutex.Unlock()
+			return selector.Select(id)
+		}
+		var wg sync.WaitGroup
 
 		for _, id := range ids {
-			hash, hashErr := notifier.hashResource(&selector, id)
-			if hashErr == nil {
-				hashByResourceID[id] = hash
-			} else {
-				failedMap.Add(id)
-			}
+			wg.Add(1)
+			go func(id ID) {
+				defer wg.Done()
+				hash, hashErr := notifier.hashResource(selectorFunc, id)
+				mapMutex.Lock()
+				defer mapMutex.Unlock()
+				if hashErr == nil {
+					hashByResourceID[id] = hash
+				} else {
+					failedMap.Add(id)
+				}
+			}(id)
 		}
+		wg.Wait()
 	}
 	failedIDs = failedMap.ToList()
 	return
 }
 
-func (notifier ChangeNotifier) hashResource(selector *Selector, id ID) (resourceHash, error) {
-	view, viewErr := selector.Select(id)
+func (notifier ChangeNotifier) hashResource(selector func(ID) (View, error), id ID) (resourceHash, error) {
+	view, viewErr := selector(id)
 	if viewErr != nil {
 		return nil, viewErr
 	}
