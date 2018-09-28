@@ -40,23 +40,26 @@ func (manifest Manifest) Entry(at int) (*ManifestEntry, error) {
 	return manifest.entries[at], nil
 }
 
-// InsertEntry puts the provided entry at the specified index.
-// Any entry at the identified index, and all those after that, are moved by one.
-func (manifest *Manifest) InsertEntry(at int, entry *ManifestEntry) error {
+// InsertEntry puts the provided entries in sequence at the specified index.
+// Any entry at the identified index, and all those after that, are moved behind the given ones.
+func (manifest *Manifest) InsertEntry(at int, entries ...*ManifestEntry) error {
 	oldLen := len(manifest.entries)
 	if (at < 0) || (at > oldLen) {
 		return errIndexOutOfBounds
 	}
-	if entry == nil {
-		return errEntryIsNil
+	for _, entry := range entries {
+		if entry == nil {
+			return errEntryIsNil
+		}
 	}
 	manifest.changeAndNotify(func() {
-		newEntries := make([]*ManifestEntry, oldLen+1)
+		addLen := len(entries)
+		newEntries := make([]*ManifestEntry, oldLen+addLen)
 		copy(newEntries[:at], manifest.entries[:at])
-		copy(newEntries[at+1:oldLen+1], manifest.entries[at:oldLen])
-		newEntries[at] = entry
+		copy(newEntries[at:], entries)
+		copy(newEntries[at+addLen:oldLen+addLen], manifest.entries[at:oldLen])
 		manifest.entries = newEntries
-	}, manifest.listIDs(entry))
+	}, manifest.listIDs(entries...))
 	return nil
 }
 
@@ -149,10 +152,12 @@ func (manifest *Manifest) TextureProperties() texture.PropertiesList {
 	return list
 }
 
-func (manifest *Manifest) listIDs(entry *ManifestEntry) (ids []resource.ID) {
-	for _, res := range entry.Resources {
-		singleIDs := res.Provider.IDs()
-		ids = append(ids, singleIDs...)
+func (manifest *Manifest) listIDs(entries ...*ManifestEntry) (ids []resource.ID) {
+	for _, entry := range entries {
+		for _, res := range entry.Resources {
+			singleIDs := res.Provider.IDs()
+			ids = append(ids, singleIDs...)
+		}
 	}
 	return
 }

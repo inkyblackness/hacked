@@ -40,6 +40,14 @@ func (suite *ManifestSuite) TestEntriesCanBeAdded() {
 	suite.thenEntryAtShouldBe(0, "id1")
 }
 
+func (suite *ManifestSuite) TestMultipleEntriesCanBeAdded() {
+	suite.whenEntriesAreInserted(0, "id1", "id2", "id3")
+	suite.thenEntryCountShouldBe(3)
+	suite.thenEntryAtShouldBe(0, "id1")
+	suite.thenEntryAtShouldBe(1, "id2")
+	suite.thenEntryAtShouldBe(2, "id3")
+}
+
 func (suite *ManifestSuite) TestEntryReturnsErrorOnInvalidInput() {
 	suite.givenEntryWasInserted(0, "id1")
 
@@ -61,10 +69,22 @@ func (suite *ManifestSuite) TestEntriesCanBeInserted() {
 	suite.thenEntryAtShouldBe(2, "id2")
 }
 
+func (suite *ManifestSuite) TestMultipleEntriesCanBeInserted() {
+	suite.givenEntryWasInserted(0, "id1")
+	suite.givenEntryWasInserted(1, "id2")
+	suite.whenEntriesAreInserted(1, "id3", "id4")
+	suite.thenEntryCountShouldBe(4)
+	suite.thenEntryAtShouldBe(0, "id1")
+	suite.thenEntryAtShouldBe(1, "id3")
+	suite.thenEntryAtShouldBe(2, "id4")
+	suite.thenEntryAtShouldBe(3, "id2")
+}
+
 func (suite *ManifestSuite) TestInsertReturnsErrorsOnInvalidData() {
 	assert.Error(suite.T(), suite.manifest.InsertEntry(-1, suite.aSimpleEntry("-1")), "Error expected with negative index")
 	assert.Error(suite.T(), suite.manifest.InsertEntry(1, suite.aSimpleEntry("1")), "Error expected with index beyond count")
 	assert.Error(suite.T(), suite.manifest.InsertEntry(0, nil), "Error expected for nil entry")
+	assert.Error(suite.T(), suite.manifest.InsertEntry(0, suite.aSimpleEntry("1"), nil, suite.aSimpleEntry("2")), "Error expected for nil entry")
 }
 
 func (suite *ManifestSuite) TestEntriesCanBeRemoved() {
@@ -164,6 +184,17 @@ func (suite *ManifestSuite) TestModifiedCallbackOnInsertFromEmptyListsNewIDs() {
 			suite.storing(0x1000, [][]byte{{0x11}}),
 			suite.storing(0x2000, [][]byte{{0x22}})))
 	suite.thenModifiedResourcesShouldBe([]int{0x1000, 0x2000})
+}
+
+func (suite *ManifestSuite) TestModifiedCallbackOnInsertFromEmptyListsNewIDsMultipleEntries() {
+	suite.whenEntriesAreInsertedWith(0, 10,
+		suite.someLocalizedResources(resource.LangAny,
+			suite.storing(0x1000, [][]byte{{0x11}}),
+			suite.storing(0x2000, [][]byte{{0x22}})),
+		suite.someLocalizedResources(resource.LangAny,
+			suite.storing(0x3000, [][]byte{{0x11}}),
+			suite.storing(0x4000, [][]byte{{0x22}})))
+	suite.thenModifiedResourcesShouldBe([]int{0x1000, 0x2000, 0x3000, 0x4000})
 }
 
 func (suite *ManifestSuite) TestModifiedCallbackOnInsertWithNewOnesListsNewIDs() {
@@ -305,8 +336,26 @@ func (suite *ManifestSuite) whenEntryIsInsertedWith(at int, id string, res ...re
 	require.Nil(suite.T(), err, fmt.Sprintf("No error expected inserting entry at %d", at))
 }
 
+func (suite *ManifestSuite) whenEntriesAreInsertedWith(at int, idBase int, resList ...resource.LocalizedResources) {
+	entries := make([]*world.ManifestEntry, len(resList))
+	for index, res := range resList {
+		entries[index] = suite.anEntryWithResources(fmt.Sprintf("id%d", idBase+index), res)
+	}
+	err := suite.manifest.InsertEntry(at, entries...)
+	require.Nil(suite.T(), err, fmt.Sprintf("No error expected inserting entry at %d", at))
+}
+
 func (suite *ManifestSuite) whenEntryIsInserted(at int, id string) {
 	err := suite.manifest.InsertEntry(at, suite.aSimpleEntry(id))
+	require.Nil(suite.T(), err, fmt.Sprintf("No error expected inserting entry at %d", at))
+}
+
+func (suite *ManifestSuite) whenEntriesAreInserted(at int, ids ...string) {
+	entries := make([]*world.ManifestEntry, len(ids))
+	for index, id := range ids {
+		entries[index] = suite.aSimpleEntry(id)
+	}
+	err := suite.manifest.InsertEntry(at, entries...)
 	require.Nil(suite.T(), err, fmt.Sprintf("No error expected inserting entry at %d", at))
 }
 

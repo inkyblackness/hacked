@@ -7,7 +7,7 @@ import (
 
 type manifestEntryKeeper interface {
 	RemoveEntry(at int) error
-	InsertEntry(at int, entry *world.ManifestEntry) error
+	InsertEntry(at int, entries ...*world.ManifestEntry) error
 }
 
 type listManifestEntryCommand struct {

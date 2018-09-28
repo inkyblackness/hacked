@@ -15,9 +15,9 @@ type testingKeeper struct {
 	nextError error
 }
 
-func (keeper *testingKeeper) InsertEntry(at int, entry *world.ManifestEntry) error {
+func (keeper *testingKeeper) InsertEntry(at int, entry ...*world.ManifestEntry) error {
 	keeper.lastAt = at
-	keeper.lastEntry = entry
+	keeper.lastEntry = entry[0]
 	return keeper.nextError
 }
 
