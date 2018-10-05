@@ -151,7 +151,7 @@ void main()
 	}
 	else
 	{
-		Out_Color = Frag_Color * texture( Texture, Frag_UV.st).r;
+		Out_Color = vec4(Frag_Color.rgb, Frag_Color.a * texture( Texture, Frag_UV.st).r);
 	}
 }
 `
