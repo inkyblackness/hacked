@@ -24,8 +24,8 @@ var cp437ToRune = [256]rune{
 func DefaultCodepage() Codepage {
 	cp437ToByte := make(map[rune]byte)
 
-	for index, rune := range &cp437ToRune {
-		cp437ToByte[rune] = byte(index)
+	for i, r := range &cp437ToRune {
+		cp437ToByte[r] = byte(i)
 	}
 
 	cp := &tabledCodepage{tableToRune: cp437ToRune[:], tableToByte: cp437ToByte}

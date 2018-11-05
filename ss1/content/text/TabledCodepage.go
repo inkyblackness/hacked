@@ -9,7 +9,11 @@ func (cp *tabledCodepage) Encode(value string) []byte {
 	result := make([]byte, 0, len(value)+1)
 
 	for _, c := range value {
-		result = append(result, cp.tableToByte[c])
+		mapped, known := cp.tableToByte[c]
+		if !known {
+			mapped = cp.tableToByte['?']
+		}
+		result = append(result, mapped)
 	}
 	result = append(result, 0x00)
 

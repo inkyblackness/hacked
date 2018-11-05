@@ -19,3 +19,9 @@ func TestDefaultCodepageDecode(t *testing.T) {
 
 	assert.Equal(t, "Éß", result)
 }
+
+func TestDefaultCodepageMapsUnknownCharacterToQuestionMark(t *testing.T) {
+	result := text.DefaultCodepage().Encode("„quoted”")
+
+	assert.Equal(t, []byte{0x3F, 0x71, 0x75, 0x6F, 0x74, 0x65, 0x64, 0x3F, 0x00}, result)
+}
