@@ -15,7 +15,7 @@ func TestDefaultCodepageEncode(t *testing.T) {
 }
 
 func TestDefaultCodepageDecode(t *testing.T) {
-	result := text.DefaultCodepage().Decode([]byte{212, 225, 0x00})
+	result := text.DefaultCodepage().Decode([]byte{144, 225, 0x00})
 
-	assert.Equal(t, "Èß", result)
+	assert.Equal(t, "Éß", result)
 }
