@@ -14,6 +14,9 @@ const (
 )
 
 const (
-	// TexturePropertiesFilename contains the lowercase name of the file containing texture properties.
+	// TexturePropertiesFilename specifies the lowercase name of the file containing texture properties.
 	TexturePropertiesFilename = "textprop.dat"
+
+	// ObjectPropertiesFilename specifies the lowercase name of the file containing object properties.
+	ObjectPropertiesFilename = "objprop.dat"
 )

@@ -91,7 +91,7 @@ func (staging *fileStaging) stage(name string, isOnlyStagedFile bool) {
 				}
 			})
 		}
-		if strings.ToLower(filename) == "objprop.dat" {
+		if strings.ToLower(filename) == world.ObjectPropertiesFilename {
 			decoder := serial.NewDecoder(bytes.NewReader(fileData))
 			properties := object.StandardPropertiesTable()
 			properties.Code(decoder)
