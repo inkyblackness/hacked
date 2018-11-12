@@ -7,6 +7,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/model"
+	"github.com/inkyblackness/hacked/editor/values"
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -122,6 +123,22 @@ func (view *View) renderContent() {
 				view.requestSetObjectName(view.model.currentObject, false, newValue)
 			})
 
+		properties, err := view.mod.ObjectProperties().ForObject(view.model.currentObject)
+		if err == nil {
+			if imgui.TreeNodeV("Common Properties", imgui.TreeNodeFlagsDefaultOpen|imgui.TreeNodeFlagsFramed) {
+				view.renderCommonProperties(readOnly, properties)
+				imgui.TreePop()
+			}
+			if imgui.TreeNodeV("Generic Properties", imgui.TreeNodeFlagsFramed) {
+				imgui.Text("(not yet)")
+				imgui.TreePop()
+			}
+			if imgui.TreeNodeV("Specific Properties", imgui.TreeNodeFlagsFramed) {
+				imgui.Text("(not yet)")
+				imgui.TreePop()
+			}
+		}
+
 		imgui.PopItemWidth()
 	}
 	imgui.EndChild()
@@ -193,4 +210,27 @@ func (view *View) requestSetObjectName(triple object.Triple, longName bool, newV
 			view.commander.Queue(command)
 		}
 	}
+}
+
+func (view *View) renderCommonProperties(readOnly bool, properties *object.Properties) {
+	intIdentity := func(u values.Unifier) int { return u.Unified().(int) }
+	intFormat := func(value int) string { return "%d" }
+
+	massUnifier := values.NewUnifier()
+	massUnifier.Add(int(properties.Common.Mass))
+	values.RenderUnifiedSliderInt(readOnly, false, "Mass", massUnifier, intIdentity, intFormat, -1, 5000, func(newValue int) {})
+
+	hitpointsUnifier := values.NewUnifier()
+	hitpointsUnifier.Add(int(properties.Common.Hitpoints))
+	values.RenderUnifiedSliderInt(readOnly, false, "Hitpoints", hitpointsUnifier, intIdentity, intFormat, 0, 10000, func(newValue int) {})
+
+	armorUnifier := values.NewUnifier()
+	armorUnifier.Add(int(properties.Common.Armor))
+	values.RenderUnifiedSliderInt(readOnly, false, "Armor", armorUnifier, intIdentity, intFormat, 0, 255, func(newValue int) {})
+
+	renderTypeUnifier := values.NewUnifier()
+	renderTypeUnifier.Add(int(properties.Common.RenderType))
+	values.RenderUnifiedCombo(readOnly, false, "Render Type", renderTypeUnifier, intIdentity,
+		func(value int) string { return object.RenderType(value).String() },
+		len(object.RenderTypes()), func(newValue int) {})
 }
