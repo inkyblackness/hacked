@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/inkyblackness/hacked/editor/model"
+	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/resource/lgres"
 	"github.com/inkyblackness/hacked/ss1/serial"
@@ -50,6 +51,12 @@ func saveModResourcesTo(mod *model.Mod, modPath string) error {
 			return err
 		}
 	}
+	if shallBeSaved(world.ObjectPropertiesFilename) {
+		err := saveObjectPropertiesTo(mod.ObjectProperties(), filepath.Join(modPath, world.ObjectPropertiesFilename))
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -67,9 +74,17 @@ func saveResourcesTo(list model.IdentifiedResources, absFilename string) error {
 }
 
 func saveTexturePropertiesTo(list texture.PropertiesList, absFilename string) error {
+	return saveCodableTo(list, absFilename)
+}
+
+func saveObjectPropertiesTo(list object.PropertiesTable, absFilename string) error {
+	return saveCodableTo(list, absFilename)
+}
+
+func saveCodableTo(codable serial.Codable, absFilename string) error {
 	buffer := bytes.NewBuffer(nil)
 	encoder := serial.NewEncoder(buffer)
-	list.Code(encoder)
+	codable.Code(encoder)
 	err := encoder.FirstError()
 	if err != nil {
 		return err

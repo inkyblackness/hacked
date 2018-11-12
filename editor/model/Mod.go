@@ -234,6 +234,11 @@ func (mod *Mod) ObjectProperties() object.PropertiesTable {
 	return mod.worldManifest.ObjectProperties()
 }
 
+// HasModifyableObjectProperties returns true if the mod has dedicated object properties.
+func (mod *Mod) HasModifyableObjectProperties() bool {
+	return len(mod.objectProperties) > 0
+}
+
 // TextureProperties returns the list of texture properties.
 func (mod *Mod) TextureProperties() texture.PropertiesList {
 	if len(mod.textureProperties) > 0 {
