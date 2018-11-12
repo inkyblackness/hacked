@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
+	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/serial/rle"
@@ -96,5 +97,12 @@ func (trans *ModTransaction) DelResource(lang resource.Language, id resource.ID)
 func (trans *ModTransaction) SetTextureProperties(textureIndex level.TextureIndex, properties texture.Properties) {
 	trans.actions = append(trans.actions, func(mod *Mod) {
 		mod.setTextureProperties(textureIndex, properties)
+	})
+}
+
+// SetObjectProperties updates the properties of a specific object.
+func (trans *ModTransaction) SetObjectProperties(triple object.Triple, properties object.Properties) {
+	trans.actions = append(trans.actions, func(mod *Mod) {
+		mod.setObjectProperties(triple, properties)
 	})
 }

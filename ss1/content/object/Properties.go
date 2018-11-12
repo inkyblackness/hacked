@@ -46,19 +46,19 @@ func NewPropertiesTable(desc Descriptors) PropertiesTable {
 }
 
 // ForObject returns the object-specific properties by given triple.
-func (table PropertiesTable) ForObject(triple Triple) (Properties, error) {
+func (table PropertiesTable) ForObject(triple Triple) (*Properties, error) {
 	if int(triple.Class) >= len(table) {
-		return Properties{}, errors.New("invalid class")
+		return nil, errors.New("invalid class")
 	}
 	classEntry := table[triple.Class]
 	if int(triple.Subclass) >= len(classEntry) {
-		return Properties{}, errors.New("invalid subclass")
+		return nil, errors.New("invalid subclass")
 	}
 	subclassEntry := classEntry[triple.Subclass]
 	if int(triple.Type) >= len(subclassEntry) {
-		return Properties{}, errors.New("invalid type")
+		return nil, errors.New("invalid type")
 	}
-	return subclassEntry[triple.Type], nil
+	return &subclassEntry[triple.Type], nil
 }
 
 // Code serializes the table with given coder.

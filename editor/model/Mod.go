@@ -354,6 +354,15 @@ func (mod *Mod) setTextureProperties(index level.TextureIndex, properties textur
 	}
 }
 
+func (mod Mod) setObjectProperties(triple object.Triple, properties object.Properties) {
+	entry, err := mod.objectProperties.ForObject(triple)
+	if err != nil {
+		return
+	}
+	*entry = properties
+	mod.markFileChanged(world.ObjectPropertiesFilename)
+}
+
 // FixListResources ensures all resources that contain resource lists to
 // have maximum size. This is done to ensure compatibility with layered modding in the
 // Source Port branch of engines.
