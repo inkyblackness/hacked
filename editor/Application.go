@@ -13,6 +13,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/levels"
 	"github.com/inkyblackness/hacked/editor/messages"
 	"github.com/inkyblackness/hacked/editor/model"
+	"github.com/inkyblackness/hacked/editor/objects"
 	"github.com/inkyblackness/hacked/editor/project"
 	"github.com/inkyblackness/hacked/editor/texts"
 	"github.com/inkyblackness/hacked/editor/textures"
@@ -79,6 +80,7 @@ type Application struct {
 	bitmapsView      *bitmaps.View
 	texturesView     *textures.View
 	animationsView   *animations.View
+	objectsView      *objects.View
 	aboutView        *about.View
 	licensesView     *about.LicensesView
 
@@ -155,6 +157,7 @@ func (app *Application) render() {
 	app.bitmapsView.Render()
 	app.texturesView.Render()
 	app.animationsView.Render()
+	app.objectsView.Render()
 
 	paletteTexture, _ := app.paletteCache.Palette(0)
 	app.mapDisplay.Render(app.mod.ObjectProperties(), activeLevel,
@@ -453,6 +456,7 @@ func (app *Application) initView() {
 	app.bitmapsView = bitmaps.NewBitmapsView(app.mod, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.texturesView = textures.NewTexturesView(app.mod, app.textLineCache, app.cp, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.animationsView = animations.NewAnimationsView(app.mod, app.textureCache, app.paletteCache, app.animationCache, &app.modalState, app.GuiScale, app)
+	app.objectsView = objects.NewView(app.mod, app.textLineCache, app.cp, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 	app.licensesView = about.NewLicensesView(app.GuiScale)
 
@@ -520,6 +524,7 @@ func (app *Application) renderMainMenu() {
 			windowEntry("Bitmaps", "", app.bitmapsView.WindowOpen())
 			windowEntry("Textures", "", app.texturesView.WindowOpen())
 			windowEntry("Animations", "", app.animationsView.WindowOpen())
+			windowEntry("Game Objects", "", app.objectsView.WindowOpen())
 			imgui.EndMenu()
 		}
 		if imgui.BeginMenu("Help") {
