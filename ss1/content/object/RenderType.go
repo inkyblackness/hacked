@@ -1,7 +1,17 @@
 package object
 
+import "fmt"
+
 // RenderType defines how an object is to be rendered.
 type RenderType byte
+
+// String returns the textual representation of the value.
+func (renderType RenderType) String() string {
+	if int(renderType) >= len(renderTypeNames) {
+		return fmt.Sprintf("Unknown 0x%02X", int(renderType))
+	}
+	return renderTypeNames[renderType]
+}
 
 // RenderType constants.
 const (
@@ -19,3 +29,20 @@ const (
 	RenderTypeSpecial   RenderType = 11
 	RenderTypeTLPoly    RenderType = 12
 )
+
+var renderTypeNames = []string{
+	"Unknown 0x00",
+	"TextPoly", "Bitmap", "TPoly", "Critter",
+	"AnimPoly", "Vox", "NoObject", "TexBitmap",
+	"FlatPoly", "MultiView", "Special", "TLPoly",
+}
+
+// RenderTypes returns all known constants.
+func RenderTypes() []RenderType {
+	return []RenderType{
+		RenderTypeUnknown,
+		RenderTypeTextPoly, RenderTypeBitmap, RenderTypeTPoly, RenderTypeCritter,
+		RenderTypeAnimPoly, RenderTypeVox, RenderTypeNoObject, RenderTypeTexBitmap,
+		RenderTypeFlatPoly, RenderTypeMultiView, RenderTypeSpecial, RenderTypeTLPoly,
+	}
+}
