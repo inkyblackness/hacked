@@ -267,4 +267,23 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 				prop.Common.RenderType = object.RenderType(newValue)
 			})
 		})
+
+	physicsModelUnifier := values.NewUnifier()
+	physicsModelUnifier.Add(int(properties.Common.PhysicsModel))
+	values.RenderUnifiedCombo(readOnly, false, "Physics Model", physicsModelUnifier, intIdentity,
+		func(value int) string { return object.PhysicsModel(value).String() },
+		len(object.PhysicsModels()), func(newValue int) {
+			view.requestSetObjectProperties(func(prop *object.Properties) {
+				prop.Common.PhysicsModel = object.PhysicsModel(newValue)
+			})
+		})
+
+	hardnessUnifier := values.NewUnifier()
+	hardnessUnifier.Add(int(properties.Common.Hardness))
+	values.RenderUnifiedSliderInt(readOnly, false, "Hardness", hardnessUnifier, intIdentity, intFormat, 0, 255,
+		func(newValue int) {
+			view.requestSetObjectProperties(func(prop *object.Properties) {
+				prop.Common.Hardness = byte(newValue)
+			})
+		})
 }

@@ -11,7 +11,7 @@ type CommonProperties struct {
 	Hitpoints     int16
 	Armor         byte
 	RenderType    RenderType
-	PhysicsModel  byte
+	PhysicsModel  PhysicsModel
 	Hardness      byte
 	Pep           byte
 	PhysicsXR     byte
