@@ -354,12 +354,12 @@ func (mod *Mod) setTextureProperties(index level.TextureIndex, properties textur
 	}
 }
 
-func (mod Mod) setObjectProperties(triple object.Triple, properties object.Properties) {
+func (mod *Mod) setObjectProperties(triple object.Triple, properties object.Properties) {
 	entry, err := mod.objectProperties.ForObject(triple)
 	if err != nil {
 		return
 	}
-	*entry = properties
+	*entry = properties.Clone()
 	mod.markFileChanged(world.ObjectPropertiesFilename)
 }
 

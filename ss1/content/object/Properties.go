@@ -22,6 +22,20 @@ type Properties struct {
 	Specific []byte
 }
 
+// Clone returns a fresh instance with a copy of the data.
+func (prop Properties) Clone() Properties {
+	cloneBytes := func(in []byte) []byte {
+		out := make([]byte, len(in))
+		copy(out, in)
+		return out
+	}
+	return Properties{
+		Common:   prop.Common,
+		Generic:  cloneBytes(prop.Generic),
+		Specific: cloneBytes(prop.Specific),
+	}
+}
+
 // NewPropertiesTable returns a new instance based on given descriptors.
 func NewPropertiesTable(desc Descriptors) PropertiesTable {
 	classCount := len(desc)
