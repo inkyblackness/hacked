@@ -77,7 +77,7 @@ func (view *View) Render() {
 
 func (view *View) renderContent() {
 	if imgui.BeginChildV("Properties", imgui.Vec2{X: -100 * view.guiScale, Y: 0}, false, imgui.WindowFlagsHorizontalScrollbar) {
-		imgui.PushItemWidth(-200 * view.guiScale)
+		imgui.PushItemWidth(-250 * view.guiScale)
 		classString := func(class object.Class) string {
 			return fmt.Sprintf("%2d: %v", int(class), class)
 		}
@@ -284,6 +284,31 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 		func(newValue int) {
 			view.requestSetObjectProperties(func(prop *object.Properties) {
 				prop.Common.Hardness = byte(newValue)
+			})
+		})
+
+	destroyEffectValueUnifier := values.NewUnifier()
+	destroyEffectValueUnifier.Add(int(properties.Common.DestroyEffect.Value()))
+	values.RenderUnifiedSliderInt(readOnly, false, "DestroyEffect Value", destroyEffectValueUnifier, intIdentity, intFormat, 0, int(object.DestroyEffectValueLimit),
+		func(newValue int) {
+			view.requestSetObjectProperties(func(prop *object.Properties) {
+				prop.Common.DestroyEffect = prop.Common.DestroyEffect.WithValue(byte(newValue))
+			})
+		})
+	destroyEffectPlaySoundUnifier := values.NewUnifier()
+	destroyEffectPlaySoundUnifier.Add(properties.Common.DestroyEffect.PlaySound())
+	values.RenderUnifiedCheckboxCombo(readOnly, false, "DestroyEffect PlaySound", destroyEffectPlaySoundUnifier,
+		func(newValue bool) {
+			view.requestSetObjectProperties(func(prop *object.Properties) {
+				prop.Common.DestroyEffect = prop.Common.DestroyEffect.WithSound(newValue)
+			})
+		})
+	destroyEffectShowExplosionUnifier := values.NewUnifier()
+	destroyEffectShowExplosionUnifier.Add(properties.Common.DestroyEffect.ShowExplosion())
+	values.RenderUnifiedCheckboxCombo(readOnly, false, "DestroyEffect ShowExplosion", destroyEffectShowExplosionUnifier,
+		func(newValue bool) {
+			view.requestSetObjectProperties(func(prop *object.Properties) {
+				prop.Common.DestroyEffect = prop.Common.DestroyEffect.WithExplosion(newValue)
 			})
 		})
 }
