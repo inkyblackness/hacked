@@ -22,6 +22,6 @@ type CommonProperties struct {
 	Toughness     byte
 	Flags         uint16
 	MfdId         uint16
-	Bitmap3D      uint16
+	Bitmap3D      Bitmap3D
 	DestroyEffect DestroyEffect
 }

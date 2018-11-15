@@ -203,7 +203,7 @@ func (display *MapDisplay) Render(properties object.PropertiesTable, lvl *level.
 		{
 			offset := 0
 			properties.Iterate(func(triple object.Triple, prop *object.Properties) bool {
-				numExtra := prop.Common.Bitmap3D >> 12
+				numExtra := int(prop.Common.Bitmap3D.FrameNumber())
 
 				if triple.Class != object.ClassTrap {
 					tripleOffsets[triple] = offset + 2

@@ -287,6 +287,39 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 			})
 		})
 
+	bitmap3DBitmapNumUnifier := values.NewUnifier()
+	bitmap3DBitmapNumUnifier.Add(int(properties.Common.Bitmap3D.BitmapNumber()))
+	values.RenderUnifiedSliderInt(readOnly, false, "Bitmap Number", bitmap3DBitmapNumUnifier, intIdentity, intFormat, 0, int(object.Bitmap3DBitmapNumberLimit),
+		func(newValue int) {
+			view.requestSetObjectProperties(func(prop *object.Properties) {
+				prop.Common.Bitmap3D = prop.Common.Bitmap3D.WithBitmapNumber(uint16(newValue))
+			})
+		})
+	bitmap3DFrameNumUnifier := values.NewUnifier()
+	bitmap3DFrameNumUnifier.Add(int(properties.Common.Bitmap3D.FrameNumber()))
+	values.RenderUnifiedSliderInt(readOnly, false, "Frame Number", bitmap3DFrameNumUnifier, intIdentity, intFormat, 0, int(object.Bitmap3DFrameNumberLimit),
+		func(newValue int) {
+			view.requestSetObjectProperties(func(prop *object.Properties) {
+				prop.Common.Bitmap3D = prop.Common.Bitmap3D.WithFrameNumber(uint16(newValue))
+			})
+		})
+	bitmap3DAnimUnifier := values.NewUnifier()
+	bitmap3DAnimUnifier.Add(properties.Common.Bitmap3D.Animation())
+	values.RenderUnifiedCheckboxCombo(readOnly, false, "Animation", bitmap3DAnimUnifier,
+		func(newValue bool) {
+			view.requestSetObjectProperties(func(prop *object.Properties) {
+				prop.Common.Bitmap3D = prop.Common.Bitmap3D.WithAnimation(newValue)
+			})
+		})
+	bitmap3DRepeatUnifier := values.NewUnifier()
+	bitmap3DRepeatUnifier.Add(properties.Common.Bitmap3D.Repeat())
+	values.RenderUnifiedCheckboxCombo(readOnly, false, "Repeat", bitmap3DRepeatUnifier,
+		func(newValue bool) {
+			view.requestSetObjectProperties(func(prop *object.Properties) {
+				prop.Common.Bitmap3D = prop.Common.Bitmap3D.WithRepeat(newValue)
+			})
+		})
+
 	destroyEffectValueUnifier := values.NewUnifier()
 	destroyEffectValueUnifier.Add(int(properties.Common.DestroyEffect.Value()))
 	values.RenderUnifiedSliderInt(readOnly, false, "DestroyEffect Value", destroyEffectValueUnifier, intIdentity, intFormat, 0, int(object.DestroyEffectValueLimit),
