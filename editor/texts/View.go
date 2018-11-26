@@ -124,7 +124,7 @@ func (view *View) renderContent() {
 		imgui.EndCombo()
 	}
 
-	if view.hasAudio() {
+	if view.textHasSound() {
 		imgui.Separator()
 		sound := view.currentSound()
 		hasSound := len(sound.Samples) > 0
@@ -213,14 +213,14 @@ func (view *View) clearText() {
 	oldText := view.currentText()
 	isTextModified := view.getText.Modified(textKey)
 
-	audioKey, textWithAudio := view.currentSoundKey()
-	oldAudio := view.currentSound()
-	isAudioModified := textWithAudio && view.getAudio.Modified(audioKey)
+	audioKey, textWithSound := view.currentSoundKey()
+	oldSound := view.currentSound()
+	isSoundModified := textWithSound && view.getAudio.Modified(audioKey)
 
 	view.requestCommand(
 		func(trans cmd.Transaction) {
 			view.setText.Clear(trans, textKey)
-			if textWithAudio {
+			if textWithSound {
 				view.setAudio.Clear(trans, audioKey)
 			}
 		},
@@ -230,9 +230,9 @@ func (view *View) clearText() {
 			} else {
 				view.setText.Remove(trans, textKey)
 			}
-			if isAudioModified {
-				view.setAudio.Set(trans, audioKey, oldAudio)
-			} else if textWithAudio {
+			if isSoundModified {
+				view.setAudio.Set(trans, audioKey, oldSound)
+			} else if textWithSound {
 				view.setAudio.Remove(trans, audioKey)
 			}
 		})
@@ -243,14 +243,14 @@ func (view *View) removeText() {
 	oldText := view.currentText()
 	isTextModified := view.getText.Modified(textKey)
 
-	audioKey, textWithAudio := view.currentSoundKey()
-	oldAudio := view.currentSound()
-	isAudioModified := textWithAudio && view.getAudio.Modified(audioKey)
+	audioKey, textWithSound := view.currentSoundKey()
+	oldSound := view.currentSound()
+	isSoundModified := textWithSound && view.getAudio.Modified(audioKey)
 
 	view.requestCommand(
 		func(trans cmd.Transaction) {
 			view.setText.Remove(trans, textKey)
-			if textWithAudio {
+			if textWithSound {
 				view.setAudio.Remove(trans, audioKey)
 			}
 		},
@@ -260,22 +260,20 @@ func (view *View) removeText() {
 			} else {
 				view.setText.Remove(trans, textKey)
 			}
-			if isAudioModified {
-				view.setAudio.Set(trans, audioKey, oldAudio)
-			} else if textWithAudio {
+			if isSoundModified {
+				view.setAudio.Set(trans, audioKey, oldSound)
+			} else if textWithSound {
 				view.setAudio.Remove(trans, audioKey)
 			}
 		})
 }
 
-// --- audio
-
-func (view View) hasAudio() bool {
+func (view View) textHasSound() bool {
 	return view.model.currentKey.ID == ids.TrapMessageTexts
 }
 
-func (view *View) currentSoundKey() (key resource.Key, textWithAudio bool) {
-	if !view.hasAudio() {
+func (view *View) currentSoundKey() (key resource.Key, textWithSound bool) {
+	if !view.textHasSound() {
 		return key, false
 	}
 	key = view.model.currentKey
@@ -285,16 +283,16 @@ func (view *View) currentSoundKey() (key resource.Key, textWithAudio bool) {
 }
 
 func (view *View) currentSound() (sound audio.L8) {
-	key, hasAudio := view.currentSoundKey()
-	if !hasAudio {
+	key, hasSound := view.currentSoundKey()
+	if !hasSound {
 		return
 	}
 	return view.getAudio.Get(key)
 }
 
 func (view *View) requestExportAudio(sound audio.L8) {
-	key, hasAudio := view.currentSoundKey()
-	if !hasAudio {
+	key, hasSound := view.currentSoundKey()
+	if !hasSound {
 		return
 	}
 	filename := fmt.Sprintf("%05d_%s.wav", key.ID.Value(), view.model.currentKey.Lang.String())
@@ -304,25 +302,25 @@ func (view *View) requestExportAudio(sound audio.L8) {
 
 func (view *View) requestImportAudio() {
 	external.ImportAudio(view.modalStateMachine, func(sound audio.L8) {
-		view.requestSetAudio(sound)
+		view.requestSetSound(sound)
 	})
 }
 
-func (view *View) requestSetAudio(sound audio.L8) {
-	audioKey, textWithAudio := view.currentSoundKey()
-	oldAudio := view.currentSound()
-	isAudioModified := textWithAudio && view.getAudio.Modified(audioKey)
+func (view *View) requestSetSound(sound audio.L8) {
+	audioKey, textWithSound := view.currentSoundKey()
+	oldSound := view.currentSound()
+	isSoundModified := textWithSound && view.getAudio.Modified(audioKey)
 
 	view.requestCommand(
 		func(trans cmd.Transaction) {
-			if textWithAudio {
+			if textWithSound {
 				view.setAudio.Set(trans, audioKey, sound)
 			}
 		},
 		func(trans cmd.Transaction) {
-			if isAudioModified {
-				view.setAudio.Set(trans, audioKey, oldAudio)
-			} else if textWithAudio {
+			if isSoundModified {
+				view.setAudio.Set(trans, audioKey, oldSound)
+			} else if textWithSound {
 				view.setAudio.Remove(trans, audioKey)
 			}
 		})
