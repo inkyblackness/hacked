@@ -26,7 +26,7 @@ func (suite *EncoderSuite) SetupTest() {
 }
 
 func (suite *EncoderSuite) TestImplementsCoderInterface() {
-	instance := (interface{})(suite.coder)
+	instance := interface{}(suite.coder)
 	_, ok := instance.(serial.Coder)
 	assert.True(suite.T(), ok)
 }
@@ -93,7 +93,7 @@ func (suite *EncoderSuite) TestCodeDoesNothingOnPreviousError() {
 }
 
 func (suite *EncoderSuite) TestImplementsWriterInterface() {
-	instance := (interface{})(suite.coder)
+	instance := interface{}(suite.coder)
 	_, ok := instance.(io.Writer)
 	assert.True(suite.T(), ok)
 }

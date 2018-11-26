@@ -26,7 +26,7 @@ func (suite *PositioningEncoderSuite) SetupTest() {
 }
 
 func (suite *PositioningEncoderSuite) TestImplementsPositioningCoderInterface() {
-	instance := (interface{})(suite.coder)
+	instance := interface{}(suite.coder)
 	_, ok := instance.(serial.PositioningCoder)
 
 	assert.True(suite.T(), ok)
@@ -90,7 +90,7 @@ func (suite *PositioningEncoderSuite) TestCurPosIsRelativeToConstructionTime() {
 }
 
 func (suite *PositioningEncoderSuite) TestImplementsSeekerInterface() {
-	instance := (interface{})(suite.coder)
+	instance := interface{}(suite.coder)
 	_, ok := instance.(io.Seeker)
 
 	assert.True(suite.T(), ok)

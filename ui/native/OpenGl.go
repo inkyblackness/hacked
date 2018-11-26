@@ -138,8 +138,8 @@ func (native *OpenGL) DeleteVertexArrays(arrays []uint32) {
 }
 
 // Disable implements the opengl.OpenGL interface.
-func (native *OpenGL) Disable(cap uint32) {
-	gl.Disable(cap)
+func (native *OpenGL) Disable(capability uint32) {
+	gl.Disable(capability)
 }
 
 // DrawArrays implements the opengl.OpenGL interface.
@@ -153,8 +153,8 @@ func (native *OpenGL) DrawElements(mode uint32, count int32, elementType uint32,
 }
 
 // Enable implements the opengl.OpenGL interface.
-func (native *OpenGL) Enable(cap uint32) {
-	gl.Enable(cap)
+func (native *OpenGL) Enable(capability uint32) {
+	gl.Enable(capability)
 }
 
 // EnableVertexAttribArray implements the opengl.OpenGL interface.
@@ -239,8 +239,8 @@ func (native *OpenGL) GetUniformLocation(program uint32, name string) int32 {
 }
 
 // IsEnabled implements the OpenGL interface.
-func (native *OpenGL) IsEnabled(cap uint32) bool {
-	return gl.IsEnabled(cap)
+func (native *OpenGL) IsEnabled(capability uint32) bool {
+	return gl.IsEnabled(capability)
 }
 
 // LinkProgram implements the opengl.OpenGL interface.

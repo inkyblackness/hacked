@@ -27,7 +27,7 @@ func (suite *DecoderSuite) SetupTest() {
 }
 
 func (suite *DecoderSuite) TestImplementsCoderInterface() {
-	instance := (interface{})(suite.coder)
+	instance := interface{}(suite.coder)
 	_, ok := instance.(serial.Coder)
 	assert.True(suite.T(), ok)
 }
@@ -91,7 +91,7 @@ func (suite *DecoderSuite) TestFirstErrorIgnoresFurtherErrors() {
 }
 
 func (suite *DecoderSuite) TestImplementsReaderInterface() {
-	instance := (interface{})(suite.coder)
+	instance := interface{}(suite.coder)
 	_, ok := instance.(io.Reader)
 	assert.True(suite.T(), ok)
 }
