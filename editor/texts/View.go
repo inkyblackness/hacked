@@ -1,15 +1,15 @@
 package texts
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/model"
+	"github.com/inkyblackness/hacked/modding/texts"
 	"github.com/inkyblackness/hacked/ss1/content/audio"
 	"github.com/inkyblackness/hacked/ss1/content/movie"
-	"github.com/inkyblackness/hacked/ss1/content/text"
+	"github.com/inkyblackness/hacked/ss1/content/text" // x
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
@@ -40,10 +40,8 @@ var textToAudio = map[resource.ID]resource.ID{
 
 // View provides edit controls for texts.
 type View struct {
-	mod        *model.Mod
-	lineCache  *text.Cache
-	pageCache  *text.Cache
-	cp         text.Codepage
+	xmod       *model.Mod
+	adapter    texts.Adapter
 	movieCache *movie.Cache
 
 	modalStateMachine gui.ModalStateMachine
@@ -62,10 +60,8 @@ func NewTextsView(mod *model.Mod,
 	modalStateMachine gui.ModalStateMachine, clipboard external.Clipboard,
 	guiScale float32, commander cmd.Commander) *View {
 	view := &View{
-		mod:        mod,
-		lineCache:  lineCache,
-		pageCache:  pageCache,
-		cp:         cp,
+		xmod:       mod,
+		adapter:    texts.NewAdapter(lineCache, pageCache, mod, cp),
 		movieCache: movieCache,
 
 		modalStateMachine: modalStateMachine,
@@ -181,18 +177,7 @@ func (view *View) renderContent() {
 }
 
 func (view View) currentText() string {
-	var cache *text.Cache
-	resourceInfo, existing := ids.Info(view.model.currentKey.ID)
-	if !existing || resourceInfo.List {
-		cache = view.lineCache
-	} else {
-		cache = view.pageCache
-	}
-	currentValue, cacheErr := cache.Text(view.model.currentKey)
-	if cacheErr != nil {
-		currentValue = ""
-	}
-	return currentValue
+	return view.adapter.CurrentText(view.model.currentKey)
 }
 
 func (view View) hasAudio() bool {
@@ -220,13 +205,7 @@ func (view *View) currentSound() (sound audio.L8) {
 }
 
 func (view View) currentModification() (data [][]byte, isList bool) {
-	info, _ := ids.Info(view.model.currentKey.ID)
-	if info.List {
-		data = [][]byte{view.mod.ModifiedBlock(view.model.currentKey.Lang, view.model.currentKey.ID, view.model.currentKey.Index)}
-	} else {
-		data = view.mod.ModifiedBlocks(view.model.currentKey.Lang, view.model.currentKey.ID.Plus(view.model.currentKey.Index))
-	}
-	return data, info.List
+	return view.adapter.Modification(view.model.currentKey)
 }
 
 func (view View) copyTextToClipboard(text string) {
@@ -241,37 +220,74 @@ func (view *View) setTextFromClipboard() {
 		return
 	}
 
-	blockedValue := text.Blocked(value)
-	oldData, isList := view.currentModification()
-	if isList {
-		newData := view.cp.Encode(blockedValue[0])
-		view.requestSetTextLine(oldData[0], newData, false, nil)
-	} else {
-		newData := make([][]byte, len(blockedValue))
-		for index, blockLine := range blockedValue {
-			newData[index] = view.cp.Encode(blockLine)
-		}
-		view.requestSetTextPage(oldData, newData)
-	}
+	oldText := view.currentText()
+	key := view.model.currentKey
+	view.requestCommandWithUiUpdate(
+		func(trans cmd.Transaction) {
+			view.adapter.SetText(trans, key, value)
+		},
+		func(trans cmd.Transaction) {
+			view.adapter.SetText(trans, key, oldText)
+		})
 }
 
 func (view *View) clearText() {
-	emptyLine := view.cp.Encode("")
-	currentModification, isList := view.currentModification()
-	if isList && !bytes.Equal(currentModification[0], emptyLine) {
-		view.requestSetTextLine(currentModification[0], emptyLine, true, &audio.L8{SampleRate: 22050, Samples: []byte{0x80}})
-	} else if !isList && ((len(currentModification) != 1) || !bytes.Equal(currentModification[0], []byte{0x00})) {
-		view.requestSetTextPage(currentModification, [][]byte{emptyLine})
-	}
+	oldText := view.currentText()
+	key := view.model.currentKey
+	view.requestCommandWithUiUpdate(
+		func(trans cmd.Transaction) {
+			view.adapter.SetText(trans, key, "")
+			// TODO audio
+		},
+		func(trans cmd.Transaction) {
+			view.adapter.SetText(trans, key, oldText)
+			// TODO audio
+		})
+
+	// TODO: audio
+	/*
+		emptyLine := view.cp.Encode("")                           // x
+		currentModification, isList := view.currentModification() // x
+		if isList && !bytes.Equal(currentModification[0], emptyLine) {
+			silence := &audio.L8{SampleRate: 22050, Samples: []byte{0x80}}
+			view.requestSetTextLine(currentModification[0], emptyLine, true, silence)
+		} else if !isList && ((len(currentModification) != 1) || !bytes.Equal(currentModification[0], []byte{0x00})) {
+			view.requestSetTextPage(currentModification, [][]byte{emptyLine})
+		}
+	*/
 }
 
-func (view *View) removeText() {
-	currentModification, isList := view.currentModification()
-	if isList && (len(currentModification[0]) > 0) {
-		view.requestSetTextLine(currentModification[0], nil, true, nil)
-	} else if !isList && (len(currentModification) > 0) {
-		view.requestSetTextPage(currentModification, nil)
+func (view *View) requestCommandWithUiUpdate(forward func(trans cmd.Transaction), backward func(trans cmd.Transaction)) {
+	command := textCommand{
+		key:      view.model.currentKey,
+		model:    &view.model,
+		forward:  forward,
+		backward: backward,
 	}
+	view.commander.Queue(command)
+}
+
+func (view *View) removeText() { // x
+	oldText := view.currentText()
+	key := view.model.currentKey
+	view.requestCommandWithUiUpdate(
+		func(trans cmd.Transaction) {
+			view.adapter.RemoveText(trans, key)
+			// TODO audio
+		},
+		func(trans cmd.Transaction) {
+			view.adapter.SetText(trans, key, oldText)
+			// TODO audio
+		})
+
+	/*
+		currentModification, isList := view.currentModification()
+		if isList && (len(currentModification[0]) > 0) {
+			view.requestSetTextLine(currentModification[0], nil, true, nil)
+		} else if !isList && (len(currentModification) > 0) {
+			view.requestSetTextPage(currentModification, nil)
+		}
+	*/
 }
 
 func (view *View) requestExportAudio(sound audio.L8) {
@@ -297,7 +313,7 @@ func (view *View) setAudioCommand(sound *audio.L8) cmd.Command {
 		model:      &view.model,
 
 		dataKey: dataKey,
-		oldData: view.mod.ModifiedBlocks(dataKey.Lang, dataKey.ID),
+		oldData: view.xmod.ModifiedBlocks(dataKey.Lang, dataKey.ID),
 	}
 	if sound != nil {
 		movieData := movie.ContainSoundData(*sound)
