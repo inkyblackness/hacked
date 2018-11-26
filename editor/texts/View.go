@@ -193,29 +193,19 @@ func (view *View) setTextFromClipboard() {
 	}
 
 	key := view.model.currentKey
-	oldText := view.currentText()
-	isModified := view.getText.Modified(key)
 	view.requestCommand(
 		func(trans cmd.Transaction) {
 			view.setText.Set(trans, key, value)
 		},
-		func(trans cmd.Transaction) {
-			if isModified {
-				view.setText.Set(trans, key, oldText)
-			} else {
-				view.setText.Remove(trans, key)
-			}
-		})
+		view.restoreTextFunc(key))
 }
 
 func (view *View) clearText() {
 	textKey := view.model.currentKey
-	oldText := view.currentText()
-	isTextModified := view.getText.Modified(textKey)
+	restoreTextFunc := view.restoreTextFunc(textKey)
 
 	audioKey, textWithSound := view.currentSoundKey()
-	oldSound := view.currentSound()
-	isSoundModified := textWithSound && view.getAudio.Modified(audioKey)
+	restoreAudioFunc := view.restoreAudioFunc()
 
 	view.requestCommand(
 		func(trans cmd.Transaction) {
@@ -225,27 +215,17 @@ func (view *View) clearText() {
 			}
 		},
 		func(trans cmd.Transaction) {
-			if isTextModified {
-				view.setText.Set(trans, textKey, oldText)
-			} else {
-				view.setText.Remove(trans, textKey)
-			}
-			if isSoundModified {
-				view.setAudio.Set(trans, audioKey, oldSound)
-			} else if textWithSound {
-				view.setAudio.Remove(trans, audioKey)
-			}
+			restoreTextFunc(trans)
+			restoreAudioFunc(trans)
 		})
 }
 
 func (view *View) removeText() {
 	textKey := view.model.currentKey
-	oldText := view.currentText()
-	isTextModified := view.getText.Modified(textKey)
+	restoreTextFunc := view.restoreTextFunc(textKey)
 
 	audioKey, textWithSound := view.currentSoundKey()
-	oldSound := view.currentSound()
-	isSoundModified := textWithSound && view.getAudio.Modified(audioKey)
+	restoreAudioFunc := view.restoreAudioFunc()
 
 	view.requestCommand(
 		func(trans cmd.Transaction) {
@@ -255,22 +235,29 @@ func (view *View) removeText() {
 			}
 		},
 		func(trans cmd.Transaction) {
-			if isTextModified {
-				view.setText.Set(trans, textKey, oldText)
-			} else {
-				view.setText.Remove(trans, textKey)
-			}
-			if isSoundModified {
-				view.setAudio.Set(trans, audioKey, oldSound)
-			} else if textWithSound {
-				view.setAudio.Remove(trans, audioKey)
-			}
+			restoreTextFunc(trans)
+			restoreAudioFunc(trans)
 		})
+}
+
+func (view *View) restoreTextFunc(key resource.Key) func(trans cmd.Transaction) {
+	oldText := view.getText.Current(key)
+	isModified := view.getText.Modified(key)
+
+	return func(trans cmd.Transaction) {
+		if isModified {
+			view.setText.Set(trans, key, oldText)
+		} else {
+			view.setText.Remove(trans, key)
+		}
+	}
 }
 
 func (view View) textHasSound() bool {
 	return view.model.currentKey.ID == ids.TrapMessageTexts
 }
+
+// TODO: TrapMessageService needs to unify this logic (map text to audio key)
 
 func (view *View) currentSoundKey() (key resource.Key, textWithSound bool) {
 	if !view.textHasSound() {
@@ -308,8 +295,6 @@ func (view *View) requestImportAudio() {
 
 func (view *View) requestSetSound(sound audio.L8) {
 	audioKey, textWithSound := view.currentSoundKey()
-	oldSound := view.currentSound()
-	isSoundModified := textWithSound && view.getAudio.Modified(audioKey)
 
 	view.requestCommand(
 		func(trans cmd.Transaction) {
@@ -317,13 +302,22 @@ func (view *View) requestSetSound(sound audio.L8) {
 				view.setAudio.Set(trans, audioKey, sound)
 			}
 		},
-		func(trans cmd.Transaction) {
-			if isSoundModified {
-				view.setAudio.Set(trans, audioKey, oldSound)
-			} else if textWithSound {
-				view.setAudio.Remove(trans, audioKey)
-			}
-		})
+		view.restoreAudioFunc())
+}
+
+func (view *View) restoreAudioFunc() func(trans cmd.Transaction) {
+	// TODO: when ID mapping has been resolved (other TODO), then restoreAudioFunc can also take an ID parameter
+	audioKey, textWithSound := view.currentSoundKey()
+	oldSound := view.currentSound()
+	isSoundModified := textWithSound && view.getAudio.Modified(audioKey)
+
+	return func(trans cmd.Transaction) {
+		if isSoundModified {
+			view.setAudio.Set(trans, audioKey, oldSound)
+		} else if textWithSound {
+			view.setAudio.Remove(trans, audioKey)
+		}
+	}
 }
 
 func (view *View) requestCommand(forward func(trans cmd.Transaction), backward func(trans cmd.Transaction)) {
