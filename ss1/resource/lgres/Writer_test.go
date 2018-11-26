@@ -52,14 +52,15 @@ func TestWriterUncompressedSingleBlockResourceCanBeWritten(t *testing.T) {
 
 	var expected []byte
 	expected = append(expected, data...)
-	expected = append(expected, 0x00, 0x00, 0x00)       // alignment for directory
-	expected = append(expected, 0x01, 0x00)             // resource count
-	expected = append(expected, 0x80, 0x00, 0x00, 0x00) // offset to first resource
-	expected = append(expected, 0x34, 0x12)             // resource ID
-	expected = append(expected, 0x05, 0x00, 0x00)       // resource length (uncompressed)
-	expected = append(expected, 0x00)                   // resource type (uncompressed, single-block)
-	expected = append(expected, 0x05, 0x00, 0x00)       // resource length in file
-	expected = append(expected, 0x0A)                   // content type
+	expected = append(expected,
+		0x00, 0x00, 0x00, // alignment for directory
+		0x01, 0x00, // resource count
+		0x80, 0x00, 0x00, 0x00, // offset to first resource
+		0x34, 0x12, // resource ID
+		0x05, 0x00, 0x00, // resource length (uncompressed)
+		0x00,             // resource type (uncompressed, single-block)
+		0x05, 0x00, 0x00, // resource length in file
+		0x0A) // content type
 	assert.Equal(t, expected, result[resourceDirectoryFileOffsetPos+4:])
 }
 
@@ -78,20 +79,22 @@ func TestWriterUncompressedCompoundResourceCanBeWritten(t *testing.T) {
 	result := store.Data()
 
 	var expected []byte
-	expected = append(expected, 0x02, 0x00)             // number of blocks
-	expected = append(expected, 0x0E, 0x00, 0x00, 0x00) // offset to first block
-	expected = append(expected, 0x11, 0x00, 0x00, 0x00) // offset to second block
-	expected = append(expected, 0x15, 0x00, 0x00, 0x00) // size of resource
+	expected = append(expected,
+		0x02, 0x00, // number of blocks
+		0x0E, 0x00, 0x00, 0x00, // offset to first block
+		0x11, 0x00, 0x00, 0x00, // offset to second block
+		0x15, 0x00, 0x00, 0x00) // size of resource
 	expected = append(expected, blockData1...)
 	expected = append(expected, blockData2...)
-	expected = append(expected, 0x00, 0x00, 0x00)       // alignment for directory
-	expected = append(expected, 0x01, 0x00)             // resource count
-	expected = append(expected, 0x80, 0x00, 0x00, 0x00) // offset to first resource
-	expected = append(expected, 0x78, 0x56)             // resource ID
-	expected = append(expected, 0x15, 0x00, 0x00)       // resource length (uncompressed)
-	expected = append(expected, 0x02)                   // resource type
-	expected = append(expected, 0x15, 0x00, 0x00)       // resource length in file
-	expected = append(expected, 0x0B)                   // content type
+	expected = append(expected,
+		0x00, 0x00, 0x00, // alignment for directory
+		0x01, 0x00, // resource count
+		0x80, 0x00, 0x00, 0x00, // offset to first resource
+		0x78, 0x56, // resource ID
+		0x15, 0x00, 0x00, // resource length (uncompressed)
+		0x02,             // resource type
+		0x15, 0x00, 0x00, // resource length in file
+		0x0B) // content type
 	assert.Equal(t, expected, result[resourceDirectoryFileOffsetPos+4:])
 }
 
@@ -110,21 +113,23 @@ func TestWriterUncompressedCompoundResourceCanBeWrittenWithPaddingForSpecialID(t
 	result := store.Data()
 
 	var expected []byte
-	expected = append(expected, 0x02, 0x00)             // number of blocks
-	expected = append(expected, 0x10, 0x00, 0x00, 0x00) // offset to first block
-	expected = append(expected, 0x13, 0x00, 0x00, 0x00) // offset to second block
-	expected = append(expected, 0x17, 0x00, 0x00, 0x00) // size of resource
-	expected = append(expected, 0x00, 0x00)             // padding
+	expected = append(expected,
+		0x02, 0x00, // number of blocks
+		0x10, 0x00, 0x00, 0x00, // offset to first block
+		0x13, 0x00, 0x00, 0x00, // offset to second block
+		0x17, 0x00, 0x00, 0x00, // size of resource
+		0x00, 0x00) // padding
 	expected = append(expected, blockData1...)
 	expected = append(expected, blockData2...)
-	expected = append(expected, 0x00)                   // alignment for directory
-	expected = append(expected, 0x01, 0x00)             // resource count
-	expected = append(expected, 0x80, 0x00, 0x00, 0x00) // offset to first resource
-	expected = append(expected, 0xFD, 0x08)             // resource ID
-	expected = append(expected, 0x17, 0x00, 0x00)       // resource length (uncompressed)
-	expected = append(expected, 0x02)                   // resource type
-	expected = append(expected, 0x17, 0x00, 0x00)       // resource length in file
-	expected = append(expected, 0x0B)                   // content type
+	expected = append(expected,
+		0x00,       // alignment for directory
+		0x01, 0x00, // resource count
+		0x80, 0x00, 0x00, 0x00, // offset to first resource
+		0xFD, 0x08, // resource ID
+		0x17, 0x00, 0x00, // resource length (uncompressed)
+		0x02,             // resource type
+		0x17, 0x00, 0x00, // resource length in file
+		0x0B) // content type
 	assert.Equal(t, expected, result[resourceDirectoryFileOffsetPos+4:])
 }
 
@@ -142,15 +147,16 @@ func TestWriterCompressedSingleBlockResourceCanBeWritten(t *testing.T) {
 
 	var expected []byte
 	// 0000 0000|0000 0100|0000 0000|0010 0000|0100 0000|0011 1111|1111 1111
-	expected = append(expected, 0x00, 0x04, 0x00, 0x20, 0x40, 0x3F, 0xFF, 0x00) // 14bit words 0x0001 0x0002 0x0100 0x3FFF + trailing 0x00
-	expected = append(expected)                                                 // alignment for directory
-	expected = append(expected, 0x01, 0x00)                                     // resource count
-	expected = append(expected, 0x80, 0x00, 0x00, 0x00)                         // offset to first resource
-	expected = append(expected, 0x22, 0x11)                                     // resource ID
-	expected = append(expected, 0x04, 0x00, 0x00)                               // resource length (uncompressed)
-	expected = append(expected, 0x01)                                           // resource type
-	expected = append(expected, 0x08, 0x00, 0x00)                               // resource length in file
-	expected = append(expected, 0x0C)                                           // content type
+	expected = append(expected,
+		0x00, 0x04, 0x00, 0x20, 0x40, 0x3F, 0xFF, 0x00, // 14bit words 0x0001 0x0002 0x0100 0x3FFF + trailing 0x00
+		// (no bytes) alignment for directory
+		0x01, 0x00, // resource count
+		0x80, 0x00, 0x00, 0x00, // offset to first resource
+		0x22, 0x11, // resource ID
+		0x04, 0x00, 0x00, // resource length (uncompressed)
+		0x01,             // resource type
+		0x08, 0x00, 0x00, // resource length in file
+		0x0C) // content type
 	assert.Equal(t, expected, result[resourceDirectoryFileOffsetPos+4:])
 }
 
@@ -169,19 +175,20 @@ func TestWriterCompressedCompoundResourceCanBeWritten(t *testing.T) {
 	result := store.Data()
 
 	var expected []byte
-	expected = append(expected, 0x02, 0x00)                               // number of blocks
-	expected = append(expected, 0x0E, 0x00, 0x00, 0x00)                   // offset to first block
-	expected = append(expected, 0x12, 0x00, 0x00, 0x00)                   // offset to second block
-	expected = append(expected, 0x16, 0x00, 0x00, 0x00)                   // size of resource
-	expected = append(expected, 0x00, 0x04, 0x00, 0x20, 0x40)             // compressed data, part 1
-	expected = append(expected, 0x01, 0x02, 0x00, 0x0B, 0xFF, 0xF0, 0x00) // compressed data, part 2
-	expected = append(expected, 0x00, 0x00)                               // alignment for directory
-	expected = append(expected, 0x01, 0x00)                               // resource count
-	expected = append(expected, 0x80, 0x00, 0x00, 0x00)                   // offset to first resource
-	expected = append(expected, 0x44, 0x55)                               // resource ID
-	expected = append(expected, 0x16, 0x00, 0x00)                         // resource length (uncompressed)
-	expected = append(expected, 0x03)                                     // resource type
-	expected = append(expected, 0x1A, 0x00, 0x00)                         // resource length in file
-	expected = append(expected, 0x09)                                     // content type
+	expected = append(expected,
+		0x02, 0x00, // number of blocks
+		0x0E, 0x00, 0x00, 0x00, // offset to first block
+		0x12, 0x00, 0x00, 0x00, // offset to second block
+		0x16, 0x00, 0x00, 0x00, // size of resource
+		0x00, 0x04, 0x00, 0x20, 0x40, // compressed data, part 1
+		0x01, 0x02, 0x00, 0x0B, 0xFF, 0xF0, 0x00, // compressed data, part 2
+		0x00, 0x00, // alignment for directory
+		0x01, 0x00, // resource count
+		0x80, 0x00, 0x00, 0x00, // offset to first resource
+		0x44, 0x55, // resource ID
+		0x16, 0x00, 0x00, // resource length (uncompressed)
+		0x03,             // resource type
+		0x1A, 0x00, 0x00, // resource length in file
+		0x09) // content type
 	assert.Equal(t, expected, result[resourceDirectoryFileOffsetPos+4:])
 }
