@@ -39,9 +39,10 @@ var textToAudio = map[resource.ID]resource.ID{
 
 // View provides edit controls for texts.
 type View struct {
-	mod         *model.Mod
-	textService modding.TextService
-	movieCache  *movie.Cache
+	mod        *model.Mod
+	getText    modding.GetTextService
+	setText    modding.SetTextService
+	movieCache *movie.Cache
 
 	modalStateMachine gui.ModalStateMachine
 	clipboard         external.Clipboard
@@ -55,13 +56,14 @@ type View struct {
 
 // NewTextsView returns a new instance.
 func NewTextsView(mod *model.Mod,
-	textService modding.TextService, movieCache *movie.Cache,
+	getText modding.GetTextService, setText modding.SetTextService, movieCache *movie.Cache,
 	modalStateMachine gui.ModalStateMachine, clipboard external.Clipboard,
 	guiScale float32, commander cmd.Commander) *View {
 	view := &View{
-		mod:         mod,
-		textService: textService,
-		movieCache:  movieCache,
+		mod:        mod,
+		getText:    getText,
+		setText:    setText,
+		movieCache: movieCache,
 
 		modalStateMachine: modalStateMachine,
 		clipboard:         clipboard,
@@ -176,7 +178,7 @@ func (view *View) renderContent() {
 }
 
 func (view View) currentText() string {
-	return view.textService.Current(view.model.currentKey)
+	return view.getText.Current(view.model.currentKey)
 }
 
 func (view View) hasAudio() bool {
@@ -217,16 +219,16 @@ func (view *View) setTextFromClipboard() {
 
 	key := view.model.currentKey
 	oldText := view.currentText()
-	isModified := view.textService.Modified(key)
+	isModified := view.getText.Modified(key)
 	view.requestTextCommand(
 		func(trans cmd.Transaction) {
-			view.textService.Set(trans, key, value)
+			view.setText.Set(trans, key, value)
 		},
 		func(trans cmd.Transaction) {
 			if isModified {
-				view.textService.Set(trans, key, oldText)
+				view.setText.Set(trans, key, oldText)
 			} else {
-				view.textService.Remove(trans, key)
+				view.setText.Remove(trans, key)
 			}
 		})
 }
@@ -234,18 +236,18 @@ func (view *View) setTextFromClipboard() {
 func (view *View) clearText() {
 	oldText := view.currentText()
 	key := view.model.currentKey
-	isModified := view.textService.Modified(key)
+	isModified := view.getText.Modified(key)
 	view.requestTextCommand(
 		func(trans cmd.Transaction) {
-			view.textService.Clear(trans, key)
+			view.setText.Clear(trans, key)
 			// silence := &audio.L8{SampleRate: 22050, Samples: []byte{0x80}}
 			// TODO audio
 		},
 		func(trans cmd.Transaction) {
 			if isModified {
-				view.textService.Set(trans, key, oldText)
+				view.setText.Set(trans, key, oldText)
 			} else {
-				view.textService.Remove(trans, key)
+				view.setText.Remove(trans, key)
 			}
 			// TODO audio (reset to current)
 		})
@@ -256,11 +258,11 @@ func (view *View) removeText() {
 	key := view.model.currentKey
 	view.requestTextCommand(
 		func(trans cmd.Transaction) {
-			view.textService.Remove(trans, key)
+			view.setText.Remove(trans, key)
 			// TODO audio
 		},
 		func(trans cmd.Transaction) {
-			view.textService.Set(trans, key, oldText)
+			view.setText.Set(trans, key, oldText)
 			// TODO audio
 		})
 }

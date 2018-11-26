@@ -448,7 +448,8 @@ func (app *Application) modReset() {
 }
 
 func (app *Application) initView() {
-	textAdapter := modding.NewTextService(app.textLineCache, app.textPageCache, app.mod, app.cp)
+	textGet := modding.NewGetTextService(app.textLineCache, app.textPageCache, app.mod)
+	textSet := modding.NewSetTextService(app.cp)
 
 	app.projectView = project.NewView(app.mod, &app.modalState, app.GuiScale, app)
 	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)
@@ -456,7 +457,7 @@ func (app *Application) initView() {
 	app.levelTilesView = levels.NewTilesView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.levelObjectsView = levels.NewObjectsView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.messagesView = messages.NewMessagesView(app.mod, app.messagesCache, app.cp, app.movieCache, app.textureCache, &app.modalState, app.clipboard, app.GuiScale, app)
-	app.textsView = texts.NewTextsView(app.mod, textAdapter, app.movieCache, &app.modalState, app.clipboard, app.GuiScale, app)
+	app.textsView = texts.NewTextsView(app.mod, textGet, textSet, app.movieCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.bitmapsView = bitmaps.NewBitmapsView(app.mod, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.texturesView = textures.NewTexturesView(app.mod, app.textLineCache, app.cp, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.animationsView = animations.NewAnimationsView(app.mod, app.textureCache, app.paletteCache, app.animationCache, &app.modalState, app.GuiScale, app)
