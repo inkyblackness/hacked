@@ -5,7 +5,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
-type textCommand struct {
+type command struct {
 	model *viewModel
 
 	key resource.Key
@@ -14,15 +14,15 @@ type textCommand struct {
 	backward func(trans cmd.Transaction)
 }
 
-func (cmd textCommand) Do(trans cmd.Transaction) error {
+func (cmd command) Do(trans cmd.Transaction) error {
 	return cmd.perform(trans, cmd.forward)
 }
 
-func (cmd textCommand) Undo(trans cmd.Transaction) error {
+func (cmd command) Undo(trans cmd.Transaction) error {
 	return cmd.perform(trans, cmd.backward)
 }
 
-func (cmd textCommand) perform(trans cmd.Transaction, callback func(trans cmd.Transaction)) error {
+func (cmd command) perform(trans cmd.Transaction, callback func(trans cmd.Transaction)) error {
 	callback(trans)
 
 	cmd.model.restoreFocus = true

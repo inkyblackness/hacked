@@ -5,10 +5,8 @@ import (
 
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/external"
-	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/modding"
 	"github.com/inkyblackness/hacked/ss1/content/audio"
-	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
@@ -39,10 +37,10 @@ var textToAudio = map[resource.ID]resource.ID{
 
 // View provides edit controls for texts.
 type View struct {
-	mod        *model.Mod
-	getText    modding.GetTextService
-	setText    modding.SetTextService
-	movieCache *movie.Cache
+	getText  modding.GetTextService
+	setText  modding.SetTextService
+	getAudio modding.GetAudioService
+	setAudio modding.SetAudioService
 
 	modalStateMachine gui.ModalStateMachine
 	clipboard         external.Clipboard
@@ -55,15 +53,16 @@ type View struct {
 }
 
 // NewTextsView returns a new instance.
-func NewTextsView(mod *model.Mod,
-	getText modding.GetTextService, setText modding.SetTextService, movieCache *movie.Cache,
+func NewTextsView(
+	getText modding.GetTextService, setText modding.SetTextService,
+	getAudio modding.GetAudioService, setAudio modding.SetAudioService,
 	modalStateMachine gui.ModalStateMachine, clipboard external.Clipboard,
 	guiScale float32, commander cmd.Commander) *View {
 	view := &View{
-		mod:        mod,
-		getText:    getText,
-		setText:    setText,
-		movieCache: movieCache,
+		getText:  getText,
+		setText:  setText,
+		getAudio: getAudio,
+		setAudio: setAudio,
 
 		modalStateMachine: modalStateMachine,
 		clipboard:         clipboard,
@@ -181,30 +180,6 @@ func (view View) currentText() string {
 	return view.getText.Current(view.model.currentKey)
 }
 
-func (view View) hasAudio() bool {
-	return view.model.currentKey.ID == ids.TrapMessageTexts
-}
-
-func (view *View) currentSoundKey() (key resource.Key, hasAudio bool) {
-	if !view.hasAudio() {
-		return key, false
-	}
-	key = view.model.currentKey
-	key.ID = textToAudio[key.ID].Plus(key.Index)
-	key.Index = 0
-	return key, true
-
-}
-
-func (view *View) currentSound() (sound audio.L8) {
-	key, hasAudio := view.currentSoundKey()
-	if !hasAudio {
-		return
-	}
-	sound, _ = view.movieCache.Audio(key)
-	return
-}
-
 func (view View) copyTextToClipboard(text string) {
 	if len(text) > 0 {
 		view.clipboard.SetString(text)
@@ -220,7 +195,7 @@ func (view *View) setTextFromClipboard() {
 	key := view.model.currentKey
 	oldText := view.currentText()
 	isModified := view.getText.Modified(key)
-	view.requestTextCommand(
+	view.requestCommand(
 		func(trans cmd.Transaction) {
 			view.setText.Set(trans, key, value)
 		},
@@ -234,47 +209,87 @@ func (view *View) setTextFromClipboard() {
 }
 
 func (view *View) clearText() {
+	textKey := view.model.currentKey
 	oldText := view.currentText()
-	key := view.model.currentKey
-	isModified := view.getText.Modified(key)
-	view.requestTextCommand(
+	isTextModified := view.getText.Modified(textKey)
+
+	audioKey, textWithAudio := view.currentSoundKey()
+	oldAudio := view.currentSound()
+	isAudioModified := textWithAudio && view.getAudio.Modified(audioKey)
+
+	view.requestCommand(
 		func(trans cmd.Transaction) {
-			view.setText.Clear(trans, key)
-			// silence := &audio.L8{SampleRate: 22050, Samples: []byte{0x80}}
-			// TODO audio
+			view.setText.Clear(trans, textKey)
+			if textWithAudio {
+				view.setAudio.Clear(trans, audioKey)
+			}
 		},
 		func(trans cmd.Transaction) {
-			if isModified {
-				view.setText.Set(trans, key, oldText)
+			if isTextModified {
+				view.setText.Set(trans, textKey, oldText)
 			} else {
-				view.setText.Remove(trans, key)
+				view.setText.Remove(trans, textKey)
 			}
-			// TODO audio (reset to current)
+			if isAudioModified {
+				view.setAudio.Set(trans, audioKey, oldAudio)
+			} else if textWithAudio {
+				view.setAudio.Remove(trans, audioKey)
+			}
 		})
 }
 
 func (view *View) removeText() {
+	textKey := view.model.currentKey
 	oldText := view.currentText()
-	key := view.model.currentKey
-	view.requestTextCommand(
+	isTextModified := view.getText.Modified(textKey)
+
+	audioKey, textWithAudio := view.currentSoundKey()
+	oldAudio := view.currentSound()
+	isAudioModified := textWithAudio && view.getAudio.Modified(audioKey)
+
+	view.requestCommand(
 		func(trans cmd.Transaction) {
-			view.setText.Remove(trans, key)
-			// TODO audio
+			view.setText.Remove(trans, textKey)
+			if textWithAudio {
+				view.setAudio.Remove(trans, audioKey)
+			}
 		},
 		func(trans cmd.Transaction) {
-			view.setText.Set(trans, key, oldText)
-			// TODO audio
+			if isTextModified {
+				view.setText.Set(trans, textKey, oldText)
+			} else {
+				view.setText.Remove(trans, textKey)
+			}
+			if isAudioModified {
+				view.setAudio.Set(trans, audioKey, oldAudio)
+			} else if textWithAudio {
+				view.setAudio.Remove(trans, audioKey)
+			}
 		})
 }
 
-func (view *View) requestTextCommand(forward func(trans cmd.Transaction), backward func(trans cmd.Transaction)) {
-	command := textCommand{
-		key:      view.model.currentKey,
-		model:    &view.model,
-		forward:  forward,
-		backward: backward,
+// --- audio
+
+func (view View) hasAudio() bool {
+	return view.model.currentKey.ID == ids.TrapMessageTexts
+}
+
+func (view *View) currentSoundKey() (key resource.Key, textWithAudio bool) {
+	if !view.hasAudio() {
+		return key, false
 	}
-	view.commander.Queue(command)
+	key = view.model.currentKey
+	key.ID = textToAudio[key.ID].Plus(key.Index)
+	key.Index = 0
+	return key, true
+}
+
+func (view *View) currentSound() (sound audio.L8) {
+	key, hasAudio := view.currentSoundKey()
+	if !hasAudio {
+		return
+	}
+	return view.getAudio.Get(key)
 }
 
 func (view *View) requestExportAudio(sound audio.L8) {
@@ -293,22 +308,32 @@ func (view *View) requestImportAudio() {
 	})
 }
 
-func (view *View) setAudioCommand(sound *audio.L8) cmd.Command {
-	dataKey, _ := view.currentSoundKey()
-	command := setAudioCommand{
-		restoreKey: view.model.currentKey,
-		model:      &view.model,
+func (view *View) requestSetAudio(sound audio.L8) {
+	audioKey, textWithAudio := view.currentSoundKey()
+	oldAudio := view.currentSound()
+	isAudioModified := textWithAudio && view.getAudio.Modified(audioKey)
 
-		dataKey: dataKey,
-		oldData: view.mod.ModifiedBlocks(dataKey.Lang, dataKey.ID),
-	}
-	if sound != nil {
-		movieData := movie.ContainSoundData(*sound)
-		command.newData = [][]byte{movieData}
-	}
-	return command
+	view.requestCommand(
+		func(trans cmd.Transaction) {
+			if textWithAudio {
+				view.setAudio.Set(trans, audioKey, sound)
+			}
+		},
+		func(trans cmd.Transaction) {
+			if isAudioModified {
+				view.setAudio.Set(trans, audioKey, oldAudio)
+			} else if textWithAudio {
+				view.setAudio.Remove(trans, audioKey)
+			}
+		})
 }
 
-func (view *View) requestSetAudio(sound audio.L8) {
-	view.commander.Queue(view.setAudioCommand(&sound))
+func (view *View) requestCommand(forward func(trans cmd.Transaction), backward func(trans cmd.Transaction)) {
+	c := command{
+		key:      view.model.currentKey,
+		model:    &view.model,
+		forward:  forward,
+		backward: backward,
+	}
+	view.commander.Queue(c)
 }
