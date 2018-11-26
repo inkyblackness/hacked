@@ -240,7 +240,7 @@ func (view *View) requestImport() {
 
 				buf := bytes.NewBuffer(nil)
 				_ = binary.Write(buf, binary.LittleEndian, &bmp.Header)
-				rle.Compress(buf, bmp.Pixels, prevFrame)
+				_ = rle.Compress(buf, bmp.Pixels, prevFrame)
 				prevFrame = bmp.Pixels
 				frames = append(frames, buf.Bytes())
 			}

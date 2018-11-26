@@ -124,7 +124,7 @@ func (suite *AnimationCacheSuite) someLocalizedResources(modifiers ...func(*reso
 
 func (suite *AnimationCacheSuite) storing(id int, anim bitmap.Animation) func(*resource.Store) {
 	buf := bytes.NewBuffer(nil)
-	bitmap.WriteAnimation(buf, anim)
+	_ = bitmap.WriteAnimation(buf, anim)
 	return func(store *resource.Store) {
 		store.Put(resource.ID(baseAnimationResourceID).Plus(id), &resource.Resource{
 			ContentType:   resource.Animation,

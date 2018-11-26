@@ -125,13 +125,6 @@ func (res *MutableResource) SetBlock(index int, data []byte) {
 	}
 }
 
-func (res *MutableResource) delBlock(index int) {
-	if !res.isBlockIndexValid(index) {
-		return
-	}
-	delete(res.blocks, index)
-}
-
 func (res MutableResource) isBlockIndexValid(index int) bool {
 	return (index >= 0) && (index < res.blockCount)
 }
