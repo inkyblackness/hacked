@@ -215,20 +215,26 @@ func (view *View) setTextFromClipboard() {
 		return
 	}
 
-	oldText := view.currentText() // TODO returns "" in case of undo of empty text
 	key := view.model.currentKey
+	oldText := view.currentText()
+	isModified := view.textService.Modified(key)
 	view.requestTextCommand(
 		func(trans cmd.Transaction) {
 			view.textService.Set(trans, key, value)
 		},
 		func(trans cmd.Transaction) {
-			view.textService.Set(trans, key, oldText)
+			if isModified {
+				view.textService.Set(trans, key, oldText)
+			} else {
+				view.textService.Remove(trans, key)
+			}
 		})
 }
 
 func (view *View) clearText() {
 	oldText := view.currentText()
 	key := view.model.currentKey
+	isModified := view.textService.Modified(key)
 	view.requestTextCommand(
 		func(trans cmd.Transaction) {
 			view.textService.Clear(trans, key)
@@ -236,7 +242,11 @@ func (view *View) clearText() {
 			// TODO audio
 		},
 		func(trans cmd.Transaction) {
-			view.textService.Set(trans, key, oldText)
+			if isModified {
+				view.textService.Set(trans, key, oldText)
+			} else {
+				view.textService.Remove(trans, key)
+			}
 			// TODO audio (reset to current)
 		})
 }

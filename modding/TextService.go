@@ -53,6 +53,17 @@ func (service TextService) Current(key resource.Key) string {
 	return currentValue
 }
 
+func (service TextService) Modified(key resource.Key) bool {
+	var data [][]byte
+	info, _ := ids.Info(key.ID)
+	if info.List {
+		data = [][]byte{service.getter.ModifiedBlock(key.Lang, key.ID, key.Index)}
+	} else {
+		data = service.getter.ModifiedBlocks(key.Lang, key.ID.Plus(key.Index))
+	}
+	return len(data) > 0
+}
+
 func (service TextService) Remove(setter TextBlockSetter, key resource.Key) {
 	info, _ := ids.Info(key.ID)
 	if info.List {
