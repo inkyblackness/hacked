@@ -17,6 +17,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/project"
 	"github.com/inkyblackness/hacked/editor/texts"
 	"github.com/inkyblackness/hacked/editor/textures"
+	"github.com/inkyblackness/hacked/modding"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
@@ -447,13 +448,15 @@ func (app *Application) modReset() {
 }
 
 func (app *Application) initView() {
+	textAdapter := modding.NewTextService(app.textLineCache, app.textPageCache, app.mod, app.cp)
+
 	app.projectView = project.NewView(app.mod, &app.modalState, app.GuiScale, app)
 	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)
 	app.levelControlView = levels.NewControlView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.levelTilesView = levels.NewTilesView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.levelObjectsView = levels.NewObjectsView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.messagesView = messages.NewMessagesView(app.mod, app.messagesCache, app.cp, app.movieCache, app.textureCache, &app.modalState, app.clipboard, app.GuiScale, app)
-	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.movieCache, &app.modalState, app.clipboard, app.GuiScale, app)
+	app.textsView = texts.NewTextsView(app.mod, textAdapter, app.movieCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.bitmapsView = bitmaps.NewBitmapsView(app.mod, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.texturesView = textures.NewTexturesView(app.mod, app.textLineCache, app.cp, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.animationsView = animations.NewAnimationsView(app.mod, app.textureCache, app.paletteCache, app.animationCache, &app.modalState, app.GuiScale, app)
