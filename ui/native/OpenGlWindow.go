@@ -180,12 +180,13 @@ func (window *OpenGLWindow) onKey(rawWindow *glfw.Window, glfwKey glfw.Key, scan
 	key, knownKey := keyMap[glfwKey]
 
 	if knownKey {
-		if action == glfw.Press {
+		switch action {
+		case glfw.Press:
 			window.keyBuffer.KeyDown(key, modifier)
-		} else if action == glfw.Repeat {
+		case glfw.Repeat:
 			window.keyBuffer.KeyUp(key, modifier)
 			window.keyBuffer.KeyDown(key, modifier)
-		} else if action == glfw.Release {
+		case glfw.Release:
 			window.keyBuffer.KeyUp(key, modifier)
 		}
 	} else if action != glfw.Release {

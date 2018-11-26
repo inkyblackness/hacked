@@ -21,7 +21,8 @@ func Write(target io.WriteSeeker, source resource.Provider) error {
 			return resourceErr
 		}
 
-		if entry.Compound {
+		switch {
+		case entry.Compound:
 			resourceWriter, resourceWriterErr := writer.CreateCompoundResource(id, entry.ContentType, entry.Compressed)
 			if resourceWriterErr != nil {
 				return resourceWriterErr
@@ -30,7 +31,7 @@ func Write(target io.WriteSeeker, source resource.Provider) error {
 			if copyErr != nil {
 				return copyErr
 			}
-		} else if entry.BlockCount() == 1 {
+		case entry.BlockCount() == 1:
 			blockWriter, resourceWriterErr := writer.CreateResource(id, entry.ContentType, entry.Compressed)
 			if resourceWriterErr != nil {
 				return resourceWriterErr
@@ -39,7 +40,7 @@ func Write(target io.WriteSeeker, source resource.Provider) error {
 			if copyErr != nil {
 				return copyErr
 			}
-		} else {
+		default:
 			return fmt.Errorf("simple resource %v has wrong number of blocks", id)
 		}
 	}

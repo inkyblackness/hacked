@@ -418,9 +418,10 @@ func (display *MapDisplay) MouseButtonUp(mouseX, mouseY float32, button uint32, 
 	if button == input.MousePrimary {
 		display.moveCapture = func(float32, float32) {}
 		if !display.mouseMoved && display.positionValid {
-			if modifier.Has(input.ModControl) {
+			switch {
+			case modifier.Has(input.ModControl):
 				display.toggleSelectionAtActiveHoverItem()
-			} else if modifier.Has(input.ModShift) && (len(display.selectedTiles.list) > 0) {
+			case modifier.Has(input.ModShift) && (len(display.selectedTiles.list) > 0):
 				firstPos := display.selectedTiles.list[0]
 
 				fromX := int(firstPos.X.Tile())
@@ -445,7 +446,7 @@ func (display *MapDisplay) MouseButtonUp(mouseX, mouseY float32, button uint32, 
 				}
 				display.eventListener.Event(TileSelectionSetEvent{tiles: newList})
 				display.eventListener.Event(ObjectSelectionSetEvent{objects: display.objectsInTiles(newList)})
-			} else {
+			default:
 				display.setSelectionByActiveHoverItem()
 			}
 		}
@@ -454,11 +455,12 @@ func (display *MapDisplay) MouseButtonUp(mouseX, mouseY float32, button uint32, 
 			evt := ObjectRequestCreateEvent{Pos: display.position}
 			if modifier.Has(input.ModShift) {
 				toGrid := func(value byte) byte {
-					if value < 0x40 {
+					switch {
+					case value < 0x40:
 						return 0x00
-					} else if value >= 0xC0 {
+					case value >= 0xC0:
 						return 0xFF
-					} else {
+					default:
 						return 0x80
 					}
 				}

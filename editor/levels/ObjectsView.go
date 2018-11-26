@@ -161,11 +161,12 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 		imgui.Separator()
 	}
 
-	if multiple {
+	switch {
+	case multiple:
 		imgui.LabelText("ID", "(multiple)")
-	} else if objectIDUnifier.IsUnique() {
+	case objectIDUnifier.IsUnique():
 		imgui.LabelText("ID", fmt.Sprintf("%3d", int(objectIDUnifier.Unified().(level.ObjectID))))
-	} else {
+	default:
 		imgui.LabelText("ID", "")
 	}
 	view.renderTypeCombo(readOnly, multiple, "Object Type", classUnifier, typeUnifier,
@@ -515,7 +516,8 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 			})
 
 		valueLabel := key + "-Value###" + fullKey + "-Value"
-		if unifier.IsUnique() {
+		switch {
+		case unifier.IsUnique():
 			key := unifier.Unified().(int32)
 			limit := 0x1FF
 			if (key & int32(typeMask)) != 0 {
@@ -533,9 +535,9 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 					})
 				})
 
-		} else if multiple {
+		case multiple:
 			imgui.LabelText(valueLabel, "(multiple)")
-		} else {
+		default:
 			imgui.LabelText(valueLabel, "")
 		}
 	}
@@ -709,7 +711,8 @@ func (view *ObjectsView) renderTypeCombo(readOnly, multiple bool, label string,
 	classUnifier values.Unifier, typeUnifier values.Unifier,
 	tripleResolver func(values.Unifier) object.Triple,
 	changeHandler func(object.Triple)) {
-	if classUnifier.IsUnique() {
+	switch {
+	case classUnifier.IsUnique():
 		objectProperties := view.mod.ObjectProperties()
 		class := tripleResolver(classUnifier).Class
 		triples := objectProperties.TriplesInClass(class)
@@ -737,9 +740,9 @@ func (view *ObjectsView) renderTypeCombo(readOnly, multiple bool, label string,
 				triple := triples[newValue]
 				changeHandler(triple)
 			})
-	} else if multiple {
+	case multiple:
 		imgui.LabelText(label, "(multiple classes)")
-	} else {
+	default:
 		imgui.LabelText(label, "")
 	}
 }

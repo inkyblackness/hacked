@@ -192,27 +192,28 @@ func (renderable *MapTextures) ensureTileType(tileType level.TileType) (vertexCo
 		var vertices []float32
 		limit := float32(1.0)
 
-		if displayedType == level.TileTypeDiagonalOpenNorthEast {
+		switch displayedType {
+		case level.TileTypeDiagonalOpenNorthEast:
 			vertices = []float32{
 				0.0, limit, 0.0,
 				limit, limit, 0.0,
 				limit, 0.0, 0.0}
-		} else if displayedType == level.TileTypeDiagonalOpenNorthWest {
+		case level.TileTypeDiagonalOpenNorthWest:
 			vertices = []float32{
 				0.0, limit, 0.0,
 				limit, limit, 0.0,
 				0.0, 0.0, 0.0}
-		} else if displayedType == level.TileTypeDiagonalOpenSouthEast {
+		case level.TileTypeDiagonalOpenSouthEast:
 			vertices = []float32{
 				limit, limit, 0.0,
 				limit, 0.0, 0.0,
 				0.0, 0.0, 0.0}
-		} else if displayedType == level.TileTypeDiagonalOpenSouthWest {
+		case level.TileTypeDiagonalOpenSouthWest:
 			vertices = []float32{
 				0.0, limit, 0.0,
 				limit, 0.0, 0.0,
 				0.0, 0.0, 0.0}
-		} else if displayedType == level.TileTypeOpen {
+		case level.TileTypeOpen:
 			vertices = []float32{
 				0.0, 0.0, 0.0,
 				limit, 0.0, 0.0,

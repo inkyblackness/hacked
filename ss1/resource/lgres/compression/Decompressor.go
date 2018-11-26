@@ -87,26 +87,28 @@ func (obj *decompressor) readNextWord() {
 	}
 	obj.leftover = obj.scratch[:obj.lastEntry.depth]
 	obj.lastEntry.Data(obj.leftover)
-	if nextWord == endOfStream {
+	switch nextWord {
+	case endOfStream:
 		obj.isEndOfStream = true
-	} else if nextWord == reset {
+	case reset:
 		obj.resetDictionary()
-	} else {
+	default:
 		var nextEntry *dictEntry
 		if int(nextWord) < len(obj.lookup) {
 			nextEntry = obj.lookup[int(nextWord)]
 		}
 
-		if nextEntry != nil {
+		switch {
+		case nextEntry != nil:
 			if obj.lastEntry.depth > 0 {
 				obj.addToDictionary(nextEntry.FirstByte())
 			}
 			obj.lastEntry = nextEntry
-		} else if nextWord >= literalLimit {
+		case nextWord >= literalLimit:
 			nextValue := obj.lastEntry.FirstByte()
 			obj.addToDictionary(nextValue)
 			obj.lastEntry = obj.lastEntry.next[nextValue]
-		} else {
+		default:
 			nextValue := byte(nextWord)
 			obj.addToDictionary(nextValue)
 			obj.lastEntry = obj.dictionary.next[nextValue]

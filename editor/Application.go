@@ -237,23 +237,24 @@ func (app *Application) onFilesDropped(names []string) {
 
 func (app *Application) onKey(key input.Key, modifier input.Modifier) {
 	app.lastModifier = modifier
-	if key == input.KeyEscape {
+	switch {
+	case key == input.KeyEscape:
 		app.modalState.SetState(nil)
-	} else if key == input.KeyUndo {
+	case key == input.KeyUndo:
 		app.tryUndo()
-	} else if key == input.KeyRedo {
+	case key == input.KeyRedo:
 		app.tryRedo()
-	} else if key == input.KeySave {
+	case key == input.KeySave:
 		app.projectView.StartSavingMod()
-	} else if key == input.KeyF1 {
+	case key == input.KeyF1:
 		*app.projectView.WindowOpen() = !*app.projectView.WindowOpen()
-	} else if key == input.KeyF2 {
+	case key == input.KeyF2:
 		*app.levelControlView.WindowOpen() = !*app.levelControlView.WindowOpen()
-	} else if key == input.KeyF3 {
+	case key == input.KeyF3:
 		*app.levelTilesView.WindowOpen() = !*app.levelTilesView.WindowOpen()
-	} else if key == input.KeyF4 {
+	case key == input.KeyF4:
 		*app.levelObjectsView.WindowOpen() = !*app.levelObjectsView.WindowOpen()
-	} else if key == input.KeyF5 {
+	case key == input.KeyF5:
 		*app.messagesView.WindowOpen() = !*app.messagesView.WindowOpen()
 	}
 }
