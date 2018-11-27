@@ -6,6 +6,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/ss1/content/audio"
+	"github.com/inkyblackness/hacked/ss1/cyber"
 	"github.com/inkyblackness/hacked/ss1/cyber/media"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
@@ -18,7 +19,7 @@ type textInfo struct {
 	title string
 }
 
-var knownTextTypes = []textInfo{
+var knownTextTypes = []textInfo{ // TODO maybe move to world?
 	{id: ids.TrapMessageTexts, title: "Trap Messages"},
 	{id: ids.WordTexts, title: "Words"},
 	{id: ids.LogCategoryTexts, title: "Log Categories"},
@@ -37,10 +38,12 @@ var textToAudio = map[resource.ID]resource.ID{
 
 // View provides edit controls for texts.
 type View struct {
-	getText  media.GetTextService
-	setText  media.SetTextService
-	getAudio media.GetAudioService
-	setAudio media.SetAudioService
+	getText        media.GetTextService
+	setText        media.SetTextService
+	getAudio       media.GetAudioService
+	setAudio       media.SetAudioService
+	getTrapMessage cyber.GetTrapMessageService
+	setTrapMessage cyber.SetTrapMessageService
 
 	modalStateMachine gui.ModalStateMachine
 	clipboard         external.Clipboard
@@ -56,13 +59,16 @@ type View struct {
 func NewTextsView(
 	getText media.GetTextService, setText media.SetTextService,
 	getAudio media.GetAudioService, setAudio media.SetAudioService,
+	getTrapMessage cyber.GetTrapMessageService, setTrapMessage cyber.SetTrapMessageService,
 	modalStateMachine gui.ModalStateMachine, clipboard external.Clipboard,
 	guiScale float32, commander cmd.Commander) *View {
 	view := &View{
-		getText:  getText,
-		setText:  setText,
-		getAudio: getAudio,
-		setAudio: setAudio,
+		getText:        getText,
+		setText:        setText,
+		getAudio:       getAudio,
+		setAudio:       setAudio,
+		getTrapMessage: getTrapMessage,
+		setTrapMessage: setTrapMessage,
 
 		modalStateMachine: modalStateMachine,
 		clipboard:         clipboard,
@@ -73,6 +79,7 @@ func NewTextsView(
 
 		textTypeTitleByID: make(map[resource.ID]string),
 	}
+	// TODO if similar maps are in world and used in other places, this functions belongs there
 	for _, info := range knownTextTypes {
 		view.textTypeTitleByID[info.id] = info.title
 	}
@@ -127,9 +134,10 @@ func (view *View) renderContent() {
 	if view.textHasSound() {
 		imgui.Separator()
 		sound := view.currentSound()
-		hasSound := len(sound.Samples) > 0
+		hasSound := len(sound.Samples) > 0 // x
 		if hasSound {
-			imgui.LabelText("Audio", fmt.Sprintf("%.2f sec", float32(len(sound.Samples))/sound.SampleRate))
+			lengthSeconds := float32(len(sound.Samples)) / sound.SampleRate // x
+			imgui.LabelText("Audio", fmt.Sprintf("%.2f sec", lengthSeconds))
 			if imgui.Button("Export") {
 				view.requestExportAudio(sound)
 			}
@@ -209,12 +217,14 @@ func (view *View) clearText() {
 
 	view.requestCommand(
 		func(trans cmd.Transaction) {
+			// x
 			view.setText.Clear(trans, textKey)
 			if textWithSound {
 				view.setAudio.Clear(trans, audioKey)
 			}
 		},
 		func(trans cmd.Transaction) {
+			// x
 			restoreTextFunc(trans)
 			restoreAudioFunc(trans)
 		})
@@ -229,12 +239,14 @@ func (view *View) removeText() {
 
 	view.requestCommand(
 		func(trans cmd.Transaction) {
+			// x
 			view.setText.Remove(trans, textKey)
 			if textWithSound {
 				view.setAudio.Remove(trans, audioKey)
 			}
 		},
 		func(trans cmd.Transaction) {
+			// x
 			restoreTextFunc(trans)
 			restoreAudioFunc(trans)
 		})
@@ -253,7 +265,7 @@ func (view *View) restoreTextFunc(key resource.Key) func(trans cmd.Transaction) 
 	}
 }
 
-func (view View) textHasSound() bool {
+func (view View) textHasSound() bool { // x
 	return view.model.currentKey.ID == ids.TrapMessageTexts
 }
 
@@ -269,7 +281,7 @@ func (view *View) currentSoundKey() (key resource.Key, textWithSound bool) {
 	return key, true
 }
 
-func (view *View) currentSound() (sound audio.L8) {
+func (view *View) currentSound() (sound audio.L8) { // x
 	key, hasSound := view.currentSoundKey()
 	if !hasSound {
 		return
@@ -298,6 +310,7 @@ func (view *View) requestSetSound(sound audio.L8) {
 
 	view.requestCommand(
 		func(trans cmd.Transaction) {
+			// x
 			if textWithSound {
 				view.setAudio.Set(trans, audioKey, sound)
 			}
