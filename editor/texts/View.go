@@ -183,8 +183,8 @@ func (view *View) setTextFromClipboard() {
 
 	key := view.model.currentKey
 	view.requestCommand(
-		func(trans cmd.Transaction) {
-			view.textService.SetText(trans, key, value)
+		func(setter cyber.AugmentedTextBlockSetter) {
+			view.textService.SetText(setter, key, value)
 		},
 		view.textService.RestoreTextFunc(key))
 }
@@ -192,8 +192,8 @@ func (view *View) setTextFromClipboard() {
 func (view *View) clearText() {
 	key := view.model.currentKey
 	view.requestCommand(
-		func(trans cmd.Transaction) {
-			view.textService.Clear(trans, key)
+		func(setter cyber.AugmentedTextBlockSetter) {
+			view.textService.Clear(setter, key)
 		},
 		view.textService.RestoreFunc(key))
 }
@@ -201,8 +201,8 @@ func (view *View) clearText() {
 func (view *View) removeText() {
 	key := view.model.currentKey
 	view.requestCommand(
-		func(trans cmd.Transaction) {
-			view.textService.Remove(trans, key)
+		func(setter cyber.AugmentedTextBlockSetter) {
+			view.textService.Remove(setter, key)
 		},
 		view.textService.RestoreFunc(key))
 }
@@ -234,18 +234,18 @@ func (view *View) requestImportAudio() {
 func (view *View) requestSetSound(sound audio.L8) {
 	key := view.model.currentKey
 	view.requestCommand(
-		func(trans cmd.Transaction) {
-			view.textService.SetSound(trans, key, sound)
+		func(setter cyber.AugmentedTextBlockSetter) {
+			view.textService.SetSound(setter, key, sound)
 		},
 		view.textService.RestoreSoundFunc(key))
 }
 
-func (view *View) requestCommand(forward func(trans cmd.Transaction), backward func(trans cyber.AugmentedTextBlockSetter)) {
+func (view *View) requestCommand(forward func(trans cyber.AugmentedTextBlockSetter), backward func(trans cyber.AugmentedTextBlockSetter)) {
 	c := command{
 		key:      view.model.currentKey,
 		model:    &view.model,
 		forward:  forward,
-		backward: func(trans cmd.Transaction) { backward(trans) },
+		backward: backward,
 	}
 	view.commander.Queue(c)
 }
