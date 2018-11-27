@@ -169,7 +169,7 @@ func (view *View) renderContent() {
 }
 
 func (view View) currentText() string {
-	return view.textService.GetText(view.model.currentKey)
+	return view.textService2.GetText(view.model.currentKey)
 }
 
 func (view View) copyTextToClipboard(text string) {
@@ -184,12 +184,7 @@ func (view *View) setTextFromClipboard() {
 		return
 	}
 
-	key := view.model.currentKey
-	view.requestCommand(
-		func(setter edit.AugmentedTextBlockSetter) {
-			view.textService.SetText(setter, key, value)
-		},
-		view.textService.RestoreTextFunc(key))
+	view.textService2.RequestSetText(view.model.currentKey, value, view.restoreFunc())
 }
 
 func (view *View) clearText() {
@@ -251,4 +246,13 @@ func (view *View) requestCommand(forward func(trans edit.AugmentedTextBlockSette
 		backward: backward,
 	}
 	view.commander.Queue(c)
+}
+
+func (view *View) restoreFunc() func() {
+	oldKey := view.model.currentKey
+
+	return func() {
+		view.model.restoreFocus = true
+		view.model.currentKey = oldKey
+	}
 }
