@@ -143,9 +143,8 @@ func (view *View) renderContent() {
 		if view.hasAudio() {
 			imgui.Separator()
 			sound := view.currentSound()
-			hasSound := len(sound.Samples) > 0
-			if hasSound {
-				imgui.LabelText("Audio", fmt.Sprintf("%.2f sec", float32(len(sound.Samples))/sound.SampleRate))
+			if !sound.Empty() {
+				imgui.LabelText("Audio", fmt.Sprintf("%.2f sec", sound.Duration()))
 				if imgui.Button("Export") {
 					view.requestExportAudio(sound)
 				}

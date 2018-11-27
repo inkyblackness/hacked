@@ -31,13 +31,9 @@ var knownTextTypes = []textInfo{ // TODO maybe move to world?
 	{id: ids.PanelNameTexts, title: "Panel Names"},
 }
 
-var textToAudio = map[resource.ID]resource.ID{
-	ids.TrapMessageTexts: ids.TrapMessagesAudioStart,
-}
-
 // View provides edit controls for texts.
 type View struct {
-	getAugmentedText cyber.AugmentedTextService
+	textService cyber.AugmentedTextService
 
 	modalStateMachine gui.ModalStateMachine
 	clipboard         external.Clipboard
@@ -51,11 +47,11 @@ type View struct {
 
 // NewTextsView returns a new instance.
 func NewTextsView(
-	getAugmentedText cyber.AugmentedTextService,
+	textService cyber.AugmentedTextService,
 	modalStateMachine gui.ModalStateMachine, clipboard external.Clipboard,
 	guiScale float32, commander cmd.Commander) *View {
 	view := &View{
-		getAugmentedText: getAugmentedText,
+		textService: textService,
 
 		modalStateMachine: modalStateMachine,
 		clipboard:         clipboard,
@@ -121,10 +117,8 @@ func (view *View) renderContent() {
 	if view.textHasSound() {
 		imgui.Separator()
 		sound := view.currentSound()
-		hasSound := len(sound.Samples) > 0 // x
-		if hasSound {
-			lengthSeconds := float32(len(sound.Samples)) / sound.SampleRate // x
-			imgui.LabelText("Audio", fmt.Sprintf("%.2f sec", lengthSeconds))
+		if !sound.Empty() {
+			imgui.LabelText("Audio", fmt.Sprintf("%.2f sec", sound.Duration()))
 			if imgui.Button("Export") {
 				view.requestExportAudio(sound)
 			}
@@ -172,7 +166,7 @@ func (view *View) renderContent() {
 }
 
 func (view View) currentText() string {
-	return view.getAugmentedText.GetText(view.model.currentKey)
+	return view.textService.GetText(view.model.currentKey)
 }
 
 func (view View) copyTextToClipboard(text string) {
@@ -190,35 +184,35 @@ func (view *View) setTextFromClipboard() {
 	key := view.model.currentKey
 	view.requestCommand(
 		func(trans cmd.Transaction) {
-			view.getAugmentedText.SetText(trans, key, value)
+			view.textService.SetText(trans, key, value)
 		},
-		view.getAugmentedText.RestoreTextFunc(key))
+		view.textService.RestoreTextFunc(key))
 }
 
 func (view *View) clearText() {
 	key := view.model.currentKey
 	view.requestCommand(
 		func(trans cmd.Transaction) {
-			view.getAugmentedText.Clear(trans, key)
+			view.textService.Clear(trans, key)
 		},
-		view.getAugmentedText.RestoreFunc(key))
+		view.textService.RestoreFunc(key))
 }
 
 func (view *View) removeText() {
 	key := view.model.currentKey
 	view.requestCommand(
 		func(trans cmd.Transaction) {
-			view.getAugmentedText.Remove(trans, key)
+			view.textService.Remove(trans, key)
 		},
-		view.getAugmentedText.RestoreFunc(key))
+		view.textService.RestoreFunc(key))
 }
 
 func (view View) textHasSound() bool {
-	return view.getAugmentedText.IsTrapMessage(view.model.currentKey)
+	return view.textService.IsTrapMessage(view.model.currentKey)
 }
 
 func (view *View) currentSound() (sound audio.L8) {
-	return view.getAugmentedText.GetSound(view.model.currentKey)
+	return view.textService.GetSound(view.model.currentKey)
 }
 
 func (view *View) requestExportAudio(sound audio.L8) {
@@ -241,9 +235,9 @@ func (view *View) requestSetSound(sound audio.L8) {
 	key := view.model.currentKey
 	view.requestCommand(
 		func(trans cmd.Transaction) {
-			view.getAugmentedText.SetSound(trans, key, sound)
+			view.textService.SetSound(trans, key, sound)
 		},
-		view.getAugmentedText.RestoreSoundFunc(key))
+		view.textService.RestoreSoundFunc(key))
 }
 
 func (view *View) requestCommand(forward func(trans cmd.Transaction), backward func(trans cyber.AugmentedTextBlockSetter)) {
