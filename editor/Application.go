@@ -17,12 +17,12 @@ import (
 	"github.com/inkyblackness/hacked/editor/project"
 	"github.com/inkyblackness/hacked/editor/texts"
 	"github.com/inkyblackness/hacked/editor/textures"
-	"github.com/inkyblackness/hacked/modding"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/content/text"
+	"github.com/inkyblackness/hacked/ss1/cyber/media"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
@@ -448,10 +448,10 @@ func (app *Application) modReset() {
 }
 
 func (app *Application) initView() {
-	textGet := modding.NewGetTextService(app.textLineCache, app.textPageCache, app.mod)
-	textSet := modding.NewSetTextService(app.cp)
-	audioGet := modding.NewGetAudioService(app.movieCache, app.mod)
-	audioSet := modding.NewSetAudioService()
+	textGet := media.NewGetTextService(app.textLineCache, app.textPageCache, app.mod)
+	textSet := media.NewSetTextService(app.cp)
+	audioGet := media.NewGetAudioService(app.movieCache, app.mod)
+	audioSet := media.NewSetAudioService()
 
 	app.projectView = project.NewView(app.mod, &app.modalState, app.GuiScale, app)
 	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)

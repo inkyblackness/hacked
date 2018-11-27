@@ -5,8 +5,8 @@ import (
 
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/external"
-	"github.com/inkyblackness/hacked/modding"
 	"github.com/inkyblackness/hacked/ss1/content/audio"
+	"github.com/inkyblackness/hacked/ss1/cyber/media"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
@@ -37,10 +37,10 @@ var textToAudio = map[resource.ID]resource.ID{
 
 // View provides edit controls for texts.
 type View struct {
-	getText  modding.GetTextService
-	setText  modding.SetTextService
-	getAudio modding.GetAudioService
-	setAudio modding.SetAudioService
+	getText  media.GetTextService
+	setText  media.SetTextService
+	getAudio media.GetAudioService
+	setAudio media.SetAudioService
 
 	modalStateMachine gui.ModalStateMachine
 	clipboard         external.Clipboard
@@ -54,8 +54,8 @@ type View struct {
 
 // NewTextsView returns a new instance.
 func NewTextsView(
-	getText modding.GetTextService, setText modding.SetTextService,
-	getAudio modding.GetAudioService, setAudio modding.SetAudioService,
+	getText media.GetTextService, setText media.SetTextService,
+	getAudio media.GetAudioService, setAudio media.SetAudioService,
 	modalStateMachine gui.ModalStateMachine, clipboard external.Clipboard,
 	guiScale float32, commander cmd.Commander) *View {
 	view := &View{

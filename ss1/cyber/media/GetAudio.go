@@ -1,4 +1,4 @@
-package modding
+package media
 
 import (
 	"github.com/inkyblackness/hacked/ss1/content/audio"
