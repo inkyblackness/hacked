@@ -1,8 +1,8 @@
-package cyber
+package edit
 
 import (
 	"github.com/inkyblackness/hacked/ss1/content/audio"
-	"github.com/inkyblackness/hacked/ss1/cyber/media"
+	"github.com/inkyblackness/hacked/ss1/edit/media"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 )

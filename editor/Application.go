@@ -22,8 +22,8 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/content/text"
-	"github.com/inkyblackness/hacked/ss1/cyber"
-	"github.com/inkyblackness/hacked/ss1/cyber/media"
+	"github.com/inkyblackness/hacked/ss1/edit"
+	"github.com/inkyblackness/hacked/ss1/edit/media"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
@@ -453,7 +453,7 @@ func (app *Application) initView() {
 	textSet := media.NewSetTextService(app.cp)
 	audioGet := media.NewGetAudioService(app.movieCache, app.mod)
 	audioSet := media.NewSetAudioService()
-	trapGet := cyber.NewAugmentedTextService(textGet, textSet, audioGet, audioSet)
+	trapGet := edit.NewAugmentedTextService(textGet, textSet, audioGet, audioSet)
 
 	app.projectView = project.NewView(app.mod, &app.modalState, app.GuiScale, app)
 	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)

@@ -6,7 +6,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/ss1/content/audio"
-	"github.com/inkyblackness/hacked/ss1/cyber"
+	"github.com/inkyblackness/hacked/ss1/edit"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
@@ -33,7 +33,7 @@ var knownTextTypes = []textInfo{ // TODO maybe move to world?
 
 // View provides edit controls for texts.
 type View struct {
-	textService cyber.AugmentedTextService
+	textService edit.AugmentedTextService
 
 	modalStateMachine gui.ModalStateMachine
 	clipboard         external.Clipboard
@@ -47,7 +47,7 @@ type View struct {
 
 // NewTextsView returns a new instance.
 func NewTextsView(
-	textService cyber.AugmentedTextService,
+	textService edit.AugmentedTextService,
 	modalStateMachine gui.ModalStateMachine, clipboard external.Clipboard,
 	guiScale float32, commander cmd.Commander) *View {
 	view := &View{
@@ -183,7 +183,7 @@ func (view *View) setTextFromClipboard() {
 
 	key := view.model.currentKey
 	view.requestCommand(
-		func(setter cyber.AugmentedTextBlockSetter) {
+		func(setter edit.AugmentedTextBlockSetter) {
 			view.textService.SetText(setter, key, value)
 		},
 		view.textService.RestoreTextFunc(key))
@@ -192,7 +192,7 @@ func (view *View) setTextFromClipboard() {
 func (view *View) clearText() {
 	key := view.model.currentKey
 	view.requestCommand(
-		func(setter cyber.AugmentedTextBlockSetter) {
+		func(setter edit.AugmentedTextBlockSetter) {
 			view.textService.Clear(setter, key)
 		},
 		view.textService.RestoreFunc(key))
@@ -201,7 +201,7 @@ func (view *View) clearText() {
 func (view *View) removeText() {
 	key := view.model.currentKey
 	view.requestCommand(
-		func(setter cyber.AugmentedTextBlockSetter) {
+		func(setter edit.AugmentedTextBlockSetter) {
 			view.textService.Remove(setter, key)
 		},
 		view.textService.RestoreFunc(key))
@@ -219,7 +219,7 @@ func (view *View) requestExportAudio(sound audio.L8) {
 	if !view.textHasSound() {
 		return
 	}
-	key := cyber.TrapMessageSoundKeyFor(view.model.currentKey)
+	key := edit.TrapMessageSoundKeyFor(view.model.currentKey)
 	filename := fmt.Sprintf("%05d_%s.wav", key.ID.Value(), view.model.currentKey.Lang.String())
 
 	external.ExportAudio(view.modalStateMachine, filename, sound)
@@ -234,13 +234,13 @@ func (view *View) requestImportAudio() {
 func (view *View) requestSetSound(sound audio.L8) {
 	key := view.model.currentKey
 	view.requestCommand(
-		func(setter cyber.AugmentedTextBlockSetter) {
+		func(setter edit.AugmentedTextBlockSetter) {
 			view.textService.SetSound(setter, key, sound)
 		},
 		view.textService.RestoreSoundFunc(key))
 }
 
-func (view *View) requestCommand(forward func(trans cyber.AugmentedTextBlockSetter), backward func(trans cyber.AugmentedTextBlockSetter)) {
+func (view *View) requestCommand(forward func(trans edit.AugmentedTextBlockSetter), backward func(trans edit.AugmentedTextBlockSetter)) {
 	c := command{
 		key:      view.model.currentKey,
 		model:    &view.model,
