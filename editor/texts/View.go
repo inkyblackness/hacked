@@ -7,7 +7,6 @@ import (
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/ss1/content/audio"
 	"github.com/inkyblackness/hacked/ss1/cyber"
-	"github.com/inkyblackness/hacked/ss1/cyber/media"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
@@ -38,12 +37,7 @@ var textToAudio = map[resource.ID]resource.ID{
 
 // View provides edit controls for texts.
 type View struct {
-	getText        media.GetTextService
-	setText        media.SetTextService
-	getAudio       media.GetAudioService
-	setAudio       media.SetAudioService
-	getTrapMessage cyber.GetTrapMessageService
-	setTrapMessage cyber.SetTrapMessageService
+	getAugmentedText cyber.GetAugmentedTextService
 
 	modalStateMachine gui.ModalStateMachine
 	clipboard         external.Clipboard
@@ -57,18 +51,11 @@ type View struct {
 
 // NewTextsView returns a new instance.
 func NewTextsView(
-	getText media.GetTextService, setText media.SetTextService,
-	getAudio media.GetAudioService, setAudio media.SetAudioService,
-	getTrapMessage cyber.GetTrapMessageService, setTrapMessage cyber.SetTrapMessageService,
+	getAugmentedText cyber.GetAugmentedTextService,
 	modalStateMachine gui.ModalStateMachine, clipboard external.Clipboard,
 	guiScale float32, commander cmd.Commander) *View {
 	view := &View{
-		getText:        getText,
-		setText:        setText,
-		getAudio:       getAudio,
-		setAudio:       setAudio,
-		getTrapMessage: getTrapMessage,
-		setTrapMessage: setTrapMessage,
+		getAugmentedText: getAugmentedText,
 
 		modalStateMachine: modalStateMachine,
 		clipboard:         clipboard,
@@ -185,7 +172,7 @@ func (view *View) renderContent() {
 }
 
 func (view View) currentText() string {
-	return view.getText.Current(view.model.currentKey)
+	return view.getAugmentedText.GetText(view.model.currentKey)
 }
 
 func (view View) copyTextToClipboard(text string) {
@@ -203,97 +190,42 @@ func (view *View) setTextFromClipboard() {
 	key := view.model.currentKey
 	view.requestCommand(
 		func(trans cmd.Transaction) {
-			view.setText.Set(trans, key, value)
+			view.getAugmentedText.SetText(trans, key, value)
 		},
-		view.restoreTextFunc(key))
+		view.getAugmentedText.RestoreTextFunc(key))
 }
 
 func (view *View) clearText() {
-	textKey := view.model.currentKey
-	restoreTextFunc := view.restoreTextFunc(textKey)
-
-	audioKey, textWithSound := view.currentSoundKey()
-	restoreAudioFunc := view.restoreAudioFunc()
-
+	key := view.model.currentKey
 	view.requestCommand(
 		func(trans cmd.Transaction) {
-			// x
-			view.setText.Clear(trans, textKey)
-			if textWithSound {
-				view.setAudio.Clear(trans, audioKey)
-			}
+			view.getAugmentedText.Clear(trans, key)
 		},
-		func(trans cmd.Transaction) {
-			// x
-			restoreTextFunc(trans)
-			restoreAudioFunc(trans)
-		})
+		view.getAugmentedText.RestoreFunc(key))
 }
 
 func (view *View) removeText() {
-	textKey := view.model.currentKey
-	restoreTextFunc := view.restoreTextFunc(textKey)
-
-	audioKey, textWithSound := view.currentSoundKey()
-	restoreAudioFunc := view.restoreAudioFunc()
-
+	key := view.model.currentKey
 	view.requestCommand(
 		func(trans cmd.Transaction) {
-			// x
-			view.setText.Remove(trans, textKey)
-			if textWithSound {
-				view.setAudio.Remove(trans, audioKey)
-			}
+			view.getAugmentedText.Remove(trans, key)
 		},
-		func(trans cmd.Transaction) {
-			// x
-			restoreTextFunc(trans)
-			restoreAudioFunc(trans)
-		})
+		view.getAugmentedText.RestoreFunc(key))
 }
 
-func (view *View) restoreTextFunc(key resource.Key) func(trans cmd.Transaction) {
-	oldText := view.getText.Current(key)
-	isModified := view.getText.Modified(key)
-
-	return func(trans cmd.Transaction) {
-		if isModified {
-			view.setText.Set(trans, key, oldText)
-		} else {
-			view.setText.Remove(trans, key)
-		}
-	}
+func (view View) textHasSound() bool {
+	return view.getAugmentedText.IsTrapMessage(view.model.currentKey)
 }
 
-func (view View) textHasSound() bool { // x
-	return view.model.currentKey.ID == ids.TrapMessageTexts
-}
-
-// TODO: TrapMessageService needs to unify this logic (map text to audio key)
-
-func (view *View) currentSoundKey() (key resource.Key, textWithSound bool) {
-	if !view.textHasSound() {
-		return key, false
-	}
-	key = view.model.currentKey
-	key.ID = textToAudio[key.ID].Plus(key.Index)
-	key.Index = 0
-	return key, true
-}
-
-func (view *View) currentSound() (sound audio.L8) { // x
-	key, hasSound := view.currentSoundKey()
-	if !hasSound {
-		return
-	}
-	return view.getAudio.Get(key)
+func (view *View) currentSound() (sound audio.L8) {
+	return view.getAugmentedText.GetSound(view.model.currentKey)
 }
 
 func (view *View) requestExportAudio(sound audio.L8) {
-	key, hasSound := view.currentSoundKey()
-	if !hasSound {
+	if !view.textHasSound() {
 		return
 	}
+	key := cyber.TrapMessageSoundKeyFor(view.model.currentKey)
 	filename := fmt.Sprintf("%05d_%s.wav", key.ID.Value(), view.model.currentKey.Lang.String())
 
 	external.ExportAudio(view.modalStateMachine, filename, sound)
@@ -306,39 +238,20 @@ func (view *View) requestImportAudio() {
 }
 
 func (view *View) requestSetSound(sound audio.L8) {
-	audioKey, textWithSound := view.currentSoundKey()
-
+	key := view.model.currentKey
 	view.requestCommand(
 		func(trans cmd.Transaction) {
-			// x
-			if textWithSound {
-				view.setAudio.Set(trans, audioKey, sound)
-			}
+			view.getAugmentedText.SetSound(trans, key, sound)
 		},
-		view.restoreAudioFunc())
+		view.getAugmentedText.RestoreSoundFunc(key))
 }
 
-func (view *View) restoreAudioFunc() func(trans cmd.Transaction) {
-	// TODO: when ID mapping has been resolved (other TODO), then restoreAudioFunc can also take an ID parameter
-	audioKey, textWithSound := view.currentSoundKey()
-	oldSound := view.currentSound()
-	isSoundModified := textWithSound && view.getAudio.Modified(audioKey)
-
-	return func(trans cmd.Transaction) {
-		if isSoundModified {
-			view.setAudio.Set(trans, audioKey, oldSound)
-		} else if textWithSound {
-			view.setAudio.Remove(trans, audioKey)
-		}
-	}
-}
-
-func (view *View) requestCommand(forward func(trans cmd.Transaction), backward func(trans cmd.Transaction)) {
+func (view *View) requestCommand(forward func(trans cmd.Transaction), backward func(trans cyber.AugmentedTextBlockSetter)) {
 	c := command{
 		key:      view.model.currentKey,
 		model:    &view.model,
 		forward:  forward,
-		backward: backward,
+		backward: func(trans cmd.Transaction) { backward(trans) },
 	}
 	view.commander.Queue(c)
 }
