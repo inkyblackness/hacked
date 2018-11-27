@@ -1,9 +1,9 @@
 package textures
 
 import (
-	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 )
 
 type setTexturePropertiesCommand struct {

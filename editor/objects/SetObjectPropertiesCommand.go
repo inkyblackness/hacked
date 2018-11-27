@@ -1,8 +1,8 @@
 package objects
 
 import (
-	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/ss1/content/object"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 )
 
 type setObjectPropertiesCommand struct {

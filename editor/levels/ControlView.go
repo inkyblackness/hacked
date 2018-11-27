@@ -3,7 +3,6 @@ package levels
 import (
 	"fmt"
 
-	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/model"
@@ -12,6 +11,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
 	"github.com/inkyblackness/hacked/ss1/content/text"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"

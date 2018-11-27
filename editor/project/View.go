@@ -5,10 +5,10 @@ import (
 	"math"
 	"time"
 
-	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/imgui-go"

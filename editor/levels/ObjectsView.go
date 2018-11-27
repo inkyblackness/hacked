@@ -5,7 +5,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/model"
@@ -18,6 +17,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/interpreters"
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/text"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/imgui-go"

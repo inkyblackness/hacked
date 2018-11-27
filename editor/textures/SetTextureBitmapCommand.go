@@ -3,7 +3,7 @@ package textures
 import (
 	"errors"
 
-	"github.com/inkyblackness/hacked/editor/cmd"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 )

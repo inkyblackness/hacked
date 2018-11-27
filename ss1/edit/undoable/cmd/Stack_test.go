@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/inkyblackness/hacked/editor/cmd"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmdndoable/cmd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"

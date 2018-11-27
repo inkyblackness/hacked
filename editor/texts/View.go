@@ -3,10 +3,10 @@ package texts
 import (
 	"fmt"
 
-	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/ss1/content/audio"
 	"github.com/inkyblackness/hacked/ss1/edit"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"

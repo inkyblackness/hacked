@@ -1,7 +1,7 @@
 package animations
 
 import (
-	"github.com/inkyblackness/hacked/editor/cmd"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 

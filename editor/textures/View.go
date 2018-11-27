@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/model"
@@ -14,6 +13,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"

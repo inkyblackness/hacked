@@ -1,6 +1,6 @@
 package project
 
-import "github.com/inkyblackness/hacked/editor/cmd"
+import "github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 
 type manifestEntryMover interface {
 	MoveEntry(to, from int) error
