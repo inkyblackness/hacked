@@ -6,6 +6,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/ss1/content/audio"
 	"github.com/inkyblackness/hacked/ss1/edit"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
@@ -33,7 +34,8 @@ var knownTextTypes = []textInfo{ // TODO maybe move to world?
 
 // View provides edit controls for texts.
 type View struct {
-	textService edit.AugmentedTextService
+	textService  edit.AugmentedTextService
+	textService2 undoable.AugmentedTextService
 
 	modalStateMachine gui.ModalStateMachine
 	clipboard         external.Clipboard
@@ -47,11 +49,12 @@ type View struct {
 
 // NewTextsView returns a new instance.
 func NewTextsView(
-	textService edit.AugmentedTextService,
+	textService edit.AugmentedTextService, textService2 undoable.AugmentedTextService,
 	modalStateMachine gui.ModalStateMachine, clipboard external.Clipboard,
 	guiScale float32, commander cmd.Commander) *View {
 	view := &View{
-		textService: textService,
+		textService:  textService,
+		textService2: textService2,
 
 		modalStateMachine: modalStateMachine,
 		clipboard:         clipboard,
