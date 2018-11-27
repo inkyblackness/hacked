@@ -453,7 +453,7 @@ func (app *Application) initView() {
 	textSet := media.NewSetTextService(app.cp)
 	audioGet := media.NewGetAudioService(app.movieCache, app.mod)
 	audioSet := media.NewSetAudioService()
-	trapGet := cyber.NewGetAugmentedTextService(textGet, textSet, audioGet, audioSet)
+	trapGet := cyber.NewAugmentedTextService(textGet, textSet, audioGet, audioSet)
 
 	app.projectView = project.NewView(app.mod, &app.modalState, app.GuiScale, app)
 	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)

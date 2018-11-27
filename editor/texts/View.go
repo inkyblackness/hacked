@@ -37,7 +37,7 @@ var textToAudio = map[resource.ID]resource.ID{
 
 // View provides edit controls for texts.
 type View struct {
-	getAugmentedText cyber.GetAugmentedTextService
+	getAugmentedText cyber.AugmentedTextService
 
 	modalStateMachine gui.ModalStateMachine
 	clipboard         external.Clipboard
@@ -51,7 +51,7 @@ type View struct {
 
 // NewTextsView returns a new instance.
 func NewTextsView(
-	getAugmentedText cyber.GetAugmentedTextService,
+	getAugmentedText cyber.AugmentedTextService,
 	modalStateMachine gui.ModalStateMachine, clipboard external.Clipboard,
 	guiScale float32, commander cmd.Commander) *View {
 	view := &View{
