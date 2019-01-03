@@ -9,7 +9,6 @@ import (
 	"github.com/inkyblackness/hacked/ui/opengl"
 )
 
-// nolint: gotype
 var buttonsByIndex = map[glfw.MouseButton]uint32{
 	glfw.MouseButton1: input.MousePrimary,
 	glfw.MouseButton2: input.MouseSecondary}
