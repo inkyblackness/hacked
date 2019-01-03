@@ -446,6 +446,7 @@ func (app *Application) modReset() {
 	app.cmdStack = new(cmd.Stack)
 }
 
+// nolint: lll
 func (app *Application) initView() {
 	app.projectView = project.NewView(app.mod, &app.modalState, app.GuiScale, app)
 	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)
