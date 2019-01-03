@@ -334,7 +334,7 @@ func (view *ObjectsView) renderProperties(lvl *level.Level, readOnly bool,
 			}
 			view.renderPropertyControl(lvl, readOnly, multiple, key, *unifier, propertyDescribers[key],
 				func(modifier func(uint32) uint32) {
-					view.requestPropertiesChange(lvl, dataRetriever, interpreterFactory, key, modifier)
+					view.requestPropertiesChange(lvl, dataRetriever, interpreterFactory, key, modifier) // nolint: scopelint
 				})
 		}
 	}
