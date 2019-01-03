@@ -105,7 +105,7 @@ func DecodeElectronicMessage(cp Codepage, provider resource.BlockProvider) (mess
 	}
 
 	message = EmptyElectronicMessage()
-	if (metaData == nil) || (len(metaData[0]) != len(metaString)) {
+	if (len(metaData) == 0) || (len(metaData[0]) != len(metaString)) {
 		err = fmt.Errorf("failed to parse meta string: <%v>", metaString)
 	}
 	if (err == nil) && (len(metaData[1]) > 0) {
