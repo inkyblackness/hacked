@@ -1086,7 +1086,7 @@ func (view *ObjectsView) PlaceSelectedObjectsOnFloor(lvl *level.Level) {
 	})
 }
 
-// PlaceSelectedObjectsOnFloor puts all selected objects to be at eye level (approximately).
+// PlaceSelectedObjectsOnEyeLevel puts all selected objects to be at eye level (approximately).
 func (view *ObjectsView) PlaceSelectedObjectsOnEyeLevel(lvl *level.Level) {
 	_, _, height := lvl.Size()
 	view.placeSelectedObjects(lvl, func(tile *level.TileMapEntry, pos MapPosition, objPivot float32) level.HeightUnit {
@@ -1095,7 +1095,7 @@ func (view *ObjectsView) PlaceSelectedObjectsOnEyeLevel(lvl *level.Level) {
 	})
 }
 
-// PlaceSelectedObjectsOnFloor puts all selected objects to hang from the ceiling.
+// PlaceSelectedObjectsOnCeiling puts all selected objects to hang from the ceiling.
 func (view *ObjectsView) PlaceSelectedObjectsOnCeiling(lvl *level.Level) {
 	_, _, height := lvl.Size()
 	view.placeSelectedObjects(lvl, func(tile *level.TileMapEntry, pos MapPosition, objPivot float32) level.HeightUnit {

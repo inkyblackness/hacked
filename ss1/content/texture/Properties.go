@@ -22,7 +22,7 @@ type Properties struct {
 	AnimationIndex byte
 }
 
-// PropertiesList
+// PropertiesList implements serial.Codable to serialize a set of texture properties.
 type PropertiesList []Properties
 
 // Code serializes the list with the provided coder.
