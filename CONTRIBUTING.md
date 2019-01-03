@@ -24,7 +24,7 @@ Please also consider engine compatibility. If there are engine features not supp
 
 ### Code Style
 
-Please make sure code is formatted according to `go fmt`, and use a linter, such as [golangci-lint](https://github.com/golangci/golangci-lint).
+Please make sure code is formatted according to `go fmt`, and use the following linter: [golangci-lint](https://github.com/golangci/golangci-lint).
 
 > If there are linter errors that you didn't introduce, you don't have to clean them up - I might have missed them and will be handling them separately.
 
