@@ -615,7 +615,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 		selectedIndex := -1
 		if unifier.IsUnique() {
 			value := int(unifier.Unified().(int32))
-			selectedType = int(value>>7) & 1
+			selectedType = (value >> 7) & 1
 			selectedIndex = value & 0x7F
 		}
 

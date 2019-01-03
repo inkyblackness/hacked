@@ -30,12 +30,12 @@ func (bmp Bitmap3D) WithBitmapNumber(value uint16) Bitmap3D {
 
 // BitmapNumber returns the number of bitmaps.
 func (bmp Bitmap3D) BitmapNumber() uint16 {
-	return uint16(((uint16(bmp) & bitmap3DBitmapNumberHighMask) >> 5) | (uint16(bmp) & bitmap3DBitmapNumberLowMask))
+	return ((uint16(bmp) & bitmap3DBitmapNumberHighMask) >> 5) | (uint16(bmp) & bitmap3DBitmapNumberLowMask)
 }
 
 // WithFrameNumber returns a Bitmap3D with the given value.
 func (bmp Bitmap3D) WithFrameNumber(value uint16) Bitmap3D {
-	frameValue := uint16((value % (Bitmap3DFrameNumberLimit + 1)) << 12)
+	frameValue := (value % (Bitmap3DFrameNumberLimit + 1)) << 12
 	return Bitmap3D((uint16(bmp) & ^bitmap3DFrameNumberMask) | frameValue)
 }
 

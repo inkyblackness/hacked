@@ -84,7 +84,7 @@ func init() {
 	uvRotations = make(map[int]*mgl.Mat4)
 	for i := 0; i < 4; i++ {
 		matrix := mgl.Translate3D(0.5, 0.5, 0.0).
-			Mul4(mgl.HomogRotate3DZ(float32(math.Pi * float32(i) / -2.0))).
+			Mul4(mgl.HomogRotate3DZ(math.Pi * float32(i) / -2.0)).
 			Mul4(mgl.Translate3D(-0.5, -0.5, 0.0)).
 			Mul4(mgl.Scale3D(1.0, -1.0, 1.0))
 		uvRotations[i] = &matrix

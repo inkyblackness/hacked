@@ -33,7 +33,7 @@ func TestIDPlusReturnsOffsetValue(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		result := resource.ID(tc.base).Plus(tc.offset)
+		result := tc.base.Plus(tc.offset)
 		assert.Equal(t, tc.expected, result, "ID mismatch")
 	}
 }
