@@ -1,7 +1,6 @@
 package external
 
 import (
-	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"image"
 	"image/png"
 	"os"
@@ -9,6 +8,7 @@ import (
 
 	"github.com/inkyblackness/hacked/ss1/content/audio"
 	"github.com/inkyblackness/hacked/ss1/content/audio/wav"
+	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ui/gui"
 )
 

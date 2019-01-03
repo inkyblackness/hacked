@@ -11,7 +11,7 @@ linters:
     - gocritic
     - gocyclo
     - gofmt
-    - goimports
+#   - goimports # disabled because of so many false-positives with "imgui-go"
     - golint
     - gosec
     - gosimple
