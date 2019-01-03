@@ -73,7 +73,7 @@ func (view *ObjectsView) Render(lvl *level.Level) {
 		title := fmt.Sprintf("Level Objects, %d selected", len(view.model.selectedObjects.list))
 		readOnly := !view.editingAllowed(lvl.ID())
 		if readOnly {
-			title += " (read-only)"
+			title += hintReadOnly
 		}
 		if imgui.BeginV(title+"###Level Objects", view.WindowOpen(), imgui.WindowFlagsHorizontalScrollbar|imgui.WindowFlagsAlwaysVerticalScrollbar) {
 			view.renderContent(lvl, readOnly)
@@ -334,7 +334,7 @@ func (view *ObjectsView) renderProperties(lvl *level.Level, readOnly bool,
 			}
 			view.renderPropertyControl(lvl, readOnly, multiple, key, *unifier, propertyDescribers[key],
 				func(modifier func(uint32) uint32) {
-					view.requestPropertiesChange(lvl, dataRetriever, interpreterFactory, key, modifier)
+					view.requestPropertiesChange(lvl, dataRetriever, interpreterFactory, key, modifier) // nolint: scopelint
 				})
 		}
 	}
@@ -615,7 +615,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 		selectedIndex := -1
 		if unifier.IsUnique() {
 			value := int(unifier.Unified().(int32))
-			selectedType = int(value>>7) & 1
+			selectedType = (value >> 7) & 1
 			selectedIndex = value & 0x7F
 		}
 
@@ -1055,7 +1055,7 @@ func (view *ObjectsView) setSelectedObjects(objectIDs []level.ObjectID) {
 }
 
 func (view *ObjectsView) tripleName(triple object.Triple) string {
-	suffix := "???"
+	suffix := hintUnknown
 	linearIndex := view.mod.ObjectProperties().TripleIndex(triple)
 	if linearIndex >= 0 {
 		key := resource.KeyOf(ids.ObjectLongNames, resource.LangDefault, linearIndex)
@@ -1086,7 +1086,7 @@ func (view *ObjectsView) PlaceSelectedObjectsOnFloor(lvl *level.Level) {
 	})
 }
 
-// PlaceSelectedObjectsOnFloor puts all selected objects to be at eye level (approximately).
+// PlaceSelectedObjectsOnEyeLevel puts all selected objects to be at eye level (approximately).
 func (view *ObjectsView) PlaceSelectedObjectsOnEyeLevel(lvl *level.Level) {
 	_, _, height := lvl.Size()
 	view.placeSelectedObjects(lvl, func(tile *level.TileMapEntry, pos MapPosition, objPivot float32) level.HeightUnit {
@@ -1095,7 +1095,7 @@ func (view *ObjectsView) PlaceSelectedObjectsOnEyeLevel(lvl *level.Level) {
 	})
 }
 
-// PlaceSelectedObjectsOnFloor puts all selected objects to hang from the ceiling.
+// PlaceSelectedObjectsOnCeiling puts all selected objects to hang from the ceiling.
 func (view *ObjectsView) PlaceSelectedObjectsOnCeiling(lvl *level.Level) {
 	_, _, height := lvl.Size()
 	view.placeSelectedObjects(lvl, func(tile *level.TileMapEntry, pos MapPosition, objPivot float32) level.HeightUnit {

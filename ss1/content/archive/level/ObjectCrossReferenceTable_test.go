@@ -70,7 +70,7 @@ func TestObjectCrossReferenceTableAllocate(t *testing.T) {
 
 func TestObjectCrossReferenceTableRelease(t *testing.T) {
 	stats := func(table level.ObjectCrossReferenceTable) (used, free int) {
-		for next := int16(table[0].NextInTile); next != 0; next = table[next].NextInTile {
+		for next := table[0].NextInTile; next != 0; next = table[next].NextInTile {
 			free++
 		}
 		used = len(table) - 1 - free

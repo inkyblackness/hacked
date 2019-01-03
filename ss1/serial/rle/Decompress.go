@@ -20,30 +20,32 @@ func Decompress(reader io.Reader, output []byte) (err error) {
 	for !done && (err == nil) {
 		first := nextByte()
 
-		if first == 0x00 {
+		switch {
+		case first == 0x00:
 			nn := nextByte()
 			zz := nextByte()
 
 			outIndex += writeBytesOfValue(output[outIndex:outIndex+int(nn)], func() byte { return zz })
-		} else if first < 0x80 {
+		case first < 0x80:
 			outIndex += writeBytesOfValue(output[outIndex:outIndex+int(first)], nextByte)
-		} else if first == 0x80 {
+		case first == 0x80:
 			control := uint16(nextByte())
 			control += uint16(nextByte()) << 8
-			if control == 0x0000 {
+			switch {
+			case control == 0x0000:
 				done = true
-			} else if control < 0x8000 {
+			case control < 0x8000:
 				outIndex += int(control)
-			} else if control < 0xC000 {
+			case control < 0xC000:
 				outIndex += writeBytesOfValue(output[outIndex:outIndex+int(control&0x3FFF)], nextByte)
-			} else if (control & 0xFF00) == 0xC000 {
+			case (control & 0xFF00) == 0xC000:
 				err = errors.New("undefined case 80 nn C0")
-			} else {
+			default:
 				zz := nextByte()
 
 				outIndex += writeBytesOfValue(output[outIndex:outIndex+int(control&0x3FFF)], func() byte { return zz })
 			}
-		} else {
+		default:
 			outIndex += int(first & 0x7F)
 		}
 	}

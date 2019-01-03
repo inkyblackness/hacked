@@ -85,7 +85,7 @@ func NewMapDisplay(gl opengl.OpenGL, guiScale float32,
 	eventListener event.Listener, eventRegistry event.Registry) *MapDisplay {
 	tilesPerMapSide := float32(64)
 
-	tileBaseLength := fineCoordinatesPerTileSide
+	tileBaseLength := float32(fineCoordinatesPerTileSide)
 	tileBaseHalf := tileBaseLength / 2.0
 	camLimit := tilesPerMapSide*tileBaseLength - tileBaseHalf
 	zoomShift := guiScale - 1.0
@@ -210,7 +210,7 @@ func (display *MapDisplay) Render(properties object.PropertiesTable, lvl *level.
 				} else {
 					tripleOffsets[triple] = offset
 				}
-				offset += 3 + int(numExtra)
+				offset += 3 + numExtra
 				return true
 			})
 		}
@@ -310,10 +310,10 @@ func (display *MapDisplay) renderPositionOverlay(lvl *level.Level) {
 		var pos MapPosition
 		hasFloor := false
 		var floorRaw int
-		floorString := "???"
+		floorString := hintUnknown
 		hasCeiling := false
 		var ceilingRaw int
-		ceilingString := "???"
+		ceilingString := hintUnknown
 
 		if display.activeHoverItem != nil {
 			pos = display.activeHoverItem.Pos()

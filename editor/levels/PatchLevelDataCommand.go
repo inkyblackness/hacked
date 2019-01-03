@@ -28,6 +28,6 @@ func (cmd patchLevelDataCommand) Undo(trans cmd.Transaction) error {
 
 func (cmd patchLevelDataCommand) perform(trans cmd.Transaction, patches []model.BlockPatch, dataResolver func(*model.BlockPatch) []byte) {
 	for _, patch := range patches {
-		trans.PatchResourceBlock(resource.LangAny, patch.ID, patch.BlockIndex, patch.BlockLength, dataResolver(&patch))
+		trans.PatchResourceBlock(resource.LangAny, patch.ID, patch.BlockIndex, patch.BlockLength, dataResolver(&patch)) // nolint: scopelint
 	}
 }

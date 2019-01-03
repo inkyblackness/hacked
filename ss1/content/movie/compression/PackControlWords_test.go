@@ -16,7 +16,10 @@ func TestControlWordsEmptyArrayResultsInZeroCount(t *testing.T) {
 }
 
 func TestControlWordsCountIsInLengthTimesThree(t *testing.T) {
-	data := compression.PackControlWords([]compression.ControlWord{compression.ControlWord(0), compression.ControlWord(1)})
+	data := compression.PackControlWords([]compression.ControlWord{
+		compression.ControlWord(0),
+		compression.ControlWord(1),
+	})
 
 	assert.Equal(t, []byte{0x06, 0x00, 0x00, 0x00}, data[:4])
 }
@@ -28,20 +31,30 @@ func TestControlWordsSingleItem(t *testing.T) {
 }
 
 func TestControlWordsMultiItemArray(t *testing.T) {
-	data := compression.PackControlWords([]compression.ControlWord{compression.ControlWord(0x00BBCCDD), compression.ControlWord(0x00112233)})
+	data := compression.PackControlWords([]compression.ControlWord{
+		compression.ControlWord(0x00BBCCDD),
+		compression.ControlWord(0x00112233),
+	})
 
 	assert.Equal(t, []byte{0x06, 0x00, 0x00, 0x00, 0xDD, 0xCC, 0xBB, 0x01, 0x33, 0x22, 0x11, 0x01}, data)
 }
 
 func TestControlWordsIdenticalWordsArePacked(t *testing.T) {
-	data := compression.PackControlWords([]compression.ControlWord{compression.ControlWord(0x00BBCCDD), compression.ControlWord(0x00BBCCDD)})
+	data := compression.PackControlWords([]compression.ControlWord{
+		compression.ControlWord(0x00BBCCDD),
+		compression.ControlWord(0x00BBCCDD),
+	})
 
 	require.Equal(t, 8, len(data))
 	assert.Equal(t, []byte{0xDD, 0xCC, 0xBB, 0x02}, data[4:8])
 }
 
 func TestControlWordsCountIsResetForFurtherWords(t *testing.T) {
-	data := compression.PackControlWords([]compression.ControlWord{compression.ControlWord(0x00BBCCDD), compression.ControlWord(0x00BBCCDD), compression.ControlWord(0x00112233)})
+	data := compression.PackControlWords([]compression.ControlWord{
+		compression.ControlWord(0x00BBCCDD),
+		compression.ControlWord(0x00BBCCDD),
+		compression.ControlWord(0x00112233),
+	})
 
 	require.Equal(t, 12, len(data))
 	assert.Equal(t, []byte{0xDD, 0xCC, 0xBB, 0x02, 0x33, 0x22, 0x11, 0x01}, data[4:12])

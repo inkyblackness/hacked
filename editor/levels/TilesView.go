@@ -78,7 +78,7 @@ func (view *TilesView) Render(lvl *level.Level) {
 		title := fmt.Sprintf("Level Tiles, %d selected", len(view.model.selectedTiles.list))
 		readOnly := !view.editingAllowed(lvl.ID())
 		if readOnly {
-			title += " (read-only)"
+			title += hintReadOnly
 		}
 		if imgui.BeginV(title+"###Level Tiles", view.WindowOpen(), 0) {
 			view.renderContent(lvl, readOnly)

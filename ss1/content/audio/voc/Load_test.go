@@ -22,7 +22,7 @@ func newHeader() *bytes.Buffer {
 
 	_ = binary.Write(writer, binary.LittleEndian, headerSize)
 	_ = binary.Write(writer, binary.LittleEndian, version)
-	versionValidity := uint16(^version + uint16(0x1234))
+	versionValidity := ^version + uint16(0x1234)
 	_ = binary.Write(writer, binary.LittleEndian, versionValidity)
 
 	return writer

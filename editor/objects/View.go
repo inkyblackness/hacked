@@ -322,7 +322,8 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 
 	destroyEffectValueUnifier := values.NewUnifier()
 	destroyEffectValueUnifier.Add(int(properties.Common.DestroyEffect.Value()))
-	values.RenderUnifiedSliderInt(readOnly, false, "DestroyEffect Value", destroyEffectValueUnifier, intIdentity, intFormat, 0, int(object.DestroyEffectValueLimit),
+	values.RenderUnifiedSliderInt(readOnly, false, "DestroyEffect Value", destroyEffectValueUnifier,
+		intIdentity, intFormat, 0, int(object.DestroyEffectValueLimit),
 		func(newValue int) {
 			view.requestSetObjectProperties(func(prop *object.Properties) {
 				prop.Common.DestroyEffect = prop.Common.DestroyEffect.WithValue(byte(newValue))

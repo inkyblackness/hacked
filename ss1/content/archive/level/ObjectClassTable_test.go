@@ -95,7 +95,7 @@ func TestObjectClassTableRelease(t *testing.T) {
 		for next := int16(table[0].ObjectID); next != 0; next = table[next].Next {
 			used++
 		}
-		for next := int16(table[0].Next); next != 0; next = table[next].Next {
+		for next := table[0].Next; next != 0; next = table[next].Next {
 			free++
 		}
 		return

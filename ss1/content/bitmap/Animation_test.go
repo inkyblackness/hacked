@@ -114,8 +114,8 @@ func TestReadWriteAnimationEntries(t *testing.T) {
 		},
 	}
 	for _, tc := range tt {
+		td := tc
 		t.Run(tc.info, func(t *testing.T) {
-			td := tc
 			anim, err := bitmap.ReadAnimation(bytes.NewReader(td.data))
 			require.Nil(t, err, "No error expected")
 			assert.Equal(t, td.expected, anim, "Animation data not as expected after reading")

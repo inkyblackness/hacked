@@ -13,7 +13,7 @@ func Save(writer io.Writer, sampleRate float32, samples []byte) error {
 	contentType := riffContentTypeWave
 	contentTypeSize := uint32(4)
 	tagSize := uint32(8)
-	tagSizes := uint32(tagSize * 2)
+	tagSizes := tagSize * 2
 
 	fmt.base.FormatType = waveFormatTypePcm
 	fmt.base.Channels = 1

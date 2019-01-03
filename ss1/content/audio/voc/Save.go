@@ -35,7 +35,7 @@ func writeHeader(writer io.Writer) error {
 	if err != nil {
 		return err
 	}
-	return binary.Write(writer, binary.LittleEndian, uint16(uint16(^version)+versionCheckValue))
+	return binary.Write(writer, binary.LittleEndian, (^version)+versionCheckValue)
 }
 
 func writeBlockHeader(writer io.Writer, block blockType, dataBytes int) error {

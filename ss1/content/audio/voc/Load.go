@@ -44,7 +44,7 @@ func readAndVerifyHeader(source io.Reader) error {
 		return err
 	}
 
-	calculated := uint16(^version + versionCheckValue)
+	calculated := ^version + versionCheckValue
 	if calculated != versionValidity {
 		return fmt.Errorf("version validity failed: 0x%04X != 0x%04X", calculated, versionValidity)
 	}

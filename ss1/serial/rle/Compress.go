@@ -43,19 +43,20 @@ func Compress(writer io.Writer, data []byte, reference []byte) error {
 		identicalByteCount := countIdenticalBytes(start)
 		constByteCount := countConstantBytes(start, data[start])
 
-		if identicalByteCount > 3 {
+		switch {
+		case identicalByteCount > 3:
 			err := skipBytes(writer, identicalByteCount)
 			if err != nil {
 				return err
 			}
 			start += identicalByteCount
-		} else if constByteCount > 3 {
+		case constByteCount > 3:
 			err := writeConstant(writer, constByteCount, data[start])
 			if err != nil {
 				return err
 			}
 			start += constByteCount
-		} else {
+		default:
 			diffByteCount := 0
 			abort := false
 
