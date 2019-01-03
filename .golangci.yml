@@ -2,31 +2,19 @@ run:
   deadline: 5m
 
 linters:
-  enable:
-    - deadcode
-    - depguard
-    - dupl
-    - errcheck
-    - goconst
-    - gocritic
-    - gocyclo
-    - gofmt
-#   - goimports # disabled because of so many false-positives with "imgui-go"
-    - golint
-    - gosimple
-    - govet
-    - ineffassign
-    - interfacer
-    - lll
-    - megacheck
-    - misspell
-    - scopelint
-    - staticcheck
-    - structcheck
-    - typecheck
-    - unconvert
-    - unused
-    - varcheck
+  enable-all: true
+
+  # linters are disabled if their majority of issues is considered false-positive (intended code)
+  # and the remaining issues (if existing) aren't worth it.
+  disable:
+    - gochecknoglobals
+    - gochecknoinits
+    - goimports # disabled because of so many false-positives with "imgui-go"
+    - gosec
+    - maligned
+    - nakedret
+    - prealloc
+    - unparam
 
 issues:
   exclude-use-default: false # disable filtering of defaults for better zero-issue policy
