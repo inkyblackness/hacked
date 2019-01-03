@@ -2,6 +2,7 @@ package messages
 
 import (
 	"fmt"
+
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"
@@ -243,40 +244,42 @@ func (view *View) renderContent() {
 	}
 	imgui.EndChild()
 
-	{
-		message, readOnly := view.currentMessage()
+	view.renderMFDs()
+}
 
-		view.renderSideImage("LeftMFD", message.LeftDisplay)
-		imgui.SameLineV(0, 0)
-		textToDisplay := message.VerboseText
-		if imgui.BeginChildV("Text", imgui.Vec2{X: -250 * view.guiScale, Y: 190 * view.guiScale}, true, 0) {
-			if !view.model.showVerboseText {
-				textToDisplay = message.TerseText
-			}
+func (view *View) renderMFDs() {
+	message, readOnly := view.currentMessage()
 
-			imgui.PushTextWrapPos()
-			if len(textToDisplay) == 0 {
-				imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1.0, Y: 1.0, Z: 1.0, W: 0.5})
-				imgui.Text("(empty)")
-				imgui.PopStyleColor()
-			} else {
-				imgui.Text(textToDisplay)
-			}
-			imgui.PopTextWrapPos()
+	view.renderSideImage("LeftMFD", message.LeftDisplay)
+	imgui.SameLineV(0, 0)
+	textToDisplay := message.VerboseText
+	if imgui.BeginChildV("Text", imgui.Vec2{X: -250 * view.guiScale, Y: 190 * view.guiScale}, true, 0) {
+		if !view.model.showVerboseText {
+			textToDisplay = message.TerseText
 		}
-		imgui.EndChild()
-		view.clipboardPopup(readOnly, "Text", textToDisplay, func(newValue string) {
-			view.requestTextChange(func(msg *text.ElectronicMessage) {
-				if view.model.showVerboseText {
-					msg.VerboseText = newValue
-				} else {
-					msg.TerseText = newValue
-				}
-			})
-		})
-		imgui.SameLineV(0, 0)
-		view.renderSideImage("RightMFD", message.RightDisplay)
+
+		imgui.PushTextWrapPos()
+		if len(textToDisplay) == 0 {
+			imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1.0, Y: 1.0, Z: 1.0, W: 0.5})
+			imgui.Text("(empty)")
+			imgui.PopStyleColor()
+		} else {
+			imgui.Text(textToDisplay)
+		}
+		imgui.PopTextWrapPos()
 	}
+	imgui.EndChild()
+	view.clipboardPopup(readOnly, "Text", textToDisplay, func(newValue string) {
+		view.requestTextChange(func(msg *text.ElectronicMessage) {
+			if view.model.showVerboseText {
+				msg.VerboseText = newValue
+			} else {
+				msg.TerseText = newValue
+			}
+		})
+	})
+	imgui.SameLineV(0, 0)
+	view.renderSideImage("RightMFD", message.RightDisplay)
 }
 
 func (view View) currentMessage() (msg text.ElectronicMessage, readOnly bool) {
