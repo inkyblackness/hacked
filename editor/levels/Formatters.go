@@ -2,13 +2,14 @@ package levels
 
 import (
 	"fmt"
+
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 )
 
 func tileHeightFormatterFor(levelHeight level.HeightShift) func(int) string {
 	return func(value int) string {
 		tileHeight, err := levelHeight.ValueFromTileHeight(level.TileHeightUnit(value))
-		tileHeightString := "???"
+		tileHeightString := hintUnknown
 		if err == nil {
 			tileHeightString = fmt.Sprintf("%2.3f", tileHeight)
 		}
@@ -19,7 +20,7 @@ func tileHeightFormatterFor(levelHeight level.HeightShift) func(int) string {
 func objectHeightFormatterFor(levelHeight level.HeightShift) func(int) string {
 	return func(value int) string {
 		tileHeight, err := levelHeight.ValueFromObjectHeight(level.HeightUnit(value))
-		tileHeightString := "???"
+		tileHeightString := hintUnknown
 		if err == nil {
 			tileHeightString = fmt.Sprintf("%2.3f", tileHeight)
 		}

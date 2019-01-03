@@ -310,10 +310,10 @@ func (display *MapDisplay) renderPositionOverlay(lvl *level.Level) {
 		var pos MapPosition
 		hasFloor := false
 		var floorRaw int
-		floorString := "???"
+		floorString := hintUnknown
 		hasCeiling := false
 		var ceilingRaw int
-		ceilingString := "???"
+		ceilingString := hintUnknown
 
 		if display.activeHoverItem != nil {
 			pos = display.activeHoverItem.Pos()

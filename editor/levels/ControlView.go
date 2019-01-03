@@ -72,7 +72,7 @@ func (view *ControlView) Render(lvl *level.Level) {
 		title := "Level Control"
 		readOnly := !view.editingAllowed(lvl.ID())
 		if readOnly {
-			title += " (read-only)"
+			title += hintReadOnly
 		}
 		if imgui.BeginV(title+"###Level Control", view.WindowOpen(), imgui.WindowFlagsNoCollapse) {
 			view.renderContent(lvl, readOnly)

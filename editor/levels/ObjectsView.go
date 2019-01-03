@@ -73,7 +73,7 @@ func (view *ObjectsView) Render(lvl *level.Level) {
 		title := fmt.Sprintf("Level Objects, %d selected", len(view.model.selectedObjects.list))
 		readOnly := !view.editingAllowed(lvl.ID())
 		if readOnly {
-			title += " (read-only)"
+			title += hintReadOnly
 		}
 		if imgui.BeginV(title+"###Level Objects", view.WindowOpen(), imgui.WindowFlagsHorizontalScrollbar|imgui.WindowFlagsAlwaysVerticalScrollbar) {
 			view.renderContent(lvl, readOnly)
@@ -1055,7 +1055,7 @@ func (view *ObjectsView) setSelectedObjects(objectIDs []level.ObjectID) {
 }
 
 func (view *ObjectsView) tripleName(triple object.Triple) string {
-	suffix := "???"
+	suffix := hintUnknown
 	linearIndex := view.mod.ObjectProperties().TripleIndex(triple)
 	if linearIndex >= 0 {
 		key := resource.KeyOf(ids.ObjectLongNames, resource.LangDefault, linearIndex)
