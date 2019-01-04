@@ -231,6 +231,50 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 	intIdentity := func(u values.Unifier) int { return u.Unified().(int) }
 	intFormat := func(value int) string { return "%d" }
 
+	if imgui.TreeNode("Flags") {
+		renderFlag := func(flag object.CommonFlag) {
+			flagUnifier := values.NewUnifier()
+			flagUnifier.Add(bool(properties.Common.Flags.Has(flag)))
+			values.RenderUnifiedCheckboxCombo(readOnly, false, flag.String(), flagUnifier, func(newValue bool) {
+				view.requestSetObjectProperties(func(prop *object.Properties) {
+					if newValue {
+						prop.Common.Flags = prop.Common.Flags.With(flag)
+					} else {
+						prop.Common.Flags = prop.Common.Flags.Without(flag)
+					}
+				})
+			})
+		}
+		for _, flag := range object.CommonFlags() {
+			renderFlag(flag)
+		}
+
+		imgui.TreePop()
+	}
+
+	lightTypes := object.LightTypes()
+	lightTypeUnifier := values.NewUnifier()
+	lightTypeUnifier.Add(int(properties.Common.Flags.LightType()))
+	values.RenderUnifiedCombo(readOnly, false, "LightType", lightTypeUnifier, intIdentity,
+		func(value int) string {
+			return object.LightType(value).String()
+		}, len(lightTypes), func(newValue int) {
+			view.requestSetObjectProperties(func(prop *object.Properties) {
+				prop.Common.Flags = prop.Common.Flags.WithLightType(object.LightType(newValue))
+			})
+		})
+
+	useModeUnifier := values.NewUnifier()
+	useModeUnifier.Add(int(properties.Common.Flags.UseMode()))
+	values.RenderUnifiedCombo(readOnly, false, "UseMode", useModeUnifier, intIdentity,
+		func(value int) string {
+			return object.UseMode(value).String()
+		}, 4, func(newValue int) {
+			view.requestSetObjectProperties(func(prop *object.Properties) {
+				prop.Common.Flags = prop.Common.Flags.WithUseMode(object.UseMode(newValue))
+			})
+		})
+
 	massUnifier := values.NewUnifier()
 	massUnifier.Add(int(properties.Common.Mass))
 	values.RenderUnifiedSliderInt(readOnly, false, "Mass", massUnifier, intIdentity, intFormat, -1, 5000,
