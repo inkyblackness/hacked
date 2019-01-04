@@ -280,10 +280,107 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 
 	hardnessUnifier := values.NewUnifier()
 	hardnessUnifier.Add(int(properties.Common.Hardness))
-	values.RenderUnifiedSliderInt(readOnly, false, "Hardness", hardnessUnifier, intIdentity, intFormat, 0, 255,
+	values.RenderUnifiedSliderInt(readOnly, false, "Hardness", hardnessUnifier, intIdentity, intFormat, 0, object.HardnessLimit,
 		func(newValue int) {
 			view.requestSetObjectProperties(func(prop *object.Properties) {
 				prop.Common.Hardness = byte(newValue)
+			})
+		})
+
+	physicsXRUnifier := values.NewUnifier()
+	physicsXRUnifier.Add(int(properties.Common.PhysicsXR))
+	values.RenderUnifiedSliderInt(readOnly, false, "Physics XR", physicsXRUnifier, intIdentity, intFormat, 0, object.PhysicsXRLimit,
+		func(newValue int) {
+			view.requestSetObjectProperties(func(prop *object.Properties) {
+				prop.Common.PhysicsXR = byte(newValue)
+			})
+		})
+
+	physicsZUnifier := values.NewUnifier()
+	physicsZUnifier.Add(int(properties.Common.PhysicsZ))
+	values.RenderUnifiedSliderInt(readOnly, false, "Physics Z", physicsZUnifier, intIdentity, intFormat, 0, 255,
+		func(newValue int) {
+			view.requestSetObjectProperties(func(prop *object.Properties) {
+				prop.Common.PhysicsZ = byte(newValue)
+			})
+		})
+
+	if imgui.TreeNode("Vulnerabilities") {
+		renderVulnerability := func(damageType object.DamageType) {
+			damageUnifier := values.NewUnifier()
+			damageUnifier.Add(bool(properties.Common.Vulnerabilities.Has(damageType)))
+			values.RenderUnifiedCheckboxCombo(readOnly, false, damageType.String(), damageUnifier, func(newValue bool) {
+				view.requestSetObjectProperties(func(prop *object.Properties) {
+					if newValue {
+						prop.Common.Vulnerabilities = prop.Common.Vulnerabilities.With(damageType)
+					} else {
+						prop.Common.Vulnerabilities = prop.Common.Vulnerabilities.Without(damageType)
+					}
+				})
+			})
+		}
+		for _, damageType := range object.DamageTypes() {
+			renderVulnerability(damageType)
+		}
+
+		primaryUnifier := values.NewUnifier()
+		primaryUnifier.Add(properties.Common.SpecialVulnerabilities.PrimaryValue())
+		values.RenderUnifiedSliderInt(readOnly, false, "Primary (double dmg)", primaryUnifier, intIdentity, intFormat, 0, object.SpecialDamageTypeLimit,
+			func(newValue int) {
+				view.requestSetObjectProperties(func(prop *object.Properties) {
+					prop.Common.SpecialVulnerabilities = prop.Common.SpecialVulnerabilities.WithPrimaryValue(newValue)
+				})
+			})
+
+		superUnifier := values.NewUnifier()
+		superUnifier.Add(properties.Common.SpecialVulnerabilities.SuperValue())
+		values.RenderUnifiedSliderInt(readOnly, false, "Super (quad dmg)", superUnifier, intIdentity, intFormat, 0, object.SpecialDamageTypeLimit,
+			func(newValue int) {
+				view.requestSetObjectProperties(func(prop *object.Properties) {
+					prop.Common.SpecialVulnerabilities = prop.Common.SpecialVulnerabilities.WithSuperValue(newValue)
+				})
+			})
+
+		imgui.TreePop()
+	}
+
+	defenseUnifier := values.NewUnifier()
+	defenseUnifier.Add(int(properties.Common.Defense))
+	values.RenderUnifiedSliderInt(readOnly, false, "Defense", defenseUnifier, intIdentity,
+		func(value int) string {
+			if value == object.DefenseNoCriticals {
+				return "%d - (no criticals)"
+			}
+			return "%d"
+		}, 0, 255,
+		func(newValue int) {
+			view.requestSetObjectProperties(func(prop *object.Properties) {
+				prop.Common.Defense = byte(newValue)
+			})
+		})
+
+	toughnessUnifier := values.NewUnifier()
+	toughnessUnifier.Add(int(properties.Common.Toughness))
+	values.RenderUnifiedSliderInt(readOnly, false, "Toughness", toughnessUnifier, intIdentity,
+		func(value int) string {
+			if value == object.ToughnessNoDamage {
+				return "(no damage) -- raw: %d"
+			}
+			return fmt.Sprintf("%d:1 dmg -- raw: %%d", 1<<uint(value))
+		},
+		0, 7,
+		func(newValue int) {
+			view.requestSetObjectProperties(func(prop *object.Properties) {
+				prop.Common.Toughness = byte(newValue)
+			})
+		})
+
+	mfdOrMeshIDUnifier := values.NewUnifier()
+	mfdOrMeshIDUnifier.Add(int(properties.Common.MfdOrMeshID))
+	values.RenderUnifiedSliderInt(readOnly, false, "MFD/Mesh ID", mfdOrMeshIDUnifier, intIdentity, intFormat, 0, 1000,
+		func(newValue int) {
+			view.requestSetObjectProperties(func(prop *object.Properties) {
+				prop.Common.MfdOrMeshID = uint16(newValue)
 			})
 		})
 
