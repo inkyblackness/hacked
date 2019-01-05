@@ -21,7 +21,10 @@ var damageType = interpreters.Bitfield(map[uint32]string{
 	0x80: "Bio",
 })
 
-var specialDamageType = interpreters.Bitfield(map[uint32]string{})
+var specialDamageType = interpreters.Bitfield(map[uint32]string{
+	0x0F: "Primary (double)",
+	0xF0: "Super (quad)",
+})
 
 func init() {
 	genericDescriptions = make(map[object.Class]*interpreters.Description)

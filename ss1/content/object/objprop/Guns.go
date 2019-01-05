@@ -48,7 +48,7 @@ var energyProjectileWeapons = interpreters.New().
 	With("AttackMass", 9, 1).
 	With("AttackSpeed", 10, 2).As(interpreters.RangedValue(-10000, +10000)).
 	With("ProjectileTravelSpeed", 12, 1).
-	With("ProjectileType", 13, 4).As(interpreters.SpecialValue("ObjectTriple")).
+	With("Projectile", 13, 4).As(interpreters.SpecialValue("ObjectTriple")).
 	With("Flags", 17, 1).As(interpreters.Bitfield(map[uint32]string{
 	0x02: "Stun"}))
 
