@@ -55,18 +55,18 @@ func StandardDescriptors() Descriptors {
 	}
 	{ // Drugs
 		subclasses := []SubclassDescriptor{
-			{TypeCount: 7, SpecificDataSize: 1},
+			{TypeCount: 7, SpecificDataSize: 7},
 		}
 
-		result = append(result, ClassDescriptor{GenericDataSize: 22, Subclasses: subclasses})
+		result = append(result, ClassDescriptor{GenericDataSize: 17, Subclasses: subclasses})
 	}
 	{ // Hardware
 		subclasses := []SubclassDescriptor{
 			{TypeCount: 5, SpecificDataSize: 1},
-			{TypeCount: 10, SpecificDataSize: 1},
+			{TypeCount: 10, SpecificDataSize: 2},
 		}
 
-		result = append(result, ClassDescriptor{GenericDataSize: 9, Subclasses: subclasses})
+		result = append(result, ClassDescriptor{GenericDataSize: 2, Subclasses: subclasses})
 	}
 	{ // Software
 		subclasses := []SubclassDescriptor{
@@ -77,7 +77,7 @@ func StandardDescriptors() Descriptors {
 			{TypeCount: 3, SpecificDataSize: 1},
 		}
 
-		result = append(result, ClassDescriptor{GenericDataSize: 5, Subclasses: subclasses})
+		result = append(result, ClassDescriptor{GenericDataSize: 2, Subclasses: subclasses})
 	}
 	{ // BigStuff
 		subclasses := []SubclassDescriptor{
@@ -91,7 +91,7 @@ func StandardDescriptors() Descriptors {
 			{TypeCount: 10, SpecificDataSize: 1},
 		}
 
-		result = append(result, ClassDescriptor{GenericDataSize: 2, Subclasses: subclasses})
+		result = append(result, ClassDescriptor{GenericDataSize: 4, Subclasses: subclasses})
 	}
 	{ // SmallStuff
 		subclasses := []SubclassDescriptor{
@@ -142,7 +142,7 @@ func StandardDescriptors() Descriptors {
 	{ // Traps
 		subclasses := []SubclassDescriptor{
 			{TypeCount: 13, SpecificDataSize: 1},
-			{TypeCount: 1, SpecificDataSize: 2},
+			{TypeCount: 1, SpecificDataSize: 1},
 			{TypeCount: 5, SpecificDataSize: 1},
 		}
 
@@ -163,9 +163,9 @@ func StandardDescriptors() Descriptors {
 	}
 	{ // Critters
 		subclasses := []SubclassDescriptor{
-			{TypeCount: 9, SpecificDataSize: 3},
-			{TypeCount: 12, SpecificDataSize: 1},
-			{TypeCount: 7, SpecificDataSize: 1},
+			{TypeCount: 9, SpecificDataSize: 1},
+			{TypeCount: 12, SpecificDataSize: 2},
+			{TypeCount: 7, SpecificDataSize: 2},
 			{TypeCount: 7, SpecificDataSize: 6},
 			{TypeCount: 2, SpecificDataSize: 1},
 		}
