@@ -237,7 +237,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 	if imgui.TreeNode("Flags") {
 		renderFlag := func(flag object.CommonFlag) {
 			flagUnifier := values.NewUnifier()
-			flagUnifier.Add(bool(properties.Common.Flags.Has(flag)))
+			flagUnifier.Add(properties.Common.Flags.Has(flag))
 			values.RenderUnifiedCheckboxCombo(readOnly, false, flag.String(), flagUnifier, func(newValue bool) {
 				view.requestSetObjectProperties(func(prop *object.Properties) {
 					if newValue {
@@ -355,7 +355,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 	if imgui.TreeNode("Vulnerabilities") {
 		renderVulnerability := func(damageType object.DamageType) {
 			damageUnifier := values.NewUnifier()
-			damageUnifier.Add(bool(properties.Common.Vulnerabilities.Has(damageType)))
+			damageUnifier.Add(properties.Common.Vulnerabilities.Has(damageType))
 			values.RenderUnifiedCheckboxCombo(readOnly, false, damageType.String(), damageUnifier, func(newValue bool) {
 				view.requestSetObjectProperties(func(prop *object.Properties) {
 					if newValue {
