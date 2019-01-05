@@ -1,9 +1,11 @@
 package level_test
 
 import (
-	"github.com/inkyblackness/hacked/ss1/content/archive/level"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 )
 
 func TestFloorCeilingInfoPermutations(t *testing.T) {

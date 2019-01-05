@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/inkyblackness/hacked/ss1/content/audio/wav"
-	"github.com/stretchr/testify/require"
 )
 
 func TestSaveStoresBytes(t *testing.T) {

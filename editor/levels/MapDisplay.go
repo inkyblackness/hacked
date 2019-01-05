@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	mgl "github.com/go-gl/mathgl/mgl32"
+	"github.com/inkyblackness/imgui-go"
 
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/graphics"
@@ -15,7 +16,6 @@ import (
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/input"
 	"github.com/inkyblackness/hacked/ui/opengl"
-	"github.com/inkyblackness/imgui-go"
 )
 
 type hoverItem interface {

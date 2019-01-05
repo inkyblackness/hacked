@@ -2,9 +2,11 @@ package object_test
 
 import (
 	"fmt"
-	"github.com/inkyblackness/hacked/ss1/content/object"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/inkyblackness/hacked/ss1/content/object"
 )
 
 func TestBitmap3DValueRange(t *testing.T) {

@@ -3,8 +3,9 @@ package lvlobj_test
 import (
 	"testing"
 
-	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlobj"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlobj"
 )
 
 func TestBinaryCodedDecimal(t *testing.T) {

@@ -1,9 +1,10 @@
 package render
 
 import (
+	"github.com/inkyblackness/imgui-go"
+
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ui/gui"
-	"github.com/inkyblackness/imgui-go"
 )
 
 // TextureIDForBitmapTexture returns a texture ID that identifies a bitmap texture.

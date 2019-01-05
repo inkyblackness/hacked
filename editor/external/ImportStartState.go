@@ -3,8 +3,9 @@ package external
 import (
 	"time"
 
-	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/imgui-go"
+
+	"github.com/inkyblackness/hacked/ui/gui"
 )
 
 type importStartState struct {

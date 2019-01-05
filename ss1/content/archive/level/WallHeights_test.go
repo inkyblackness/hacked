@@ -2,11 +2,13 @@ package level_test
 
 import (
 	"fmt"
-	"github.com/inkyblackness/hacked/ss1/content/archive/level"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"testing"
+
+	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 )
 
 type WallHeightsSuite struct {

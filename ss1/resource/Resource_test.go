@@ -4,8 +4,9 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
 func verifyBlockContent(t *testing.T, provider resource.BlockProvider, index int, expected []byte) {

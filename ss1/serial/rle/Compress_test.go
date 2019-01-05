@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/inkyblackness/hacked/ss1/serial/rle"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/inkyblackness/hacked/ss1/serial/rle"
 )
 
 func TestCompressEmptyArrayResultsInTerminator(t *testing.T) {

@@ -1,8 +1,9 @@
 package project
 
 import (
-	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/imgui-go"
+
+	"github.com/inkyblackness/hacked/ui/gui"
 )
 
 type saveModAsStartState struct {

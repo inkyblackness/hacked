@@ -1,12 +1,13 @@
 package project
 
 import (
+	"errors"
 	"testing"
 
-	"errors"
-	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/inkyblackness/hacked/ss1/world"
 )
 
 type testingKeeper struct {

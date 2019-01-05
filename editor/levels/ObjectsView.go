@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/inkyblackness/imgui-go"
+
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/graphics"
@@ -19,7 +21,6 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
-	"github.com/inkyblackness/imgui-go"
 )
 
 // ObjectsView is for object properties.

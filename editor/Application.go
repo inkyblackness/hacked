@@ -3,6 +3,8 @@ package editor
 import (
 	"fmt"
 
+	"github.com/inkyblackness/imgui-go"
+
 	"github.com/inkyblackness/hacked/editor/about"
 	"github.com/inkyblackness/hacked/editor/animations"
 	"github.com/inkyblackness/hacked/editor/archives"
@@ -27,7 +29,6 @@ import (
 	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/hacked/ui/input"
 	"github.com/inkyblackness/hacked/ui/opengl"
-	"github.com/inkyblackness/imgui-go"
 )
 
 // Application is the root object of the graphical editor.

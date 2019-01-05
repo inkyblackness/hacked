@@ -2,16 +2,16 @@ package compression
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"math/rand"
 	"testing"
 	"time"
 
-	"github.com/inkyblackness/hacked/ss1/serial"
-
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/inkyblackness/hacked/ss1/serial"
 )
 
 type DecompressorSuite struct {

@@ -2,9 +2,11 @@ package resource_test
 
 import (
 	"fmt"
-	"github.com/inkyblackness/hacked/ss1/resource"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
 func TestLanguageIncludes(t *testing.T) {

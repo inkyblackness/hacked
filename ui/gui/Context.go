@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/inkyblackness/hacked/ui/opengl"
 	"github.com/inkyblackness/imgui-go"
+
+	"github.com/inkyblackness/hacked/ui/opengl"
 )
 
 // ContextParameters describes how to create the context.

@@ -3,9 +3,10 @@ package render
 import (
 	"math"
 
+	"github.com/inkyblackness/imgui-go"
+
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/ss1/resource"
-	"github.com/inkyblackness/imgui-go"
 )
 
 // TextureImage renders an image centered and fitted within the given size.
