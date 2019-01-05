@@ -2,13 +2,16 @@ package objects
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/values"
+	"github.com/inkyblackness/hacked/ss1/content/interpreters"
 	"github.com/inkyblackness/hacked/ss1/content/object"
+	"github.com/inkyblackness/hacked/ss1/content/object/objprop"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
@@ -130,11 +133,11 @@ func (view *View) renderContent() {
 				imgui.TreePop()
 			}
 			if imgui.TreeNodeV("Generic Properties", imgui.TreeNodeFlagsFramed) {
-				imgui.Text("(not yet)")
+				view.renderGenericProperties(readOnly, properties)
 				imgui.TreePop()
 			}
 			if imgui.TreeNodeV("Specific Properties", imgui.TreeNodeFlagsFramed) {
-				imgui.Text("(not yet)")
+				view.renderSpecificProperties(readOnly, properties)
 				imgui.TreePop()
 			}
 		}
@@ -486,4 +489,69 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 				prop.Common.DestroyEffect = prop.Common.DestroyEffect.WithExplosion(newValue)
 			})
 		})
+}
+
+func (view *View) renderGenericProperties(readOnly bool, properties *object.Properties) {
+	readInterpreter := objprop.GenericProperties(view.model.currentObject.Class, properties.Generic)
+	view.createPropertyControls(readOnly, readInterpreter, func(key string, modifier func(uint32) uint32) {
+		view.requestSetObjectProperties(func(prop *object.Properties) {
+			writeInterpreter := objprop.GenericProperties(view.model.currentObject.Class, prop.Generic)
+			view.setInterpreterValueKeyed(writeInterpreter, key, modifier)
+		})
+	})
+}
+
+func (view *View) renderSpecificProperties(readOnly bool, properties *object.Properties) {
+	readInterpreter := objprop.SpecificProperties(view.model.currentObject, properties.Specific)
+	view.createPropertyControls(readOnly, readInterpreter, func(key string, modifier func(uint32) uint32) {
+		view.requestSetObjectProperties(func(prop *object.Properties) {
+			writeInterpreter := objprop.SpecificProperties(view.model.currentObject, prop.Specific)
+			view.setInterpreterValueKeyed(writeInterpreter, key, modifier)
+		})
+	})
+}
+
+func (view *View) createPropertyControls(readOnly bool, rootInterpreter *interpreters.Instance,
+	updater func(string, func(uint32) uint32)) {
+	objTypeRenderer := values.ObjectTypeControlRenderer{
+		Meta:      view.mod.ObjectProperties(),
+		TextCache: view.textCache,
+	}
+
+	var processInterpreter func(string, *interpreters.Instance)
+	processInterpreter = func(path string, interpreter *interpreters.Instance) {
+		for _, key := range interpreter.Keys() {
+			fullKey := path + key
+			unifier := values.NewUnifier()
+			unifier.Add(int32(interpreter.Get(key)))
+			simplifier := values.StandardSimplifier(readOnly, false, fullKey, unifier,
+				func(modifier func(uint32) uint32) {
+					updater(fullKey, modifier)
+				}, objTypeRenderer)
+
+			interpreter.Describe(key, simplifier)
+		}
+
+		for _, key := range interpreter.ActiveRefinements() {
+			fullKey := path + key
+			if len(fullKey) > 0 {
+				imgui.Separator()
+				imgui.Text(fullKey + ":")
+			}
+			processInterpreter(fullKey+".", interpreter.Refined(key))
+		}
+	}
+	processInterpreter("", rootInterpreter)
+}
+
+func (view *View) setInterpreterValueKeyed(instance *interpreters.Instance, key string, modifier func(uint32) uint32) {
+	resolvedInterpreter := instance
+	keys := strings.Split(key, ".")
+	keyCount := len(keys)
+	if len(keys) > 1 {
+		for _, subKey := range keys[:keyCount-1] {
+			resolvedInterpreter = resolvedInterpreter.Refined(subKey)
+		}
+	}
+	resolvedInterpreter.Set(keys[keyCount-1], modifier(resolvedInterpreter.Get(keys[keyCount-1])))
 }
