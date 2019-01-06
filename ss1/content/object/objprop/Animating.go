@@ -10,7 +10,7 @@ import (
 var animationGenerics = interpreters.New().
 	With("FrameTime", 0, 1).As(interpreters.FormattedRangedValue(0, 255,
 	func(value int) string {
-		return fmt.Sprintf("%3.0f millisec - raw: %d", (float64(value)*900)/255.0, value)
+		return fmt.Sprintf("%3.0f millisec", (float64(value)*900)/255.0)
 	})).
 	With("Flags", 1, 1).As(interpreters.Bitfield(map[uint32]string{0x01: "Emit Light"}))
 
