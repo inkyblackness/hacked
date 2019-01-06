@@ -10,7 +10,9 @@ import (
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/model"
+	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
+	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/content/interpreters"
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/object/objprop"
@@ -71,7 +73,7 @@ func (view *View) Render() {
 		view.model.windowOpen = true
 	}
 	if view.model.windowOpen {
-		imgui.SetNextWindowSizeV(imgui.Vec2{X: 600 * view.guiScale, Y: 600 * view.guiScale}, imgui.ConditionOnce)
+		imgui.SetNextWindowSizeV(imgui.Vec2{X: 800 * view.guiScale, Y: 600 * view.guiScale}, imgui.ConditionOnce)
 		if imgui.BeginV("Game Objects", view.WindowOpen(), imgui.WindowFlagsNoCollapse|imgui.WindowFlagsHorizontalScrollbar) {
 			view.renderContent()
 		}
@@ -80,8 +82,8 @@ func (view *View) Render() {
 }
 
 func (view *View) renderContent() {
-	if imgui.BeginChildV("Properties", imgui.Vec2{X: -100 * view.guiScale, Y: 0}, false, imgui.WindowFlagsHorizontalScrollbar) {
-		imgui.PushItemWidth(-250 * view.guiScale)
+	if imgui.BeginChildV("Properties", imgui.Vec2{X: -330 * view.guiScale, Y: 0}, false, imgui.WindowFlagsHorizontalScrollbar) {
+		imgui.PushItemWidth(-260 * view.guiScale)
 		classString := func(class object.Class) string {
 			return fmt.Sprintf("%2d: %v", int(class), class)
 		}
@@ -89,6 +91,7 @@ func (view *View) renderContent() {
 			for _, class := range object.Classes() {
 				if imgui.SelectableV(classString(class), class == view.model.currentObject.Class, 0, imgui.Vec2{}) {
 					view.model.currentObject = object.TripleFrom(int(class), 0, 0)
+					view.model.currentBitmap = 0
 				}
 			}
 			imgui.EndCombo()
@@ -98,12 +101,25 @@ func (view *View) renderContent() {
 			for _, triple := range allTypes {
 				if imgui.SelectableV(view.tripleName(triple), triple == view.model.currentObject, 0, imgui.Vec2{}) {
 					view.model.currentObject = triple
+					view.model.currentBitmap = 0
 				}
 			}
 			imgui.EndCombo()
 		}
 
 		readOnly := !view.mod.HasModifyableObjectProperties()
+		properties, propErr := view.mod.ObjectProperties().ForObject(view.model.currentObject)
+
+		imgui.Separator()
+		bitmapLimit := 0
+		if propErr == nil {
+			bitmapLimit = int(properties.Common.Bitmap3D.FrameNumber() + 2)
+		}
+		gui.StepSliderInt("Bitmap", &view.model.currentBitmap, 0, bitmapLimit)
+		render.TextureSelector("BitmapSelector", -1, view.guiScale, bitmapLimit+1, view.model.currentBitmap,
+			view.imageCache, view.currentBitmapKeyFor, func(int) string { return "" }, func(newValue int) {
+				view.model.currentBitmap = newValue
+			})
 
 		imgui.Separator()
 
@@ -127,8 +143,7 @@ func (view *View) renderContent() {
 				view.requestSetObjectName(view.model.currentObject, false, newValue)
 			})
 
-		properties, err := view.mod.ObjectProperties().ForObject(view.model.currentObject)
-		if err == nil {
+		if propErr == nil {
 			if imgui.TreeNodeV("Common Properties", imgui.TreeNodeFlagsDefaultOpen|imgui.TreeNodeFlagsFramed) {
 				view.renderCommonProperties(readOnly, properties)
 				imgui.TreePop()
@@ -141,16 +156,18 @@ func (view *View) renderContent() {
 				view.renderSpecificProperties(readOnly, properties)
 				imgui.TreePop()
 			}
+		} else {
+			imgui.Text("(properties unavailable)")
 		}
 
 		imgui.PopItemWidth()
 	}
 	imgui.EndChild()
-	//imgui.SameLine()
+	imgui.SameLine()
 
-	//imgui.BeginGroup()
-	// view.renderObjectBitmap()
-	//imgui.EndGroup()
+	imgui.BeginGroup()
+	view.renderObjectBitmap()
+	imgui.EndGroup()
 }
 
 func (view *View) renderText(readOnly bool, label string, value string, changeCallback func(string)) {
@@ -207,6 +224,8 @@ func (view *View) requestSetObjectName(triple object.Triple, longName bool, newV
 		if oldValue != newValue {
 			command := setObjectTextCommand{
 				model:   &view.model,
+				triple:  view.model.currentObject,
+				bitmap:  view.model.currentBitmap,
 				key:     key,
 				oldData: view.cp.Encode(oldValue),
 				newData: view.cp.Encode(text.Blocked(newValue)[0]),
@@ -220,6 +239,7 @@ func (view *View) requestSetObjectProperties(modifier func(*object.Properties)) 
 	command := setObjectPropertiesCommand{
 		model:  &view.model,
 		triple: view.model.currentObject,
+		bitmap: view.model.currentBitmap,
 	}
 	currentProp, err := view.mod.ObjectProperties().ForObject(command.triple)
 	if err != nil {
@@ -555,4 +575,136 @@ func (view *View) setInterpreterValueKeyed(instance *interpreters.Instance, key 
 		}
 	}
 	resolvedInterpreter.Set(keys[keyCount-1], modifier(resolvedInterpreter.Get(keys[keyCount-1])))
+}
+
+func (view *View) renderObjectBitmap() {
+	render.TextureImage("BitmapImage", view.imageCache, view.currentBitmapKey(), imgui.Vec2{X: 320 * view.guiScale, Y: 240 * view.guiScale})
+	if imgui.Button("Clear") {
+		view.requestClearBitmap()
+	}
+	imgui.SameLine()
+	if imgui.Button("Import") {
+		view.requestImportBitmap()
+	}
+	imgui.SameLine()
+	if imgui.Button("Export") {
+		view.requestExportBitmap()
+	}
+	if view.hasModCurrentBitmap() {
+		imgui.SameLine()
+		if imgui.Button("Remove") {
+			view.requestSetBitmapData(nil)
+		}
+	}
+}
+
+func (view *View) requestClearBitmap() {
+	bmp := bitmap.Bitmap{
+		Header: bitmap.Header{
+			Width:  1,
+			Height: 1,
+		},
+		Pixels: []byte{0x00},
+	}
+	view.requestSetBitmap(bmp)
+}
+
+func (view *View) requestImportBitmap() {
+	paletteRetriever := func() (bitmap.Palette, error) {
+		palette, err := view.paletteCache.Palette(0)
+		if err != nil {
+			return bitmap.Palette{}, err
+		}
+		return palette.Palette(), nil
+	}
+	external.ImportImage(view.modalStateMachine, paletteRetriever, func(bmp bitmap.Bitmap) {
+		view.requestSetBitmap(bmp)
+	})
+}
+
+func (view *View) requestExportBitmap() {
+	key := view.currentBitmapKey()
+	texture, err := view.imageCache.Texture(key)
+	if err != nil {
+		return
+	}
+	palette, err := view.paletteCache.Palette(0)
+	if err != nil {
+		return
+	}
+	rawPalette := palette.Palette()
+	filename := fmt.Sprintf("%02d_%d_%02d-%02d.png",
+		view.model.currentObject.Class, view.model.currentObject.Subclass, view.model.currentObject.Type, view.model.currentBitmap)
+	width, height := texture.Size()
+	bmp := bitmap.Bitmap{
+		Header: bitmap.Header{
+			Width:  int16(width),
+			Height: int16(height),
+		},
+		Pixels:  texture.PixelData(),
+		Palette: &rawPalette,
+	}
+
+	external.ExportImage(view.modalStateMachine, filename, bmp)
+}
+
+func (view *View) hasModCurrentBitmap() bool {
+	key := view.currentBitmapKey()
+	return len(view.mod.ModifiedBlock(key.Lang, key.ID, key.Index)) > 0
+}
+
+func (view *View) requestSetBitmap(bmp bitmap.Bitmap) {
+	highestBitShift := func(value int16) (result byte) {
+		if value != 0 {
+			for (value >> result) != 1 {
+				result++
+			}
+		}
+		return
+	}
+
+	bmp.Header.Flags = bitmap.FlagTransparent
+	bmp.Header.Type = bitmap.TypeCompressed8Bit
+	bmp.Header.WidthFactor = highestBitShift(bmp.Header.Width)
+	bmp.Header.HeightFactor = highestBitShift(bmp.Header.Height)
+	bmp.Header.Stride = uint16(bmp.Header.Width)
+	data := bitmap.Encode(&bmp, 0)
+	view.requestSetBitmapData(data)
+}
+
+func (view *View) requestSetBitmapData(newData []byte) {
+	resourceKey := view.currentBitmapKey()
+
+	command := setObjectBitmapCommand{
+		model:  &view.model,
+		triple: view.model.currentObject,
+		bitmap: view.model.currentBitmap,
+
+		resourceKey: resourceKey,
+		oldData:     view.mod.ModifiedBlock(resourceKey.Lang, resourceKey.ID, resourceKey.Index),
+		newData:     newData,
+	}
+	view.commander.Queue(command)
+}
+
+func (view *View) currentBitmapKey() resource.Key {
+	return view.currentBitmapKeyFor(view.model.currentBitmap)
+}
+
+func (view *View) currentBitmapKeyFor(offset int) resource.Key {
+	baseOffset := 1
+	done := false
+	view.mod.ObjectProperties().Iterate(func(triple object.Triple, prop *object.Properties) bool {
+		if !done && triple == view.model.currentObject {
+			done = true
+		}
+		if done {
+			return false
+		}
+		numExtra := int(prop.Common.Bitmap3D.FrameNumber())
+		baseOffset += 3 + numExtra
+		return true
+	})
+
+	return resource.KeyOf(ids.ObjectBitmaps, resource.LangAny, baseOffset+offset)
 }

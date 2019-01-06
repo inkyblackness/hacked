@@ -10,6 +10,7 @@ type viewModel struct {
 	restoreFocus bool
 
 	currentObject object.Triple
+	currentBitmap int
 	currentLang   resource.Language
 }
 
