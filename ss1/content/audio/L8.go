@@ -12,7 +12,6 @@ func (sound L8) Empty() bool {
 }
 
 // Duration returns the length of the sound in seconds.
-// TODO return time.Duration type
 func (sound L8) Duration() float32 {
 	if sound.SampleRate <= 0 {
 		return 0.0
