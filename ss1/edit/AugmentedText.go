@@ -24,21 +24,21 @@ func TrapMessageSoundKeyFor(key resource.Key) resource.Key {
 
 // AugmentedTextService provides read/write functionality.
 type AugmentedTextService struct {
-	getText  media.GetTextService
-	setText  media.SetTextService
-	getAudio media.GetAudioService
-	setAudio media.SetAudioService
+	textViewer  media.TextViewerService
+	textSetter  media.TextSetterService
+	audioViewer media.AudioViewerService
+	audioSetter media.AudioSetterService
 }
 
 // NewAugmentedTextService returns a new instance based on given accessor.
 func NewAugmentedTextService(
-	getText media.GetTextService, setText media.SetTextService,
-	getAudio media.GetAudioService, setAudio media.SetAudioService) AugmentedTextService {
+	textViewer media.TextViewerService, textSetter media.TextSetterService,
+	audioViewer media.AudioViewerService, audioSetter media.AudioSetterService) AugmentedTextService {
 	return AugmentedTextService{
-		getText:  getText,
-		setText:  setText,
-		getAudio: getAudio,
-		setAudio: setAudio,
+		textViewer:  textViewer,
+		textSetter:  textSetter,
+		audioViewer: audioViewer,
+		audioSetter: audioSetter,
 	}
 }
 
@@ -49,24 +49,24 @@ func (service AugmentedTextService) IsTrapMessage(key resource.Key) bool {
 
 // Text returns the textual value of the identified text resource.
 func (service AugmentedTextService) Text(key resource.Key) string {
-	return service.getText.Text(key)
+	return service.textViewer.Text(key)
 }
 
 // SetText changes the textual value of a text resource.
 func (service AugmentedTextService) SetText(setter AugmentedTextBlockSetter, key resource.Key, value string) {
-	service.setText.Set(setter, key, value)
+	service.textSetter.Set(setter, key, value)
 }
 
 // RestoreTextFunc creates a snapshot of the current textual state and returns a function to restore it.
 func (service AugmentedTextService) RestoreTextFunc(key resource.Key) func(setter AugmentedTextBlockSetter) {
-	oldText := service.getText.Text(key)
-	isModified := service.getText.Modified(key)
+	oldText := service.textViewer.Text(key)
+	isModified := service.textViewer.Modified(key)
 
 	return func(setter AugmentedTextBlockSetter) {
 		if isModified {
-			service.setText.Set(setter, key, oldText)
+			service.textSetter.Set(setter, key, oldText)
 		} else {
-			service.setText.Remove(setter, key)
+			service.textSetter.Remove(setter, key)
 		}
 	}
 }
@@ -77,14 +77,14 @@ func (service AugmentedTextService) Sound(key resource.Key) audio.L8 {
 	if !service.IsTrapMessage(key) {
 		return audio.L8{}
 	}
-	return service.getAudio.Get(TrapMessageSoundKeyFor(key))
+	return service.audioViewer.Audio(TrapMessageSoundKeyFor(key))
 }
 
 // SetSound changes the sound of a text resource.
 // Should the text resource have no audio component, this call does nothing.
 func (service AugmentedTextService) SetSound(setter AugmentedTextBlockSetter, key resource.Key, sound audio.L8) { // nolint: interfacer
 	if service.IsTrapMessage(key) {
-		service.setAudio.Set(setter, TrapMessageSoundKeyFor(key), sound)
+		service.audioSetter.Set(setter, TrapMessageSoundKeyFor(key), sound)
 	}
 }
 
@@ -96,31 +96,31 @@ func (service AugmentedTextService) RestoreSoundFunc(key resource.Key) func(sett
 	}
 
 	soundKey := TrapMessageSoundKeyFor(key)
-	isSoundModified := service.getAudio.Modified(soundKey)
-	oldSound := service.getAudio.Get(soundKey)
+	isSoundModified := service.audioViewer.Modified(soundKey)
+	oldSound := service.audioViewer.Audio(soundKey)
 
 	return func(setter AugmentedTextBlockSetter) {
 		if isSoundModified {
-			service.setAudio.Set(setter, soundKey, oldSound)
+			service.audioSetter.Set(setter, soundKey, oldSound)
 		} else {
-			service.setAudio.Remove(setter, soundKey)
+			service.audioSetter.Remove(setter, soundKey)
 		}
 	}
 }
 
 // Clear sets the text to an empty string and sets an empty sound if audio is associated.
 func (service AugmentedTextService) Clear(setter AugmentedTextBlockSetter, key resource.Key) {
-	service.setText.Clear(setter, key)
+	service.textSetter.Clear(setter, key)
 	if service.IsTrapMessage(key) {
-		service.setAudio.Clear(setter, TrapMessageSoundKeyFor(key))
+		service.audioSetter.Clear(setter, TrapMessageSoundKeyFor(key))
 	}
 }
 
 // Remove erases the text and audio from the resources.
 func (service AugmentedTextService) Remove(setter AugmentedTextBlockSetter, key resource.Key) {
-	service.setText.Remove(setter, key)
+	service.textSetter.Remove(setter, key)
 	if service.IsTrapMessage(key) {
-		service.setAudio.Remove(setter, TrapMessageSoundKeyFor(key))
+		service.audioSetter.Remove(setter, TrapMessageSoundKeyFor(key))
 	}
 }
 

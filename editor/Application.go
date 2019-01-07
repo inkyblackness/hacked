@@ -452,11 +452,11 @@ func (app *Application) modReset() {
 
 // nolint: lll
 func (app *Application) initView() {
-	textGet := media.NewGetTextService(app.textLineCache, app.textPageCache, app.mod)
-	textSet := media.NewSetTextService(app.cp)
-	audioGet := media.NewGetAudioService(app.movieCache, app.mod)
-	audioSet := media.NewSetAudioService()
-	augmentedTextService := undoable.NewAugmentedTextService(edit.NewAugmentedTextService(textGet, textSet, audioGet, audioSet), app)
+	textViewer := media.NewTextViewerService(app.textLineCache, app.textPageCache, app.mod)
+	textSetter := media.NewTextSetterService(app.cp)
+	audioViewer := media.NewAudioViewerService(app.movieCache, app.mod)
+	audioSetter := media.NewAudioSetterService()
+	augmentedTextService := undoable.NewAugmentedTextService(edit.NewAugmentedTextService(textViewer, textSetter, audioViewer, audioSetter), app)
 
 	app.projectView = project.NewView(app.mod, &app.modalState, app.GuiScale, app)
 	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)

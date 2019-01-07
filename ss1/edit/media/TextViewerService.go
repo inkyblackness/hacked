@@ -14,22 +14,24 @@ type TextBlockGetter interface {
 	ModifiedBlocks(lang resource.Language, id resource.ID) [][]byte
 }
 
-// TextService is modding text.
-type GetTextService struct {
+// TextViewerService provides read-only access to text resources.
+type TextViewerService struct {
 	lineCache *text.Cache
 	pageCache *text.Cache
 	getter    TextBlockGetter
 }
 
-func NewGetTextService(lineCache, pageCache *text.Cache, getter TextBlockGetter) GetTextService {
-	return GetTextService{
+// NewTextViewerService returns a new instance.
+func NewTextViewerService(lineCache, pageCache *text.Cache, getter TextBlockGetter) TextViewerService {
+	return TextViewerService{
 		lineCache: lineCache,
 		pageCache: pageCache,
 		getter:    getter,
 	}
 }
 
-func (service GetTextService) Text(key resource.Key) string {
+// Text returns the text data associated with the given key.
+func (service TextViewerService) Text(key resource.Key) string {
 	var cache *text.Cache
 	resourceInfo, existing := ids.Info(key.ID)
 	if !existing || resourceInfo.List {
@@ -44,13 +46,11 @@ func (service GetTextService) Text(key resource.Key) string {
 	return currentValue
 }
 
-func (service GetTextService) Modified(key resource.Key) bool {
+// Modified returns true if the identified text resource is marked as modified.
+func (service TextViewerService) Modified(key resource.Key) bool {
 	info, _ := ids.Info(key.ID)
-	hasData := false
 	if info.List {
-		hasData = len(service.getter.ModifiedBlock(key.Lang, key.ID, key.Index)) > 0
-	} else {
-		hasData = len(service.getter.ModifiedBlocks(key.Lang, key.ID.Plus(key.Index))) > 0
+		return len(service.getter.ModifiedBlock(key.Lang, key.ID, key.Index)) > 0
 	}
-	return hasData
+	return len(service.getter.ModifiedBlocks(key.Lang, key.ID.Plus(key.Index))) > 0
 }

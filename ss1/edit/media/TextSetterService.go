@@ -6,25 +6,27 @@ import (
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 )
 
-// TextBlockSetter modifies storage of raw text data
+// TextBlockSetter modifies storage of raw resource data.
 type TextBlockSetter interface {
 	SetResourceBlock(lang resource.Language, id resource.ID, index int, data []byte)
 	SetResourceBlocks(lang resource.Language, id resource.ID, data [][]byte)
 	DelResource(lang resource.Language, id resource.ID)
 }
 
-// TextService is modding text.
-type SetTextService struct {
+// TextSetterService provides methods to change text resources.
+type TextSetterService struct {
 	cp text.Codepage
 }
 
-func NewSetTextService(cp text.Codepage) SetTextService {
-	return SetTextService{
+// NewTextSetterService returns a new instance.
+func NewTextSetterService(cp text.Codepage) TextSetterService {
+	return TextSetterService{
 		cp: cp,
 	}
 }
 
-func (service SetTextService) Remove(setter TextBlockSetter, key resource.Key) {
+// Remove deletes any text resource for given key.
+func (service TextSetterService) Remove(setter TextBlockSetter, key resource.Key) {
 	info, _ := ids.Info(key.ID)
 	if info.List {
 		setter.SetResourceBlock(key.Lang, key.ID, key.Index, nil)
@@ -34,11 +36,13 @@ func (service SetTextService) Remove(setter TextBlockSetter, key resource.Key) {
 	}
 }
 
-func (service SetTextService) Clear(setter TextBlockSetter, key resource.Key) {
+// Clear resets the identified text resource to an empty string.
+func (service TextSetterService) Clear(setter TextBlockSetter, key resource.Key) {
 	service.Set(setter, key, "")
 }
 
-func (service SetTextService) Set(setter TextBlockSetter, key resource.Key, value string) {
+// Set stores the given text as the identified resource.
+func (service TextSetterService) Set(setter TextBlockSetter, key resource.Key, value string) {
 	blockedValue := text.Blocked(value)
 	info, _ := ids.Info(key.ID)
 	if info.List {
