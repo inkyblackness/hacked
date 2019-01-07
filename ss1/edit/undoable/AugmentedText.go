@@ -7,11 +7,13 @@ import (
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
+// AugmentedTextService provides read/write functionality with undo capability.
 type AugmentedTextService struct {
 	wrapped   edit.AugmentedTextService
 	commander cmd.Commander
 }
 
+// NewAugmentedTextService returns a new instance of a service.
 func NewAugmentedTextService(wrapped edit.AugmentedTextService, commander cmd.Commander) AugmentedTextService {
 	return AugmentedTextService{
 		wrapped:   wrapped,
@@ -19,14 +21,17 @@ func NewAugmentedTextService(wrapped edit.AugmentedTextService, commander cmd.Co
 	}
 }
 
+// IsTrapMessage returns true if the provided resource identifies a trap resource.
 func (service AugmentedTextService) IsTrapMessage(key resource.Key) bool {
 	return service.wrapped.IsTrapMessage(key)
 }
 
-func (service AugmentedTextService) GetText(key resource.Key) string {
-	return service.wrapped.GetText(key)
+// Text returns the textual value of the identified text resource.
+func (service AugmentedTextService) Text(key resource.Key) string {
+	return service.wrapped.Text(key)
 }
 
+// RequestSetText queues the change to update the text.
 func (service AugmentedTextService) RequestSetText(key resource.Key, value string, restoreFunc func()) {
 	service.requestCommand(
 		func(setter edit.AugmentedTextBlockSetter) {
@@ -36,10 +41,13 @@ func (service AugmentedTextService) RequestSetText(key resource.Key, value strin
 		restoreFunc)
 }
 
-func (service AugmentedTextService) GetSound(key resource.Key) audio.L8 {
-	return service.wrapped.GetSound(key)
+// Sound returns the audio value of the identified text resource.
+// In case the text resource has no audio, an empty sound will be returned.
+func (service AugmentedTextService) Sound(key resource.Key) audio.L8 {
+	return service.wrapped.Sound(key)
 }
 
+// RequestSetSound queues the change to update the sound.
 func (service AugmentedTextService) RequestSetSound(key resource.Key, sound audio.L8, restoreFunc func()) {
 	service.requestCommand(
 		func(setter edit.AugmentedTextBlockSetter) {
@@ -49,6 +57,7 @@ func (service AugmentedTextService) RequestSetSound(key resource.Key, sound audi
 		restoreFunc)
 }
 
+// RequestClear queues the change to set both the text and the sound empty.
 func (service AugmentedTextService) RequestClear(key resource.Key, restoreFunc func()) {
 	service.requestCommand(
 		func(setter edit.AugmentedTextBlockSetter) {
@@ -58,6 +67,7 @@ func (service AugmentedTextService) RequestClear(key resource.Key, restoreFunc f
 		restoreFunc)
 }
 
+// RequestRemove queues the change to remove both the text and the sound from the storage.
 func (service AugmentedTextService) RequestRemove(key resource.Key, restoreFunc func()) {
 	service.requestCommand(
 		func(setter edit.AugmentedTextBlockSetter) {

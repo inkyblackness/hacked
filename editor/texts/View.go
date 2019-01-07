@@ -164,7 +164,7 @@ func (view *View) renderContent() {
 }
 
 func (view View) currentText() string {
-	return view.textService.GetText(view.model.currentKey)
+	return view.textService.Text(view.model.currentKey)
 }
 
 func (view View) copyTextToClipboard(text string) {
@@ -195,7 +195,7 @@ func (view View) textHasSound() bool {
 }
 
 func (view *View) currentSound() (sound audio.L8) {
-	return view.textService.GetSound(view.model.currentKey)
+	return view.textService.Sound(view.model.currentKey)
 }
 
 func (view *View) requestExportAudio(sound audio.L8) {
