@@ -87,7 +87,7 @@ func (view *View) renderContent() {
 		imgui.EndCombo()
 	}
 
-	if view.textHasSound() {
+	if view.textIsWithAudio() {
 		imgui.Separator()
 		sound := view.currentSound()
 		if !sound.Empty() {
@@ -165,8 +165,8 @@ func (view *View) removeText() {
 	view.textService.RequestRemove(view.model.currentKey, view.restoreFunc())
 }
 
-func (view View) textHasSound() bool {
-	return view.textService.IsTrapMessage(view.model.currentKey)
+func (view View) textIsWithAudio() bool {
+	return view.textService.WithAudio(view.model.currentKey)
 }
 
 func (view *View) currentSound() (sound audio.L8) {
@@ -174,11 +174,10 @@ func (view *View) currentSound() (sound audio.L8) {
 }
 
 func (view *View) requestExportAudio(sound audio.L8) {
-	if !view.textHasSound() {
+	if !view.textIsWithAudio() {
 		return
 	}
-	key := edit.TrapMessageSoundKeyFor(view.model.currentKey)
-	filename := fmt.Sprintf("%05d_%s.wav", key.ID.Value(), view.model.currentKey.Lang.String())
+	filename := fmt.Sprintf("%05d_%03d_%s.wav", view.model.currentKey.ID, view.model.currentKey.Index, view.model.currentKey.Lang.String())
 
 	external.ExportAudio(view.modalStateMachine, filename, sound)
 }

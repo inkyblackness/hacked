@@ -21,9 +21,9 @@ func NewAugmentedTextService(wrapped edit.AugmentedTextService, commander cmd.Co
 	}
 }
 
-// IsTrapMessage returns true if the provided resource identifies a trap resource.
-func (service AugmentedTextService) IsTrapMessage(key resource.Key) bool {
-	return service.wrapped.IsTrapMessage(key)
+// WithAudio returns true if the identified resource is one with an audio component.
+func (service AugmentedTextService) WithAudio(key resource.Key) bool {
+	return service.wrapped.WithAudio(key)
 }
 
 // Text returns the textual value of the identified text resource.

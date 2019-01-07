@@ -14,8 +14,7 @@ type AugmentedTextBlockSetter interface {
 	DelResource(lang resource.Language, id resource.ID)
 }
 
-// TrapMessageSoundKeyFor returns the resource key associated to given trap message.
-func TrapMessageSoundKeyFor(key resource.Key) resource.Key {
+func trapMessageSoundKeyFor(key resource.Key) resource.Key {
 	soundKey := key
 	soundKey.ID = ids.TrapMessagesAudioStart.Plus(key.Index)
 	soundKey.Index = 0
@@ -42,8 +41,8 @@ func NewAugmentedTextService(
 	}
 }
 
-// IsTrapMessage returns true if the provided resource identifies a trap resource.
-func (service AugmentedTextService) IsTrapMessage(key resource.Key) bool {
+// WithAudio returns true if the identified resource is one with an audio component.
+func (service AugmentedTextService) WithAudio(key resource.Key) bool {
 	return key.ID == ids.TrapMessageTexts
 }
 
@@ -74,28 +73,28 @@ func (service AugmentedTextService) RestoreTextFunc(key resource.Key) func(sette
 // Sound returns the audio value of the identified text resource.
 // In case the text resource has no audio, an empty sound will be returned.
 func (service AugmentedTextService) Sound(key resource.Key) audio.L8 {
-	if !service.IsTrapMessage(key) {
+	if !service.WithAudio(key) {
 		return audio.L8{}
 	}
-	return service.audioViewer.Audio(TrapMessageSoundKeyFor(key))
+	return service.audioViewer.Audio(trapMessageSoundKeyFor(key))
 }
 
 // SetSound changes the sound of a text resource.
 // Should the text resource have no audio component, this call does nothing.
 func (service AugmentedTextService) SetSound(setter AugmentedTextBlockSetter, key resource.Key, sound audio.L8) { // nolint: interfacer
-	if service.IsTrapMessage(key) {
-		service.audioSetter.Set(setter, TrapMessageSoundKeyFor(key), sound)
+	if service.WithAudio(key) {
+		service.audioSetter.Set(setter, trapMessageSoundKeyFor(key), sound)
 	}
 }
 
 // RestoreSoundFunc creates a snapshot of the current sound and returns a function to restore it.
 // In case the text resource has no audio, a stub method will be returned.
 func (service AugmentedTextService) RestoreSoundFunc(key resource.Key) func(setter AugmentedTextBlockSetter) {
-	if !service.IsTrapMessage(key) {
+	if !service.WithAudio(key) {
 		return func(setter AugmentedTextBlockSetter) {}
 	}
 
-	soundKey := TrapMessageSoundKeyFor(key)
+	soundKey := trapMessageSoundKeyFor(key)
 	isSoundModified := service.audioViewer.Modified(soundKey)
 	oldSound := service.audioViewer.Audio(soundKey)
 
@@ -111,16 +110,16 @@ func (service AugmentedTextService) RestoreSoundFunc(key resource.Key) func(sett
 // Clear sets the text to an empty string and sets an empty sound if audio is associated.
 func (service AugmentedTextService) Clear(setter AugmentedTextBlockSetter, key resource.Key) {
 	service.textSetter.Clear(setter, key)
-	if service.IsTrapMessage(key) {
-		service.audioSetter.Clear(setter, TrapMessageSoundKeyFor(key))
+	if service.WithAudio(key) {
+		service.audioSetter.Clear(setter, trapMessageSoundKeyFor(key))
 	}
 }
 
 // Remove erases the text and audio from the resources.
 func (service AugmentedTextService) Remove(setter AugmentedTextBlockSetter, key resource.Key) {
 	service.textSetter.Remove(setter, key)
-	if service.IsTrapMessage(key) {
-		service.audioSetter.Remove(setter, TrapMessageSoundKeyFor(key))
+	if service.WithAudio(key) {
+		service.audioSetter.Remove(setter, trapMessageSoundKeyFor(key))
 	}
 }
 
