@@ -11,23 +11,33 @@ import (
 type TextInfo struct {
 	ID    resource.ID
 	Title string
+
+	audioBase resource.ID
 }
 
 // TextInfoList is a set of TextInfo.
 type TextInfoList []TextInfo
 
-// Title returns the title property of the identified info.
-func (list TextInfoList) Title(id resource.ID) string {
+// ByID returns a text info for the given identifier.
+func (list TextInfoList) ByID(id resource.ID) TextInfo {
 	for _, info := range list {
 		if info.ID == id {
-			return info.Title
+			return info
 		}
 	}
-	return fmt.Sprintf("??? %v", id)
+	return TextInfo{
+		ID:    id,
+		Title: fmt.Sprintf("??? %v", id),
+	}
+}
+
+// Title returns the title property of the identified info.
+func (list TextInfoList) Title(id resource.ID) string {
+	return list.ByID(id).Title
 }
 
 var knownTexts = TextInfoList{
-	{ID: ids.TrapMessageTexts, Title: "Trap Messages"},
+	{ID: ids.TrapMessageTexts, Title: "Trap Messages", audioBase: ids.TrapMessagesAudioStart},
 	{ID: ids.WordTexts, Title: "Words"},
 	{ID: ids.LogCategoryTexts, Title: "Log Categories"},
 	{ID: ids.VariousMessageTexts, Title: "Various Messages"},

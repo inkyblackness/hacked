@@ -4,7 +4,6 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/audio"
 	"github.com/inkyblackness/hacked/ss1/edit/media"
 	"github.com/inkyblackness/hacked/ss1/resource"
-	"github.com/inkyblackness/hacked/ss1/world/ids"
 )
 
 // AugmentedTextBlockSetter modifies resource blocks.
@@ -14,9 +13,14 @@ type AugmentedTextBlockSetter interface {
 	DelResource(lang resource.Language, id resource.ID)
 }
 
-func trapMessageSoundKeyFor(key resource.Key) resource.Key {
+func augmentedTextAudioKeyFor(key resource.Key) resource.Key {
+	audioBase := KnownTexts().ByID(key.ID).audioBase
+	if audioBase == 0 {
+		return resource.KeyOf(0, resource.LangAny, 0)
+	}
+
 	soundKey := key
-	soundKey.ID = ids.TrapMessagesAudioStart.Plus(key.Index)
+	soundKey.ID = audioBase.Plus(key.Index)
 	soundKey.Index = 0
 	return soundKey
 }
@@ -43,7 +47,7 @@ func NewAugmentedTextService(
 
 // WithAudio returns true if the identified resource is one with an audio component.
 func (service AugmentedTextService) WithAudio(key resource.Key) bool {
-	return key.ID == ids.TrapMessageTexts
+	return KnownTexts().ByID(key.ID).audioBase != 0
 }
 
 // Text returns the textual value of the identified text resource.
@@ -76,14 +80,14 @@ func (service AugmentedTextService) Sound(key resource.Key) audio.L8 {
 	if !service.WithAudio(key) {
 		return audio.L8{}
 	}
-	return service.audioViewer.Audio(trapMessageSoundKeyFor(key))
+	return service.audioViewer.Audio(augmentedTextAudioKeyFor(key))
 }
 
 // SetSound changes the sound of a text resource.
 // Should the text resource have no audio component, this call does nothing.
 func (service AugmentedTextService) SetSound(setter AugmentedTextBlockSetter, key resource.Key, sound audio.L8) { // nolint: interfacer
 	if service.WithAudio(key) {
-		service.audioSetter.Set(setter, trapMessageSoundKeyFor(key), sound)
+		service.audioSetter.Set(setter, augmentedTextAudioKeyFor(key), sound)
 	}
 }
 
@@ -94,7 +98,7 @@ func (service AugmentedTextService) RestoreSoundFunc(key resource.Key) func(sett
 		return func(setter AugmentedTextBlockSetter) {}
 	}
 
-	soundKey := trapMessageSoundKeyFor(key)
+	soundKey := augmentedTextAudioKeyFor(key)
 	isSoundModified := service.audioViewer.Modified(soundKey)
 	oldSound := service.audioViewer.Audio(soundKey)
 
@@ -111,7 +115,7 @@ func (service AugmentedTextService) RestoreSoundFunc(key resource.Key) func(sett
 func (service AugmentedTextService) Clear(setter AugmentedTextBlockSetter, key resource.Key) {
 	service.textSetter.Clear(setter, key)
 	if service.WithAudio(key) {
-		service.audioSetter.Clear(setter, trapMessageSoundKeyFor(key))
+		service.audioSetter.Clear(setter, augmentedTextAudioKeyFor(key))
 	}
 }
 
@@ -119,7 +123,7 @@ func (service AugmentedTextService) Clear(setter AugmentedTextBlockSetter, key r
 func (service AugmentedTextService) Remove(setter AugmentedTextBlockSetter, key resource.Key) {
 	service.textSetter.Remove(setter, key)
 	if service.WithAudio(key) {
-		service.audioSetter.Remove(setter, trapMessageSoundKeyFor(key))
+		service.audioSetter.Remove(setter, augmentedTextAudioKeyFor(key))
 	}
 }
 
