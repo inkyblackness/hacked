@@ -22,9 +22,9 @@ func NewGetAudioService(movieCache *movie.Cache, getter AudioBlockGetter) GetAud
 	}
 }
 
-func (service GetAudioService) Get(key resource.Key) (sound audio.L8) {
-	sound, _ = service.movieCache.Audio(key)
-	return
+func (service GetAudioService) Get(key resource.Key) audio.L8 {
+	sound, _ := service.movieCache.Audio(key)
+	return sound
 }
 
 func (service GetAudioService) Modified(key resource.Key) bool {

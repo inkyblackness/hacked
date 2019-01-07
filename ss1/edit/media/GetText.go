@@ -29,7 +29,7 @@ func NewGetTextService(lineCache, pageCache *text.Cache, getter TextBlockGetter)
 	}
 }
 
-func (service GetTextService) Current(key resource.Key) string {
+func (service GetTextService) Text(key resource.Key) string {
 	var cache *text.Cache
 	resourceInfo, existing := ids.Info(key.ID)
 	if !existing || resourceInfo.List {
@@ -45,12 +45,12 @@ func (service GetTextService) Current(key resource.Key) string {
 }
 
 func (service GetTextService) Modified(key resource.Key) bool {
-	var data [][]byte
 	info, _ := ids.Info(key.ID)
+	hasData := false
 	if info.List {
-		data = [][]byte{service.getter.ModifiedBlock(key.Lang, key.ID, key.Index)}
+		hasData = len(service.getter.ModifiedBlock(key.Lang, key.ID, key.Index)) > 0
 	} else {
-		data = service.getter.ModifiedBlocks(key.Lang, key.ID.Plus(key.Index))
+		hasData = len(service.getter.ModifiedBlocks(key.Lang, key.ID.Plus(key.Index))) > 0
 	}
-	return len(data) > 0
+	return hasData
 }

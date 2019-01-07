@@ -49,7 +49,7 @@ func (service AugmentedTextService) IsTrapMessage(key resource.Key) bool {
 
 // Text returns the textual value of the identified text resource.
 func (service AugmentedTextService) Text(key resource.Key) string {
-	return service.getText.Current(key)
+	return service.getText.Text(key)
 }
 
 // SetText changes the textual value of a text resource.
@@ -59,7 +59,7 @@ func (service AugmentedTextService) SetText(setter AugmentedTextBlockSetter, key
 
 // RestoreTextFunc creates a snapshot of the current textual state and returns a function to restore it.
 func (service AugmentedTextService) RestoreTextFunc(key resource.Key) func(setter AugmentedTextBlockSetter) {
-	oldText := service.getText.Current(key)
+	oldText := service.getText.Text(key)
 	isModified := service.getText.Modified(key)
 
 	return func(setter AugmentedTextBlockSetter) {
