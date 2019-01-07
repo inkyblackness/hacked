@@ -5,9 +5,9 @@ import (
 )
 
 type command struct {
-	forward  func(cmd.Transaction)
-	backward func(cmd.Transaction)
-	restore  func()
+	forward func(cmd.Transaction)
+	reverse func(cmd.Transaction)
+	restore func()
 }
 
 func (cmd command) Do(trans cmd.Transaction) error {
@@ -15,7 +15,7 @@ func (cmd command) Do(trans cmd.Transaction) error {
 }
 
 func (cmd command) Undo(trans cmd.Transaction) error {
-	return cmd.perform(trans, cmd.backward)
+	return cmd.perform(trans, cmd.reverse)
 }
 
 func (cmd command) perform(trans cmd.Transaction, callback func(setter cmd.Transaction)) error {

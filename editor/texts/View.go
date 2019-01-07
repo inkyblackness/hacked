@@ -9,7 +9,6 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/audio"
 	"github.com/inkyblackness/hacked/ss1/edit"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable"
-	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
@@ -35,13 +34,11 @@ var knownTextTypes = []textInfo{ // TODO maybe move to world?
 
 // View provides edit controls for texts.
 type View struct {
-	textService  edit.AugmentedTextService
-	textService2 undoable.AugmentedTextService
+	textService undoable.AugmentedTextService
 
 	modalStateMachine gui.ModalStateMachine
 	clipboard         external.Clipboard
 	guiScale          float32
-	commander         cmd.Commander
 
 	model viewModel
 
@@ -49,18 +46,15 @@ type View struct {
 }
 
 // NewTextsView returns a new instance.
-func NewTextsView(
-	textService edit.AugmentedTextService, textService2 undoable.AugmentedTextService,
+func NewTextsView(textService undoable.AugmentedTextService,
 	modalStateMachine gui.ModalStateMachine, clipboard external.Clipboard,
-	guiScale float32, commander cmd.Commander) *View {
+	guiScale float32) *View {
 	view := &View{
-		textService:  textService,
-		textService2: textService2,
+		textService: textService,
 
 		modalStateMachine: modalStateMachine,
 		clipboard:         clipboard,
 		guiScale:          guiScale,
-		commander:         commander,
 
 		model: freshViewModel(),
 
@@ -170,7 +164,7 @@ func (view *View) renderContent() {
 }
 
 func (view View) currentText() string {
-	return view.textService2.GetText(view.model.currentKey)
+	return view.textService.GetText(view.model.currentKey)
 }
 
 func (view View) copyTextToClipboard(text string) {
@@ -185,25 +179,15 @@ func (view *View) setTextFromClipboard() {
 		return
 	}
 
-	view.textService2.RequestSetText(view.model.currentKey, value, view.restoreFunc())
+	view.textService.RequestSetText(view.model.currentKey, value, view.restoreFunc())
 }
 
 func (view *View) clearText() {
-	key := view.model.currentKey
-	view.requestCommand(
-		func(setter edit.AugmentedTextBlockSetter) {
-			view.textService.Clear(setter, key)
-		},
-		view.textService.RestoreFunc(key))
+	view.textService.RequestClear(view.model.currentKey, view.restoreFunc())
 }
 
 func (view *View) removeText() {
-	key := view.model.currentKey
-	view.requestCommand(
-		func(setter edit.AugmentedTextBlockSetter) {
-			view.textService.Remove(setter, key)
-		},
-		view.textService.RestoreFunc(key))
+	view.textService.RequestRemove(view.model.currentKey, view.restoreFunc())
 }
 
 func (view View) textHasSound() bool {
@@ -226,27 +210,8 @@ func (view *View) requestExportAudio(sound audio.L8) {
 
 func (view *View) requestImportAudio() {
 	external.ImportAudio(view.modalStateMachine, func(sound audio.L8) {
-		view.requestSetSound(sound)
+		view.textService.RequestSetSound(view.model.currentKey, sound, view.restoreFunc())
 	})
-}
-
-func (view *View) requestSetSound(sound audio.L8) {
-	key := view.model.currentKey
-	view.requestCommand(
-		func(setter edit.AugmentedTextBlockSetter) {
-			view.textService.SetSound(setter, key, sound)
-		},
-		view.textService.RestoreSoundFunc(key))
-}
-
-func (view *View) requestCommand(forward func(trans edit.AugmentedTextBlockSetter), backward func(trans edit.AugmentedTextBlockSetter)) {
-	c := command{
-		key:      view.model.currentKey,
-		model:    &view.model,
-		forward:  forward,
-		backward: backward,
-	}
-	view.commander.Queue(c)
 }
 
 func (view *View) restoreFunc() func() {
