@@ -27,8 +27,26 @@ func (service AugmentedTextService) GetText(key resource.Key) string {
 	return service.wrapped.GetText(key)
 }
 
-func (service AugmentedTextService) GetSound(key resource.Key) (sound audio.L8) {
+func (service AugmentedTextService) RequestSetText(key resource.Key, value string, restoreFunc func()) {
+	service.requestCommand(
+		func(setter edit.AugmentedTextBlockSetter) {
+			service.wrapped.SetText(setter, key, value)
+		},
+		service.wrapped.RestoreTextFunc(key),
+		restoreFunc)
+}
+
+func (service AugmentedTextService) GetSound(key resource.Key) audio.L8 {
 	return service.wrapped.GetSound(key)
+}
+
+func (service AugmentedTextService) RequestSetSound(key resource.Key, sound audio.L8, restoreFunc func()) {
+	service.requestCommand(
+		func(setter edit.AugmentedTextBlockSetter) {
+			service.wrapped.SetSound(setter, key, sound)
+		},
+		service.wrapped.RestoreSoundFunc(key),
+		restoreFunc)
 }
 
 func (service AugmentedTextService) RequestClear(key resource.Key, restoreFunc func()) {
@@ -36,7 +54,7 @@ func (service AugmentedTextService) RequestClear(key resource.Key, restoreFunc f
 		func(setter edit.AugmentedTextBlockSetter) {
 			service.wrapped.Clear(setter, key)
 		},
-		service.wrapped.RestoreFunc(key), // TODO move RestoreFunc to here
+		service.wrapped.RestoreFunc(key),
 		restoreFunc)
 }
 
@@ -45,25 +63,7 @@ func (service AugmentedTextService) RequestRemove(key resource.Key, restoreFunc 
 		func(setter edit.AugmentedTextBlockSetter) {
 			service.wrapped.Remove(setter, key)
 		},
-		service.wrapped.RestoreFunc(key), // TODO move RestoreFunc to here
-		restoreFunc)
-}
-
-func (service AugmentedTextService) RequestSetText(key resource.Key, value string, restoreFunc func()) {
-	service.requestCommand(
-		func(setter edit.AugmentedTextBlockSetter) {
-			service.wrapped.SetText(setter, key, value)
-		},
-		service.wrapped.RestoreTextFunc(key), // TODO move RestoreTextFunc to here
-		restoreFunc)
-}
-
-func (service AugmentedTextService) RequestSetSound(key resource.Key, sound audio.L8, restoreFunc func()) {
-	service.requestCommand(
-		func(setter edit.AugmentedTextBlockSetter) {
-			service.wrapped.SetSound(setter, key, sound)
-		},
-		service.wrapped.RestoreSoundFunc(key), // TODO move RestoreSoundFunc to here
+		service.wrapped.RestoreFunc(key),
 		restoreFunc)
 }
 

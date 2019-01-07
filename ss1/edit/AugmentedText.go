@@ -63,9 +63,9 @@ func (service AugmentedTextService) RestoreTextFunc(key resource.Key) func(sette
 	}
 }
 
-func (service AugmentedTextService) GetSound(key resource.Key) (sound audio.L8) {
+func (service AugmentedTextService) GetSound(key resource.Key) audio.L8 {
 	if !service.IsTrapMessage(key) {
-		return
+		return audio.L8{}
 	}
 	return service.getAudio.Get(TrapMessageSoundKeyFor(key))
 }
