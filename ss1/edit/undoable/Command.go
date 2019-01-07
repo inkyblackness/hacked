@@ -10,16 +10,16 @@ type command struct {
 	restore func()
 }
 
-func (cmd command) Do(trans cmd.Transaction) error {
-	return cmd.perform(trans, cmd.forward)
+func (c command) Do(trans cmd.Transaction) error {
+	return c.perform(trans, c.forward)
 }
 
-func (cmd command) Undo(trans cmd.Transaction) error {
-	return cmd.perform(trans, cmd.reverse)
+func (c command) Undo(trans cmd.Transaction) error {
+	return c.perform(trans, c.reverse)
 }
 
-func (cmd command) perform(trans cmd.Transaction, callback func(setter cmd.Transaction)) error {
+func (c command) perform(trans cmd.Transaction, callback func(setter cmd.Transaction)) error {
 	callback(trans)
-	cmd.restore()
+	c.restore()
 	return nil
 }
