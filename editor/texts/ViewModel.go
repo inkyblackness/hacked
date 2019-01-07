@@ -1,6 +1,7 @@
 package texts
 
 import (
+	"github.com/inkyblackness/hacked/ss1/edit"
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
@@ -12,6 +13,6 @@ type viewModel struct {
 
 func freshViewModel() viewModel {
 	return viewModel{
-		currentKey: resource.KeyOf(knownTextTypes[0].id, resource.LangDefault, 0),
+		currentKey: resource.KeyOf(edit.KnownTexts()[0].ID, resource.LangDefault, 0),
 	}
 }

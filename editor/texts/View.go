@@ -14,24 +14,6 @@ import (
 	"github.com/inkyblackness/hacked/ui/gui"
 )
 
-type textInfo struct {
-	id    resource.ID
-	title string
-}
-
-var knownTextTypes = []textInfo{ // TODO maybe move to world?
-	{id: ids.TrapMessageTexts, title: "Trap Messages"},
-	{id: ids.WordTexts, title: "Words"},
-	{id: ids.LogCategoryTexts, title: "Log Categories"},
-	{id: ids.VariousMessageTexts, title: "Various Messages"},
-	{id: ids.ScreenMessageTexts, title: "Screen Messages"},
-	{id: ids.InfoNodeMessageTexts, title: "Info Node Message Texts (8/5/6)"},
-	{id: ids.AccessCardNameTexts, title: "Access Card Names"},
-	{id: ids.DataletMessageTexts, title: "Datalet Messages (8/5/8)"},
-	{id: ids.PaperTextsStart, title: "Papers"},
-	{id: ids.PanelNameTexts, title: "Panel Names"},
-}
-
 // View provides edit controls for texts.
 type View struct {
 	textService undoable.AugmentedTextService
@@ -41,8 +23,6 @@ type View struct {
 	guiScale          float32
 
 	model viewModel
-
-	textTypeTitleByID map[resource.ID]string
 }
 
 // NewTextsView returns a new instance.
@@ -57,12 +37,6 @@ func NewTextsView(textService undoable.AugmentedTextService,
 		guiScale:          guiScale,
 
 		model: freshViewModel(),
-
-		textTypeTitleByID: make(map[resource.ID]string),
-	}
-	// TODO if similar maps are in world and used in other places, this functions belongs there
-	for _, info := range knownTextTypes {
-		view.textTypeTitleByID[info.id] = info.title
 	}
 	return view
 }
@@ -89,11 +63,12 @@ func (view *View) Render() {
 }
 
 func (view *View) renderContent() {
+	knownTexts := edit.KnownTexts()
 	imgui.PushItemWidth(-100 * view.guiScale)
-	if imgui.BeginCombo("Text Type", view.textTypeTitleByID[view.model.currentKey.ID]) {
-		for _, info := range knownTextTypes {
-			if imgui.SelectableV(info.title, info.id == view.model.currentKey.ID, 0, imgui.Vec2{}) {
-				view.model.currentKey.ID = info.id
+	if imgui.BeginCombo("Text Type", knownTexts.Title(view.model.currentKey.ID)) {
+		for _, info := range knownTexts {
+			if imgui.SelectableV(info.Title, info.ID == view.model.currentKey.ID, 0, imgui.Vec2{}) {
+				view.model.currentKey.ID = info.ID
 				view.model.currentKey.Index = 0
 			}
 		}
