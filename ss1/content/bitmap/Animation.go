@@ -71,7 +71,7 @@ func WriteAnimation(writer io.Writer, anim Animation) error {
 	codeAnimationBase(encoder, &anim)
 	for _, entry := range anim.Entries {
 		encoder.Code([]byte{animationEntryTag})
-		encoder.Code(&entry)
+		encoder.Code(&entry) // nolint: scopelint
 	}
 	encoder.Code([]byte{animationEndTag, animationEndTagData})
 

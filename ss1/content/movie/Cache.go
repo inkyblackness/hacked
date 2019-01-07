@@ -3,9 +3,10 @@ package movie
 import (
 	"bytes"
 	"errors"
+	"io/ioutil"
+
 	"github.com/inkyblackness/hacked/ss1/content/audio"
 	"github.com/inkyblackness/hacked/ss1/resource"
-	"io/ioutil"
 )
 
 // Cache retrieves movie container from a localizer and keeps them decoded until they are invalidated.

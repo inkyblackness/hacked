@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/inkyblackness/hacked/ui/opengl"
 	"github.com/inkyblackness/imgui-go"
+
+	"github.com/inkyblackness/hacked/ui/opengl"
 )
 
 // ContextParameters describes how to create the context.
@@ -328,16 +329,17 @@ func (context *Context) renderDrawData(drawData imgui.DrawData, bitmapTextureQue
 				textureID := cmd.TextureID()
 				imageType := ImageTypeFromID(textureID)
 				gl.Uniform1i(context.attribLocationType, int32(imageType))
-				if imageType == ImageTypeSimpleTexture {
+				switch imageType {
+				case ImageTypeSimpleTexture:
 					gl.ActiveTexture(opengl.TEXTURE0 + uint32(0))
 					gl.BindTexture(opengl.TEXTURE_2D, uint32(textureID))
-				} else if imageType == ImageTypeBitmapTexture {
+				case ImageTypeBitmapTexture:
 					palette, bitmap := bitmapTextureQuery(textureID)
 					gl.ActiveTexture(opengl.TEXTURE0 + uint32(0))
 					gl.BindTexture(opengl.TEXTURE_2D, bitmap)
 					gl.ActiveTexture(opengl.TEXTURE0 + uint32(1))
 					gl.BindTexture(opengl.TEXTURE_2D, palette)
-				} else {
+				default:
 					gl.ActiveTexture(opengl.TEXTURE0 + uint32(0))
 					gl.BindTexture(opengl.TEXTURE_2D, 0)
 					gl.ActiveTexture(opengl.TEXTURE0 + uint32(1))

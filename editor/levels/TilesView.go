@@ -3,6 +3,8 @@ package levels
 import (
 	"fmt"
 
+	"github.com/inkyblackness/imgui-go"
+
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/model"
@@ -15,7 +17,6 @@ import (
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
-	"github.com/inkyblackness/imgui-go"
 )
 
 // TilesView is for tile properties.
@@ -78,7 +79,7 @@ func (view *TilesView) Render(lvl *level.Level) {
 		title := fmt.Sprintf("Level Tiles, %d selected", len(view.model.selectedTiles.list))
 		readOnly := !view.editingAllowed(lvl.ID())
 		if readOnly {
-			title += " (read-only)"
+			title += hintReadOnly
 		}
 		if imgui.BeginV(title+"###Level Tiles", view.WindowOpen(), 0) {
 			view.renderContent(lvl, readOnly)

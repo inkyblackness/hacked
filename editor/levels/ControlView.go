@@ -3,6 +3,8 @@ package levels
 import (
 	"fmt"
 
+	"github.com/inkyblackness/imgui-go"
+
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/model"
@@ -16,7 +18,6 @@ import (
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
-	"github.com/inkyblackness/imgui-go"
 )
 
 // ControlView is the core view for level editing.
@@ -72,7 +73,7 @@ func (view *ControlView) Render(lvl *level.Level) {
 		title := "Level Control"
 		readOnly := !view.editingAllowed(lvl.ID())
 		if readOnly {
-			title += " (read-only)"
+			title += hintReadOnly
 		}
 		if imgui.BeginV(title+"###Level Control", view.WindowOpen(), imgui.WindowFlagsNoCollapse) {
 			view.renderContent(lvl, readOnly)

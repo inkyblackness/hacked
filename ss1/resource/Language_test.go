@@ -2,9 +2,11 @@ package resource_test
 
 import (
 	"fmt"
-	"github.com/inkyblackness/hacked/ss1/resource"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
 func TestLanguageIncludes(t *testing.T) {
@@ -21,9 +23,10 @@ func TestLanguageIncludes(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		t.Run(fmt.Sprintf("Expecting %v including %v should be %v", tc.primary, tc.secondary, tc.expected), func(t *testing.T) {
-			result := tc.primary.Includes(tc.secondary)
-			assert.Equal(t, tc.expected, result)
+		td := tc
+		t.Run(fmt.Sprintf("Expecting %v including %v should be %v", td.primary, td.secondary, td.expected), func(t *testing.T) {
+			result := td.primary.Includes(td.secondary)
+			assert.Equal(t, td.expected, result)
 		})
 	}
 }
@@ -41,9 +44,10 @@ func TestLanguageString(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		t.Run(tc.expected, func(t *testing.T) {
-			result := tc.lang.String()
-			assert.Equal(t, tc.expected, result)
+		td := tc
+		t.Run(td.expected, func(t *testing.T) {
+			result := td.lang.String()
+			assert.Equal(t, td.expected, result)
 		})
 	}
 }

@@ -93,15 +93,16 @@ func (m *WallHeightsMap) calculateWallHeight(entry *TileMapEntry, entrySide Dire
 	otherCeilingSideHeights := sideHeights(otherSide, -1, otherCeilingFactors.Negated(), otherSlopeHeight, otherCeilingHeight)
 
 	for i := 0; i < 3; i++ {
-		if (otherFloorSideHeights[i] == entryFloorSideHeights[i]) && (entryFloorSideHeights[i] == float32(TileHeightUnitMax)) {
+		switch {
+		case (otherFloorSideHeights[i] == entryFloorSideHeights[i]) && (entryFloorSideHeights[i] == float32(TileHeightUnitMax)):
 			// shortcut for solid-to-solid - no "wall" to see here
 			result[i] = 0
-		} else if (otherFloorSideHeights[i] >= otherCeilingSideHeights[i]) || // other ceiling side seals off at its floor
+		case (otherFloorSideHeights[i] >= otherCeilingSideHeights[i]) || // other ceiling side seals off at its floor
 			(otherCeilingSideHeights[i] <= entryFloorSideHeights[i]) || // other ceiling side seals off at this floor
 			(otherFloorSideHeights[i] >= entryCeilingSideHeights[i]) || // other floor side seals off at this ceiling
-			(entryFloorSideHeights[i] >= entryCeilingSideHeights[i]) { // own ceiling side seals off at floor
+			(entryFloorSideHeights[i] >= entryCeilingSideHeights[i]): // own ceiling side seals off at floor
 			result[i] = float32(TileHeightUnitMax)
-		} else {
+		default:
 			result[i] = otherFloorSideHeights[i] - entryFloorSideHeights[i]
 		}
 	}

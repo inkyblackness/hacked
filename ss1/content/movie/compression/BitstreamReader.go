@@ -48,10 +48,10 @@ func (reader *BitstreamReader) Read(bits int) (result uint32) {
 		toRead = available
 	}
 
-	for reader.bitsBuffered < uint64(toRead) {
+	for reader.bitsBuffered < toRead {
 		reader.bufferNextByte()
 	}
-	result = uint32(reader.buffer >> (reader.bitsBuffered - uint64(toRead)) & ^(uint64(0xFFFFFFFFFFFFFFFF) << uint64(toRead)))
+	result = uint32(reader.buffer >> (reader.bitsBuffered - toRead) & ^(uint64(0xFFFFFFFFFFFFFFFF) << toRead))
 	result <<= uint64(bits) - toRead
 
 	return

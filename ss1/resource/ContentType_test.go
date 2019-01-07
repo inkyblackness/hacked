@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
 func TestContentTypeString(t *testing.T) {

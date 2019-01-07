@@ -3,8 +3,15 @@ package values
 import (
 	"fmt"
 
-	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/imgui-go"
+
+	"github.com/inkyblackness/hacked/ui/gui"
+)
+
+const (
+	hintMultiple = "(multiple)"
+	hintYes      = "Yes"
+	hintNo       = "No"
 )
 
 // RenderUnifiedSliderInt renders a control for an unified integer value.
@@ -19,7 +26,7 @@ func RenderUnifiedSliderInt(readOnly, multiple bool, label string, unifier Unifi
 		selectedString = formatter(selectedValue)
 		labelValue = fmt.Sprintf(selectedString, selectedValue)
 	} else if multiple {
-		selectedString = "(multiple)"
+		selectedString = hintMultiple
 		labelValue = selectedString
 	}
 	if readOnly {
@@ -40,7 +47,7 @@ func RenderUnifiedCombo(readOnly, multiple bool, label string, unifier Unifier,
 		selectedIndex = intConverter(unifier)
 		selectedString = formatter(selectedIndex)
 	} else if multiple {
-		selectedString = "(multiple)"
+		selectedString = hintMultiple
 	}
 	if readOnly {
 		imgui.LabelText(label, selectedString)
@@ -64,18 +71,18 @@ func RenderUnifiedCheckboxCombo(readOnly, multiple bool, label string, unifier U
 	if unifier.IsUnique() {
 		selectedValue := unifier.Unified().(bool)
 		if selectedValue {
-			selectedString = "Yes"
+			selectedString = hintYes
 		} else {
-			selectedString = "No"
+			selectedString = hintNo
 		}
 	} else if multiple {
-		selectedString = "(multiple)"
+		selectedString = hintMultiple
 	}
 	if readOnly {
 		imgui.LabelText(label, selectedString)
 	} else {
 		if imgui.BeginCombo(label, selectedString) {
-			for i, text := range []string{"No", "Yes"} {
+			for i, text := range []string{hintNo, hintYes} {
 				if imgui.SelectableV(text, text == selectedString, 0, imgui.Vec2{}) {
 					changeHandler(i != 0)
 				}

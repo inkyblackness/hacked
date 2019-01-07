@@ -9,6 +9,7 @@ type setObjectPropertiesCommand struct {
 	model *viewModel
 
 	triple object.Triple
+	bitmap int
 
 	oldProperties object.Properties
 	newProperties object.Properties
@@ -27,5 +28,6 @@ func (command setObjectPropertiesCommand) perform(trans cmd.Transaction, propert
 
 	command.model.restoreFocus = true
 	command.model.currentObject = command.triple
+	command.model.currentBitmap = command.bitmap
 	return nil
 }

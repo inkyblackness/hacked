@@ -2,9 +2,9 @@ package native
 
 import (
 	"strings"
+	"unsafe"
 
 	"github.com/go-gl/gl/v3.2-core/gl"
-	"unsafe"
 )
 
 // OpenGL wraps the native GL API into a common interface.

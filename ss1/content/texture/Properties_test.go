@@ -4,8 +4,9 @@ import (
 	"encoding/binary"
 	"testing"
 
-	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/inkyblackness/hacked/ss1/content/texture"
 )
 
 func TestPropertiesSize(t *testing.T) {

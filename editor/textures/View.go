@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/inkyblackness/imgui-go"
+
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/model"
@@ -18,7 +20,6 @@ import (
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
-	"github.com/inkyblackness/imgui-go"
 )
 
 // View provides edit controls for textures.

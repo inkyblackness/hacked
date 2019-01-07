@@ -6,7 +6,6 @@ import (
 	"github.com/inkyblackness/hacked/ui/input"
 )
 
-// nolint: gotype
 var keyMap = map[glfw.Key]input.Key{
 	glfw.KeyEnter:     input.KeyEnter,
 	glfw.KeyKPEnter:   input.KeyEnter,

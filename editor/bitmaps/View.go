@@ -3,6 +3,8 @@ package bitmaps
 import (
 	"fmt"
 
+	"github.com/inkyblackness/imgui-go"
+
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/model"
@@ -12,7 +14,6 @@ import (
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
-	"github.com/inkyblackness/imgui-go"
 )
 
 type bitmapInfo struct {

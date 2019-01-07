@@ -3,6 +3,8 @@ package archives
 import (
 	"fmt"
 
+	"github.com/inkyblackness/imgui-go"
+
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
@@ -12,7 +14,6 @@ import (
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
-	"github.com/inkyblackness/imgui-go"
 )
 
 // View provides edit controls for the archive.

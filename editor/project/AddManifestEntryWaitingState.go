@@ -3,11 +3,12 @@ package project
 import (
 	"time"
 
+	"github.com/inkyblackness/imgui-go"
+
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
-	"github.com/inkyblackness/imgui-go"
 )
 
 type addManifestEntryWaitingState struct {

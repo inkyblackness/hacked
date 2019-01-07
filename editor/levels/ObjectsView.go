@@ -2,8 +2,9 @@ package levels
 
 import (
 	"fmt"
-	"sort"
 	"strings"
+
+	"github.com/inkyblackness/imgui-go"
 
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/graphics"
@@ -20,7 +21,6 @@ import (
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
-	"github.com/inkyblackness/imgui-go"
 )
 
 // ObjectsView is for object properties.
@@ -73,7 +73,7 @@ func (view *ObjectsView) Render(lvl *level.Level) {
 		title := fmt.Sprintf("Level Objects, %d selected", len(view.model.selectedObjects.list))
 		readOnly := !view.editingAllowed(lvl.ID())
 		if readOnly {
-			title += " (read-only)"
+			title += hintReadOnly
 		}
 		if imgui.BeginV(title+"###Level Objects", view.WindowOpen(), imgui.WindowFlagsHorizontalScrollbar|imgui.WindowFlagsAlwaysVerticalScrollbar) {
 			view.renderContent(lvl, readOnly)
@@ -169,7 +169,12 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 	default:
 		imgui.LabelText("ID", "")
 	}
-	view.renderTypeCombo(readOnly, multiple, "Object Type", classUnifier, typeUnifier,
+
+	objTypeRenderer := values.ObjectTypeControlRenderer{
+		Meta:      view.mod.ObjectProperties(),
+		TextCache: view.textCache,
+	}
+	objTypeRenderer.Render(readOnly, multiple, "Object Type", classUnifier, typeUnifier,
 		func(u values.Unifier) object.Triple { return u.Unified().(object.Triple) },
 		func(newValue object.Triple) {
 			view.requestBaseChange(lvl, func(entry *level.ObjectMasterEntry) {
@@ -334,7 +339,7 @@ func (view *ObjectsView) renderProperties(lvl *level.Level, readOnly bool,
 			}
 			view.renderPropertyControl(lvl, readOnly, multiple, key, *unifier, propertyDescribers[key],
 				func(modifier func(uint32) uint32) {
-					view.requestPropertiesChange(lvl, dataRetriever, interpreterFactory, key, modifier)
+					view.requestPropertiesChange(lvl, dataRetriever, interpreterFactory, key, modifier) // nolint: scopelint
 				})
 		}
 	}
@@ -351,133 +356,11 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 	objectHeightFormatter := objectHeightFormatterFor(levelHeight)
 	moveTileHeightFormatter := moveTileHeightFormatterFor(levelHeight)
 
-	simplifier := interpreters.NewSimplifier(func(minValue, maxValue int64, formatter interpreters.RawValueFormatter) {
-		values.RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
-			func(u values.Unifier) int {
-				unifiedValue := u.Unified().(int32)
-				if (minValue == -1) && (maxValue == 0x7FFF) {
-					unifiedValue = int32(int16(unifiedValue))
-				}
-				return int(unifiedValue)
-			},
-			func(value int) string {
-				result := formatter(value)
-				if len(result) == 0 {
-					result = "%d"
-				} else {
-					result += "  - raw: %d"
-				}
-				return result
-			},
-			int(minValue), int(maxValue),
-			func(newValue int) {
-				updater(func(oldValue uint32) uint32 { return uint32(newValue) })
-			})
-	})
-
-	simplifier.SetEnumValueHandler(func(enumValues map[uint32]string) {
-		valueKeys := make([]uint32, 0, len(enumValues))
-		for valueKey := range enumValues {
-			valueKeys = append(valueKeys, valueKey)
-		}
-		sort.Slice(valueKeys, func(indexA, indexB int) bool { return valueKeys[indexA] < valueKeys[indexB] })
-
-		values.RenderUnifiedCombo(readOnly, multiple, label, unifier,
-			func(u values.Unifier) int {
-				unifiedValue := uint32(u.Unified().(int32))
-				for index, valueKey := range valueKeys {
-					if valueKey == unifiedValue {
-						return index
-					}
-				}
-				return -1
-			},
-			func(index int) string {
-				if index < 0 {
-					return ""
-				}
-				return enumValues[valueKeys[index]]
-			},
-			len(valueKeys),
-			func(newIndex int) {
-				updater(func(oldValue uint32) uint32 { return valueKeys[newIndex] })
-			})
-	})
-
-	simplifier.SetBitfieldHandler(func(maskNames map[uint32]string) {
-		masks := make([]uint32, 0, len(maskNames))
-		for mask := range maskNames {
-			masks = append(masks, mask)
-		}
-		sort.Slice(masks, func(indexA, indexB int) bool { return masks[indexA] < masks[indexB] })
-
-		addMaskedItem := func(mask uint32) {
-			maxValue := mask
-			shift := 0
-			maskedLabel := key + "." + maskNames[mask] + "###" + label + "-" + maskNames[mask]
-
-			for (maxValue & 1) == 0 {
-				shift++
-				maxValue >>= 1
-			}
-
-			if maxValue == 1 {
-				booleanUnifier := values.NewUnifier()
-				if unifier.IsUnique() {
-					booleanUnifier.Add((uint32(unifier.Unified().(int32)) & mask) != 0)
-				}
-				values.RenderUnifiedCheckboxCombo(readOnly, multiple, maskedLabel, booleanUnifier,
-					func(newValue bool) {
-						updater(func(oldValue uint32) uint32 {
-							result := oldValue & ^mask
-							if newValue {
-								result |= mask
-							}
-							return result
-						})
-					})
-			} else {
-				values.RenderUnifiedSliderInt(readOnly, multiple, maskedLabel, unifier,
-					func(u values.Unifier) int { return int((uint32(u.Unified().(int32)) & mask) >> uint32(shift)) },
-					func(value int) string { return "%d" },
-					0, int(maxValue),
-					func(newValue int) {
-						updater(func(oldValue uint32) uint32 {
-							return (oldValue & ^mask) | (uint32(newValue) << uint32(shift))
-						})
-					})
-			}
-		}
-
-		for _, mask := range masks {
-			addMaskedItem(mask)
-		}
-	})
-
-	simplifier.SetSpecialHandler("ObjectTriple", func() {
-		var classNames [object.ClassCount]string
-		for index, class := range object.Classes() {
-			classNames[index] = class.String()
-		}
-		tripleResolver := func(u values.Unifier) object.Triple { return object.TripleFromInt(int(u.Unified().(int32))) }
-		values.RenderUnifiedCombo(readOnly, multiple, key+"-Class###"+fullKey+"-Class", unifier,
-			func(u values.Unifier) int {
-				triple := tripleResolver(u)
-				return int(triple.Class)
-			},
-			func(value int) string { return fmt.Sprintf("%2d: %v", value, object.Class(value)) },
-			object.ClassCount,
-			func(newValue int) {
-				triple := object.TripleFrom(newValue, 0, 0)
-				updater(func(oldValue uint32) uint32 { return uint32(triple.Int()) })
-			})
-
-		view.renderTypeCombo(readOnly, multiple, key+"###"+fullKey+"-Type", unifier, unifier,
-			tripleResolver,
-			func(newValue object.Triple) {
-				updater(func(oldValue uint32) uint32 { return uint32(newValue.Int()) })
-			})
-	})
+	objTypeRenderer := values.ObjectTypeControlRenderer{
+		Meta:      view.mod.ObjectProperties(),
+		TextCache: view.textCache,
+	}
+	simplifier := values.StandardSimplifier(readOnly, multiple, fullKey, unifier, updater, objTypeRenderer)
 
 	simplifier.SetObjectIDHandler(func() {
 		values.RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
@@ -615,7 +498,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 		selectedIndex := -1
 		if unifier.IsUnique() {
 			value := int(unifier.Unified().(int32))
-			selectedType = int(value>>7) & 1
+			selectedType = (value >> 7) & 1
 			selectedIndex = value & 0x7F
 		}
 
@@ -700,51 +583,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 			})
 	})
 
-	simplifier.SetSpecialHandler("Mistake", func() {})
-	simplifier.SetSpecialHandler("Ignored", func() {})
-	simplifier.SetSpecialHandler("Unknown", func() {})
-
 	describer(simplifier)
-}
-
-func (view *ObjectsView) renderTypeCombo(readOnly, multiple bool, label string,
-	classUnifier values.Unifier, typeUnifier values.Unifier,
-	tripleResolver func(values.Unifier) object.Triple,
-	changeHandler func(object.Triple)) {
-	switch {
-	case classUnifier.IsUnique():
-		objectProperties := view.mod.ObjectProperties()
-		class := tripleResolver(classUnifier).Class
-		triples := objectProperties.TriplesInClass(class)
-		selectedIndex := -1
-		if typeUnifier.IsUnique() {
-			triple := tripleResolver(typeUnifier)
-			for index, availableTriple := range triples {
-				if availableTriple == triple {
-					selectedIndex = index
-				}
-			}
-			if selectedIndex < 0 {
-				selectedIndex = len(triples)
-				triples = append(triples, triple)
-			}
-		}
-		values.RenderUnifiedCombo(readOnly, multiple, label, typeUnifier,
-			func(u values.Unifier) int { return selectedIndex },
-			func(value int) string {
-				triple := triples[value]
-				return view.tripleName(triple)
-			},
-			len(triples),
-			func(newValue int) {
-				triple := triples[newValue]
-				changeHandler(triple)
-			})
-	case multiple:
-		imgui.LabelText(label, "(multiple classes)")
-	default:
-		imgui.LabelText(label, "")
-	}
 }
 
 func (view *ObjectsView) renderBlockPuzzleControl(lvl *level.Level, readOnly bool) {
@@ -1055,7 +894,7 @@ func (view *ObjectsView) setSelectedObjects(objectIDs []level.ObjectID) {
 }
 
 func (view *ObjectsView) tripleName(triple object.Triple) string {
-	suffix := "???"
+	suffix := hintUnknown
 	linearIndex := view.mod.ObjectProperties().TripleIndex(triple)
 	if linearIndex >= 0 {
 		key := resource.KeyOf(ids.ObjectLongNames, resource.LangDefault, linearIndex)
@@ -1086,7 +925,7 @@ func (view *ObjectsView) PlaceSelectedObjectsOnFloor(lvl *level.Level) {
 	})
 }
 
-// PlaceSelectedObjectsOnFloor puts all selected objects to be at eye level (approximately).
+// PlaceSelectedObjectsOnEyeLevel puts all selected objects to be at eye level (approximately).
 func (view *ObjectsView) PlaceSelectedObjectsOnEyeLevel(lvl *level.Level) {
 	_, _, height := lvl.Size()
 	view.placeSelectedObjects(lvl, func(tile *level.TileMapEntry, pos MapPosition, objPivot float32) level.HeightUnit {
@@ -1095,7 +934,7 @@ func (view *ObjectsView) PlaceSelectedObjectsOnEyeLevel(lvl *level.Level) {
 	})
 }
 
-// PlaceSelectedObjectsOnFloor puts all selected objects to hang from the ceiling.
+// PlaceSelectedObjectsOnCeiling puts all selected objects to hang from the ceiling.
 func (view *ObjectsView) PlaceSelectedObjectsOnCeiling(lvl *level.Level) {
 	_, _, height := lvl.Size()
 	view.placeSelectedObjects(lvl, func(tile *level.TileMapEntry, pos MapPosition, objPivot float32) level.HeightUnit {

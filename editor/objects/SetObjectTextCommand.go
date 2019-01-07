@@ -10,6 +10,7 @@ type setObjectTextCommand struct {
 	model *viewModel
 
 	triple object.Triple
+	bitmap int
 	key    resource.Key
 
 	oldData []byte
@@ -28,6 +29,7 @@ func (command setObjectTextCommand) perform(trans cmd.Transaction, data []byte) 
 	trans.SetResourceBlock(command.key.Lang, command.key.ID, command.key.Index, data)
 	command.model.restoreFocus = true
 	command.model.currentObject = command.triple
+	command.model.currentBitmap = command.bitmap
 	command.model.currentLang = command.key.Lang
 	return nil
 }

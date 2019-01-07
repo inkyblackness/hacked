@@ -21,7 +21,7 @@ func (ctrl TransparencyControl) String() string {
 const (
 	// TransparencyControlRegular describes a typical texture.
 	TransparencyControlRegular TransparencyControl = 0x00
-	// TransparencyControl marks space texture, which ignores bitmap data.
+	// TransparencyControlSpace marks space texture, which ignores bitmap data.
 	TransparencyControlSpace TransparencyControl = 0x01
 	// TransparencyControlSpaceBackground draws space for palette index 0x00.
 	TransparencyControlSpaceBackground TransparencyControl = 0x02

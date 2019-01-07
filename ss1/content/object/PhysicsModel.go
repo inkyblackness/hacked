@@ -13,7 +13,7 @@ func (model PhysicsModel) String() string {
 	return physicsModelNames[model]
 }
 
-// RenderType constants.
+// PhysicsModel constants.
 const (
 	PhysicsModelInsubstantial PhysicsModel = 0
 	PhysicsModelRegular       PhysicsModel = 1
@@ -26,7 +26,7 @@ var physicsModelNames = []string{
 	"Strange",
 }
 
-// RenderTypes returns all known constants.
+// PhysicsModels returns all known constants.
 func PhysicsModels() []PhysicsModel {
 	return []PhysicsModel{
 		PhysicsModelInsubstantial, PhysicsModelRegular, PhysicsModelStrange,

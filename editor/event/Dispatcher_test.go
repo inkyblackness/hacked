@@ -202,7 +202,7 @@ func (suite *DispatcherSuite) TestEventIsIgnoredIfNoHandlerRegistered() {
 func (suite *DispatcherSuite) givenRegisteredHandler(handlers ...interface{}) {
 	for _, handler := range handlers {
 		require.NotPanics(suite.T(), func() {
-			suite.dispatcher.RegisterHandler(handler)
+			suite.dispatcher.RegisterHandler(handler) // nolint: scopelint
 		}, "Registering handler panicked! Not expected.")
 	}
 }

@@ -29,7 +29,7 @@ func TestReaderFromReturnsInstanceOnEmptySource(t *testing.T) {
 
 func TestReaderFromReturnsErrorOnInvalidHeaderString(t *testing.T) {
 	sourceData := emptyResourceFile()
-	sourceData[10] = byte("A"[0])
+	sourceData[10] = "A"[0]
 
 	_, err := ReaderFrom(bytes.NewReader(sourceData))
 

@@ -4,8 +4,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/imgui-go"
+
+	"github.com/inkyblackness/hacked/ui/gui"
 )
 
 type importWaitingState struct {

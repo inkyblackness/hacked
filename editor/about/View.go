@@ -1,8 +1,9 @@
 package about
 
 import (
-	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/imgui-go"
+
+	"github.com/inkyblackness/hacked/editor/external"
 )
 
 // View handles the about display.

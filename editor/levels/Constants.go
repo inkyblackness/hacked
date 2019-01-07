@@ -1,5 +1,8 @@
 package levels
 
 const (
-	fineCoordinatesPerTileSide float32 = 256.0
+	fineCoordinatesPerTileSide = 256
+
+	hintUnknown  = "???"
+	hintReadOnly = " (read-only)"
 )

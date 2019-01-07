@@ -3,9 +3,10 @@ package render
 import (
 	"math"
 
+	"github.com/inkyblackness/imgui-go"
+
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/ss1/resource"
-	"github.com/inkyblackness/imgui-go"
 )
 
 // TextureImage renders an image centered and fitted within the given size.
@@ -26,7 +27,7 @@ func TextureImage(label string, cache *graphics.TextureCache, key resource.Key, 
 			scaleFactor := float32(math.Min(float64(size.X/width), float64(size.Y/height)))
 			imageSize := imgui.Vec2{X: width * scaleFactor, Y: height * scaleFactor}
 
-			bufferSize := imgui.Vec2{X: float32((size.X - imageSize.X) / 2), Y: float32((size.Y - imageSize.Y) / 2)}
+			bufferSize := imgui.Vec2{X: (size.X - imageSize.X) / 2, Y: (size.Y - imageSize.Y) / 2}
 			imgui.SetCursorPos(bufferSize)
 
 			imgui.ImageV(textureID, imageSize, imgui.Vec2{}, uv,
