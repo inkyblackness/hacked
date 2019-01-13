@@ -22,7 +22,7 @@ func TestWrite(t *testing.T) {
 				Compound:    compound,
 			},
 			Blocks: blocks,
-		}.ToView()
+		}
 	}
 
 	provider.Put(resource.ID(1), aResource(false, resource.Bitmap, false, resource.BlocksFrom([][]byte{{0x11}})))

@@ -133,7 +133,7 @@ func (suite *AnimationCacheSuite) storing(id int, anim bitmap.Animation) func(*r
 				Compound:    true,
 			},
 			Blocks: resource.BlocksFrom([][]byte{buf.Bytes()}),
-		}.ToView())
+		})
 	}
 }
 
@@ -164,7 +164,7 @@ func (suite *AnimationCacheSuite) storingNonAnimation(id int) func(*resource.Sto
 				Compound:    true,
 			},
 			Blocks: resource.BlocksFrom([][]byte{{}}),
-		}.ToView())
+		})
 	}
 }
 

@@ -165,7 +165,7 @@ func (suite *ElectronicMessageCacheSuite) storing(id int, modifier func(msg text
 				Compound:    true,
 			},
 			Blocks: resource.BlocksFrom(data),
-		}.ToView())
+		})
 	}
 }
 
@@ -177,7 +177,7 @@ func (suite *ElectronicMessageCacheSuite) storingNonText(id int) func(*resource.
 				Compound:    false,
 			},
 			Blocks: resource.BlocksFrom([][]byte{{}}),
-		}.ToView())
+		})
 	}
 }
 

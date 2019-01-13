@@ -135,7 +135,7 @@ func (suite *PaletteCacheSuite) storing(id int, palette bitmap.Palette) func(*re
 				Compound:    false,
 			},
 			Blocks: resource.BlocksFrom([][]byte{buf.Bytes()}),
-		}.ToView())
+		})
 	}
 }
 
@@ -157,7 +157,7 @@ func (suite *PaletteCacheSuite) storingNonPalette(id int) func(*resource.Store) 
 				Compound:    false,
 			},
 			Blocks: resource.BlocksFrom([][]byte{{}}),
-		}.ToView())
+		})
 	}
 }
 

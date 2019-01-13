@@ -22,7 +22,7 @@ func TestIsSavegameTrueForActualSavegame(t *testing.T) {
 			Compound:    false,
 		},
 		Blocks: resource.BlocksFrom([][]byte{stateData}),
-	}.ToView())
+	})
 
 	result := world.IsSavegame(store)
 	assert.True(t, result)
@@ -44,7 +44,7 @@ func TestIsSavegameFalseForWrongResourceContent(t *testing.T) {
 			Compound:    true,
 		},
 		Blocks: resource.BlocksFrom([][]byte{}),
-	}.ToView())
+	})
 
 	result := world.IsSavegame(store)
 	assert.False(t, result)
@@ -59,7 +59,7 @@ func TestIsSavegameFalseForTooShortData(t *testing.T) {
 			Compound:    true,
 		},
 		Blocks: resource.BlocksFrom([][]byte{make([]byte, 0x10)}),
-	}.ToView())
+	})
 
 	result := world.IsSavegame(store)
 	assert.False(t, result)
@@ -75,7 +75,7 @@ func TestIsSavegameFalseForZeroData(t *testing.T) {
 			Compound:    true,
 		},
 		Blocks: resource.BlocksFrom([][]byte{stateData}),
-	}.ToView())
+	})
 
 	result := world.IsSavegame(store)
 	assert.False(t, result)

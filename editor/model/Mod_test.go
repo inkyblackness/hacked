@@ -82,7 +82,7 @@ func (suite *ModSuite) TestResourceMetaCanBeChanged() {
 						Compressed:  false,
 					},
 					Blocks: resource.BlocksFrom(nil),
-				}.ToView())
+				})
 			}),
 		suite.someLocalizedResources(resource.LangFrench,
 			func(store *resource.Store) {
@@ -93,7 +93,7 @@ func (suite *ModSuite) TestResourceMetaCanBeChanged() {
 						Compressed:  false,
 					},
 					Blocks: resource.BlocksFrom(nil),
-				}.ToView())
+				})
 			}))
 	suite.whenModifyingBy(func(trans *model.ModTransaction) {
 		trans.SetResource(0x1000, true, resource.Movie, true)
@@ -126,7 +126,7 @@ func (suite *ModSuite) TestMetaModificationIsNotified() {
 						Compressed:  false,
 					},
 					Blocks: resource.BlocksFrom(nil),
-				}.ToView())
+				})
 			}))
 	suite.whenModifyingBy(func(trans *model.ModTransaction) {
 		trans.SetResource(0x1000, true, resource.Movie, true)
@@ -292,6 +292,6 @@ func (suite *ModSuite) storing(id int, data [][]byte) func(*resource.Store) {
 	return func(store *resource.Store) {
 		store.Put(resource.ID(id), resource.Resource{
 			Blocks: resource.BlocksFrom(data),
-		}.ToView())
+		})
 	}
 }

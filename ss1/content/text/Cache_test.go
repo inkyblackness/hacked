@@ -174,7 +174,7 @@ func (suite *CacheSuite) storing(id int, lines ...string) func(*resource.Store) 
 				Compound:    len(data) != 1,
 			},
 			Blocks: resource.BlocksFrom(data),
-		}.ToView())
+		})
 	}
 }
 
@@ -186,7 +186,7 @@ func (suite *CacheSuite) storingNonText(id int) func(*resource.Store) {
 				Compound:    false,
 			},
 			Blocks: resource.BlocksFrom([][]byte{{}}),
-		}.ToView())
+		})
 	}
 }
 

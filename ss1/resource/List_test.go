@@ -11,7 +11,7 @@ import (
 func someResource(key byte) resource.View {
 	return resource.Resource{
 		Blocks: resource.BlocksFrom([][]byte{{key}}),
-	}.ToView()
+	}
 }
 
 func TestListWith(t *testing.T) {

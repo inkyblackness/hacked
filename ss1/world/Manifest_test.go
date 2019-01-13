@@ -442,7 +442,7 @@ func (suite *ManifestSuite) storing(id int, data [][]byte) func(*resource.Store)
 	return func(store *resource.Store) {
 		store.Put(resource.ID(id), resource.Resource{
 			Blocks: resource.BlocksFrom(data),
-		}.ToView())
+		})
 	}
 }
 
