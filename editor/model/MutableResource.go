@@ -1,9 +1,6 @@
 package model
 
 import (
-	"bytes"
-	"fmt"
-	"io"
 	"io/ioutil"
 
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -14,12 +11,7 @@ type MutableResource struct {
 	filename  string
 	saveOrder int
 
-	compound    bool
-	contentType resource.ContentType
-	compressed  bool
-
-	blockCount int
-	blocks     map[int][]byte
+	resource.Resource
 }
 
 // LocalizedResources is a map of identified resources by language.
@@ -46,10 +38,13 @@ func MutableResourcesFromProvider(filename string, provider resource.Provider) I
 			filename:  filename,
 			saveOrder: index,
 
-			compound:    res.Compound(),
-			contentType: res.ContentType(),
-			compressed:  res.Compressed(),
-			blocks:      make(map[int][]byte),
+			Resource: resource.Resource{
+				Properties: resource.Properties{
+					Compound:    res.Compound(),
+					ContentType: res.ContentType(),
+					Compressed:  res.Compressed(),
+				},
+			},
 		}
 		blockCount := res.BlockCount()
 		for blockIndex := 0; blockIndex < blockCount; blockIndex++ {
@@ -75,56 +70,4 @@ func readBlock(provider resource.BlockProvider, index int) []byte {
 // Filename returns the file this resource should be stored in.
 func (res MutableResource) Filename() string {
 	return res.filename
-}
-
-// Compound returns true if the resource holds zero, one, or more blocks.
-func (res MutableResource) Compound() bool {
-	return res.compound
-}
-
-// ContentType describes how the data shall be interpreted.
-func (res MutableResource) ContentType() resource.ContentType {
-	return res.contentType
-}
-
-// Compressed returns true if the resource shall be serialized in compressed form.
-func (res MutableResource) Compressed() bool {
-	return res.compressed
-}
-
-// BlockCount returns the number of blocks in this resource.
-func (res MutableResource) BlockCount() int {
-	return res.blockCount
-}
-
-// Block returns a reader for the identified block.
-func (res MutableResource) Block(index int) (io.Reader, error) {
-	if !res.isBlockIndexValid(index) {
-		return nil, fmt.Errorf("block index wrong: %v/%v", index, res.blockCount)
-	}
-	return bytes.NewReader(res.blocks[index]), nil
-}
-
-// SetBlocks sets the data of all the blocks, essentially resetting the resource.
-func (res *MutableResource) SetBlocks(data [][]byte) {
-	res.blockCount = 0
-	res.blocks = make(map[int][]byte)
-	for index, blockData := range data {
-		res.SetBlock(index, blockData)
-	}
-}
-
-// SetBlock sets the data of the identified block.
-func (res *MutableResource) SetBlock(index int, data []byte) {
-	if index < 0 {
-		return
-	}
-	res.blocks[index] = data
-	if index >= res.blockCount {
-		res.blockCount = index + 1
-	}
-}
-
-func (res MutableResource) isBlockIndexValid(index int) bool {
-	return (index >= 0) && (index < res.blockCount)
 }

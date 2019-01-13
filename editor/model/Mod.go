@@ -131,16 +131,16 @@ func (mod Mod) CreateBlockPatch(lang resource.Language, id resource.ID, index in
 	if res == nil {
 		return patch, false, errors.New("resource unknown")
 	}
-	if (index < 0) || (index >= res.BlockCount()) {
-		return patch, false, errors.New("block index wrong")
+	oldData, err := res.BlockRaw(index)
+	if err != nil {
+		return patch, false, err
 	}
-	oldData := res.blocks[index]
 	if len(oldData) != len(newData) {
 		return patch, false, fmt.Errorf("block length mismatch: current=%d, newData=%d", len(oldData), len(newData))
 	}
 
 	forwardData := bytes.NewBuffer(nil)
-	err := rle.Compress(forwardData, newData, oldData)
+	err = rle.Compress(forwardData, newData, oldData)
 	if err != nil {
 		return patch, false, err
 	}
@@ -166,7 +166,8 @@ func (mod Mod) ModifiedBlock(lang resource.Language, id resource.ID, index int) 
 	if res == nil {
 		return
 	}
-	return mod.blockCopy(res.blocks[index])
+	raw, _ := res.BlockRaw(index)
+	return mod.blockCopy(raw)
 }
 
 // ModifiedBlocks returns all blocks of the modified resource.
@@ -175,9 +176,10 @@ func (mod Mod) ModifiedBlocks(lang resource.Language, id resource.ID) [][]byte {
 	if res == nil {
 		return nil
 	}
-	data := make([][]byte, res.blockCount)
-	for index := 0; index < res.blockCount; index++ {
-		data[index] = mod.blockCopy(res.blocks[index])
+	data := make([][]byte, res.BlockCount())
+	for index := 0; index < res.BlockCount(); index++ {
+		raw, _ := res.BlockRaw(index)
+		data[index] = mod.blockCopy(raw)
 	}
 	return data
 }
@@ -297,10 +299,13 @@ func (mod *Mod) newResource(lang resource.Language, id resource.ID) *MutableReso
 		filename:  filename,
 		saveOrder: math.MaxInt32,
 
-		compound:    compound,
-		contentType: contentType,
-		compressed:  compressed,
-		blocks:      make(map[int][]byte),
+		Resource: resource.Resource{
+			Properties: resource.Properties{
+				Compound:    compound,
+				ContentType: contentType,
+				Compressed:  compressed,
+			},
+		},
 	}
 }
 

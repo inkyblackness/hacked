@@ -27,9 +27,9 @@ type ModTransaction struct {
 func (trans *ModTransaction) SetResource(id resource.ID,
 	compound bool, contentType resource.ContentType, compressed bool) {
 	setResource := func(mod *Mod, res *MutableResource) {
-		res.compound = compound
-		res.contentType = contentType
-		res.compressed = compressed
+		res.Properties.Compound = compound
+		res.Properties.ContentType = contentType
+		res.Properties.Compressed = compressed
 		mod.markFileChanged(res.filename)
 	}
 	trans.actions = append(trans.actions, func(mod *Mod) {
@@ -64,8 +64,9 @@ func (trans *ModTransaction) SetResourceBlock(lang resource.Language, id resourc
 func (trans *ModTransaction) PatchResourceBlock(lang resource.Language, id resource.ID, index int, expectedLength int, patch []byte) {
 	trans.actions = append(trans.actions, func(mod *Mod) {
 		res := mod.ensureResource(lang, id)
-		if res.isBlockIndexValid(index) && (len(res.blocks[index]) == expectedLength) {
-			_ = rle.Decompress(bytes.NewReader(patch), res.blocks[index])
+		raw, err := res.BlockRaw(index)
+		if (err == nil) && (len(raw) == expectedLength) {
+			_ = rle.Decompress(bytes.NewReader(patch), raw)
 			mod.markFileChanged(res.filename)
 		}
 	})
@@ -77,7 +78,7 @@ func (trans *ModTransaction) PatchResourceBlock(lang resource.Language, id resou
 func (trans *ModTransaction) SetResourceBlocks(lang resource.Language, id resource.ID, data [][]byte) {
 	trans.actions = append(trans.actions, func(mod *Mod) {
 		res := mod.ensureResource(lang, id)
-		res.SetBlocks(data)
+		res.Set(data)
 		mod.markFileChanged(res.filename)
 	})
 	trans.modifiedIDs.Add(id)
