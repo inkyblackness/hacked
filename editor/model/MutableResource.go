@@ -46,9 +46,9 @@ func MutableResourcesFromProvider(filename string, provider resource.Provider) I
 			filename:  filename,
 			saveOrder: index,
 
-			compound:    res.Compound,
-			contentType: res.ContentType,
-			compressed:  res.Compressed,
+			compound:    res.Compound(),
+			contentType: res.ContentType(),
+			compressed:  res.Compressed(),
 			blocks:      make(map[int][]byte),
 		}
 		blockCount := res.BlockCount()

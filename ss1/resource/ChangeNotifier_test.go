@@ -117,9 +117,9 @@ func (suite *ChangeNotifierSuite) someLocalizedResources(lang resource.Language,
 
 func (suite *ChangeNotifierSuite) storing(id int, data ...[]byte) func(*resource.Store) {
 	return func(store *resource.Store) {
-		store.Put(resource.ID(id), &resource.Resource{
+		store.Put(resource.ID(id), resource.Resource{
 			Blocks: resource.BlocksFrom(data),
-		})
+		}.ToView())
 	}
 }
 

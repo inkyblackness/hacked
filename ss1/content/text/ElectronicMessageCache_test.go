@@ -159,21 +159,25 @@ func (suite *ElectronicMessageCacheSuite) someLocalizedResources(lang resource.L
 func (suite *ElectronicMessageCacheSuite) storing(id int, modifier func(msg text.ElectronicMessage) text.ElectronicMessage) func(*resource.Store) {
 	data := modifier(text.EmptyElectronicMessage()).Encode(suite.cp)
 	return func(store *resource.Store) {
-		store.Put(resource.ID(id), &resource.Resource{
-			ContentType: resource.Text,
-			Compound:    true,
-			Blocks:      resource.BlocksFrom(data),
-		})
+		store.Put(resource.ID(id), resource.Resource{
+			Properties: resource.Properties{
+				ContentType: resource.Text,
+				Compound:    true,
+			},
+			Blocks: resource.BlocksFrom(data),
+		}.ToView())
 	}
 }
 
 func (suite *ElectronicMessageCacheSuite) storingNonText(id int) func(*resource.Store) {
 	return func(store *resource.Store) {
-		store.Put(resource.ID(id), &resource.Resource{
-			ContentType: resource.Sound,
-			Compound:    false,
-			Blocks:      resource.BlocksFrom([][]byte{{}}),
-		})
+		store.Put(resource.ID(id), resource.Resource{
+			Properties: resource.Properties{
+				ContentType: resource.Sound,
+				Compound:    false,
+			},
+			Blocks: resource.BlocksFrom([][]byte{{}}),
+		}.ToView())
 	}
 }
 

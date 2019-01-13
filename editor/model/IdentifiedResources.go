@@ -36,15 +36,10 @@ func (res IdentifiedResources) IDs() []resource.ID {
 }
 
 // Resource returns the mutable resource as a read-only view.
-func (res IdentifiedResources) Resource(id resource.ID) (*resource.Resource, error) {
+func (res IdentifiedResources) Resource(id resource.ID) (resource.View, error) {
 	entry, existing := res[id]
 	if !existing {
 		return nil, resource.ErrResourceDoesNotExist(id)
 	}
-	return &resource.Resource{
-		Compressed:  entry.Compressed(),
-		ContentType: entry.ContentType(),
-		Compound:    entry.Compound(),
-		Blocks:      entry,
-	}, nil
+	return entry, nil
 }

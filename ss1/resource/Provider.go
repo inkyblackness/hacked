@@ -6,5 +6,5 @@ type Provider interface {
 	IDs() []ID
 
 	// Resource returns a resource for the given identifier.
-	Resource(id ID) (*Resource, error)
+	Resource(id ID) (View, error)
 }

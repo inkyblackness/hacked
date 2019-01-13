@@ -129,11 +129,13 @@ func (suite *PaletteCacheSuite) storing(id int, palette bitmap.Palette) func(*re
 	encoder := serial.NewEncoder(buf)
 	encoder.Code(palette)
 	return func(store *resource.Store) {
-		store.Put(resource.ID(basePaletteResourceID).Plus(id), &resource.Resource{
-			ContentType: resource.Palette,
-			Compound:    false,
-			Blocks:      resource.BlocksFrom([][]byte{buf.Bytes()}),
-		})
+		store.Put(resource.ID(basePaletteResourceID).Plus(id), resource.Resource{
+			Properties: resource.Properties{
+				ContentType: resource.Palette,
+				Compound:    false,
+			},
+			Blocks: resource.BlocksFrom([][]byte{buf.Bytes()}),
+		}.ToView())
 	}
 }
 
@@ -149,11 +151,13 @@ func (suite *PaletteCacheSuite) somePalette(seed uint8) bitmap.Palette {
 
 func (suite *PaletteCacheSuite) storingNonPalette(id int) func(*resource.Store) {
 	return func(store *resource.Store) {
-		store.Put(resource.ID(basePaletteResourceID).Plus(id), &resource.Resource{
-			ContentType: resource.Sound,
-			Compound:    false,
-			Blocks:      resource.BlocksFrom([][]byte{{}}),
-		})
+		store.Put(resource.ID(basePaletteResourceID).Plus(id), resource.Resource{
+			Properties: resource.Properties{
+				ContentType: resource.Sound,
+				Compound:    false,
+			},
+			Blocks: resource.BlocksFrom([][]byte{{}}),
+		}.ToView())
 	}
 }
 

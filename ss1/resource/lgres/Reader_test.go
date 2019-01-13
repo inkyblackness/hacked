@@ -88,9 +88,9 @@ func TestReaderResourceReturnsResourceWithMetaInformation(t *testing.T) {
 	}
 	verifyResource := func(resourceID resource.ID, compound bool, contentType resource.ContentType, compressed bool) {
 		resourceReader, _ := reader.Resource(resourceID)
-		assert.Equal(t, compound, resourceReader.Compound, info(resourceID, "compound", compound))
-		assert.Equal(t, contentType, resourceReader.ContentType, info(resourceID, "contentType", contentType))
-		assert.Equal(t, compressed, resourceReader.Compressed, info(resourceID, "compressed", compressed))
+		assert.Equal(t, compound, resourceReader.Compound(), info(resourceID, "compound", compound))
+		assert.Equal(t, contentType, resourceReader.ContentType(), info(resourceID, "contentType", contentType))
+		assert.Equal(t, compressed, resourceReader.Compressed(), info(resourceID, "compressed", compressed))
 	}
 	verifyResource(exampleResourceIDSingleBlockResource, false, resource.ContentType(0x01), false)
 	verifyResource(exampleResourceIDSingleBlockResourceCompressed, false, resource.ContentType(0x02), true)

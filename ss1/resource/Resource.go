@@ -5,8 +5,8 @@ import (
 	"io"
 )
 
-// Resource provides meta information as well as access to its contained blocks.
-type Resource struct {
+// Properties describe the meta information about a resource.
+type Properties struct {
 	// Compound tells whether the resource should be serialized with a directory.
 	// Compound resources can have zero, one, or more blocks.
 	// Simple resources always have exactly one block.
@@ -17,6 +17,11 @@ type Resource struct {
 
 	// Compressed tells whether the data shall be serialized in compressed form.
 	Compressed bool
+}
+
+// Resource provides meta information as well as access to its contained blocks.
+type Resource struct {
+	Properties
 
 	// Blocks is the keeper of original block data.
 	// This provider will be referred to if no other data was explicitly set.

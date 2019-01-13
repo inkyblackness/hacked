@@ -12,6 +12,6 @@ func (*nullProvider) IDs() []ID {
 	return nil
 }
 
-func (*nullProvider) Resource(id ID) (*Resource, error) {
+func (*nullProvider) Resource(id ID) (View, error) {
 	return nil, ErrResourceDoesNotExist(id)
 }

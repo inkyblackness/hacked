@@ -14,13 +14,15 @@ import (
 func TestWrite(t *testing.T) {
 	target := serial.NewByteStore()
 	provider := resource.NewProviderBackedStore(resource.NullProvider())
-	aResource := func(compressed bool, contentType resource.ContentType, compound bool, blocks resource.Blocks) *resource.Resource {
-		return &resource.Resource{
-			Compressed:  compressed,
-			ContentType: contentType,
-			Compound:    compound,
-			Blocks:      blocks,
-		}
+	aResource := func(compressed bool, contentType resource.ContentType, compound bool, blocks resource.Blocks) resource.View {
+		return resource.Resource{
+			Properties: resource.Properties{
+				Compressed:  compressed,
+				ContentType: contentType,
+				Compound:    compound,
+			},
+			Blocks: blocks,
+		}.ToView()
 	}
 
 	provider.Put(resource.ID(1), aResource(false, resource.Bitmap, false, resource.BlocksFrom([][]byte{{0x11}})))

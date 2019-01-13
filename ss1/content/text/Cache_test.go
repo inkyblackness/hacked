@@ -168,21 +168,25 @@ func (suite *CacheSuite) storing(id int, lines ...string) func(*resource.Store) 
 		data[i] = suite.cp.Encode(line)
 	}
 	return func(store *resource.Store) {
-		store.Put(resource.ID(id), &resource.Resource{
-			ContentType: resource.Text,
-			Compound:    len(data) != 1,
-			Blocks:      resource.BlocksFrom(data),
-		})
+		store.Put(resource.ID(id), resource.Resource{
+			Properties: resource.Properties{
+				ContentType: resource.Text,
+				Compound:    len(data) != 1,
+			},
+			Blocks: resource.BlocksFrom(data),
+		}.ToView())
 	}
 }
 
 func (suite *CacheSuite) storingNonText(id int) func(*resource.Store) {
 	return func(store *resource.Store) {
-		store.Put(resource.ID(id), &resource.Resource{
-			ContentType: resource.Sound,
-			Compound:    false,
-			Blocks:      resource.BlocksFrom([][]byte{{}}),
-		})
+		store.Put(resource.ID(id), resource.Resource{
+			Properties: resource.Properties{
+				ContentType: resource.Sound,
+				Compound:    false,
+			},
+			Blocks: resource.BlocksFrom([][]byte{{}}),
+		}.ToView())
 	}
 }
 

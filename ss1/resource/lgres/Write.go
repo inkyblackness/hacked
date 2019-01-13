@@ -22,8 +22,8 @@ func Write(target io.WriteSeeker, source resource.Provider) error {
 		}
 
 		switch {
-		case entry.Compound:
-			resourceWriter, resourceWriterErr := writer.CreateCompoundResource(id, entry.ContentType, entry.Compressed)
+		case entry.Compound():
+			resourceWriter, resourceWriterErr := writer.CreateCompoundResource(id, entry.ContentType(), entry.Compressed())
 			if resourceWriterErr != nil {
 				return resourceWriterErr
 			}
@@ -32,7 +32,7 @@ func Write(target io.WriteSeeker, source resource.Provider) error {
 				return copyErr
 			}
 		case entry.BlockCount() == 1:
-			blockWriter, resourceWriterErr := writer.CreateResource(id, entry.ContentType, entry.Compressed)
+			blockWriter, resourceWriterErr := writer.CreateResource(id, entry.ContentType(), entry.Compressed())
 			if resourceWriterErr != nil {
 				return resourceWriterErr
 			}

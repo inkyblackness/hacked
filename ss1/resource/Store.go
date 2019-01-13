@@ -3,7 +3,7 @@ package resource
 // Store is a resource provider that can be modified.
 type Store struct {
 	ids       []ID
-	retriever map[uint16]func() (*Resource, error)
+	retriever map[uint16]func() (View, error)
 }
 
 func cloneIDs(source []ID) []ID {
@@ -18,10 +18,10 @@ func cloneIDs(source []ID) []ID {
 func NewProviderBackedStore(provider Provider) *Store {
 	store := &Store{
 		ids:       cloneIDs(provider.IDs()),
-		retriever: make(map[uint16]func() (*Resource, error))}
+		retriever: make(map[uint16]func() (View, error))}
 
-	defaultToProvider := func(id ID) func() (*Resource, error) {
-		return func() (*Resource, error) { return provider.Resource(id) }
+	defaultToProvider := func(id ID) func() (View, error) {
+		return func() (View, error) { return provider.Resource(id) }
 	}
 	for _, id := range store.ids {
 		store.retriever[id.Value()] = defaultToProvider(id)
@@ -36,7 +36,7 @@ func (store *Store) IDs() []ID {
 }
 
 // Resource returns a resource for the given identifier.
-func (store *Store) Resource(id ID) (*Resource, error) {
+func (store *Store) Resource(id ID) (View, error) {
 	retriever, existing := store.retriever[id.Value()]
 	if !existing {
 		return nil, ErrResourceDoesNotExist(id)
@@ -61,10 +61,10 @@ func (store *Store) Del(id ID) {
 
 // Put (re-)assigns an identifier with data. If no resource with given ID exists,
 // then it is created. Existing resources are overwritten with the provided data.
-func (store *Store) Put(id ID, res *Resource) {
+func (store *Store) Put(id ID, res View) {
 	key := id.Value()
 	if _, existing := store.retriever[key]; !existing {
 		store.ids = append(store.ids, id)
 	}
-	store.retriever[key] = func() (*Resource, error) { return res, nil }
+	store.retriever[key] = func() (View, error) { return res, nil }
 }

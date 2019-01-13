@@ -24,10 +24,10 @@ func (list ResourceList) IDs() []resource.ID {
 	return ids
 }
 
-func (list ResourceList) Resource(id resource.ID) (res *resource.Resource, err error) {
+func (list ResourceList) Resource(id resource.ID) (res resource.View, err error) {
 	for _, entry := range list {
 		if entry.id.Value() == id.Value() {
-			res = entry.res
+			res = entry.res.ToView()
 		}
 	}
 	if res == nil {
@@ -135,7 +135,7 @@ func (suite *StoreSuite) whenResourceIsDeleted(id resource.ID) {
 }
 
 func (suite *StoreSuite) whenResourceIsPut(id resource.ID, res *resource.Resource) {
-	suite.store.Put(id, res)
+	suite.store.Put(id, res.ToView())
 }
 
 func (suite *StoreSuite) thenIDsShouldBeEmpty() {
@@ -149,7 +149,7 @@ func (suite *StoreSuite) thenIDsShouldBe(expected []resource.ID) {
 func (suite *StoreSuite) thenReturnedResourceShouldBe(id resource.ID, expected *resource.Resource) {
 	res, err := suite.store.Resource(id)
 	assert.Nil(suite.T(), err, "No error expected for ID %v", id)
-	assert.Equal(suite.T(), expected, res, "Different res returned for ID %v", id)
+	assert.Equal(suite.T(), expected.ToView(), res, "Different res returned for ID %v", id)
 }
 
 func (suite *StoreSuite) thenResourceShouldReturnErrorFor(id resource.ID) {
