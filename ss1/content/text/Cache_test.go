@@ -163,15 +163,15 @@ func (suite *CacheSuite) someLocalizedResources(lang resource.Language, modifier
 }
 
 func (suite *CacheSuite) storing(id int, lines ...string) func(*resource.Store) {
-	blocks := make(resource.Blocks, len(lines))
+	data := make([][]byte, len(lines))
 	for i, line := range lines {
-		blocks[i] = suite.cp.Encode(line)
+		data[i] = suite.cp.Encode(line)
 	}
 	return func(store *resource.Store) {
 		store.Put(resource.ID(id), &resource.Resource{
 			ContentType:   resource.Text,
-			Compound:      len(blocks) != 1,
-			BlockProvider: blocks,
+			Compound:      len(data) != 1,
+			BlockProvider: resource.BlocksFrom(data),
 		})
 	}
 }
@@ -181,7 +181,7 @@ func (suite *CacheSuite) storingNonText(id int) func(*resource.Store) {
 		store.Put(resource.ID(id), &resource.Resource{
 			ContentType:   resource.Sound,
 			Compound:      false,
-			BlockProvider: resource.Blocks{{}},
+			BlockProvider: resource.BlocksFrom([][]byte{{}}),
 		})
 	}
 }

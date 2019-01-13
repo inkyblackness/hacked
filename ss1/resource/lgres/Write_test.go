@@ -23,10 +23,10 @@ func TestWrite(t *testing.T) {
 		}
 	}
 
-	provider.Put(resource.ID(1), aResource(false, resource.Bitmap, false, resource.Blocks{{0x11}}))
-	provider.Put(resource.ID(3), aResource(false, resource.Font, true, resource.Blocks{{0x21}, {0x22, 0x23}}))
-	provider.Put(resource.ID(2), aResource(true, resource.Geometry, false, resource.Blocks{{0x31}}))
-	provider.Put(resource.ID(4), aResource(true, resource.Archive, true, resource.Blocks{{0x41}, {0x42, 0x43}}))
+	provider.Put(resource.ID(1), aResource(false, resource.Bitmap, false, resource.BlocksFrom([][]byte{{0x11}})))
+	provider.Put(resource.ID(3), aResource(false, resource.Font, true, resource.BlocksFrom([][]byte{{0x21}, {0x22, 0x23}})))
+	provider.Put(resource.ID(2), aResource(true, resource.Geometry, false, resource.BlocksFrom([][]byte{{0x31}})))
+	provider.Put(resource.ID(4), aResource(true, resource.Archive, true, resource.BlocksFrom([][]byte{{0x41}, {0x42, 0x43}})))
 
 	errWrite := lgres.Write(target, provider)
 	if errWrite != nil {

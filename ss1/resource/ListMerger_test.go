@@ -38,10 +38,10 @@ func (suite *ListMergerSuite) thenBlockShouldReturnErrorFor(index int) {
 	assert.NotNil(suite.T(), err, "Error expected")
 }
 
-func (suite *ListMergerSuite) whenEntryStores(blocks ...[]byte) {
+func (suite *ListMergerSuite) whenEntryStores(data ...[]byte) {
 	resource := &Resource{
-		Compound:      len(blocks) != 1,
-		BlockProvider: Blocks(blocks),
+		Compound:      len(data) != 1,
+		BlockProvider: BlocksFrom(data),
 	}
 	suite.merger.list = append(suite.merger.list, resource.ToView())
 }

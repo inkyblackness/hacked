@@ -14,12 +14,12 @@ func TestBlockCountReturnsZeroForNilInstance(t *testing.T) {
 }
 
 func TestBlockCountReturnsLengthOfArray(t *testing.T) {
-	blocks := make(resource.Blocks, 3)
+	blocks := resource.BlocksFrom(make([][]byte, 3))
 	assert.Equal(t, 3, blocks.BlockCount())
 }
 
 func TestBlockReturnsArrayEntries(t *testing.T) {
-	blocks := resource.Blocks{{0x01}, {0x02, 0x03}}
+	blocks := resource.BlocksFrom([][]byte{{0x01}, {0x02, 0x03}})
 	verifyBlock := func(index int) {
 		reader, err := blocks.Block(index)
 		assert.Nil(t, err)
@@ -30,7 +30,7 @@ func TestBlockReturnsArrayEntries(t *testing.T) {
 }
 
 func TestBlockReturnsErrorForInvalidIndex(t *testing.T) {
-	blocks := resource.Blocks{{0x01}, {0x02, 0x03}}
+	blocks := resource.BlocksFrom([][]byte{{0x01}, {0x02, 0x03}})
 	verifyError := func(index int) {
 		_, err := blocks.Block(index)
 		assert.NotNil(t, err, "Error expected for index ", index)
