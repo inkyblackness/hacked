@@ -34,3 +34,21 @@ func (blocks Blocks) Block(index int) (io.Reader, error) {
 	}
 	return bytes.NewBuffer(blocks.data[index]), nil
 }
+
+// Set the data of all the blocks.
+func (blocks *Blocks) Set(data [][]byte) {
+	blocks.data = data
+}
+
+// SetBlock sets the data of the identified block.
+func (blocks *Blocks) SetBlock(index int, data []byte) {
+	if index < 0 {
+		return
+	}
+	if index >= len(blocks.data) {
+		newData := make([][]byte, index+1)
+		copy(newData, blocks.data)
+		blocks.data = newData
+	}
+	blocks.data[index] = data
+}

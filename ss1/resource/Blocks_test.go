@@ -1,6 +1,7 @@
 package resource_test
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -38,4 +39,21 @@ func TestBlockReturnsErrorForInvalidIndex(t *testing.T) {
 	verifyError(-1)
 	verifyError(2)
 	verifyError(3)
+}
+
+func TestBlockSetting(t *testing.T) {
+	var blocks resource.Blocks
+
+	blocks.Set(make([][]byte, 3))
+	assert.Equal(t, 3, blocks.BlockCount(), "block count should have been set")
+
+	blocks.SetBlock(1, []byte{0x01, 0x02})
+	block, err := blocks.Block(1)
+	assert.Nil(t, err, "block should be known")
+	storedData, err := ioutil.ReadAll(block)
+	assert.Nil(t, err, "data should be read")
+	assert.Equal(t, []byte{0x01, 0x02}, storedData, "stored data mismatch")
+
+	blocks.SetBlock(5, []byte{0xAA})
+	assert.Equal(t, 6, blocks.BlockCount(), "block count should have been updated")
 }
