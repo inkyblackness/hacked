@@ -79,7 +79,7 @@ func (suite *ModSuite) TestResourceMetaCanBeChanged() {
 					Compound:      false,
 					ContentType:   resource.Sound,
 					Compressed:    false,
-					BlockProvider: resource.MemoryBlockProvider(nil),
+					BlockProvider: resource.Blocks(nil),
 				})
 			}),
 		suite.someLocalizedResources(resource.LangFrench,
@@ -88,7 +88,7 @@ func (suite *ModSuite) TestResourceMetaCanBeChanged() {
 					Compound:      false,
 					ContentType:   resource.Palette,
 					Compressed:    false,
-					BlockProvider: resource.MemoryBlockProvider(nil),
+					BlockProvider: resource.Blocks(nil),
 				})
 			}))
 	suite.whenModifyingBy(func(trans *model.ModTransaction) {
@@ -119,7 +119,7 @@ func (suite *ModSuite) TestMetaModificationIsNotified() {
 					Compound:      false,
 					ContentType:   resource.Sound,
 					Compressed:    false,
-					BlockProvider: resource.MemoryBlockProvider(nil),
+					BlockProvider: resource.Blocks(nil),
 				})
 			}))
 	suite.whenModifyingBy(func(trans *model.ModTransaction) {
@@ -285,7 +285,7 @@ func (suite *ModSuite) anEntryWithResources(id string, res ...resource.Localized
 func (suite *ModSuite) storing(id int, blocks [][]byte) func(*resource.Store) {
 	return func(store *resource.Store) {
 		store.Put(resource.ID(id), &resource.Resource{
-			BlockProvider: resource.MemoryBlockProvider(blocks),
+			BlockProvider: resource.Blocks(blocks),
 		})
 	}
 }

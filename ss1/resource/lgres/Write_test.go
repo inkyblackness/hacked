@@ -14,18 +14,19 @@ import (
 func TestWrite(t *testing.T) {
 	target := serial.NewByteStore()
 	provider := resource.NewProviderBackedStore(resource.NullProvider())
-	aResource := func(compressed bool, contentType resource.ContentType, compound bool, blocks [][]byte) *resource.Resource {
+	aResource := func(compressed bool, contentType resource.ContentType, compound bool, blocks resource.Blocks) *resource.Resource {
 		return &resource.Resource{
 			Compressed:    compressed,
 			ContentType:   contentType,
 			Compound:      compound,
-			BlockProvider: resource.MemoryBlockProvider(blocks)}
+			BlockProvider: blocks,
+		}
 	}
 
-	provider.Put(resource.ID(1), aResource(false, resource.Bitmap, false, [][]byte{{0x11}}))
-	provider.Put(resource.ID(3), aResource(false, resource.Font, true, [][]byte{{0x21}, {0x22, 0x23}}))
-	provider.Put(resource.ID(2), aResource(true, resource.Geometry, false, [][]byte{{0x31}}))
-	provider.Put(resource.ID(4), aResource(true, resource.Archive, true, [][]byte{{0x41}, {0x42, 0x43}}))
+	provider.Put(resource.ID(1), aResource(false, resource.Bitmap, false, resource.Blocks{{0x11}}))
+	provider.Put(resource.ID(3), aResource(false, resource.Font, true, resource.Blocks{{0x21}, {0x22, 0x23}}))
+	provider.Put(resource.ID(2), aResource(true, resource.Geometry, false, resource.Blocks{{0x31}}))
+	provider.Put(resource.ID(4), aResource(true, resource.Archive, true, resource.Blocks{{0x41}, {0x42, 0x43}}))
 
 	errWrite := lgres.Write(target, provider)
 	if errWrite != nil {

@@ -19,7 +19,7 @@ func TestIsSavegameTrueForActualSavegame(t *testing.T) {
 		Compressed:    false,
 		ContentType:   resource.Archive,
 		Compound:      false,
-		BlockProvider: resource.MemoryBlockProvider([][]byte{stateData}),
+		BlockProvider: resource.Blocks([][]byte{stateData}),
 	})
 
 	result := world.IsSavegame(store)
@@ -39,7 +39,7 @@ func TestIsSavegameFalseForWrongResourceContent(t *testing.T) {
 		Compressed:    false,
 		ContentType:   resource.Archive,
 		Compound:      true,
-		BlockProvider: resource.MemoryBlockProvider([][]byte{}),
+		BlockProvider: resource.Blocks([][]byte{}),
 	})
 
 	result := world.IsSavegame(store)
@@ -52,7 +52,7 @@ func TestIsSavegameFalseForTooShortData(t *testing.T) {
 		Compressed:    false,
 		ContentType:   resource.Archive,
 		Compound:      true,
-		BlockProvider: resource.MemoryBlockProvider([][]byte{make([]byte, 0x10)}),
+		BlockProvider: resource.Blocks([][]byte{make([]byte, 0x10)}),
 	})
 
 	result := world.IsSavegame(store)
@@ -66,7 +66,7 @@ func TestIsSavegameFalseForZeroData(t *testing.T) {
 		Compressed:    false,
 		ContentType:   resource.Archive,
 		Compound:      true,
-		BlockProvider: resource.MemoryBlockProvider([][]byte{stateData}),
+		BlockProvider: resource.Blocks([][]byte{stateData}),
 	})
 
 	result := world.IsSavegame(store)

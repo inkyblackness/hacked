@@ -130,7 +130,7 @@ func (suite *AnimationCacheSuite) storing(id int, anim bitmap.Animation) func(*r
 		store.Put(resource.ID(baseAnimationResourceID).Plus(id), &resource.Resource{
 			ContentType:   resource.Animation,
 			Compound:      true,
-			BlockProvider: resource.MemoryBlockProvider([][]byte{buf.Bytes()}),
+			BlockProvider: resource.Blocks{buf.Bytes()},
 		})
 	}
 }
@@ -159,7 +159,7 @@ func (suite *AnimationCacheSuite) storingNonAnimation(id int) func(*resource.Sto
 		store.Put(resource.ID(baseAnimationResourceID).Plus(id), &resource.Resource{
 			ContentType:   resource.Sound,
 			Compound:      true,
-			BlockProvider: resource.MemoryBlockProvider([][]byte{{}}),
+			BlockProvider: resource.Blocks{{}},
 		})
 	}
 }

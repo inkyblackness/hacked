@@ -441,7 +441,7 @@ func (suite *ManifestSuite) anEntryWithResources(id string, res ...resource.Loca
 func (suite *ManifestSuite) storing(id int, blocks [][]byte) func(*resource.Store) {
 	return func(store *resource.Store) {
 		store.Put(resource.ID(id), &resource.Resource{
-			BlockProvider: resource.MemoryBlockProvider(blocks),
+			BlockProvider: resource.Blocks(blocks),
 		})
 	}
 }

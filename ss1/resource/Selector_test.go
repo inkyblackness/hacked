@@ -34,17 +34,17 @@ func (suite *ResourceSelectorSuite) SetupTest() {
 }
 
 func (suite *ResourceSelectorSuite) TestBlockReturnsData() {
-	suite.givenResource([][]byte{{0x01}})
+	suite.givenResource(resource.Blocks{{0x01}})
 	suite.whenInstanceIsCreated()
 	suite.thenResourceBlockShouldBe(0, []byte{0x01})
 }
 
 func (suite *ResourceSelectorSuite) TestBlockReturnsDataFromLastEntryByDefault() {
 	suite.givenSpecificResource(func(res *resource.Resource) {
-		res.BlockProvider = resource.MemoryBlockProvider{{0xAA}}
+		res.BlockProvider = resource.Blocks{{0xAA}}
 	})
 	suite.givenSpecificResource(func(res *resource.Resource) {
-		res.BlockProvider = resource.MemoryBlockProvider{{0xBB}}
+		res.BlockProvider = resource.Blocks{{0xBB}}
 	})
 	suite.whenInstanceIsCreated()
 	suite.thenResourceBlockShouldBe(0, []byte{0xBB})
@@ -54,11 +54,11 @@ func (suite *ResourceSelectorSuite) TestBlockReturnsDataFromLastEntryForCompound
 	suite.givenViewStrategyIsSet()
 	suite.givenSpecificResource(func(res *resource.Resource) {
 		res.Compound = true
-		res.BlockProvider = resource.MemoryBlockProvider{{0xAA}}
+		res.BlockProvider = resource.Blocks{{0xAA}}
 	})
 	suite.givenSpecificResource(func(res *resource.Resource) {
 		res.Compound = true
-		res.BlockProvider = resource.MemoryBlockProvider{{0xBB}, {0xCC}}
+		res.BlockProvider = resource.Blocks{{0xBB}, {0xCC}}
 	})
 	suite.whenInstanceIsCreated()
 	suite.thenResourceBlockCountShouldBe(2)
@@ -70,11 +70,11 @@ func (suite *ResourceSelectorSuite) TestBlockReturnsDataFromLastNonEmptyEntryIfA
 	suite.givenResourceIsACompoundList()
 	suite.givenSpecificResource(func(res *resource.Resource) {
 		res.Compound = true
-		res.BlockProvider = resource.MemoryBlockProvider{{0xAA}}
+		res.BlockProvider = resource.Blocks{{0xAA}}
 	})
 	suite.givenSpecificResource(func(res *resource.Resource) {
 		res.Compound = true
-		res.BlockProvider = resource.MemoryBlockProvider{{}}
+		res.BlockProvider = resource.Blocks{{}}
 	})
 	suite.whenInstanceIsCreated()
 	suite.thenResourceBlockShouldBe(0, []byte{0xAA})
@@ -84,15 +84,15 @@ func (suite *ResourceSelectorSuite) TestBlockCountOfACompoundListReturnsHighestC
 	suite.givenResourceIsACompoundList()
 	suite.givenSpecificResource(func(res *resource.Resource) {
 		res.Compound = true
-		res.BlockProvider = resource.MemoryBlockProvider{{}, {}, {0x11}}
+		res.BlockProvider = resource.Blocks{{}, {}, {0x11}}
 	})
 	suite.givenSpecificResource(func(res *resource.Resource) {
 		res.Compound = true
-		res.BlockProvider = resource.MemoryBlockProvider{{}, {0x22}}
+		res.BlockProvider = resource.Blocks{{}, {0x22}}
 	})
 	suite.givenSpecificResource(func(res *resource.Resource) {
 		res.Compound = true
-		res.BlockProvider = resource.MemoryBlockProvider{{}, {}, {}, {0x33}}
+		res.BlockProvider = resource.Blocks{{}, {}, {}, {0x33}}
 	})
 	suite.whenInstanceIsCreated()
 	suite.thenResourceBlockCountShouldBe(4)
@@ -104,13 +104,13 @@ func (suite *ResourceSelectorSuite) TestMetaOfCompoundListIsThatOfFirst() {
 		res.Compound = true
 		res.Compressed = true
 		res.ContentType = resource.Movie
-		res.BlockProvider = resource.MemoryBlockProvider{{}, {}, {0x11}}
+		res.BlockProvider = resource.Blocks{{}, {}, {0x11}}
 	})
 	suite.givenSpecificResource(func(res *resource.Resource) {
 		res.Compound = false
 		res.Compressed = false
 		res.ContentType = resource.Text
-		res.BlockProvider = resource.MemoryBlockProvider{{}, {0x22}}
+		res.BlockProvider = resource.Blocks{{}, {0x22}}
 	})
 	suite.whenInstanceIsCreated()
 	suite.thenResourceShouldHaveMeta(true, resource.Movie, true)
@@ -121,13 +121,13 @@ func (suite *ResourceSelectorSuite) TestMetaOfNonCompoundListIsThatOfLast() {
 		res.Compound = true
 		res.Compressed = true
 		res.ContentType = resource.Movie
-		res.BlockProvider = resource.MemoryBlockProvider{{}, {}, {0x11}}
+		res.BlockProvider = resource.Blocks{{}, {}, {0x11}}
 	})
 	suite.givenSpecificResource(func(res *resource.Resource) {
 		res.Compound = false
 		res.Compressed = false
 		res.ContentType = resource.Text
-		res.BlockProvider = resource.MemoryBlockProvider{{}, {0x22}}
+		res.BlockProvider = resource.Blocks{{}, {0x22}}
 	})
 	suite.whenInstanceIsCreated()
 	suite.thenResourceShouldHaveMeta(false, resource.Text, false)
@@ -142,9 +142,9 @@ func (suite *ResourceSelectorSuite) givenViewStrategyIsSet() {
 	suite.viewStrategy = suite
 }
 
-func (suite *ResourceSelectorSuite) givenResource(blocks [][]byte) {
+func (suite *ResourceSelectorSuite) givenResource(blocks resource.Blocks) {
 	suite.givenSpecificResource(func(res *resource.Resource) {
-		res.BlockProvider = resource.MemoryBlockProvider(blocks)
+		res.BlockProvider = blocks
 	})
 }
 

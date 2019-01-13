@@ -9,19 +9,19 @@ import (
 )
 
 func TestBlockCountReturnsZeroForNilInstance(t *testing.T) {
-	var provider resource.MemoryBlockProvider
-	assert.Equal(t, 0, provider.BlockCount())
+	var blocks resource.Blocks
+	assert.Equal(t, 0, blocks.BlockCount())
 }
 
 func TestBlockCountReturnsLengthOfArray(t *testing.T) {
-	var provider resource.MemoryBlockProvider = make([][]byte, 3)
-	assert.Equal(t, 3, provider.BlockCount())
+	blocks := make(resource.Blocks, 3)
+	assert.Equal(t, 3, blocks.BlockCount())
 }
 
 func TestBlockReturnsArrayEntries(t *testing.T) {
-	var provider resource.MemoryBlockProvider = [][]byte{{0x01}, {0x02, 0x03}}
+	blocks := resource.Blocks{{0x01}, {0x02, 0x03}}
 	verifyBlock := func(index int) {
-		reader, err := provider.Block(index)
+		reader, err := blocks.Block(index)
 		assert.Nil(t, err)
 		assert.NotNil(t, reader)
 	}
@@ -30,9 +30,9 @@ func TestBlockReturnsArrayEntries(t *testing.T) {
 }
 
 func TestBlockReturnsErrorForInvalidIndex(t *testing.T) {
-	var provider resource.MemoryBlockProvider = [][]byte{{0x01}, {0x02, 0x03}}
+	blocks := resource.Blocks{{0x01}, {0x02, 0x03}}
 	verifyError := func(index int) {
-		_, err := provider.Block(index)
+		_, err := blocks.Block(index)
 		assert.NotNil(t, err, "Error expected for index ", index)
 	}
 	verifyError(-1)

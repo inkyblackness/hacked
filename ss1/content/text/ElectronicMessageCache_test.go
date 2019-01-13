@@ -162,7 +162,7 @@ func (suite *ElectronicMessageCacheSuite) storing(id int, modifier func(msg text
 		store.Put(resource.ID(id), &resource.Resource{
 			ContentType:   resource.Text,
 			Compound:      true,
-			BlockProvider: resource.MemoryBlockProvider(blocks),
+			BlockProvider: resource.Blocks(blocks),
 		})
 	}
 }
@@ -172,7 +172,7 @@ func (suite *ElectronicMessageCacheSuite) storingNonText(id int) func(*resource.
 		store.Put(resource.ID(id), &resource.Resource{
 			ContentType:   resource.Sound,
 			Compound:      false,
-			BlockProvider: resource.MemoryBlockProvider([][]byte{{}}),
+			BlockProvider: resource.Blocks{{}},
 		})
 	}
 }

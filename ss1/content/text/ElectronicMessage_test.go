@@ -186,7 +186,7 @@ func (suite *ElectronicMessageSuite) TestRecodeMessage() {
 	inMessage.TerseText = "\n"
 
 	blocks := inMessage.Encode(suite.cp)
-	outMessage, err := text.DecodeElectronicMessage(suite.cp, resource.MemoryBlockProvider(blocks))
+	outMessage, err := text.DecodeElectronicMessage(suite.cp, resource.Blocks(blocks))
 
 	require.Nil(suite.T(), err)
 	require.NotNil(suite.T(), outMessage)
@@ -204,7 +204,7 @@ func (suite *ElectronicMessageSuite) TestRecodeMessageWithMultipleNewLines() {
 	inMessage.TerseText = "terse\n"
 
 	blocks := inMessage.Encode(suite.cp)
-	outMessage, err := text.DecodeElectronicMessage(suite.cp, resource.MemoryBlockProvider(blocks))
+	outMessage, err := text.DecodeElectronicMessage(suite.cp, resource.Blocks(blocks))
 
 	require.Nil(suite.T(), err)
 	require.NotNil(suite.T(), outMessage)
@@ -227,7 +227,7 @@ func (suite *ElectronicMessageSuite) holderWithMeta(meta string) resource.BlockP
 		suite.cp.Encode("terse"),
 		suite.cp.Encode("")}
 
-	return resource.MemoryBlockProvider(blocks)
+	return resource.Blocks(blocks)
 }
 
 func (suite *ElectronicMessageSuite) vanillaStubMail() resource.BlockProvider {
@@ -242,7 +242,7 @@ func (suite *ElectronicMessageSuite) vanillaStubMail() resource.BlockProvider {
 		suite.cp.Encode("stub email"),
 		suite.cp.Encode("")}
 
-	return resource.MemoryBlockProvider(blocks)
+	return resource.Blocks(blocks)
 }
 
 func (suite *ElectronicMessageSuite) holderWithMissingTerminatingLine() resource.BlockProvider {
@@ -258,5 +258,5 @@ func (suite *ElectronicMessageSuite) holderWithMissingTerminatingLine() resource
 		suite.cp.Encode("terse "),
 		suite.cp.Encode("text")}
 
-	return resource.MemoryBlockProvider(blocks)
+	return resource.Blocks(blocks)
 }

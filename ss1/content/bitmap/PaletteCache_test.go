@@ -132,7 +132,7 @@ func (suite *PaletteCacheSuite) storing(id int, palette bitmap.Palette) func(*re
 		store.Put(resource.ID(basePaletteResourceID).Plus(id), &resource.Resource{
 			ContentType:   resource.Palette,
 			Compound:      false,
-			BlockProvider: resource.MemoryBlockProvider([][]byte{buf.Bytes()}),
+			BlockProvider: resource.Blocks{buf.Bytes()},
 		})
 	}
 }
@@ -152,7 +152,7 @@ func (suite *PaletteCacheSuite) storingNonPalette(id int) func(*resource.Store) 
 		store.Put(resource.ID(basePaletteResourceID).Plus(id), &resource.Resource{
 			ContentType:   resource.Sound,
 			Compound:      false,
-			BlockProvider: resource.MemoryBlockProvider([][]byte{{}}),
+			BlockProvider: resource.Blocks{{}},
 		})
 	}
 }
