@@ -169,9 +169,9 @@ func (suite *CacheSuite) storing(id int, lines ...string) func(*resource.Store) 
 	}
 	return func(store *resource.Store) {
 		store.Put(resource.ID(id), &resource.Resource{
-			ContentType:   resource.Text,
-			Compound:      len(data) != 1,
-			BlockProvider: resource.BlocksFrom(data),
+			ContentType: resource.Text,
+			Compound:    len(data) != 1,
+			Blocks:      resource.BlocksFrom(data),
 		})
 	}
 }
@@ -179,9 +179,9 @@ func (suite *CacheSuite) storing(id int, lines ...string) func(*resource.Store) 
 func (suite *CacheSuite) storingNonText(id int) func(*resource.Store) {
 	return func(store *resource.Store) {
 		store.Put(resource.ID(id), &resource.Resource{
-			ContentType:   resource.Sound,
-			Compound:      false,
-			BlockProvider: resource.BlocksFrom([][]byte{{}}),
+			ContentType: resource.Sound,
+			Compound:    false,
+			Blocks:      resource.BlocksFrom([][]byte{{}}),
 		})
 	}
 }

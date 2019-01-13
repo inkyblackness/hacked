@@ -18,16 +18,16 @@ type Resource struct {
 	// Compressed tells whether the data shall be serialized in compressed form.
 	Compressed bool
 
-	// BlockProvider is the keeper of original block data.
+	// Blocks is the keeper of original block data.
 	// This provider will be referred to if no other data was explicitly set.
-	BlockProvider BlockProvider
+	Blocks BlockProvider
 }
 
 // BlockCount returns the number of available blocks in the resource.
 // Simple resources will always have exactly one block.
 func (res Resource) BlockCount() (count int) {
-	if res.BlockProvider != nil {
-		count = res.BlockProvider.BlockCount()
+	if res.Blocks != nil {
+		count = res.Blocks.BlockCount()
 	}
 	return
 }
@@ -36,10 +36,10 @@ func (res Resource) BlockCount() (count int) {
 // Each call returns a new reader instance.
 // Data provided by this reader is always uncompressed.
 func (res Resource) Block(index int) (io.Reader, error) {
-	if res.BlockProvider == nil {
+	if res.Blocks == nil {
 		return nil, fmt.Errorf("no blocks available")
 	}
-	return res.BlockProvider.Block(index)
+	return res.Blocks.Block(index)
 }
 
 // ToView returns a view of this resource.

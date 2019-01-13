@@ -16,10 +16,10 @@ func TestWrite(t *testing.T) {
 	provider := resource.NewProviderBackedStore(resource.NullProvider())
 	aResource := func(compressed bool, contentType resource.ContentType, compound bool, blocks resource.Blocks) *resource.Resource {
 		return &resource.Resource{
-			Compressed:    compressed,
-			ContentType:   contentType,
-			Compound:      compound,
-			BlockProvider: blocks,
+			Compressed:  compressed,
+			ContentType: contentType,
+			Compound:    compound,
+			Blocks:      blocks,
 		}
 	}
 

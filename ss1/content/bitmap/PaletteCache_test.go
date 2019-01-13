@@ -130,9 +130,9 @@ func (suite *PaletteCacheSuite) storing(id int, palette bitmap.Palette) func(*re
 	encoder.Code(palette)
 	return func(store *resource.Store) {
 		store.Put(resource.ID(basePaletteResourceID).Plus(id), &resource.Resource{
-			ContentType:   resource.Palette,
-			Compound:      false,
-			BlockProvider: resource.BlocksFrom([][]byte{buf.Bytes()}),
+			ContentType: resource.Palette,
+			Compound:    false,
+			Blocks:      resource.BlocksFrom([][]byte{buf.Bytes()}),
 		})
 	}
 }
@@ -150,9 +150,9 @@ func (suite *PaletteCacheSuite) somePalette(seed uint8) bitmap.Palette {
 func (suite *PaletteCacheSuite) storingNonPalette(id int) func(*resource.Store) {
 	return func(store *resource.Store) {
 		store.Put(resource.ID(basePaletteResourceID).Plus(id), &resource.Resource{
-			ContentType:   resource.Sound,
-			Compound:      false,
-			BlockProvider: resource.BlocksFrom([][]byte{{}}),
+			ContentType: resource.Sound,
+			Compound:    false,
+			Blocks:      resource.BlocksFrom([][]byte{{}}),
 		})
 	}
 }

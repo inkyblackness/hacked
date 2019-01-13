@@ -159,5 +159,5 @@ func (suite *StoreSuite) thenResourceShouldReturnErrorFor(id resource.ID) {
 
 func (suite *StoreSuite) aResource() *resource.Resource {
 	suite.resourceCounter++
-	return &resource.Resource{BlockProvider: resource.BlocksFrom([][]byte{{byte(suite.resourceCounter)}})}
+	return &resource.Resource{Blocks: resource.BlocksFrom([][]byte{{byte(suite.resourceCounter)}})}
 }

@@ -26,7 +26,7 @@ func verifyBlockError(t *testing.T, provider resource.BlockProvider, index int) 
 }
 
 func TestResourceRefersToBlockProviderByDefault(t *testing.T) {
-	res := &resource.Resource{BlockProvider: resource.BlocksFrom([][]byte{{0x01}, {0x02, 0x02}})}
+	res := &resource.Resource{Blocks: resource.BlocksFrom([][]byte{{0x01}, {0x02, 0x02}})}
 
 	assert.Equal(t, 2, res.BlockCount())
 	verifyBlockContent(t, res, 0, []byte{0x01})
@@ -34,7 +34,7 @@ func TestResourceRefersToBlockProviderByDefault(t *testing.T) {
 }
 
 func TestResourceBlockReturnsErrorOnInvalidIndex(t *testing.T) {
-	res := &resource.Resource{BlockProvider: resource.BlocksFrom(nil)}
+	res := &resource.Resource{Blocks: resource.BlocksFrom(nil)}
 
 	verifyBlockError(t, res, -1)
 	verifyBlockError(t, res, 0)

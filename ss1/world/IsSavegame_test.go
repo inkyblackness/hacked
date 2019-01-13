@@ -16,10 +16,10 @@ func TestIsSavegameTrueForActualSavegame(t *testing.T) {
 	stateData[0x009C] = 0x80
 	store := resource.NewProviderBackedStore(resource.NullProvider())
 	store.Put(ids.GameState, &resource.Resource{
-		Compressed:    false,
-		ContentType:   resource.Archive,
-		Compound:      false,
-		BlockProvider: resource.BlocksFrom([][]byte{stateData}),
+		Compressed:  false,
+		ContentType: resource.Archive,
+		Compound:    false,
+		Blocks:      resource.BlocksFrom([][]byte{stateData}),
 	})
 
 	result := world.IsSavegame(store)
@@ -36,10 +36,10 @@ func TestIsSavegameFalseForMissingStateData(t *testing.T) {
 func TestIsSavegameFalseForWrongResourceContent(t *testing.T) {
 	store := resource.NewProviderBackedStore(resource.NullProvider())
 	store.Put(ids.GameState, &resource.Resource{
-		Compressed:    false,
-		ContentType:   resource.Archive,
-		Compound:      true,
-		BlockProvider: resource.BlocksFrom([][]byte{}),
+		Compressed:  false,
+		ContentType: resource.Archive,
+		Compound:    true,
+		Blocks:      resource.BlocksFrom([][]byte{}),
 	})
 
 	result := world.IsSavegame(store)
@@ -49,10 +49,10 @@ func TestIsSavegameFalseForWrongResourceContent(t *testing.T) {
 func TestIsSavegameFalseForTooShortData(t *testing.T) {
 	store := resource.NewProviderBackedStore(resource.NullProvider())
 	store.Put(ids.GameState, &resource.Resource{
-		Compressed:    false,
-		ContentType:   resource.Archive,
-		Compound:      true,
-		BlockProvider: resource.BlocksFrom([][]byte{make([]byte, 0x10)}),
+		Compressed:  false,
+		ContentType: resource.Archive,
+		Compound:    true,
+		Blocks:      resource.BlocksFrom([][]byte{make([]byte, 0x10)}),
 	})
 
 	result := world.IsSavegame(store)
@@ -63,10 +63,10 @@ func TestIsSavegameFalseForZeroData(t *testing.T) {
 	stateData := make([]byte, archive.GameStateSize)
 	store := resource.NewProviderBackedStore(resource.NullProvider())
 	store.Put(ids.GameState, &resource.Resource{
-		Compressed:    false,
-		ContentType:   resource.Archive,
-		Compound:      true,
-		BlockProvider: resource.BlocksFrom([][]byte{stateData}),
+		Compressed:  false,
+		ContentType: resource.Archive,
+		Compound:    true,
+		Blocks:      resource.BlocksFrom([][]byte{stateData}),
 	})
 
 	result := world.IsSavegame(store)

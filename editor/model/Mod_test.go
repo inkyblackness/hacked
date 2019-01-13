@@ -76,19 +76,19 @@ func (suite *ModSuite) TestResourceMetaCanBeChanged() {
 		suite.someLocalizedResources(resource.LangGerman,
 			func(store *resource.Store) {
 				store.Put(0x1000, &resource.Resource{
-					Compound:      false,
-					ContentType:   resource.Sound,
-					Compressed:    false,
-					BlockProvider: resource.BlocksFrom(nil),
+					Compound:    false,
+					ContentType: resource.Sound,
+					Compressed:  false,
+					Blocks:      resource.BlocksFrom(nil),
 				})
 			}),
 		suite.someLocalizedResources(resource.LangFrench,
 			func(store *resource.Store) {
 				store.Put(0x1000, &resource.Resource{
-					Compound:      false,
-					ContentType:   resource.Palette,
-					Compressed:    false,
-					BlockProvider: resource.BlocksFrom(nil),
+					Compound:    false,
+					ContentType: resource.Palette,
+					Compressed:  false,
+					Blocks:      resource.BlocksFrom(nil),
 				})
 			}))
 	suite.whenModifyingBy(func(trans *model.ModTransaction) {
@@ -116,10 +116,10 @@ func (suite *ModSuite) TestMetaModificationIsNotified() {
 		suite.someLocalizedResources(resource.LangGerman,
 			func(store *resource.Store) {
 				store.Put(0x1000, &resource.Resource{
-					Compound:      false,
-					ContentType:   resource.Sound,
-					Compressed:    false,
-					BlockProvider: resource.BlocksFrom(nil),
+					Compound:    false,
+					ContentType: resource.Sound,
+					Compressed:  false,
+					Blocks:      resource.BlocksFrom(nil),
 				})
 			}))
 	suite.whenModifyingBy(func(trans *model.ModTransaction) {
@@ -285,7 +285,7 @@ func (suite *ModSuite) anEntryWithResources(id string, res ...resource.Localized
 func (suite *ModSuite) storing(id int, data [][]byte) func(*resource.Store) {
 	return func(store *resource.Store) {
 		store.Put(resource.ID(id), &resource.Resource{
-			BlockProvider: resource.BlocksFrom(data),
+			Blocks: resource.BlocksFrom(data),
 		})
 	}
 }

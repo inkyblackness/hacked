@@ -10,7 +10,7 @@ import (
 
 func someResource(key byte) resource.View {
 	return resource.Resource{
-		BlockProvider: resource.BlocksFrom([][]byte{{key}}),
+		Blocks: resource.BlocksFrom([][]byte{{key}}),
 	}.ToView()
 }
 

@@ -128,9 +128,9 @@ func (suite *AnimationCacheSuite) storing(id int, anim bitmap.Animation) func(*r
 	_ = bitmap.WriteAnimation(buf, anim)
 	return func(store *resource.Store) {
 		store.Put(resource.ID(baseAnimationResourceID).Plus(id), &resource.Resource{
-			ContentType:   resource.Animation,
-			Compound:      true,
-			BlockProvider: resource.BlocksFrom([][]byte{buf.Bytes()}),
+			ContentType: resource.Animation,
+			Compound:    true,
+			Blocks:      resource.BlocksFrom([][]byte{buf.Bytes()}),
 		})
 	}
 }
@@ -157,9 +157,9 @@ func (suite *AnimationCacheSuite) someAnimation(seed uint8) bitmap.Animation {
 func (suite *AnimationCacheSuite) storingNonAnimation(id int) func(*resource.Store) {
 	return func(store *resource.Store) {
 		store.Put(resource.ID(baseAnimationResourceID).Plus(id), &resource.Resource{
-			ContentType:   resource.Sound,
-			Compound:      true,
-			BlockProvider: resource.BlocksFrom([][]byte{{}}),
+			ContentType: resource.Sound,
+			Compound:    true,
+			Blocks:      resource.BlocksFrom([][]byte{{}}),
 		})
 	}
 }

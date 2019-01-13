@@ -160,9 +160,9 @@ func (suite *ElectronicMessageCacheSuite) storing(id int, modifier func(msg text
 	data := modifier(text.EmptyElectronicMessage()).Encode(suite.cp)
 	return func(store *resource.Store) {
 		store.Put(resource.ID(id), &resource.Resource{
-			ContentType:   resource.Text,
-			Compound:      true,
-			BlockProvider: resource.BlocksFrom(data),
+			ContentType: resource.Text,
+			Compound:    true,
+			Blocks:      resource.BlocksFrom(data),
 		})
 	}
 }
@@ -170,9 +170,9 @@ func (suite *ElectronicMessageCacheSuite) storing(id int, modifier func(msg text
 func (suite *ElectronicMessageCacheSuite) storingNonText(id int) func(*resource.Store) {
 	return func(store *resource.Store) {
 		store.Put(resource.ID(id), &resource.Resource{
-			ContentType:   resource.Sound,
-			Compound:      false,
-			BlockProvider: resource.BlocksFrom([][]byte{{}}),
+			ContentType: resource.Sound,
+			Compound:    false,
+			Blocks:      resource.BlocksFrom([][]byte{{}}),
 		})
 	}
 }

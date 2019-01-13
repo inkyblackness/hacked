@@ -40,8 +40,8 @@ func (suite *ListMergerSuite) thenBlockShouldReturnErrorFor(index int) {
 
 func (suite *ListMergerSuite) whenEntryStores(data ...[]byte) {
 	resource := &Resource{
-		Compound:      len(data) != 1,
-		BlockProvider: BlocksFrom(data),
+		Compound: len(data) != 1,
+		Blocks:   BlocksFrom(data),
 	}
 	suite.merger.list = append(suite.merger.list, resource.ToView())
 }

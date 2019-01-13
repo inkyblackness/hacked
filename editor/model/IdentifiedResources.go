@@ -42,9 +42,9 @@ func (res IdentifiedResources) Resource(id resource.ID) (*resource.Resource, err
 		return nil, resource.ErrResourceDoesNotExist(id)
 	}
 	return &resource.Resource{
-		Compressed:    entry.Compressed(),
-		ContentType:   entry.ContentType(),
-		Compound:      entry.Compound(),
-		BlockProvider: entry,
+		Compressed:  entry.Compressed(),
+		ContentType: entry.ContentType(),
+		Compound:    entry.Compound(),
+		Blocks:      entry,
 	}, nil
 }
