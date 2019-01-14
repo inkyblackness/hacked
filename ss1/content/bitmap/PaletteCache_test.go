@@ -113,7 +113,7 @@ func (suite PaletteCacheSuite) keyed(index int) resource.Key {
 }
 
 func (suite *PaletteCacheSuite) someLocalizedResources(modifiers ...func(*resource.Store)) resource.LocalizedResources {
-	store := resource.NewProviderBackedStore(resource.NullProvider())
+	store := resource.NewStore()
 	for _, modifier := range modifiers {
 		modifier(store)
 	}

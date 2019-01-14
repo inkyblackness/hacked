@@ -13,7 +13,7 @@ import (
 
 func TestWrite(t *testing.T) {
 	target := serial.NewByteStore()
-	provider := resource.NewProviderBackedStore(resource.NullProvider())
+	provider := resource.NewStore()
 	aResource := func(compressed bool, contentType resource.ContentType, compound bool, blocks resource.Blocks) resource.View {
 		return resource.Resource{
 			Properties: resource.Properties{

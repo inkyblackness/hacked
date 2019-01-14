@@ -14,7 +14,7 @@ import (
 func TestIsSavegameTrueForActualSavegame(t *testing.T) {
 	stateData := make([]byte, archive.GameStateSize)
 	stateData[0x009C] = 0x80
-	store := resource.NewProviderBackedStore(resource.NullProvider())
+	store := resource.NewStore()
 	store.Put(ids.GameState, resource.Resource{
 		Properties: resource.Properties{
 			Compressed:  false,
@@ -29,14 +29,14 @@ func TestIsSavegameTrueForActualSavegame(t *testing.T) {
 }
 
 func TestIsSavegameFalseForMissingStateData(t *testing.T) {
-	store := resource.NewProviderBackedStore(resource.NullProvider())
+	store := resource.NewStore()
 
 	result := world.IsSavegame(store)
 	assert.False(t, result)
 }
 
 func TestIsSavegameFalseForWrongResourceContent(t *testing.T) {
-	store := resource.NewProviderBackedStore(resource.NullProvider())
+	store := resource.NewStore()
 	store.Put(ids.GameState, resource.Resource{
 		Properties: resource.Properties{
 			Compressed:  false,
@@ -51,7 +51,7 @@ func TestIsSavegameFalseForWrongResourceContent(t *testing.T) {
 }
 
 func TestIsSavegameFalseForTooShortData(t *testing.T) {
-	store := resource.NewProviderBackedStore(resource.NullProvider())
+	store := resource.NewStore()
 	store.Put(ids.GameState, resource.Resource{
 		Properties: resource.Properties{
 			Compressed:  false,
@@ -67,7 +67,7 @@ func TestIsSavegameFalseForTooShortData(t *testing.T) {
 
 func TestIsSavegameFalseForZeroData(t *testing.T) {
 	stateData := make([]byte, archive.GameStateSize)
-	store := resource.NewProviderBackedStore(resource.NullProvider())
+	store := resource.NewStore()
 	store.Put(ids.GameState, resource.Resource{
 		Properties: resource.Properties{
 			Compressed:  false,

@@ -12,20 +12,11 @@ func cloneIDs(source []ID) []ID {
 	return cloned
 }
 
-// NewProviderBackedStore returns a new store based on the specified provider.
-// The created store will have a snapshot of the current provider; Changes in
-// the list of available IDs of the given provider are not reflected.
-func NewProviderBackedStore(provider Provider) *Store {
+// NewStore returns a new store instance.
+func NewStore() *Store {
 	store := &Store{
-		ids:       cloneIDs(provider.IDs()),
+		ids:       nil,
 		retriever: make(map[uint16]func() (View, error))}
-
-	defaultToProvider := func(id ID) func() (View, error) {
-		return func() (View, error) { return provider.Resource(id) }
-	}
-	for _, id := range store.ids {
-		store.retriever[id.Value()] = defaultToProvider(id)
-	}
 
 	return store
 }

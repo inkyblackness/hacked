@@ -65,7 +65,7 @@ func (suite *ManifestEntrySuite) TestResourceIgnoresResourcesWithSpecificLanguag
 }
 
 func (suite *ManifestEntrySuite) givenLocalizedResources(lang resource.Language, id int, data [][]byte) {
-	store := resource.NewProviderBackedStore(resource.NullProvider())
+	store := resource.NewStore()
 	store.Put(resource.ID(id), resource.Resource{
 		Blocks: resource.BlocksFrom(data),
 	})

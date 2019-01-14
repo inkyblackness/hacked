@@ -420,7 +420,7 @@ func (suite *ManifestSuite) aSimpleEntry(id string) *world.ManifestEntry {
 }
 
 func (suite *ManifestSuite) someLocalizedResources(lang resource.Language, modifiers ...func(*resource.Store)) resource.LocalizedResources {
-	store := resource.NewProviderBackedStore(resource.NullProvider())
+	store := resource.NewStore()
 	for _, modifier := range modifiers {
 		modifier(store)
 	}

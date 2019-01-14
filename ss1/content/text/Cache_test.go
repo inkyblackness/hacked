@@ -151,7 +151,7 @@ func (suite *CacheSuite) thenTextShouldReturnError(key resource.Key) {
 }
 
 func (suite *CacheSuite) someLocalizedResources(lang resource.Language, modifiers ...func(*resource.Store)) resource.LocalizedResources {
-	store := resource.NewProviderBackedStore(resource.NullProvider())
+	store := resource.NewStore()
 	for _, modifier := range modifiers {
 		modifier(store)
 	}
