@@ -29,7 +29,7 @@ func NewLocalizedResources() LocalizedResources {
 
 // MutableResourcesFromViewer returns MutableResource instances based on a viewer.
 // This function retrieves all data from the viewer.
-func MutableResourcesFromViewer(filename string, viewer resource.Provider) IdentifiedResources {
+func MutableResourcesFromViewer(filename string, viewer resource.Viewer) IdentifiedResources {
 	ids := viewer.IDs()
 	mutables := make(IdentifiedResources)
 	for index, id := range ids {

@@ -7,5 +7,5 @@ type LocalizedResources struct {
 	// Language specifies for which language the viewer has resources.
 	Language Language
 	// Viewer is the actual container of the resources.
-	Viewer Provider
+	Viewer Viewer
 }

@@ -9,7 +9,7 @@ import (
 
 // IsSavegame returns true for resources that most likely identify a savegame.
 // A savegame is one that has a state resource (0x0FA1) and hacker's health is more than zero.
-func IsSavegame(viewer resource.Provider) bool {
+func IsSavegame(viewer resource.Viewer) bool {
 	res, err := viewer.View(ids.GameState)
 	if err != nil {
 		return false

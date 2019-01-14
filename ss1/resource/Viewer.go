@@ -1,7 +1,7 @@
 package resource
 
 // Viewer provides resources from some storage.
-type Provider interface {
+type Viewer interface {
 	// IDs returns a list of available IDs this viewer can provide.
 	IDs() []ID
 

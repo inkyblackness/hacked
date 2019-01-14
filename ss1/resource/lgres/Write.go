@@ -9,7 +9,7 @@ import (
 
 // Write serializes the resources from given source into the target.
 // It is a convenience function for using Writer.
-func Write(target io.WriteSeeker, source resource.Provider) error {
+func Write(target io.WriteSeeker, source resource.Viewer) error {
 	writer, writerErr := NewWriter(target)
 	if writerErr != nil {
 		return writerErr
