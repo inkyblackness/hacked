@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/inkyblackness/hacked/ss1/resource"
 
 	"github.com/stretchr/testify/assert"
@@ -105,7 +107,8 @@ func (suite *StoreSuite) givenAnInstance() {
 }
 
 func (suite *StoreSuite) givenStoredResource(id resource.ID, res *resource.Resource) {
-	suite.store.Put(id, res)
+	err := suite.store.Put(id, res)
+	require.Nil(suite.T(), err, "No error expected storing resource")
 }
 
 func (suite *StoreSuite) whenInstanceIsCreated() {
@@ -117,7 +120,8 @@ func (suite *StoreSuite) whenResourceIsDeleted(id resource.ID) {
 }
 
 func (suite *StoreSuite) whenResourceIsPut(id resource.ID, res *resource.Resource) {
-	suite.store.Put(id, res)
+	err := suite.store.Put(id, res)
+	require.Nil(suite.T(), err, "No error expected putting resource")
 }
 
 func (suite *StoreSuite) thenIDsShouldBeEmpty() {
