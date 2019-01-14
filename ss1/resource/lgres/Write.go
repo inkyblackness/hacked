@@ -7,7 +7,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
-// Write serializes the resources from given provider into the target.
+// Write serializes the resources from given source into the target.
 // It is a convenience function for using Writer.
 func Write(target io.WriteSeeker, source resource.Provider) error {
 	writer, writerErr := NewWriter(target)

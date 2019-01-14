@@ -158,7 +158,7 @@ func (suite *CacheSuite) someLocalizedResources(lang resource.Language, modifier
 	return resource.LocalizedResources{
 		ID:       "unnamed",
 		Language: lang,
-		Provider: store,
+		Viewer:   store,
 	}
 }
 

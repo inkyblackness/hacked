@@ -1,11 +1,11 @@
 package resource
 
-// LocalizedResources associates a language with a resource provider under a specific identifier.
+// LocalizedResources associates a language with a resource viewer under a specific identifier.
 type LocalizedResources struct {
-	// ID is the identifier of the provider. This could be a filename for instance.
+	// ID is the identifier of the viewer. This could be a filename for instance.
 	ID string
-	// Language specifies for which language the provider has resources.
+	// Language specifies for which language the viewer has resources.
 	Language Language
-	// Provider is the actual container of the resources.
-	Provider Provider
+	// Viewer is the actual container of the resources.
+	Viewer Provider
 }

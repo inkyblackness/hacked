@@ -227,7 +227,7 @@ func (suite *ModSuite) someLocalizedResources(lang resource.Language, modifiers 
 	return resource.LocalizedResources{
 		ID:       "unnamed",
 		Language: lang,
-		Provider: store,
+		Viewer:   store,
 	}
 }
 

@@ -54,9 +54,9 @@ func (state *loadModWaitingState) HandleFiles(names []string) {
 	if len(staging.resources) > 0 {
 		res := model.NewLocalizedResources()
 
-		for filename, provider := range staging.resources {
+		for filename, viewer := range staging.resources {
 			lang := ids.LocalizeFilename(filename)
-			res[lang].Add(model.MutableResourcesFromProvider(filename, provider))
+			res[lang].Add(model.MutableResourcesFromViewer(filename, viewer))
 		}
 
 		state.machine.SetState(nil)

@@ -111,7 +111,7 @@ func (suite *ChangeNotifierSuite) someLocalizedResources(lang resource.Language,
 	return resource.LocalizedResources{
 		ID:       "unnamed",
 		Language: lang,
-		Provider: store,
+		Viewer:   store,
 	}
 }
 

@@ -120,7 +120,7 @@ func (suite *PaletteCacheSuite) someLocalizedResources(modifiers ...func(*resour
 	return resource.LocalizedResources{
 		ID:       "unnamed",
 		Language: resource.LangAny,
-		Provider: store,
+		Viewer:   store,
 	}
 }
 

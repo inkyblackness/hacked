@@ -427,7 +427,7 @@ func (suite *ManifestSuite) someLocalizedResources(lang resource.Language, modif
 	return resource.LocalizedResources{
 		ID:       "unnamed",
 		Language: lang,
-		Provider: store,
+		Viewer:   store,
 	}
 }
 

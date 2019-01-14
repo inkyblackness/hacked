@@ -152,7 +152,7 @@ func (suite *ElectronicMessageCacheSuite) someLocalizedResources(lang resource.L
 	return resource.LocalizedResources{
 		ID:       "unnamed",
 		Language: lang,
-		Provider: store,
+		Viewer:   store,
 	}
 }
 

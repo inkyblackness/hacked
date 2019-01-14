@@ -119,7 +119,7 @@ func (suite *AnimationCacheSuite) someLocalizedResources(modifiers ...func(*reso
 	return resource.LocalizedResources{
 		ID:       "unnamed",
 		Language: resource.LangAny,
-		Provider: store,
+		Viewer:   store,
 	}
 }
 

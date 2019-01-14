@@ -71,7 +71,7 @@ func (suite *ManifestEntrySuite) givenLocalizedResources(lang resource.Language,
 	})
 	suite.entry.Resources = append(suite.entry.Resources, resource.LocalizedResources{
 		Language: lang,
-		Provider: store,
+		Viewer:   store,
 	})
 }
 
