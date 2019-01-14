@@ -1,7 +1,6 @@
 package textures
 
 import (
-	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 )
@@ -9,7 +8,7 @@ import (
 type setTexturePropertiesCommand struct {
 	model *viewModel
 
-	textureIndex level.TextureIndex
+	textureIndex int
 
 	oldProperties texture.Properties
 	newProperties texture.Properties
@@ -27,6 +26,6 @@ func (cmd setTexturePropertiesCommand) perform(trans cmd.Transaction, properties
 	trans.SetTextureProperties(cmd.textureIndex, properties)
 
 	cmd.model.restoreFocus = true
-	cmd.model.currentIndex = int(cmd.textureIndex)
+	cmd.model.currentIndex = cmd.textureIndex
 	return nil
 }

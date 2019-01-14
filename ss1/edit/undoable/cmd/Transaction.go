@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -35,7 +34,7 @@ type Transaction interface {
 	DelResource(lang resource.Language, id resource.ID)
 
 	// SetTextureProperties updates the properties of a specific texture.
-	SetTextureProperties(textureIndex level.TextureIndex, properties texture.Properties)
+	SetTextureProperties(textureIndex int, properties texture.Properties)
 
 	// SetObjectProperties updates the properties of a specific object.
 	SetObjectProperties(triple object.Triple, properties object.Properties)

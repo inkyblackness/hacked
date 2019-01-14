@@ -11,7 +11,6 @@ import (
 	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
-	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
@@ -290,7 +289,7 @@ func (view *View) requestChangeProperties(modifier func(*texture.Properties)) {
 	if view.model.currentIndex < len(list) {
 		command := setTexturePropertiesCommand{
 			model:         &view.model,
-			textureIndex:  level.TextureIndex(view.model.currentIndex),
+			textureIndex:  view.model.currentIndex,
 			oldProperties: list[view.model.currentIndex],
 			newProperties: list[view.model.currentIndex],
 		}

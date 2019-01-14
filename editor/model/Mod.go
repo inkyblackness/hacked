@@ -7,7 +7,6 @@ import (
 	"math"
 	"time"
 
-	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -352,7 +351,7 @@ func (mod *Mod) markFileChanged(filename string) {
 	mod.lastChangeTime = time.Now()
 }
 
-func (mod *Mod) setTextureProperties(index level.TextureIndex, properties texture.Properties) {
+func (mod *Mod) setTextureProperties(index int, properties texture.Properties) {
 	if (index >= 0) && (int(index) < len(mod.textureProperties)) {
 		mod.textureProperties[index] = properties
 		mod.markFileChanged(world.TexturePropertiesFilename)
