@@ -18,29 +18,6 @@ type ModTransaction struct {
 	modifiedIDs resource.IDMarkerMap
 }
 
-// SetResource changes the meta information about a resource.
-// Should the resource exist in multiple languages, all are modified.
-//
-// This is a low-level function and should not be required on a regular basis.
-// Mods typically extend on already existing resources, and/or the editor itself should have a list of templates for
-// new resources.
-func (trans *ModTransaction) SetResource(id resource.ID,
-	compound bool, contentType resource.ContentType, compressed bool) {
-	setResource := func(mod *Mod, res *MutableResource) {
-		res.Properties.Compound = compound
-		res.Properties.ContentType = contentType
-		res.Properties.Compressed = compressed
-		mod.markFileChanged(res.filename)
-	}
-	trans.actions = append(trans.actions, func(mod *Mod) {
-		for _, lang := range resource.Languages() {
-			setResource(mod, mod.ensureResource(lang, id))
-		}
-		setResource(mod, mod.ensureResource(resource.LangAny, id))
-	})
-	trans.modifiedIDs.Add(id)
-}
-
 // SetResourceBlock changes the block data of a resource.
 //
 // If the block data is not empty, then:

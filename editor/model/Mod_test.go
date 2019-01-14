@@ -71,37 +71,6 @@ func (suite *ModSuite) TestResourcesCanBeExtended() {
 	suite.thenResourceBlockShouldBe(resource.LangAny, 0x0800, 2, []byte{0xBB})
 }
 
-func (suite *ModSuite) TestResourceMetaCanBeChanged() {
-	suite.givenWorldHas(
-		suite.someLocalizedResources(resource.LangGerman,
-			func(store *resource.Store) {
-				store.Put(0x1000, resource.Resource{
-					Properties: resource.Properties{
-						Compound:    false,
-						ContentType: resource.Sound,
-						Compressed:  false,
-					},
-					Blocks: resource.BlocksFrom(nil),
-				})
-			}),
-		suite.someLocalizedResources(resource.LangFrench,
-			func(store *resource.Store) {
-				store.Put(0x1000, resource.Resource{
-					Properties: resource.Properties{
-						Compound:    false,
-						ContentType: resource.Palette,
-						Compressed:  false,
-					},
-					Blocks: resource.BlocksFrom(nil),
-				})
-			}))
-	suite.whenModifyingBy(func(trans *model.ModTransaction) {
-		trans.SetResource(0x1000, true, resource.Movie, true)
-	})
-	suite.thenResourceMetaShouldBe(resource.LangFrench, 0x1000, true, resource.Movie, true)
-	suite.thenResourceMetaShouldBe(resource.LangGerman, 0x1000, true, resource.Movie, true)
-}
-
 func (suite *ModSuite) TestResourcesCanBeRemoved() {
 	suite.givenWorldHas(
 		suite.someLocalizedResources(resource.LangAny,
@@ -113,25 +82,6 @@ func (suite *ModSuite) TestResourcesCanBeRemoved() {
 		trans.DelResource(resource.LangAny, 0x0800)
 	})
 	suite.thenResourceBlockShouldBe(resource.LangAny, 0x0800, 0, []byte{0xAA})
-}
-
-func (suite *ModSuite) TestMetaModificationIsNotified() {
-	suite.givenWorldHas(
-		suite.someLocalizedResources(resource.LangGerman,
-			func(store *resource.Store) {
-				store.Put(0x1000, resource.Resource{
-					Properties: resource.Properties{
-						Compound:    false,
-						ContentType: resource.Sound,
-						Compressed:  false,
-					},
-					Blocks: resource.BlocksFrom(nil),
-				})
-			}))
-	suite.whenModifyingBy(func(trans *model.ModTransaction) {
-		trans.SetResource(0x1000, true, resource.Movie, true)
-	})
-	suite.thenModifiedResourcesShouldBe(0x1000)
 }
 
 func (suite *ModSuite) TestAdditionsAreNotified() {

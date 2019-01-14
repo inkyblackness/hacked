@@ -9,9 +9,6 @@ import (
 
 // Transaction describes actions meant to modify resources.
 type Transaction interface {
-	// SetResource changes the meta information about a resource.
-	// Should the resource exist in multiple languages, all are modified.
-	SetResource(id resource.ID, compound bool, contentType resource.ContentType, compressed bool)
 
 	// SetResourceBlock changes the block data of a resource.
 	//
