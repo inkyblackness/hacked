@@ -5,6 +5,6 @@ type Provider interface {
 	// IDs returns a list of available IDs this provider can provide.
 	IDs() []ID
 
-	// Resource returns a resource for the given identifier.
-	Resource(id ID) (View, error)
+	// View returns a read-only view to a resource for the given identifier.
+	View(id ID) (View, error)
 }

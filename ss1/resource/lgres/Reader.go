@@ -64,9 +64,9 @@ func (reader *Reader) IDs() []resource.ID {
 	return ids
 }
 
-// Resource returns a reader for the specified resource.
+// View returns a reader prepared to extract data for the specified resource.
 // An error is returned if either the ID is not known, or the resource could not be prepared.
-func (reader *Reader) Resource(id resource.ID) (retrievedResource resource.View, err error) {
+func (reader *Reader) View(id resource.ID) (retrievedResource resource.View, err error) {
 	if cachedResource, existing := reader.cache[id.Value()]; existing {
 		return cachedResource, nil
 	}

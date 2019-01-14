@@ -69,14 +69,14 @@ func TestReaderIDsReturnsTheStoredResourceIDsInOrderFromFile(t *testing.T) {
 
 func TestReaderResourceReturnsErrorForUnknownID(t *testing.T) {
 	reader, _ := ReaderFrom(bytes.NewReader(emptyResourceFile()))
-	resourceReader, err := reader.Resource(resource.ID(0x1111))
+	resourceReader, err := reader.View(resource.ID(0x1111))
 	assert.Nil(t, resourceReader, "no reader expected")
 	assert.NotNil(t, err)
 }
 
 func TestReaderResourceReturnsAResourceReaderForKnownID(t *testing.T) {
 	reader, _ := ReaderFrom(bytes.NewReader(exampleResourceFile()))
-	resourceReader, err := reader.Resource(exampleResourceIDSingleBlockResource)
+	resourceReader, err := reader.View(exampleResourceIDSingleBlockResource)
 	assert.Nil(t, err, "no error expected")
 	assert.NotNil(t, resourceReader)
 }
@@ -87,7 +87,7 @@ func TestReaderResourceReturnsResourceWithMetaInformation(t *testing.T) {
 		return fmt.Sprintf("Resource 0x%04X should have %v = %v", resourceID.Value(), name, expected)
 	}
 	verifyResource := func(resourceID resource.ID, compound bool, contentType resource.ContentType, compressed bool) {
-		resourceReader, _ := reader.Resource(resourceID)
+		resourceReader, _ := reader.View(resourceID)
 		assert.Equal(t, compound, resourceReader.Compound(), info(resourceID, "compound", compound))
 		assert.Equal(t, contentType, resourceReader.ContentType(), info(resourceID, "contentType", contentType))
 		assert.Equal(t, compressed, resourceReader.Compressed(), info(resourceID, "compressed", compressed))
@@ -101,15 +101,15 @@ func TestReaderResourceReturnsResourceWithMetaInformation(t *testing.T) {
 func TestReaderResourceReturnsSameInstance(t *testing.T) {
 	reader, _ := ReaderFrom(bytes.NewReader(exampleResourceFile()))
 
-	c1, _ := reader.Resource(exampleResourceIDSingleBlockResource)
-	c2, _ := reader.Resource(exampleResourceIDSingleBlockResource)
+	c1, _ := reader.View(exampleResourceIDSingleBlockResource)
+	c2, _ := reader.View(exampleResourceIDSingleBlockResource)
 
 	assert.Equal(t, c1, c2, "Resources should be the same")
 }
 
 func TestReaderResourceWithUncompressedSingleBlockContent(t *testing.T) {
 	reader, _ := ReaderFrom(bytes.NewReader(exampleResourceFile()))
-	resourceReader, _ := reader.Resource(exampleResourceIDSingleBlockResource)
+	resourceReader, _ := reader.View(exampleResourceIDSingleBlockResource)
 
 	assert.Equal(t, 1, resourceReader.BlockCount())
 	verifyBlockContent(t, resourceReader, 0, []byte{0x01, 0x01, 0x01})
@@ -117,7 +117,7 @@ func TestReaderResourceWithUncompressedSingleBlockContent(t *testing.T) {
 
 func TestReaderResourceWithCompressedSingleBlockContent(t *testing.T) {
 	reader, _ := ReaderFrom(bytes.NewReader(exampleResourceFile()))
-	resourceReader, _ := reader.Resource(exampleResourceIDSingleBlockResourceCompressed)
+	resourceReader, _ := reader.View(exampleResourceIDSingleBlockResourceCompressed)
 
 	assert.Equal(t, 1, resourceReader.BlockCount())
 	verifyBlockContent(t, resourceReader, 0, []byte{0x02, 0x02})
@@ -125,7 +125,7 @@ func TestReaderResourceWithCompressedSingleBlockContent(t *testing.T) {
 
 func TestReaderResourceWithUncompressedCompoundContent(t *testing.T) {
 	reader, _ := ReaderFrom(bytes.NewReader(exampleResourceFile()))
-	resourceReader, _ := reader.Resource(exampleResourceIDCompoundResource)
+	resourceReader, _ := reader.View(exampleResourceIDCompoundResource)
 
 	assert.Equal(t, 2, resourceReader.BlockCount())
 	verifyBlockContent(t, resourceReader, 0, []byte{0x30, 0x30, 0x30, 0x30})
@@ -134,7 +134,7 @@ func TestReaderResourceWithUncompressedCompoundContent(t *testing.T) {
 
 func TestReaderResourceWithCompressedCompoundContent(t *testing.T) {
 	reader, _ := ReaderFrom(bytes.NewReader(exampleResourceFile()))
-	resourceReader, _ := reader.Resource(exampleResourceIDCompoundResourceCompressed)
+	resourceReader, _ := reader.View(exampleResourceIDCompoundResourceCompressed)
 
 	assert.Equal(t, 3, resourceReader.BlockCount())
 	verifyBlockContent(t, resourceReader, 0, []byte{0x40, 0x40})

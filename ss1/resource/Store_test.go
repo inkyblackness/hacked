@@ -58,7 +58,7 @@ func (suite *StoreSuite) TestNewInstanceIsEmpty() {
 
 func (suite *StoreSuite) TestResourceReturnsErrorForUnknownResource() {
 	suite.whenInstanceIsCreated()
-	suite.thenResourceShouldReturnErrorFor(resource.ID(10))
+	suite.thenViewShouldReturnErrorFor(resource.ID(10))
 }
 
 func (suite *StoreSuite) TestDelWillHaveStoreIgnorePreviousEntry() {
@@ -67,7 +67,7 @@ func (suite *StoreSuite) TestDelWillHaveStoreIgnorePreviousEntry() {
 	suite.givenStoredResource(resource.ID(2), suite.aResource())
 	suite.whenResourceIsDeleted(resource.ID(2))
 	suite.thenIDsShouldBe([]resource.ID{resource.ID(1)})
-	suite.thenResourceShouldReturnErrorFor(resource.ID(2))
+	suite.thenViewShouldReturnErrorFor(resource.ID(2))
 }
 
 func (suite *StoreSuite) TestPutOverridesPreviousResources() {
@@ -77,7 +77,7 @@ func (suite *StoreSuite) TestPutOverridesPreviousResources() {
 	newRes := suite.aResource()
 	suite.whenResourceIsPut(resource.ID(2), newRes)
 	suite.thenIDsShouldBe([]resource.ID{resource.ID(2), resource.ID(1)})
-	suite.thenReturnedResourceShouldBe(resource.ID(2), newRes)
+	suite.thenReturnedViewShouldBe(resource.ID(2), newRes)
 }
 
 func (suite *StoreSuite) TestDelWillHaveStoreIgnoreResourceEvenIfPutMultipleTimes() {
@@ -87,7 +87,7 @@ func (suite *StoreSuite) TestDelWillHaveStoreIgnoreResourceEvenIfPutMultipleTime
 	suite.givenStoredResource(resource.ID(2), suite.aResource())
 	suite.whenResourceIsDeleted(resource.ID(2))
 	suite.thenIDsShouldBe([]resource.ID{resource.ID(1)})
-	suite.thenResourceShouldReturnErrorFor(resource.ID(2))
+	suite.thenViewShouldReturnErrorFor(resource.ID(2))
 }
 
 func (suite *StoreSuite) TestPutAddsNewResourcesAtEnd() {
@@ -97,7 +97,7 @@ func (suite *StoreSuite) TestPutAddsNewResourcesAtEnd() {
 	newRes := suite.aResource()
 	suite.whenResourceIsPut(resource.ID(3), newRes)
 	suite.thenIDsShouldBe([]resource.ID{resource.ID(2), resource.ID(1), resource.ID(3)})
-	suite.thenReturnedResourceShouldBe(resource.ID(3), newRes)
+	suite.thenReturnedViewShouldBe(resource.ID(3), newRes)
 }
 
 func (suite *StoreSuite) givenAnInstance() {
@@ -128,14 +128,14 @@ func (suite *StoreSuite) thenIDsShouldBe(expected []resource.ID) {
 	assert.Equal(suite.T(), expected, suite.store.IDs())
 }
 
-func (suite *StoreSuite) thenReturnedResourceShouldBe(id resource.ID, expected *resource.Resource) {
-	res, err := suite.store.Resource(id)
+func (suite *StoreSuite) thenReturnedViewShouldBe(id resource.ID, expected *resource.Resource) {
+	res, err := suite.store.View(id)
 	assert.Nil(suite.T(), err, "No error expected for ID %v", id)
 	assert.Equal(suite.T(), expected, res, "Different res returned for ID %v", id)
 }
 
-func (suite *StoreSuite) thenResourceShouldReturnErrorFor(id resource.ID) {
-	_, err := suite.store.Resource(id)
+func (suite *StoreSuite) thenViewShouldReturnErrorFor(id resource.ID) {
+	_, err := suite.store.View(id)
 	assert.Error(suite.T(), err, "Error expected for ID %v ", id) // nolint: vet
 }
 

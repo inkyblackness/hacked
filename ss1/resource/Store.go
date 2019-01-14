@@ -1,6 +1,6 @@
 package resource
 
-// Store is a resource provider that can be modified.
+// Store holds a set of resources. This set can be modified.
 type Store struct {
 	ids       []ID
 	retriever map[uint16]func() (View, error)
@@ -26,8 +26,8 @@ func (store *Store) IDs() []ID {
 	return cloneIDs(store.ids)
 }
 
-// Resource returns a resource for the given identifier.
-func (store *Store) Resource(id ID) (View, error) {
+// View returns a read-only view on the resource for given identifier.
+func (store *Store) View(id ID) (View, error) {
 	retriever, existing := store.retriever[id.Value()]
 	if !existing {
 		return nil, ErrResourceDoesNotExist(id)

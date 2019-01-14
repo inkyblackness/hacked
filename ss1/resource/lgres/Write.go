@@ -16,7 +16,7 @@ func Write(target io.WriteSeeker, source resource.Provider) error {
 	}
 
 	for _, id := range source.IDs() {
-		entry, resourceErr := source.Resource(id)
+		entry, resourceErr := source.View(id)
 		if resourceErr != nil {
 			return resourceErr
 		}

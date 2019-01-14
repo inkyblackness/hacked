@@ -33,7 +33,7 @@ func MutableResourcesFromProvider(filename string, provider resource.Provider) I
 	ids := provider.IDs()
 	mutables := make(IdentifiedResources)
 	for index, id := range ids {
-		res, _ := provider.Resource(id)
+		res, _ := provider.View(id)
 		mutable := &MutableResource{
 			filename:  filename,
 			saveOrder: index,
