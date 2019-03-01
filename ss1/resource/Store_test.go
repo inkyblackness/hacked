@@ -102,6 +102,16 @@ func (suite *StoreSuite) TestPutAddsNewResourcesAtEnd() {
 	suite.thenReturnedViewShouldBe(resource.ID(3), newRes)
 }
 
+func (suite *StoreSuite) TestPutRestoresIDAtOldPosition() {
+	suite.givenAnInstance()
+	suite.givenStoredResource(resource.ID(2), suite.aResource())
+	suite.givenStoredResource(resource.ID(1), suite.aResource())
+	suite.givenResourceWasDeleted(resource.ID(2))
+	newRes := suite.aResource()
+	suite.whenResourceIsPut(resource.ID(2), newRes)
+	suite.thenIDsShouldBe([]resource.ID{resource.ID(2), resource.ID(1)})
+}
+
 func (suite *StoreSuite) givenAnInstance() {
 	suite.whenInstanceIsCreated()
 }
@@ -109,6 +119,10 @@ func (suite *StoreSuite) givenAnInstance() {
 func (suite *StoreSuite) givenStoredResource(id resource.ID, res *resource.Resource) {
 	err := suite.store.Put(id, res)
 	require.Nil(suite.T(), err, "No error expected storing resource")
+}
+
+func (suite *StoreSuite) givenResourceWasDeleted(id resource.ID) {
+	suite.whenResourceIsDeleted(id)
 }
 
 func (suite *StoreSuite) whenInstanceIsCreated() {
