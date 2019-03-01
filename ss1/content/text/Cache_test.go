@@ -151,9 +151,9 @@ func (suite *CacheSuite) thenTextShouldReturnError(key resource.Key) {
 }
 
 func (suite *CacheSuite) someLocalizedResources(lang resource.Language, modifiers ...func(*resource.Store)) resource.LocalizedResources {
-	store := resource.NewStore()
+	var store resource.Store
 	for _, modifier := range modifiers {
-		modifier(store)
+		modifier(&store)
 	}
 	return resource.LocalizedResources{
 		ID:       "unnamed",
@@ -168,7 +168,7 @@ func (suite *CacheSuite) storing(id int, lines ...string) func(*resource.Store) 
 		data[i] = suite.cp.Encode(line)
 	}
 	return func(store *resource.Store) {
-		store.Put(resource.ID(id), resource.Resource{
+		_ = store.Put(resource.ID(id), resource.Resource{
 			Properties: resource.Properties{
 				ContentType: resource.Text,
 				Compound:    len(data) != 1,
@@ -180,7 +180,7 @@ func (suite *CacheSuite) storing(id int, lines ...string) func(*resource.Store) 
 
 func (suite *CacheSuite) storingNonText(id int) func(*resource.Store) {
 	return func(store *resource.Store) {
-		store.Put(resource.ID(id), resource.Resource{
+		_ = store.Put(resource.ID(id), resource.Resource{
 			Properties: resource.Properties{
 				ContentType: resource.Sound,
 				Compound:    false,

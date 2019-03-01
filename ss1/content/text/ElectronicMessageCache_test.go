@@ -145,9 +145,9 @@ func (suite *ElectronicMessageCacheSuite) thenMessageShouldReturnError(key resou
 }
 
 func (suite *ElectronicMessageCacheSuite) someLocalizedResources(lang resource.Language, modifiers ...func(*resource.Store)) resource.LocalizedResources {
-	store := resource.NewStore()
+	var store resource.Store
 	for _, modifier := range modifiers {
-		modifier(store)
+		modifier(&store)
 	}
 	return resource.LocalizedResources{
 		ID:       "unnamed",
@@ -159,7 +159,7 @@ func (suite *ElectronicMessageCacheSuite) someLocalizedResources(lang resource.L
 func (suite *ElectronicMessageCacheSuite) storing(id int, modifier func(msg text.ElectronicMessage) text.ElectronicMessage) func(*resource.Store) {
 	data := modifier(text.EmptyElectronicMessage()).Encode(suite.cp)
 	return func(store *resource.Store) {
-		store.Put(resource.ID(id), resource.Resource{
+		_ = store.Put(resource.ID(id), resource.Resource{
 			Properties: resource.Properties{
 				ContentType: resource.Text,
 				Compound:    true,
@@ -171,7 +171,7 @@ func (suite *ElectronicMessageCacheSuite) storing(id int, modifier func(msg text
 
 func (suite *ElectronicMessageCacheSuite) storingNonText(id int) func(*resource.Store) {
 	return func(store *resource.Store) {
-		store.Put(resource.ID(id), resource.Resource{
+		_ = store.Put(resource.ID(id), resource.Resource{
 			Properties: resource.Properties{
 				ContentType: resource.Sound,
 				Compound:    false,

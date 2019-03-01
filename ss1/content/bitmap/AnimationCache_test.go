@@ -112,9 +112,9 @@ func (suite AnimationCacheSuite) keyed(index int) resource.Key {
 }
 
 func (suite *AnimationCacheSuite) someLocalizedResources(modifiers ...func(*resource.Store)) resource.LocalizedResources {
-	store := resource.NewStore()
+	var store resource.Store
 	for _, modifier := range modifiers {
-		modifier(store)
+		modifier(&store)
 	}
 	return resource.LocalizedResources{
 		ID:       "unnamed",
@@ -127,7 +127,7 @@ func (suite *AnimationCacheSuite) storing(id int, anim bitmap.Animation) func(*r
 	buf := bytes.NewBuffer(nil)
 	_ = bitmap.WriteAnimation(buf, anim)
 	return func(store *resource.Store) {
-		store.Put(resource.ID(baseAnimationResourceID).Plus(id), resource.Resource{
+		_ = store.Put(resource.ID(baseAnimationResourceID).Plus(id), resource.Resource{
 			Properties: resource.Properties{
 				ContentType: resource.Animation,
 				Compound:    true,
@@ -158,7 +158,7 @@ func (suite *AnimationCacheSuite) someAnimation(seed uint8) bitmap.Animation {
 
 func (suite *AnimationCacheSuite) storingNonAnimation(id int) func(*resource.Store) {
 	return func(store *resource.Store) {
-		store.Put(resource.ID(baseAnimationResourceID).Plus(id), resource.Resource{
+		_ = store.Put(resource.ID(baseAnimationResourceID).Plus(id), resource.Resource{
 			Properties: resource.Properties{
 				ContentType: resource.Sound,
 				Compound:    true,

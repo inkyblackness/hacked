@@ -13,7 +13,7 @@ import (
 
 func TestWrite(t *testing.T) {
 	target := serial.NewByteStore()
-	store := resource.NewStore()
+	var store resource.Store
 	aResource := func(compressed bool, contentType resource.ContentType, compound bool, blocks resource.Blocks) resource.View {
 		return resource.Resource{
 			Properties: resource.Properties{
@@ -25,10 +25,10 @@ func TestWrite(t *testing.T) {
 		}
 	}
 
-	store.Put(resource.ID(1), aResource(false, resource.Bitmap, false, resource.BlocksFrom([][]byte{{0x11}})))
-	store.Put(resource.ID(3), aResource(false, resource.Font, true, resource.BlocksFrom([][]byte{{0x21}, {0x22, 0x23}})))
-	store.Put(resource.ID(2), aResource(true, resource.Geometry, false, resource.BlocksFrom([][]byte{{0x31}})))
-	store.Put(resource.ID(4), aResource(true, resource.Archive, true, resource.BlocksFrom([][]byte{{0x41}, {0x42, 0x43}})))
+	_ = store.Put(resource.ID(1), aResource(false, resource.Bitmap, false, resource.BlocksFrom([][]byte{{0x11}})))
+	_ = store.Put(resource.ID(3), aResource(false, resource.Font, true, resource.BlocksFrom([][]byte{{0x21}, {0x22, 0x23}})))
+	_ = store.Put(resource.ID(2), aResource(true, resource.Geometry, false, resource.BlocksFrom([][]byte{{0x31}})))
+	_ = store.Put(resource.ID(4), aResource(true, resource.Archive, true, resource.BlocksFrom([][]byte{{0x41}, {0x42, 0x43}})))
 
 	errWrite := lgres.Write(target, store)
 	if errWrite != nil {

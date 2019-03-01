@@ -8,15 +8,8 @@ type Store struct {
 	resources map[ID]*Resource
 }
 
-// NewStore returns a new store instance.
-func NewStore() *Store {
-	store := &Store{}
-
-	return store
-}
-
 // IDs returns a list of available IDs this store currently contains.
-func (store *Store) IDs() []ID {
+func (store Store) IDs() []ID {
 	ids := make([]ID, len(store.resources))
 	for id := range store.resources {
 		ids[store.findIDIndex(id)] = id
@@ -25,7 +18,7 @@ func (store *Store) IDs() []ID {
 }
 
 // Resource returns reference to the contained resource for given identifier.
-func (store *Store) Resource(id ID) (*Resource, error) {
+func (store Store) Resource(id ID) (*Resource, error) {
 	res, existing := store.resources[id]
 	if !existing {
 		return nil, ErrResourceDoesNotExist(id)
@@ -34,7 +27,7 @@ func (store *Store) Resource(id ID) (*Resource, error) {
 }
 
 // View returns a read-only view on the resource for given identifier.
-func (store *Store) View(id ID) (View, error) {
+func (store Store) View(id ID) (View, error) {
 	return store.Resource(id)
 }
 
@@ -78,7 +71,7 @@ func (store *Store) Put(id ID, view View) error {
 	return nil
 }
 
-func (store *Store) findIDIndex(id ID) int {
+func (store Store) findIDIndex(id ID) int {
 	for index := 0; index < len(store.ids); index++ {
 		if store.ids[index] == id {
 			return index

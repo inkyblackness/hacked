@@ -104,9 +104,9 @@ func (suite *ChangeNotifierSuite) thenModifiedIDsShouldBe(expected ...int) {
 }
 
 func (suite *ChangeNotifierSuite) someLocalizedResources(lang resource.Language, modifiers ...func(*resource.Store)) resource.LocalizedResources {
-	store := resource.NewStore()
+	var store resource.Store
 	for _, modifier := range modifiers {
-		modifier(store)
+		modifier(&store)
 	}
 	return resource.LocalizedResources{
 		ID:       "unnamed",
@@ -117,7 +117,7 @@ func (suite *ChangeNotifierSuite) someLocalizedResources(lang resource.Language,
 
 func (suite *ChangeNotifierSuite) storing(id int, data ...[]byte) func(*resource.Store) {
 	return func(store *resource.Store) {
-		store.Put(resource.ID(id), resource.Resource{
+		_ = store.Put(resource.ID(id), resource.Resource{
 			Blocks: resource.BlocksFrom(data),
 		})
 	}

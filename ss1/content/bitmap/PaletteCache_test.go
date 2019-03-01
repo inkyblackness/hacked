@@ -113,9 +113,9 @@ func (suite PaletteCacheSuite) keyed(index int) resource.Key {
 }
 
 func (suite *PaletteCacheSuite) someLocalizedResources(modifiers ...func(*resource.Store)) resource.LocalizedResources {
-	store := resource.NewStore()
+	var store resource.Store
 	for _, modifier := range modifiers {
-		modifier(store)
+		modifier(&store)
 	}
 	return resource.LocalizedResources{
 		ID:       "unnamed",
@@ -129,7 +129,7 @@ func (suite *PaletteCacheSuite) storing(id int, palette bitmap.Palette) func(*re
 	encoder := serial.NewEncoder(buf)
 	encoder.Code(palette)
 	return func(store *resource.Store) {
-		store.Put(resource.ID(basePaletteResourceID).Plus(id), resource.Resource{
+		_ = store.Put(resource.ID(basePaletteResourceID).Plus(id), resource.Resource{
 			Properties: resource.Properties{
 				ContentType: resource.Palette,
 				Compound:    false,
@@ -151,7 +151,7 @@ func (suite *PaletteCacheSuite) somePalette(seed uint8) bitmap.Palette {
 
 func (suite *PaletteCacheSuite) storingNonPalette(id int) func(*resource.Store) {
 	return func(store *resource.Store) {
-		store.Put(resource.ID(basePaletteResourceID).Plus(id), resource.Resource{
+		_ = store.Put(resource.ID(basePaletteResourceID).Plus(id), resource.Resource{
 			Properties: resource.Properties{
 				ContentType: resource.Sound,
 				Compound:    false,

@@ -420,9 +420,9 @@ func (suite *ManifestSuite) aSimpleEntry(id string) *world.ManifestEntry {
 }
 
 func (suite *ManifestSuite) someLocalizedResources(lang resource.Language, modifiers ...func(*resource.Store)) resource.LocalizedResources {
-	store := resource.NewStore()
+	var store resource.Store
 	for _, modifier := range modifiers {
-		modifier(store)
+		modifier(&store)
 	}
 	return resource.LocalizedResources{
 		ID:       "unnamed",
@@ -440,7 +440,7 @@ func (suite *ManifestSuite) anEntryWithResources(id string, res ...resource.Loca
 
 func (suite *ManifestSuite) storing(id int, data [][]byte) func(*resource.Store) {
 	return func(store *resource.Store) {
-		store.Put(resource.ID(id), resource.Resource{
+		_ = store.Put(resource.ID(id), resource.Resource{
 			Blocks: resource.BlocksFrom(data),
 		})
 	}

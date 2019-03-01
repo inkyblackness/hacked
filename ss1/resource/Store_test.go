@@ -41,7 +41,7 @@ func (list ResourceList) Resource(id resource.ID) (res resource.View, err error)
 type StoreSuite struct {
 	suite.Suite
 
-	store           *resource.Store
+	store           resource.Store
 	resourceCounter int
 }
 
@@ -50,7 +50,7 @@ func TestStoreSuite(t *testing.T) {
 }
 
 func (suite *StoreSuite) SetupTest() {
-	suite.store = nil
+	suite.store = resource.Store{}
 }
 
 func (suite *StoreSuite) TestNewInstanceIsEmpty() {
@@ -126,7 +126,7 @@ func (suite *StoreSuite) givenResourceWasDeleted(id resource.ID) {
 }
 
 func (suite *StoreSuite) whenInstanceIsCreated() {
-	suite.store = resource.NewStore()
+	suite.store = resource.Store{}
 }
 
 func (suite *StoreSuite) whenResourceIsDeleted(id resource.ID) {
