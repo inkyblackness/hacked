@@ -224,7 +224,6 @@ func (mod Mod) LocalizedResources(lang resource.Language) resource.Selector {
 // After the modifier completes, all the requests will be applied and any changes notified.
 func (mod *Mod) Modify(modifier func(*ModTransaction)) {
 	var trans ModTransaction
-	trans.modifiedIDs = make(resource.IDMarkerMap)
 	modifier(&trans)
 	mod.modifyAndNotify(func() {
 		for _, action := range trans.actions {
@@ -340,7 +339,7 @@ func (mod *Mod) delResource(lang resource.Language, id resource.ID) {
 
 // Reset changes the mod to a new set of resources.
 func (mod *Mod) Reset(newResources []*LocalizedResources, objectProperties object.PropertiesTable, textureProperties texture.PropertiesList) {
-	modifiedIDs := make(resource.IDMarkerMap)
+	var modifiedIDs resource.IDMarkerMap
 	collectIDs := func(res []*LocalizedResources) {
 		for _, loc := range res {
 			for _, id := range loc.Store.IDs() {
