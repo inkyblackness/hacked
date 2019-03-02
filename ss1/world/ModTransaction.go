@@ -1,12 +1,9 @@
 package world
 
 import (
-	"bytes"
-
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/resource"
-	"github.com/inkyblackness/hacked/ss1/serial/rle"
 )
 
 type modAction func(mod *Mod)
@@ -27,9 +24,7 @@ type ModTransaction struct {
 // If the resource is a compound list, then the underlying data will become visible again.
 func (trans *ModTransaction) SetResourceBlock(lang resource.Language, id resource.ID, index int, data []byte) {
 	trans.actions = append(trans.actions, func(mod *Mod) {
-		loc, res := mod.ensureResource(lang, id)
-		res.SetBlock(index, data)
-		mod.markFileChanged(loc.Filename)
+		mod.data.SetResourceBlock(lang, id, index, data)
 	})
 	trans.modifiedIDs.Add(id)
 }
@@ -39,12 +34,7 @@ func (trans *ModTransaction) SetResourceBlock(lang resource.Language, id resourc
 // The patch data is expected to be produced by rle.Compress().
 func (trans *ModTransaction) PatchResourceBlock(lang resource.Language, id resource.ID, index int, expectedLength int, patch []byte) {
 	trans.actions = append(trans.actions, func(mod *Mod) {
-		loc, res := mod.ensureResource(lang, id)
-		raw, err := res.BlockRaw(index)
-		if (err == nil) && (len(raw) == expectedLength) {
-			_ = rle.Decompress(bytes.NewReader(patch), raw)
-			mod.markFileChanged(loc.Filename)
-		}
+		mod.data.PatchResourceBlock(lang, id, index, expectedLength, patch)
 	})
 	trans.modifiedIDs.Add(id)
 }
@@ -53,9 +43,7 @@ func (trans *ModTransaction) PatchResourceBlock(lang resource.Language, id resou
 // This method is primarily meant for compound non-list resources (e.g. text pages).
 func (trans *ModTransaction) SetResourceBlocks(lang resource.Language, id resource.ID, data [][]byte) {
 	trans.actions = append(trans.actions, func(mod *Mod) {
-		loc, res := mod.ensureResource(lang, id)
-		res.Set(data)
-		mod.markFileChanged(loc.Filename)
+		mod.data.SetResourceBlocks(lang, id, data)
 	})
 	trans.modifiedIDs.Add(id)
 }
@@ -65,7 +53,7 @@ func (trans *ModTransaction) SetResourceBlocks(lang resource.Language, id resour
 // After the deletion, all the underlying data of the world will become visible again.
 func (trans *ModTransaction) DelResource(lang resource.Language, id resource.ID) {
 	trans.actions = append(trans.actions, func(mod *Mod) {
-		mod.delResource(lang, id)
+		mod.data.DelResource(lang, id)
 	})
 	trans.modifiedIDs.Add(id)
 }
@@ -73,13 +61,13 @@ func (trans *ModTransaction) DelResource(lang resource.Language, id resource.ID)
 // SetTextureProperties updates the properties of a specific texture.
 func (trans *ModTransaction) SetTextureProperties(textureIndex int, properties texture.Properties) {
 	trans.actions = append(trans.actions, func(mod *Mod) {
-		mod.setTextureProperties(textureIndex, properties)
+		mod.data.SetTextureProperties(textureIndex, properties)
 	})
 }
 
 // SetObjectProperties updates the properties of a specific object.
 func (trans *ModTransaction) SetObjectProperties(triple object.Triple, properties object.Properties) {
 	trans.actions = append(trans.actions, func(mod *Mod) {
-		mod.setObjectProperties(triple, properties)
+		mod.data.SetObjectProperties(triple, properties)
 	})
 }

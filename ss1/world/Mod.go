@@ -16,13 +16,6 @@ import (
 // ModResetCallback is called when the mod was reset.
 type ModResetCallback func()
 
-// LocalizedResources associates a language with a resource store under a specific filename.
-type LocalizedResources struct {
-	Filename string
-	Language resource.Language
-	Store    resource.Store
-}
-
 // Mod is the central object for a game-mod.
 //
 // It is based on a "static" world and adds its own changes. The world data itself is not static, it is merely the
@@ -36,9 +29,7 @@ type Mod struct {
 	lastChangeTime time.Time
 	changedFiles   map[string]struct{}
 
-	localizedResources []*LocalizedResources
-	objectProperties   object.PropertiesTable
-	textureProperties  texture.PropertiesList
+	data ModData
 }
 
 // NewMod returns a new instance.
@@ -49,6 +40,7 @@ func NewMod(resourcesChanged resource.ModificationCallback, resetCallback ModRes
 		changedFiles:     make(map[string]struct{}),
 	}
 	mod.worldManifest = NewManifest(mod.worldChanged)
+	mod.data.FileChangeCallback = mod.markFileChanged
 
 	return mod
 }
@@ -71,12 +63,12 @@ func (mod *Mod) SetPath(p string) {
 
 // ModifiedResources returns the current modification state.
 func (mod Mod) ModifiedResources() []*LocalizedResources {
-	return mod.localizedResources
+	return mod.data.LocalizedResources
 }
 
 // ModifiedFilenames returns the list of all filenames suspected of change.
 func (mod Mod) ModifiedFilenames() []string {
-	var result []string
+	result := make([]string, 0, len(mod.changedFiles))
 	for filename := range mod.changedFiles {
 		result = append(result, filename)
 	}
@@ -107,7 +99,7 @@ func (mod Mod) ModifiedResource(lang resource.Language, id resource.ID) resource
 }
 
 func (mod Mod) modifiedResource(lang resource.Language, id resource.ID) *resource.Resource {
-	for _, entry := range mod.localizedResources {
+	for _, entry := range mod.data.LocalizedResources {
 		if entry.Language == lang {
 			res, err := entry.Store.Resource(id)
 			if err == nil {
@@ -234,27 +226,27 @@ func (mod *Mod) Modify(modifier func(*ModTransaction)) {
 // ObjectProperties returns the table of object properties.
 func (mod *Mod) ObjectProperties() object.PropertiesTable {
 	if mod.HasModifyableObjectProperties() {
-		return mod.objectProperties
+		return mod.data.ObjectProperties
 	}
 	return mod.worldManifest.ObjectProperties()
 }
 
 // HasModifyableObjectProperties returns true if the mod has dedicated object properties.
 func (mod *Mod) HasModifyableObjectProperties() bool {
-	return len(mod.objectProperties) > 0
+	return len(mod.data.ObjectProperties) > 0
 }
 
 // TextureProperties returns the list of texture properties.
 func (mod *Mod) TextureProperties() texture.PropertiesList {
 	if mod.HasModifyableTextureProperties() {
-		return mod.textureProperties
+		return mod.data.TextureProperties
 	}
 	return mod.worldManifest.TextureProperties()
 }
 
 // HasModifyableTextureProperties returns true if the mod has dedicated texture properties.
 func (mod *Mod) HasModifyableTextureProperties() bool {
-	return len(mod.textureProperties) > 0
+	return len(mod.data.TextureProperties) > 0
 }
 
 func (mod *Mod) modifyAndNotify(modifier func(), modifiedIDs []resource.ID) {
@@ -276,66 +268,6 @@ func (mod Mod) worldChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) 
 	mod.resourcesChanged(modifiedIDs, failedIDs)
 }
 
-func (mod *Mod) ensureResource(lang resource.Language, id resource.ID) (*LocalizedResources, *resource.Resource) {
-	for _, loc := range mod.localizedResources {
-		if loc.Language == lang {
-			res, err := loc.Store.Resource(id)
-			if err == nil {
-				return loc, res
-			}
-		}
-	}
-
-	return mod.newResource(lang, id)
-}
-
-func (mod *Mod) newResource(lang resource.Language, id resource.ID) (*LocalizedResources, *resource.Resource) {
-	compound := true
-	contentType := resource.ContentType(0xFF) // Default to something completely unknown.
-	compressed := false
-	filename := "unknown.res"
-
-	if info, known := ids.Info(id); known {
-		compound = info.Compound
-		contentType = info.ContentType
-		compressed = info.Compressed
-		filename = info.ResFile.For(lang)
-	}
-
-	loc := mod.ensureStore(lang, filename)
-	_ = loc.Store.Put(id, resource.Resource{
-		Properties: resource.Properties{
-			Compound:    compound,
-			ContentType: contentType,
-			Compressed:  compressed,
-		},
-	})
-	res, _ := loc.Store.Resource(id)
-	return loc, res
-}
-
-func (mod *Mod) ensureStore(lang resource.Language, filename string) *LocalizedResources {
-	for _, loc := range mod.localizedResources {
-		if loc.Language == lang && loc.Filename == filename {
-			return loc
-		}
-	}
-	loc := &LocalizedResources{
-		Filename: filename,
-		Language: lang,
-	}
-	mod.localizedResources = append(mod.localizedResources, loc)
-	return loc
-}
-
-func (mod *Mod) delResource(lang resource.Language, id resource.ID) {
-	for _, loc := range mod.localizedResources {
-		if (loc.Language == lang) && loc.Store.Del(id) {
-			mod.markFileChanged(loc.Filename)
-		}
-	}
-}
-
 // Reset changes the mod to a new set of resources.
 func (mod *Mod) Reset(newResources []*LocalizedResources, objectProperties object.PropertiesTable, textureProperties texture.PropertiesList) {
 	var modifiedIDs resource.IDMarkerMap
@@ -346,12 +278,12 @@ func (mod *Mod) Reset(newResources []*LocalizedResources, objectProperties objec
 			}
 		}
 	}
-	collectIDs(mod.localizedResources)
+	collectIDs(mod.data.LocalizedResources)
 	collectIDs(newResources)
 
-	mod.localizedResources = newResources
-	mod.objectProperties = objectProperties
-	mod.textureProperties = textureProperties
+	mod.data.LocalizedResources = newResources
+	mod.data.ObjectProperties = objectProperties
+	mod.data.TextureProperties = textureProperties
 	mod.changedFiles = make(map[string]struct{})
 	mod.lastChangeTime = time.Time{}
 	mod.resetCallback()
@@ -363,22 +295,6 @@ func (mod *Mod) markFileChanged(filename string) {
 	mod.lastChangeTime = time.Now()
 }
 
-func (mod *Mod) setTextureProperties(index int, properties texture.Properties) {
-	if (index >= 0) && (int(index) < len(mod.textureProperties)) {
-		mod.textureProperties[index] = properties
-		mod.markFileChanged(TexturePropertiesFilename)
-	}
-}
-
-func (mod *Mod) setObjectProperties(triple object.Triple, properties object.Properties) {
-	entry, err := mod.objectProperties.ForObject(triple)
-	if err != nil {
-		return
-	}
-	*entry = properties.Clone()
-	mod.markFileChanged(ObjectPropertiesFilename)
-}
-
 // FixListResources ensures all resources that contain resource lists to
 // have maximum size. This is done to ensure compatibility with layered modding in the
 // Source Port branch of engines.
@@ -386,7 +302,7 @@ func (mod *Mod) setObjectProperties(triple object.Triple, properties object.Prop
 // "higher" mod. This even counts for entries past the last modified one in the higher mod.
 func (mod *Mod) FixListResources() {
 	mod.Modify(func(trans *ModTransaction) {
-		for _, localized := range mod.localizedResources {
+		for _, localized := range mod.data.LocalizedResources {
 			for _, id := range localized.Store.IDs() {
 				res, _ := localized.Store.Resource(id)
 				info, known := ids.Info(id)
