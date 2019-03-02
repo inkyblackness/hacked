@@ -8,7 +8,6 @@ import (
 
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"
-	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
@@ -18,13 +17,14 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
 )
 
 // View provides edit controls for game objects.
 type View struct {
-	mod          *model.Mod
+	mod          *world.Mod
 	textCache    *text.Cache
 	cp           text.Codepage
 	imageCache   *graphics.TextureCache
@@ -39,7 +39,7 @@ type View struct {
 }
 
 // NewView returns a new instance.
-func NewView(mod *model.Mod, textCache *text.Cache, cp text.Codepage,
+func NewView(mod *world.Mod, textCache *text.Cache, cp text.Codepage,
 	imageCache *graphics.TextureCache, paletteCache *graphics.PaletteCache,
 	modalStateMachine gui.ModalStateMachine,
 	clipboard external.Clipboard, guiScale float32, commander cmd.Commander) *View {

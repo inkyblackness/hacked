@@ -13,7 +13,6 @@ import (
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/levels"
 	"github.com/inkyblackness/hacked/editor/messages"
-	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/objects"
 	"github.com/inkyblackness/hacked/editor/project"
 	"github.com/inkyblackness/hacked/editor/texts"
@@ -28,6 +27,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/edit/undoable"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/hacked/ui/input"
@@ -60,7 +60,7 @@ type Application struct {
 	eventDispatcher *event.Dispatcher
 
 	cmdStack       *cmd.Stack
-	mod            *model.Mod
+	mod            *world.Mod
 	cp             text.Codepage
 	textLineCache  *text.Cache
 	textPageCache  *text.Cache
@@ -306,7 +306,7 @@ func (app *Application) tryRedo() {
 }
 
 func (app *Application) modifyModByCommand(modifier func(cmd.Transaction) error) (err error) {
-	app.mod.Modify(func(trans *model.ModTransaction) {
+	app.mod.Modify(func(trans *world.ModTransaction) {
 		err = modifier(trans)
 	})
 	return
@@ -416,7 +416,7 @@ func (app *Application) initSignalling() {
 }
 
 func (app *Application) initModel() {
-	app.mod = model.NewMod(app.resourcesChanged, app.modReset)
+	app.mod = world.NewMod(app.resourcesChanged, app.modReset)
 
 	app.cp = text.DefaultCodepage()
 	app.textLineCache = text.NewLineCache(app.cp, app.mod)

@@ -1,4 +1,4 @@
-package model_test
+package world_test
 
 import (
 	"fmt"
@@ -6,7 +6,6 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
 
@@ -17,7 +16,7 @@ import (
 
 type ModSuite struct {
 	suite.Suite
-	mod *model.Mod
+	mod *world.Mod
 
 	selector *resource.Selector
 
@@ -30,7 +29,7 @@ func TestModSuite(t *testing.T) {
 }
 
 func (suite *ModSuite) SetupTest() {
-	suite.mod = model.NewMod(suite.onResourcesModified, func() {})
+	suite.mod = world.NewMod(suite.onResourcesModified, func() {})
 
 	suite.selector = nil
 
@@ -55,7 +54,7 @@ func (suite *ModSuite) TestResourcesCanBeModified() {
 	suite.givenWorldHas(
 		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xAA}})))
-	suite.whenModifyingBy(func(trans *model.ModTransaction) {
+	suite.whenModifyingBy(func(trans *world.ModTransaction) {
 		trans.SetResourceBlock(resource.LangAny, 0x0800, 0, []byte{0xBB})
 	})
 	suite.thenResourceBlockShouldBe(resource.LangAny, 0x0800, 0, []byte{0xBB})
@@ -65,7 +64,7 @@ func (suite *ModSuite) TestResourcesCanBeExtended() {
 	suite.givenWorldHas(
 		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xAA}})))
-	suite.whenModifyingBy(func(trans *model.ModTransaction) {
+	suite.whenModifyingBy(func(trans *world.ModTransaction) {
 		trans.SetResourceBlock(resource.LangAny, 0x0800, 2, []byte{0xBB})
 	})
 	suite.thenResourceBlockShouldBe(resource.LangAny, 0x0800, 2, []byte{0xBB})
@@ -75,10 +74,10 @@ func (suite *ModSuite) TestResourcesCanBeRemoved() {
 	suite.givenWorldHas(
 		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xAA}})))
-	suite.givenModifiedBy(func(trans *model.ModTransaction) {
+	suite.givenModifiedBy(func(trans *world.ModTransaction) {
 		trans.SetResourceBlock(resource.LangAny, 0x0800, 0, []byte{0xBB})
 	})
-	suite.whenModifyingBy(func(trans *model.ModTransaction) {
+	suite.whenModifyingBy(func(trans *world.ModTransaction) {
 		trans.DelResource(resource.LangAny, 0x0800)
 	})
 	suite.thenResourceBlockShouldBe(resource.LangAny, 0x0800, 0, []byte{0xAA})
@@ -88,7 +87,7 @@ func (suite *ModSuite) TestAdditionsAreNotified() {
 	suite.givenWorldHas(
 		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xAA}})))
-	suite.whenModifyingBy(func(trans *model.ModTransaction) {
+	suite.whenModifyingBy(func(trans *world.ModTransaction) {
 		trans.SetResourceBlock(resource.LangAny, 0x0800, 2, []byte{0xBB})
 	})
 	suite.thenModifiedResourcesShouldBe(0x0800)
@@ -98,7 +97,7 @@ func (suite *ModSuite) TestModificationsToIdenticalDataAreNotNotified() {
 	suite.givenWorldHas(
 		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x004C, [][]byte{{0xAA}})))
-	suite.whenModifyingBy(func(trans *model.ModTransaction) {
+	suite.whenModifyingBy(func(trans *world.ModTransaction) {
 		trans.SetResourceBlock(resource.LangAny, 0x004C, 0, []byte{0xAA})
 	})
 	suite.thenModifiedResourcesShouldBe()
@@ -108,17 +107,17 @@ func (suite *ModSuite) TestDeletionIsNotified() {
 	suite.givenWorldHas(
 		suite.someLocalizedResources(resource.LangAny,
 			suite.storing(0x0800, [][]byte{{0xAA}})))
-	suite.givenModifiedBy(func(trans *model.ModTransaction) {
+	suite.givenModifiedBy(func(trans *world.ModTransaction) {
 		trans.SetResourceBlock(resource.LangAny, 0x0800, 0, []byte{0xBB})
 	})
-	suite.whenModifyingBy(func(trans *model.ModTransaction) {
+	suite.whenModifyingBy(func(trans *world.ModTransaction) {
 		trans.DelResource(resource.LangAny, 0x0800)
 	})
 	suite.thenModifiedResourcesShouldBe(0x0800)
 }
 
 func (suite *ModSuite) TestModifiedResourceCanBeRetrieved() {
-	suite.whenModifyingBy(func(trans *model.ModTransaction) {
+	suite.whenModifyingBy(func(trans *world.ModTransaction) {
 		trans.SetResourceBlock(resource.LangAny, 0x0800, 0, []byte{0xBB})
 		trans.SetResourceBlock(resource.LangAny, 0x0800, 1, []byte{0xCC})
 	})
@@ -129,7 +128,7 @@ func (suite *ModSuite) TestModifiedResourceCanBeRetrieved() {
 }
 
 func (suite *ModSuite) TestModifiedBlocksCanBeRetrievedSingle() {
-	suite.whenModifyingBy(func(trans *model.ModTransaction) {
+	suite.whenModifyingBy(func(trans *world.ModTransaction) {
 		trans.SetResourceBlock(resource.LangAny, 0x0800, 0, []byte{0xBB})
 		trans.SetResourceBlock(resource.LangAny, 0x0800, 1, []byte{0xCC})
 	})
@@ -139,7 +138,7 @@ func (suite *ModSuite) TestModifiedBlocksCanBeRetrievedSingle() {
 }
 
 func (suite *ModSuite) TestModifiedBlocksCanBeRetrievedBulk() {
-	suite.whenModifyingBy(func(trans *model.ModTransaction) {
+	suite.whenModifyingBy(func(trans *world.ModTransaction) {
 		trans.SetResourceBlock(resource.LangAny, 0x0800, 0, []byte{0xBB})
 		trans.SetResourceBlock(resource.LangAny, 0x0800, 1, []byte{0xCC})
 	})
@@ -166,14 +165,14 @@ func (suite *ModSuite) whenResourcesAreQueriedFor(lang resource.Language) {
 	suite.selector = &selector
 }
 
-func (suite *ModSuite) givenModifiedBy(modifier func(*model.ModTransaction)) {
+func (suite *ModSuite) givenModifiedBy(modifier func(*world.ModTransaction)) {
 	suite.mod.Modify(modifier)
 
 	suite.lastModifiedIDs = nil
 	suite.lastFailedIDs = nil
 }
 
-func (suite *ModSuite) whenModifyingBy(modifier func(*model.ModTransaction)) {
+func (suite *ModSuite) whenModifyingBy(modifier func(*world.ModTransaction)) {
 	suite.mod.Modify(modifier)
 }
 

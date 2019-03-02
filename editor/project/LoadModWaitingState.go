@@ -5,7 +5,7 @@ import (
 
 	"github.com/inkyblackness/imgui-go"
 
-	"github.com/inkyblackness/hacked/editor/model"
+	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
 )
@@ -52,11 +52,11 @@ func (state *loadModWaitingState) HandleFiles(names []string) {
 	staging.stageAll(names)
 
 	if len(staging.resources) > 0 {
-		var locs []*model.LocalizedResources
+		var locs []*world.LocalizedResources
 
 		for filename, viewer := range staging.resources {
 			lang := ids.LocalizeFilename(filename)
-			loc := &model.LocalizedResources{
+			loc := &world.LocalizedResources{
 				Filename: filename,
 				Language: lang,
 			}

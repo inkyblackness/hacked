@@ -8,7 +8,6 @@ import (
 
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"
-	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
@@ -23,7 +22,7 @@ import (
 
 // View provides edit controls for textures.
 type View struct {
-	mod          *model.Mod
+	mod          *world.Mod
 	textCache    *text.Cache
 	cp           text.Codepage
 	imageCache   *graphics.TextureCache
@@ -38,7 +37,7 @@ type View struct {
 }
 
 // NewTexturesView returns a new instance.
-func NewTexturesView(mod *model.Mod, textCache *text.Cache, cp text.Codepage,
+func NewTexturesView(mod *world.Mod, textCache *text.Cache, cp text.Codepage,
 	imageCache *graphics.TextureCache, paletteCache *graphics.PaletteCache,
 	modalStateMachine gui.ModalStateMachine,
 	clipboard external.Clipboard, guiScale float32, commander cmd.Commander) *View {

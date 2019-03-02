@@ -1,4 +1,4 @@
-package model
+package world
 
 import (
 	"bytes"
@@ -10,7 +10,6 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/serial/rle"
-	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 )
 
@@ -29,7 +28,7 @@ type LocalizedResources struct {
 // It is based on a "static" world and adds its own changes. The world data itself is not static, it is merely the
 // unchangeable background for the mod. Changes to the mod are kept in a separate layer, which can be loaded and saved.
 type Mod struct {
-	worldManifest    *world.Manifest
+	worldManifest    *Manifest
 	resourcesChanged resource.ModificationCallback
 	resetCallback    ModResetCallback
 
@@ -49,14 +48,14 @@ func NewMod(resourcesChanged resource.ModificationCallback, resetCallback ModRes
 		resetCallback:    resetCallback,
 		changedFiles:     make(map[string]struct{}),
 	}
-	mod.worldManifest = world.NewManifest(mod.worldChanged)
+	mod.worldManifest = NewManifest(mod.worldChanged)
 
 	return mod
 }
 
 // World returns the static background to the mod. Changes in the returned manifest may cause change callbacks
 // being forwarded.
-func (mod Mod) World() *world.Manifest {
+func (mod Mod) World() *Manifest {
 	return mod.worldManifest
 }
 
@@ -216,7 +215,7 @@ func (mod Mod) LocalizedResources(lang resource.Language) resource.Selector {
 	return resource.Selector{
 		Lang: lang,
 		From: mod,
-		As:   world.ResourceViewStrategy(),
+		As:   ResourceViewStrategy(),
 	}
 }
 
@@ -367,7 +366,7 @@ func (mod *Mod) markFileChanged(filename string) {
 func (mod *Mod) setTextureProperties(index int, properties texture.Properties) {
 	if (index >= 0) && (int(index) < len(mod.textureProperties)) {
 		mod.textureProperties[index] = properties
-		mod.markFileChanged(world.TexturePropertiesFilename)
+		mod.markFileChanged(TexturePropertiesFilename)
 	}
 }
 
@@ -377,7 +376,7 @@ func (mod *Mod) setObjectProperties(triple object.Triple, properties object.Prop
 		return
 	}
 	*entry = properties.Clone()
-	mod.markFileChanged(world.ObjectPropertiesFilename)
+	mod.markFileChanged(ObjectPropertiesFilename)
 }
 
 // FixListResources ensures all resources that contain resource lists to

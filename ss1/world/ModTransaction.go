@@ -1,4 +1,4 @@
-package model
+package world
 
 import (
 	"bytes"

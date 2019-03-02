@@ -1,4 +1,4 @@
-package model
+package world
 
 import "github.com/inkyblackness/hacked/ss1/resource"
 

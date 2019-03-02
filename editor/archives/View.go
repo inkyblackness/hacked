@@ -5,7 +5,6 @@ import (
 
 	"github.com/inkyblackness/imgui-go"
 
-	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
@@ -18,7 +17,7 @@ import (
 
 // View provides edit controls for the archive.
 type View struct {
-	mod *model.Mod
+	mod *world.Mod
 
 	guiScale  float32
 	commander cmd.Commander
@@ -27,7 +26,7 @@ type View struct {
 }
 
 // NewArchiveView returns a new instance.
-func NewArchiveView(mod *model.Mod, guiScale float32, commander cmd.Commander) *View {
+func NewArchiveView(mod *world.Mod, guiScale float32, commander cmd.Commander) *View {
 	view := &View{
 		mod: mod,
 

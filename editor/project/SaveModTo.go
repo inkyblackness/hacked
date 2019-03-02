@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -14,7 +13,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/world"
 )
 
-func saveModResourcesTo(mod *model.Mod, modPath string) error {
+func saveModResourcesTo(mod *world.Mod, modPath string) error {
 	localized := mod.ModifiedResources()
 	filenamesToSave := mod.ModifiedFilenames()
 
