@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/inkyblackness/hacked/ss1/content/object"
@@ -18,6 +17,13 @@ import (
 // ModResetCallback is called when the mod was reset.
 type ModResetCallback func()
 
+// LocalizedResources associates a language with a resource store under a specific filename.
+type LocalizedResources struct {
+	Filename string
+	Language resource.Language
+	Store    resource.Store
+}
+
 // Mod is the central object for a game-mod.
 //
 // It is based on a "static" world and adds its own changes. The world data itself is not static, it is merely the
@@ -27,10 +33,11 @@ type Mod struct {
 	resourcesChanged resource.ModificationCallback
 	resetCallback    ModResetCallback
 
-	modPath            string
-	lastChangeTime     time.Time
-	changedFiles       map[string]struct{}
-	localizedResources LocalizedResources
+	modPath        string
+	lastChangeTime time.Time
+	changedFiles   map[string]struct{}
+
+	localizedResources []*LocalizedResources
 	objectProperties   object.PropertiesTable
 	textureProperties  texture.PropertiesList
 }
@@ -38,10 +45,9 @@ type Mod struct {
 // NewMod returns a new instance.
 func NewMod(resourcesChanged resource.ModificationCallback, resetCallback ModResetCallback) *Mod {
 	mod := &Mod{
-		resourcesChanged:   resourcesChanged,
-		resetCallback:      resetCallback,
-		localizedResources: NewLocalizedResources(),
-		changedFiles:       make(map[string]struct{}),
+		resourcesChanged: resourcesChanged,
+		resetCallback:    resetCallback,
+		changedFiles:     make(map[string]struct{}),
 	}
 	mod.worldManifest = world.NewManifest(mod.worldChanged)
 
@@ -65,7 +71,7 @@ func (mod *Mod) SetPath(p string) {
 }
 
 // ModifiedResources returns the current modification state.
-func (mod Mod) ModifiedResources() LocalizedResources {
+func (mod Mod) ModifiedResources() []*LocalizedResources {
 	return mod.localizedResources
 }
 
@@ -94,23 +100,23 @@ func (mod *Mod) MarkSave() {
 	mod.lastChangeTime = time.Time{}
 }
 
-// IDs returns an array of currently modified IDs for given language.
-func (mod Mod) IDs(lang resource.Language) []resource.ID {
-	localized := mod.localizedResources[lang]
-	var result []resource.ID
-	for id, res := range localized {
-		if res.BlockCount() > 0 {
-			result = append(result, id)
-		}
-	}
-	return result
-}
-
 // ModifiedResource retrieves the resource of given language and ID.
 // There is no fallback lookup, it will return the exact resource stored under the provided identifier.
 // Returns nil if the resource does not exist.
 func (mod Mod) ModifiedResource(lang resource.Language, id resource.ID) resource.View {
-	return mod.localizedResources[lang][id]
+	return mod.modifiedResource(lang, id)
+}
+
+func (mod Mod) modifiedResource(lang resource.Language, id resource.ID) *resource.Resource {
+	for _, entry := range mod.localizedResources {
+		if entry.Language == lang {
+			res, err := entry.Store.Resource(id)
+			if err == nil {
+				return res
+			}
+		}
+	}
+	return nil
 }
 
 // CreateBlockPatch creates delta information for a block witch static data length.
@@ -126,7 +132,7 @@ func (mod Mod) CreateBlockPatch(lang resource.Language, id resource.ID, index in
 		BlockIndex:  -1,
 		BlockLength: 0,
 	}
-	res := mod.localizedResources[lang][id]
+	res := mod.modifiedResource(lang, id)
 	if res == nil {
 		return patch, false, errors.New("resource unknown")
 	}
@@ -161,7 +167,7 @@ func (mod Mod) CreateBlockPatch(lang resource.Language, id resource.ID, index in
 // ModifiedBlock retrieves the specific block identified by given parameter.
 // Returns empty slice if the block (or resource) is not modified.
 func (mod Mod) ModifiedBlock(lang resource.Language, id resource.ID, index int) (data []byte) {
-	res := mod.localizedResources[lang][id]
+	res := mod.modifiedResource(lang, id)
 	if res == nil {
 		return
 	}
@@ -171,7 +177,7 @@ func (mod Mod) ModifiedBlock(lang resource.Language, id resource.ID, index int) 
 
 // ModifiedBlocks returns all blocks of the modified resource.
 func (mod Mod) ModifiedBlocks(lang resource.Language, id resource.ID) [][]byte {
-	res := mod.localizedResources[lang][id]
+	res := mod.modifiedResource(lang, id)
 	if res == nil {
 		return nil
 	}
@@ -192,12 +198,12 @@ func (mod Mod) blockCopy(data []byte) []byte {
 // Filter returns a list of resources that match the given parameters.
 func (mod Mod) Filter(lang resource.Language, id resource.ID) resource.List {
 	list := mod.worldManifest.Filter(lang, id)
-	if res, resExists := mod.localizedResources[resource.LangAny][id]; resExists {
+	if res := mod.modifiedResource(resource.LangAny, id); res != nil {
 		list = list.With(res)
 	}
 	for _, worldLang := range resource.Languages() {
 		if worldLang.Includes(lang) {
-			if res, resExists := mod.localizedResources[lang][id]; resExists {
+			if res := mod.modifiedResource(lang, id); res != nil {
 				list = list.With(res)
 			}
 		}
@@ -229,7 +235,7 @@ func (mod *Mod) Modify(modifier func(*ModTransaction)) {
 
 // ObjectProperties returns the table of object properties.
 func (mod *Mod) ObjectProperties() object.PropertiesTable {
-	if len(mod.objectProperties) > 0 {
+	if mod.HasModifyableObjectProperties() {
 		return mod.objectProperties
 	}
 	return mod.worldManifest.ObjectProperties()
@@ -242,7 +248,7 @@ func (mod *Mod) HasModifyableObjectProperties() bool {
 
 // TextureProperties returns the list of texture properties.
 func (mod *Mod) TextureProperties() texture.PropertiesList {
-	if len(mod.textureProperties) > 0 {
+	if mod.HasModifyableTextureProperties() {
 		return mod.textureProperties
 	}
 	return mod.worldManifest.TextureProperties()
@@ -272,16 +278,20 @@ func (mod Mod) worldChanged(modifiedIDs []resource.ID, failedIDs []resource.ID) 
 	mod.resourcesChanged(modifiedIDs, failedIDs)
 }
 
-func (mod *Mod) ensureResource(lang resource.Language, id resource.ID) *MutableResource {
-	res, resExists := mod.localizedResources[lang][id]
-	if !resExists {
-		res = mod.newResource(lang, id)
-		mod.localizedResources[lang][id] = res
+func (mod *Mod) ensureResource(lang resource.Language, id resource.ID) (*LocalizedResources, *resource.Resource) {
+	for _, loc := range mod.localizedResources {
+		if loc.Language == lang {
+			res, err := loc.Store.Resource(id)
+			if err == nil {
+				return loc, res
+			}
+		}
 	}
-	return res
+
+	return mod.newResource(lang, id)
 }
 
-func (mod *Mod) newResource(lang resource.Language, id resource.ID) *MutableResource {
+func (mod *Mod) newResource(lang resource.Language, id resource.ID) (*LocalizedResources, *resource.Resource) {
 	compound := true
 	contentType := resource.ContentType(0xFF) // Default to something completely unknown.
 	compressed := false
@@ -294,42 +304,46 @@ func (mod *Mod) newResource(lang resource.Language, id resource.ID) *MutableReso
 		filename = info.ResFile.For(lang)
 	}
 
-	return &MutableResource{
-		filename:  filename,
-		saveOrder: math.MaxInt32,
-
-		Resource: resource.Resource{
-			Properties: resource.Properties{
-				Compound:    compound,
-				ContentType: contentType,
-				Compressed:  compressed,
-			},
+	loc := mod.ensureStore(lang, filename)
+	_ = loc.Store.Put(id, resource.Resource{
+		Properties: resource.Properties{
+			Compound:    compound,
+			ContentType: contentType,
+			Compressed:  compressed,
 		},
+	})
+	res, _ := loc.Store.Resource(id)
+	return loc, res
+}
+
+func (mod *Mod) ensureStore(lang resource.Language, filename string) *LocalizedResources {
+	for _, loc := range mod.localizedResources {
+		if loc.Language == lang && loc.Filename == filename {
+			return loc
+		}
 	}
+	loc := &LocalizedResources{
+		Filename: filename,
+		Language: lang,
+	}
+	mod.localizedResources = append(mod.localizedResources, loc)
+	return loc
 }
 
 func (mod *Mod) delResource(lang resource.Language, id resource.ID) {
-	deleteEntry := func(specificLang resource.Language, id resource.ID) {
-		if lang.Includes(specificLang) {
-			res, existing := mod.localizedResources[specificLang][id]
-			if existing {
-				mod.markFileChanged(res.filename)
-				delete(mod.localizedResources[specificLang], id)
-			}
+	for _, loc := range mod.localizedResources {
+		if (loc.Language == lang) && loc.Store.Del(id) {
+			mod.markFileChanged(loc.Filename)
 		}
 	}
-	for _, worldLang := range resource.Languages() {
-		deleteEntry(worldLang, id)
-	}
-	deleteEntry(resource.LangAny, id)
 }
 
 // Reset changes the mod to a new set of resources.
-func (mod *Mod) Reset(newResources LocalizedResources, objectProperties object.PropertiesTable, textureProperties texture.PropertiesList) {
+func (mod *Mod) Reset(newResources []*LocalizedResources, objectProperties object.PropertiesTable, textureProperties texture.PropertiesList) {
 	modifiedIDs := make(resource.IDMarkerMap)
-	collectIDs := func(res LocalizedResources) {
-		for _, resMap := range res {
-			for id := range resMap {
+	collectIDs := func(res []*LocalizedResources) {
+		for _, loc := range res {
+			for _, id := range loc.Store.IDs() {
 				modifiedIDs.Add(id)
 			}
 		}
@@ -374,14 +388,15 @@ func (mod *Mod) setObjectProperties(triple object.Triple, properties object.Prop
 // "higher" mod. This even counts for entries past the last modified one in the higher mod.
 func (mod *Mod) FixListResources() {
 	mod.Modify(func(trans *ModTransaction) {
-		for lang, localized := range mod.localizedResources {
-			for id, res := range localized {
+		for _, localized := range mod.localizedResources {
+			for _, id := range localized.Store.IDs() {
+				res, _ := localized.Store.Resource(id)
 				info, known := ids.Info(id)
 				if known && info.List {
 					baseCount := res.BlockCount()
 					required := info.MaxCount - baseCount
 					for i := 0; i < required; i++ {
-						trans.SetResourceBlock(lang, id, baseCount+i, nil)
+						trans.SetResourceBlock(localized.Language, id, baseCount+i, nil)
 					}
 				}
 			}

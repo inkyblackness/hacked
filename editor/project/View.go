@@ -219,7 +219,7 @@ func (view *View) requestRemoveManifestEntry() {
 	view.commander.Queue(command)
 }
 
-func (view *View) requestLoadMod(modPath string, resources model.LocalizedResources,
+func (view *View) requestLoadMod(modPath string, resources []*model.LocalizedResources,
 	objectProperties object.PropertiesTable, textureProperties texture.PropertiesList) {
 	view.mod.SetPath(modPath)
 	view.mod.Reset(resources, objectProperties, textureProperties)

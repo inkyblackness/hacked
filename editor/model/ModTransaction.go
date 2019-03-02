@@ -27,9 +27,9 @@ type ModTransaction struct {
 // If the resource is a compound list, then the underlying data will become visible again.
 func (trans *ModTransaction) SetResourceBlock(lang resource.Language, id resource.ID, index int, data []byte) {
 	trans.actions = append(trans.actions, func(mod *Mod) {
-		res := mod.ensureResource(lang, id)
+		loc, res := mod.ensureResource(lang, id)
 		res.SetBlock(index, data)
-		mod.markFileChanged(res.filename)
+		mod.markFileChanged(loc.Filename)
 	})
 	trans.modifiedIDs.Add(id)
 }
@@ -39,11 +39,11 @@ func (trans *ModTransaction) SetResourceBlock(lang resource.Language, id resourc
 // The patch data is expected to be produced by rle.Compress().
 func (trans *ModTransaction) PatchResourceBlock(lang resource.Language, id resource.ID, index int, expectedLength int, patch []byte) {
 	trans.actions = append(trans.actions, func(mod *Mod) {
-		res := mod.ensureResource(lang, id)
+		loc, res := mod.ensureResource(lang, id)
 		raw, err := res.BlockRaw(index)
 		if (err == nil) && (len(raw) == expectedLength) {
 			_ = rle.Decompress(bytes.NewReader(patch), raw)
-			mod.markFileChanged(res.filename)
+			mod.markFileChanged(loc.Filename)
 		}
 	})
 	trans.modifiedIDs.Add(id)
@@ -53,9 +53,9 @@ func (trans *ModTransaction) PatchResourceBlock(lang resource.Language, id resou
 // This method is primarily meant for compound non-list resources (e.g. text pages).
 func (trans *ModTransaction) SetResourceBlocks(lang resource.Language, id resource.ID, data [][]byte) {
 	trans.actions = append(trans.actions, func(mod *Mod) {
-		res := mod.ensureResource(lang, id)
+		loc, res := mod.ensureResource(lang, id)
 		res.Set(data)
-		mod.markFileChanged(res.filename)
+		mod.markFileChanged(loc.Filename)
 	})
 	trans.modifiedIDs.Add(id)
 }

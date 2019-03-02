@@ -32,10 +32,12 @@ func (store Store) View(id ID) (View, error) {
 }
 
 // Del removes the resource with given identifier from the store.
-func (store *Store) Del(id ID) {
-	if _, existing := store.resources[id]; existing {
+func (store *Store) Del(id ID) bool {
+	_, existing := store.resources[id]
+	if existing {
 		delete(store.resources, id)
 	}
+	return existing
 }
 
 // Put (re-)assigns an identifier with data. If no resource with given ID exists,

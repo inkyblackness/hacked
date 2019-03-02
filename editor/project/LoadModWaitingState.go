@@ -52,15 +52,26 @@ func (state *loadModWaitingState) HandleFiles(names []string) {
 	staging.stageAll(names)
 
 	if len(staging.resources) > 0 {
-		res := model.NewLocalizedResources()
+		var locs []*model.LocalizedResources
 
 		for filename, viewer := range staging.resources {
 			lang := ids.LocalizeFilename(filename)
-			res[lang].Add(model.MutableResourcesFromViewer(filename, viewer))
+			loc := &model.LocalizedResources{
+				Filename: filename,
+				Language: lang,
+			}
+			for _, id := range viewer.IDs() {
+				view, err := viewer.View(id)
+				if err == nil {
+					err = loc.Store.Put(id, view)
+				}
+				// TODO: handle error?
+			}
+			locs = append(locs, loc)
 		}
 
 		state.machine.SetState(nil)
-		state.view.requestLoadMod(names[0], res, staging.objectProperties, staging.textureProperties)
+		state.view.requestLoadMod(names[0], locs, staging.objectProperties, staging.textureProperties)
 	} else {
 		state.failureTime = time.Now()
 	}
