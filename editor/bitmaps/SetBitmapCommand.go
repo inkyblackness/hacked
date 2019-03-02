@@ -1,8 +1,8 @@
 package bitmaps
 
 import (
-	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world"
 )
 
 type setBitmapCommand struct {
@@ -15,16 +15,16 @@ type setBitmapCommand struct {
 	newData     []byte
 }
 
-func (cmd setBitmapCommand) Do(trans cmd.Transaction) error {
-	return cmd.perform(trans, cmd.newData)
+func (cmd setBitmapCommand) Do(modder world.Modder) error {
+	return cmd.perform(modder, cmd.newData)
 }
 
-func (cmd setBitmapCommand) Undo(trans cmd.Transaction) error {
-	return cmd.perform(trans, cmd.oldData)
+func (cmd setBitmapCommand) Undo(modder world.Modder) error {
+	return cmd.perform(modder, cmd.oldData)
 }
 
-func (cmd setBitmapCommand) perform(trans cmd.Transaction, data []byte) error {
-	trans.SetResourceBlock(cmd.resourceKey.Lang, cmd.resourceKey.ID, cmd.resourceKey.Index, data)
+func (cmd setBitmapCommand) perform(modder world.Modder, data []byte) error {
+	modder.SetResourceBlock(cmd.resourceKey.Lang, cmd.resourceKey.ID, cmd.resourceKey.Index, data)
 
 	cmd.model.restoreFocus = true
 	cmd.model.currentKey = cmd.displayKey

@@ -2,8 +2,8 @@ package objects
 
 import (
 	"github.com/inkyblackness/hacked/ss1/content/object"
-	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world"
 )
 
 type setObjectTextCommand struct {
@@ -17,16 +17,16 @@ type setObjectTextCommand struct {
 	newData []byte
 }
 
-func (command setObjectTextCommand) Do(trans cmd.Transaction) error {
-	return command.perform(trans, command.newData)
+func (command setObjectTextCommand) Do(modder world.Modder) error {
+	return command.perform(modder, command.newData)
 }
 
-func (command setObjectTextCommand) Undo(trans cmd.Transaction) error {
-	return command.perform(trans, command.oldData)
+func (command setObjectTextCommand) Undo(modder world.Modder) error {
+	return command.perform(modder, command.oldData)
 }
 
-func (command setObjectTextCommand) perform(trans cmd.Transaction, data []byte) error {
-	trans.SetResourceBlock(command.key.Lang, command.key.ID, command.key.Index, data)
+func (command setObjectTextCommand) perform(modder world.Modder, data []byte) error {
+	modder.SetResourceBlock(command.key.Lang, command.key.ID, command.key.Index, data)
 	command.model.restoreFocus = true
 	command.model.currentObject = command.triple
 	command.model.currentBitmap = command.bitmap

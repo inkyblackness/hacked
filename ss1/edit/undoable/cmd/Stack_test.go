@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
+	"github.com/inkyblackness/hacked/ss1/world"
 )
 
 type TestCommand struct {
@@ -21,12 +22,12 @@ type TestCommand struct {
 	task         func()
 }
 
-func (cmd *TestCommand) Do(trans cmd.Transaction) error {
+func (cmd *TestCommand) Do(modder world.Modder) error {
 	cmd.executed++
 	return cmd.run()
 }
 
-func (cmd *TestCommand) Undo(trans cmd.Transaction) error {
+func (cmd *TestCommand) Undo(modder world.Modder) error {
 	cmd.reverted++
 	return cmd.run()
 }

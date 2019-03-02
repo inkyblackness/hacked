@@ -2,7 +2,7 @@ package textures
 
 import (
 	"github.com/inkyblackness/hacked/ss1/content/texture"
-	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
+	"github.com/inkyblackness/hacked/ss1/world"
 )
 
 type setTexturePropertiesCommand struct {
@@ -14,16 +14,16 @@ type setTexturePropertiesCommand struct {
 	newProperties texture.Properties
 }
 
-func (cmd setTexturePropertiesCommand) Do(trans cmd.Transaction) error {
-	return cmd.perform(trans, cmd.newProperties)
+func (cmd setTexturePropertiesCommand) Do(modder world.Modder) error {
+	return cmd.perform(modder, cmd.newProperties)
 }
 
-func (cmd setTexturePropertiesCommand) Undo(trans cmd.Transaction) error {
-	return cmd.perform(trans, cmd.oldProperties)
+func (cmd setTexturePropertiesCommand) Undo(modder world.Modder) error {
+	return cmd.perform(modder, cmd.oldProperties)
 }
 
-func (cmd setTexturePropertiesCommand) perform(trans cmd.Transaction, properties texture.Properties) error {
-	trans.SetTextureProperties(cmd.textureIndex, properties)
+func (cmd setTexturePropertiesCommand) perform(modder world.Modder, properties texture.Properties) error {
+	modder.SetTextureProperties(cmd.textureIndex, properties)
 
 	cmd.model.restoreFocus = true
 	cmd.model.currentIndex = cmd.textureIndex

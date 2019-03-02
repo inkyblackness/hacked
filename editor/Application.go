@@ -305,9 +305,9 @@ func (app *Application) tryRedo() {
 	}
 }
 
-func (app *Application) modifyModByCommand(modifier func(cmd.Transaction) error) (err error) {
-	app.mod.Modify(func(trans *world.ModTransaction) {
-		err = modifier(trans)
+func (app *Application) modifyModByCommand(modifier func(world.Modder) error) (err error) {
+	app.mod.Modify(func(modder world.Modder) {
+		err = modifier(modder)
 	})
 	return
 }
@@ -477,8 +477,8 @@ func (app *Application) initView() {
 
 // Queue requests to perform the given command.
 func (app *Application) Queue(command cmd.Command) {
-	err := app.modifyModByCommand(func(trans cmd.Transaction) error {
-		return app.cmdStack.Perform(command, trans)
+	err := app.modifyModByCommand(func(modder world.Modder) error {
+		return app.cmdStack.Perform(command, modder)
 	})
 	if err != nil {
 		app.onFailure("command", "", err)

@@ -1,4 +1,4 @@
-package cmd
+package world
 
 import (
 	"github.com/inkyblackness/hacked/ss1/content/object"
@@ -6,8 +6,8 @@ import (
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
-// Transaction describes actions meant to modify resources.
-type Transaction interface {
+// Modder describes actions meant to modify resources.
+type Modder interface {
 
 	// SetResourceBlock changes the block data of a resource.
 	//

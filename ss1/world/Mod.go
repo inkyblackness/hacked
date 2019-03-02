@@ -213,12 +213,12 @@ func (mod Mod) LocalizedResources(lang resource.Language) resource.Selector {
 
 // Modify requests to change the mod. The provided function will be called to collect all changes.
 // After the modifier completes, all the requests will be applied and any changes notified.
-func (mod *Mod) Modify(modifier func(*ModTransaction)) {
+func (mod *Mod) Modify(modifier func(Modder)) {
 	var trans ModTransaction
 	modifier(&trans)
 	mod.modifyAndNotify(func() {
 		for _, action := range trans.actions {
-			action(mod)
+			action(&mod.data)
 		}
 	}, trans.modifiedIDs.ToList())
 }
@@ -301,7 +301,7 @@ func (mod *Mod) markFileChanged(filename string) {
 // These engines will have "lower" mods bleed through only if the block is empty in a
 // "higher" mod. This even counts for entries past the last modified one in the higher mod.
 func (mod *Mod) FixListResources() {
-	mod.Modify(func(trans *ModTransaction) {
+	mod.Modify(func(modder Modder) {
 		for _, localized := range mod.data.LocalizedResources {
 			for _, id := range localized.Store.IDs() {
 				res, _ := localized.Store.Resource(id)
@@ -310,7 +310,7 @@ func (mod *Mod) FixListResources() {
 					baseCount := res.BlockCount()
 					required := info.MaxCount - baseCount
 					for i := 0; i < required; i++ {
-						trans.SetResourceBlock(localized.Language, id, baseCount+i, nil)
+						modder.SetResourceBlock(localized.Language, id, baseCount+i, nil)
 					}
 				}
 			}
