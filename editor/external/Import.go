@@ -13,11 +13,12 @@ import (
 )
 
 // Import starts an import dialog series, calling the given callback with a file name.
-func Import(machine gui.ModalStateMachine, info string, callback func(string), lastFailed bool) {
+func Import(machine gui.ModalStateMachine, info string, types []TypeInfo, callback func(string), lastFailed bool) {
 	machine.SetState(&importStartState{
 		machine:   machine,
 		callback:  callback,
 		info:      info,
+		typeInfo:  types,
 		withError: lastFailed,
 	})
 }
@@ -25,41 +26,43 @@ func Import(machine gui.ModalStateMachine, info string, callback func(string), l
 // ImportAudio is a helper to handle audio file import. The callback is called with the loaded audio.
 func ImportAudio(machine gui.ModalStateMachine, callback func(l8 audio.L8)) {
 	info := "File must be a WAV file, 22050 Hz, 8-bit or 16-bit, uncompressed."
+	types := []TypeInfo{{Title: "Audio files (*.wav)", Extensions: []string{"wav"}}}
 	var fileHandler func(string)
 
 	fileHandler = func(filename string) {
 		reader, err := os.Open(filename)
 		if err != nil {
-			Import(machine, info, fileHandler, true)
+			Import(machine, info, types, fileHandler, true)
 			return
 		}
 		defer func() { _ = reader.Close() }()
 		sound, err := wav.Load(reader)
 		if err != nil {
-			Import(machine, info, fileHandler, true)
+			Import(machine, info, types, fileHandler, true)
 			return
 		}
 		callback(sound)
 	}
 
-	Import(machine, info, fileHandler, false)
+	Import(machine, info, types, fileHandler, false)
 }
 
 // ImportImage is a helper to handle image file import. The callback is called with the loaded image.
 func ImportImage(machine gui.ModalStateMachine, paletteRetriever func() (bitmap.Palette, error), callback func(bitmap.Bitmap)) {
 	info := "File should be either a PNG or a GIF file.\nPaletted images matching game palette are taken 1:1,\nothers are mapped closest fitting."
+	types := []TypeInfo{{Title: "Image files (*.gif, *.png)", Extensions: []string{"png", "gif"}}}
 	var fileHandler func(string)
 
 	fileHandler = func(filename string) {
 		reader, err := os.Open(filename)
 		if err != nil {
-			Import(machine, "Could not open file.\n"+info, fileHandler, true)
+			Import(machine, "Could not open file.\n"+info, types, fileHandler, true)
 			return
 		}
 		defer func() { _ = reader.Close() }()
 		img, _, err := image.Decode(reader)
 		if err != nil {
-			Import(machine, "File not recognized as image.\n"+info, fileHandler, true)
+			Import(machine, "File not recognized as image.\n"+info, types, fileHandler, true)
 			return
 		}
 
@@ -67,7 +70,7 @@ func ImportImage(machine gui.ModalStateMachine, paletteRetriever func() (bitmap.
 		importMapped := true
 		rawPalette, err := paletteRetriever()
 		if err != nil {
-			Import(machine, "Can not import image without having a palette loaded.\n"+info, fileHandler, true)
+			Import(machine, "Can not import image without having a palette loaded.\n"+info, types, fileHandler, true)
 			return
 		}
 		if palettedImg, isPaletted := img.(image.PalettedImage); isPaletted {
@@ -93,7 +96,7 @@ func ImportImage(machine gui.ModalStateMachine, paletteRetriever func() (bitmap.
 		callback(bmp)
 	}
 
-	Import(machine, info, fileHandler, false)
+	Import(machine, info, types, fileHandler, false)
 }
 
 func paletteMatches(imgPalette color.Palette, rawPalette color.Palette) bool {

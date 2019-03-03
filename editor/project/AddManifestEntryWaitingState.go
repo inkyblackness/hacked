@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/inkyblackness/imgui-go"
+	"github.com/sqweek/dialog"
 
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
@@ -36,6 +37,14 @@ Typically, you would use the main "data" directory of the game
 (where all the .res files are).
 `)
 		imgui.Separator()
+		if imgui.Button("Browse...") {
+			dlgBuilder := dialog.Directory()
+			filename, err := dlgBuilder.Browse()
+			if err == nil {
+				state.HandleFiles([]string{filename})
+			}
+		}
+		imgui.SameLine()
 		if imgui.Button("Cancel") {
 			state.machine.SetState(nil)
 			imgui.CloseCurrentPopup()

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/inkyblackness/imgui-go"
+	"github.com/sqweek/dialog"
 
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
@@ -36,6 +37,14 @@ use the main "data" directory of the game.
 `)
 		imgui.Text("This action will clear the undo/redo buffer\nand you will lose any unsaved changes.")
 		imgui.Separator()
+		if imgui.Button("Browse...") {
+			dlgBuilder := dialog.Directory()
+			filename, err := dlgBuilder.Browse()
+			if err == nil {
+				state.HandleFiles([]string{filename})
+			}
+		}
+		imgui.SameLine()
 		if imgui.Button("Cancel") {
 			state.machine.SetState(nil)
 			imgui.CloseCurrentPopup()

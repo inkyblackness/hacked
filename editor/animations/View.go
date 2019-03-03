@@ -184,24 +184,25 @@ func (view *View) currentAnimation() (bitmap.Animation, bool, bool) {
 
 func (view *View) requestImport() {
 	info := "File must be an animated GIF file.\nIdeally, it matches the game palette 1:1,\nothers are mapped closest fitting."
+	types := []external.TypeInfo{{Title: "Animation files (*.gif)", Extensions: []string{"gif"}}}
 	var fileHandler func(string)
 
 	fileHandler = func(filename string) {
 		reader, err := os.Open(filename)
 		if err != nil {
-			external.Import(view.modalStateMachine, "Could not open file.\n"+info, fileHandler, true)
+			external.Import(view.modalStateMachine, "Could not open file.\n"+info, types, fileHandler, true)
 			return
 		}
 		defer func() { _ = reader.Close() }()
 		data, err := gif.DecodeAll(reader)
 		if err != nil {
-			external.Import(view.modalStateMachine, "File not recognized as GIF.\n"+info, fileHandler, true)
+			external.Import(view.modalStateMachine, "File not recognized as GIF.\n"+info, types, fileHandler, true)
 			return
 		}
 
 		palette, err := view.paletteCache.Palette(0)
 		if err != nil {
-			external.Import(view.modalStateMachine, "Can not import image without having a palette loaded.\n"+info, fileHandler, true)
+			external.Import(view.modalStateMachine, "Can not import image without having a palette loaded.\n"+info, types, fileHandler, true)
 			return
 		}
 		anim := bitmap.Animation{
@@ -250,7 +251,7 @@ func (view *View) requestImport() {
 		view.requestSetAnimation(anim, frames)
 	}
 
-	external.Import(view.modalStateMachine, info, fileHandler, false)
+	external.Import(view.modalStateMachine, info, types, fileHandler, false)
 }
 
 func (view *View) requestExport() {

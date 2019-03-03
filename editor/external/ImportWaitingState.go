@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/inkyblackness/imgui-go"
+	"github.com/sqweek/dialog"
 
 	"github.com/inkyblackness/hacked/ui/gui"
 )
@@ -13,6 +14,7 @@ type importWaitingState struct {
 	machine  gui.ModalStateMachine
 	callback func(string)
 	info     string
+	typeInfo []TypeInfo
 
 	failureTime time.Time
 }
@@ -35,6 +37,18 @@ that shall be loaded into the editor window.
 `)
 		imgui.Text(state.info)
 		imgui.Separator()
+		if imgui.Button("Browse...") {
+			dlgBuilder := dialog.File()
+			for _, info := range state.typeInfo {
+				dlgBuilder = dlgBuilder.Filter(info.Title, info.Extensions...)
+			}
+			dlgBuilder = dlgBuilder.Filter("All files (*.*)", "*")
+			filename, err := dlgBuilder.Load()
+			if err == nil {
+				state.HandleFiles([]string{filename})
+			}
+		}
+		imgui.SameLine()
 		if imgui.Button("Cancel") {
 			state.machine.SetState(nil)
 			imgui.CloseCurrentPopup()

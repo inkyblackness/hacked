@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/inkyblackness/imgui-go"
+	"github.com/sqweek/dialog"
 
 	"github.com/inkyblackness/hacked/ui/gui"
 )
@@ -39,6 +40,14 @@ where to save the data into the editor window.
 		imgui.Text("It is recommended to use an empty folder.\nSaving will potentially overwrite existing files.")
 		imgui.PopStyleColor()
 		imgui.Separator()
+		if imgui.Button("Browse...") {
+			dlgBuilder := dialog.Directory()
+			filename, err := dlgBuilder.Browse()
+			if err == nil {
+				state.HandleFiles([]string{filename})
+			}
+		}
+		imgui.SameLine()
 		if imgui.Button("Cancel") {
 			state.machine.SetState(nil)
 			imgui.CloseCurrentPopup()

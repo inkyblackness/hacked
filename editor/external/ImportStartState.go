@@ -12,6 +12,7 @@ type importStartState struct {
 	machine   gui.ModalStateMachine
 	callback  func(string)
 	info      string
+	typeInfo  []TypeInfo
 	withError bool
 }
 
@@ -21,6 +22,7 @@ func (state importStartState) Render() {
 		machine:  state.machine,
 		callback: state.callback,
 		info:     state.info,
+		typeInfo: state.typeInfo,
 	}
 	if state.withError {
 		nextState.failureTime = time.Now()
