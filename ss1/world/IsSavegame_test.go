@@ -14,12 +14,14 @@ import (
 func TestIsSavegameTrueForActualSavegame(t *testing.T) {
 	stateData := make([]byte, archive.GameStateSize)
 	stateData[0x009C] = 0x80
-	store := resource.NewProviderBackedStore(resource.NullProvider())
-	store.Put(ids.GameState, &resource.Resource{
-		Compressed:    false,
-		ContentType:   resource.Archive,
-		Compound:      false,
-		BlockProvider: resource.MemoryBlockProvider([][]byte{stateData}),
+	var store resource.Store
+	_ = store.Put(ids.GameState, resource.Resource{
+		Properties: resource.Properties{
+			Compressed:  false,
+			ContentType: resource.Archive,
+			Compound:    false,
+		},
+		Blocks: resource.BlocksFrom([][]byte{stateData}),
 	})
 
 	result := world.IsSavegame(store)
@@ -27,19 +29,21 @@ func TestIsSavegameTrueForActualSavegame(t *testing.T) {
 }
 
 func TestIsSavegameFalseForMissingStateData(t *testing.T) {
-	store := resource.NewProviderBackedStore(resource.NullProvider())
+	var store resource.Store
 
 	result := world.IsSavegame(store)
 	assert.False(t, result)
 }
 
 func TestIsSavegameFalseForWrongResourceContent(t *testing.T) {
-	store := resource.NewProviderBackedStore(resource.NullProvider())
-	store.Put(ids.GameState, &resource.Resource{
-		Compressed:    false,
-		ContentType:   resource.Archive,
-		Compound:      true,
-		BlockProvider: resource.MemoryBlockProvider([][]byte{}),
+	var store resource.Store
+	_ = store.Put(ids.GameState, resource.Resource{
+		Properties: resource.Properties{
+			Compressed:  false,
+			ContentType: resource.Archive,
+			Compound:    true,
+		},
+		Blocks: resource.BlocksFrom([][]byte{}),
 	})
 
 	result := world.IsSavegame(store)
@@ -47,12 +51,14 @@ func TestIsSavegameFalseForWrongResourceContent(t *testing.T) {
 }
 
 func TestIsSavegameFalseForTooShortData(t *testing.T) {
-	store := resource.NewProviderBackedStore(resource.NullProvider())
-	store.Put(ids.GameState, &resource.Resource{
-		Compressed:    false,
-		ContentType:   resource.Archive,
-		Compound:      true,
-		BlockProvider: resource.MemoryBlockProvider([][]byte{make([]byte, 0x10)}),
+	var store resource.Store
+	_ = store.Put(ids.GameState, resource.Resource{
+		Properties: resource.Properties{
+			Compressed:  false,
+			ContentType: resource.Archive,
+			Compound:    true,
+		},
+		Blocks: resource.BlocksFrom([][]byte{make([]byte, 0x10)}),
 	})
 
 	result := world.IsSavegame(store)
@@ -61,12 +67,14 @@ func TestIsSavegameFalseForTooShortData(t *testing.T) {
 
 func TestIsSavegameFalseForZeroData(t *testing.T) {
 	stateData := make([]byte, archive.GameStateSize)
-	store := resource.NewProviderBackedStore(resource.NullProvider())
-	store.Put(ids.GameState, &resource.Resource{
-		Compressed:    false,
-		ContentType:   resource.Archive,
-		Compound:      true,
-		BlockProvider: resource.MemoryBlockProvider([][]byte{stateData}),
+	var store resource.Store
+	_ = store.Put(ids.GameState, resource.Resource{
+		Properties: resource.Properties{
+			Compressed:  false,
+			ContentType: resource.Archive,
+			Compound:    true,
+		},
+		Blocks: resource.BlocksFrom([][]byte{stateData}),
 	})
 
 	result := world.IsSavegame(store)

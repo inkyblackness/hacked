@@ -1,5 +1,7 @@
 package cmd
 
+import "github.com/inkyblackness/hacked/ss1/world"
+
 type stackEntry struct {
 	link *stackEntry
 	cmd  Command
@@ -19,11 +21,11 @@ type Stack struct {
 // Perform executes the given command and puts it on the stack
 // if the command was successful.
 // This function also clears the list of commands to be redone.
-func (stack *Stack) Perform(cmd Command, trans Transaction) error {
+func (stack *Stack) Perform(cmd Command, modder world.Modder) error {
 	stack.lock("Perform")
 	defer stack.unlock()
 
-	err := cmd.Do(trans)
+	err := cmd.Do(modder)
 	if err != nil {
 		return err
 	}
@@ -41,7 +43,7 @@ func (stack *Stack) CanUndo() bool {
 // If there is no further command to undo, nothing happens.
 // An error is returned if the command failed. In this case, the stack is
 // unchanged and a further attempt to undo will try the same command again.
-func (stack *Stack) Undo(trans Transaction) error {
+func (stack *Stack) Undo(modder world.Modder) error {
 	stack.lock("Undo")
 	defer stack.unlock()
 
@@ -49,7 +51,7 @@ func (stack *Stack) Undo(trans Transaction) error {
 		return nil
 	}
 	entry := stack.undoList
-	err := entry.cmd.Undo(trans)
+	err := entry.cmd.Undo(modder)
 	if err != nil {
 		return err
 	}
@@ -68,7 +70,7 @@ func (stack *Stack) CanRedo() bool {
 // If there is no further command to redo, nothing happens.
 // An error is returned if the command failed. In this case, the stack is
 // unchanged and a further attempt to redo will try the same command again.
-func (stack *Stack) Redo(trans Transaction) error {
+func (stack *Stack) Redo(modder world.Modder) error {
 	stack.lock("Redo")
 	defer stack.unlock()
 
@@ -76,7 +78,7 @@ func (stack *Stack) Redo(trans Transaction) error {
 		return nil
 	}
 	entry := stack.redoList
-	err := entry.cmd.Do(trans)
+	err := entry.cmd.Do(modder)
 	if err != nil {
 		return err
 	}

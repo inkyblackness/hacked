@@ -10,8 +10,8 @@ import (
 
 func someResource(key byte) resource.View {
 	return resource.Resource{
-		BlockProvider: resource.MemoryBlockProvider{[]byte{key}},
-	}.ToView()
+		Blocks: resource.BlocksFrom([][]byte{{key}}),
+	}
 }
 
 func TestListWith(t *testing.T) {

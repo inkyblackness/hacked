@@ -1,8 +1,8 @@
 package texts
 
 import (
+	"github.com/inkyblackness/hacked/ss1/edit"
 	"github.com/inkyblackness/hacked/ss1/resource"
-	"github.com/inkyblackness/hacked/ss1/world/ids"
 )
 
 type viewModel struct {
@@ -13,6 +13,6 @@ type viewModel struct {
 
 func freshViewModel() viewModel {
 	return viewModel{
-		currentKey: resource.KeyOf(ids.TrapMessageTexts, resource.LangDefault, 0),
+		currentKey: resource.KeyOf(edit.KnownTexts()[0].ID, resource.LangDefault, 0),
 	}
 }

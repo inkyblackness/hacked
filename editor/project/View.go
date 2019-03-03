@@ -7,17 +7,16 @@ import (
 
 	"github.com/inkyblackness/imgui-go"
 
-	"github.com/inkyblackness/hacked/editor/cmd"
-	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ui/gui"
 )
 
 // View handles the project display.
 type View struct {
-	mod *model.Mod
+	mod *world.Mod
 
 	modalStateMachine gui.ModalStateMachine
 	guiScale          float32
@@ -27,7 +26,7 @@ type View struct {
 }
 
 // NewView creates a new instance for the project display.
-func NewView(mod *model.Mod, modalStateMachine gui.ModalStateMachine,
+func NewView(mod *world.Mod, modalStateMachine gui.ModalStateMachine,
 	guiScale float32, commander cmd.Commander) *View {
 	return &View{
 		mod: mod,
@@ -219,7 +218,7 @@ func (view *View) requestRemoveManifestEntry() {
 	view.commander.Queue(command)
 }
 
-func (view *View) requestLoadMod(modPath string, resources model.LocalizedResources,
+func (view *View) requestLoadMod(modPath string, resources []*world.LocalizedResources,
 	objectProperties object.PropertiesTable, textureProperties texture.PropertiesList) {
 	view.mod.SetPath(modPath)
 	view.mod.Reset(resources, objectProperties, textureProperties)

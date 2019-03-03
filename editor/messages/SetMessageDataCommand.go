@@ -1,8 +1,8 @@
 package messages
 
 import (
-	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world"
 )
 
 type messageDataEntry struct {
@@ -20,17 +20,17 @@ type setMessageDataCommand struct {
 	audioEntries map[resource.Language]messageDataEntry
 }
 
-func (cmd setMessageDataCommand) Do(trans cmd.Transaction) error {
-	return cmd.perform(trans, func(entry messageDataEntry) [][]byte { return entry.newData })
+func (cmd setMessageDataCommand) Do(modder world.Modder) error {
+	return cmd.perform(modder, func(entry messageDataEntry) [][]byte { return entry.newData })
 }
 
-func (cmd setMessageDataCommand) Undo(trans cmd.Transaction) error {
-	return cmd.perform(trans, func(entry messageDataEntry) [][]byte { return entry.oldData })
+func (cmd setMessageDataCommand) Undo(modder world.Modder) error {
+	return cmd.perform(modder, func(entry messageDataEntry) [][]byte { return entry.oldData })
 }
 
-func (cmd setMessageDataCommand) perform(trans cmd.Transaction, dataResolver func(messageDataEntry) [][]byte) error {
-	cmd.saveEntries(trans, cmd.key.ID.Plus(cmd.key.Index), cmd.textEntries, dataResolver)
-	cmd.saveEntries(trans, cmd.key.ID.Plus(cmd.key.Index).Plus(300), cmd.audioEntries, dataResolver)
+func (cmd setMessageDataCommand) perform(modder world.Modder, dataResolver func(messageDataEntry) [][]byte) error {
+	cmd.saveEntries(modder, cmd.key.ID.Plus(cmd.key.Index), cmd.textEntries, dataResolver)
+	cmd.saveEntries(modder, cmd.key.ID.Plus(cmd.key.Index).Plus(300), cmd.audioEntries, dataResolver)
 
 	cmd.model.restoreFocus = true
 	cmd.model.currentKey = cmd.key
@@ -38,15 +38,15 @@ func (cmd setMessageDataCommand) perform(trans cmd.Transaction, dataResolver fun
 	return nil
 }
 
-func (cmd setMessageDataCommand) saveEntries(trans cmd.Transaction, id resource.ID,
+func (cmd setMessageDataCommand) saveEntries(modder world.Modder, id resource.ID,
 	entries map[resource.Language]messageDataEntry,
 	dataResolver func(messageDataEntry) [][]byte) {
 	for lang, entry := range entries {
 		data := dataResolver(entry)
 		if len(data) > 0 {
-			trans.SetResourceBlocks(lang, id, data)
+			modder.SetResourceBlocks(lang, id, data)
 		} else {
-			trans.DelResource(lang, id)
+			modder.DelResource(lang, id)
 		}
 	}
 }

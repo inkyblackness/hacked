@@ -5,7 +5,7 @@ import (
 
 	"github.com/inkyblackness/imgui-go"
 
-	"github.com/inkyblackness/hacked/editor/model"
+	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
 )
@@ -52,15 +52,26 @@ func (state *loadModWaitingState) HandleFiles(names []string) {
 	staging.stageAll(names)
 
 	if len(staging.resources) > 0 {
-		res := model.NewLocalizedResources()
+		var locs []*world.LocalizedResources
 
-		for filename, provider := range staging.resources {
+		for filename, viewer := range staging.resources {
 			lang := ids.LocalizeFilename(filename)
-			res[lang].Add(model.MutableResourcesFromProvider(filename, provider))
+			loc := &world.LocalizedResources{
+				Filename: filename,
+				Language: lang,
+			}
+			for _, id := range viewer.IDs() {
+				view, err := viewer.View(id)
+				if err == nil {
+					_ = loc.Store.Put(id, view)
+				}
+				// TODO: handle error?
+			}
+			locs = append(locs, loc)
 		}
 
 		state.machine.SetState(nil)
-		state.view.requestLoadMod(names[0], res, staging.objectProperties, staging.textureProperties)
+		state.view.requestLoadMod(names[0], locs, staging.objectProperties, staging.textureProperties)
 	} else {
 		state.failureTime = time.Now()
 	}

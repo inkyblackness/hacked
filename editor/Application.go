@@ -9,12 +9,10 @@ import (
 	"github.com/inkyblackness/hacked/editor/animations"
 	"github.com/inkyblackness/hacked/editor/archives"
 	"github.com/inkyblackness/hacked/editor/bitmaps"
-	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/levels"
 	"github.com/inkyblackness/hacked/editor/messages"
-	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/objects"
 	"github.com/inkyblackness/hacked/editor/project"
 	"github.com/inkyblackness/hacked/editor/texts"
@@ -24,7 +22,12 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/content/text"
+	"github.com/inkyblackness/hacked/ss1/edit"
+	"github.com/inkyblackness/hacked/ss1/edit/media"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/hacked/ui/input"
@@ -57,7 +60,7 @@ type Application struct {
 	eventDispatcher *event.Dispatcher
 
 	cmdStack       *cmd.Stack
-	mod            *model.Mod
+	mod            *world.Mod
 	cp             text.Codepage
 	textLineCache  *text.Cache
 	textPageCache  *text.Cache
@@ -302,9 +305,9 @@ func (app *Application) tryRedo() {
 	}
 }
 
-func (app *Application) modifyModByCommand(modifier func(cmd.Transaction) error) (err error) {
-	app.mod.Modify(func(trans *model.ModTransaction) {
-		err = modifier(trans)
+func (app *Application) modifyModByCommand(modifier func(world.Modder) error) (err error) {
+	app.mod.Modify(func(modder world.Modder) {
+		err = modifier(modder)
 	})
 	return
 }
@@ -413,7 +416,7 @@ func (app *Application) initSignalling() {
 }
 
 func (app *Application) initModel() {
-	app.mod = model.NewMod(app.resourcesChanged, app.modReset)
+	app.mod = world.NewMod(app.resourcesChanged, app.modReset)
 
 	app.cp = text.DefaultCodepage()
 	app.textLineCache = text.NewLineCache(app.cp, app.mod)
@@ -449,13 +452,19 @@ func (app *Application) modReset() {
 
 // nolint: lll
 func (app *Application) initView() {
+	textViewer := media.NewTextViewerService(app.textLineCache, app.textPageCache, app.mod)
+	textSetter := media.NewTextSetterService(app.cp)
+	audioViewer := media.NewAudioViewerService(app.movieCache, app.mod)
+	audioSetter := media.NewAudioSetterService()
+	augmentedTextService := undoable.NewAugmentedTextService(edit.NewAugmentedTextService(textViewer, textSetter, audioViewer, audioSetter), app)
+
 	app.projectView = project.NewView(app.mod, &app.modalState, app.GuiScale, app)
 	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)
 	app.levelControlView = levels.NewControlView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.levelTilesView = levels.NewTilesView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.levelObjectsView = levels.NewObjectsView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.messagesView = messages.NewMessagesView(app.mod, app.messagesCache, app.cp, app.movieCache, app.textureCache, &app.modalState, app.clipboard, app.GuiScale, app)
-	app.textsView = texts.NewTextsView(app.mod, app.textLineCache, app.textPageCache, app.cp, app.movieCache, &app.modalState, app.clipboard, app.GuiScale, app)
+	app.textsView = texts.NewTextsView(augmentedTextService, &app.modalState, app.clipboard, app.GuiScale)
 	app.bitmapsView = bitmaps.NewBitmapsView(app.mod, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.texturesView = textures.NewTexturesView(app.mod, app.textLineCache, app.cp, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.animationsView = animations.NewAnimationsView(app.mod, app.textureCache, app.paletteCache, app.animationCache, &app.modalState, app.GuiScale, app)
@@ -468,11 +477,11 @@ func (app *Application) initView() {
 
 // Queue requests to perform the given command.
 func (app *Application) Queue(command cmd.Command) {
-	err := app.modifyModByCommand(func(trans cmd.Transaction) error {
-		return app.cmdStack.Perform(command, trans)
+	err := app.modifyModByCommand(func(modder world.Modder) error {
+		return app.cmdStack.Perform(command, modder)
 	})
 	if err != nil {
-		app.onFailure("Command", "", err)
+		app.onFailure("command", "", err)
 	}
 }
 

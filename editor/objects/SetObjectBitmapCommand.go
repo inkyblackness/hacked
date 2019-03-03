@@ -1,9 +1,9 @@
 package objects
 
 import (
-	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world"
 )
 
 type setObjectBitmapCommand struct {
@@ -17,16 +17,16 @@ type setObjectBitmapCommand struct {
 	newData     []byte
 }
 
-func (command setObjectBitmapCommand) Do(trans cmd.Transaction) error {
-	return command.perform(trans, command.newData)
+func (command setObjectBitmapCommand) Do(modder world.Modder) error {
+	return command.perform(modder, command.newData)
 }
 
-func (command setObjectBitmapCommand) Undo(trans cmd.Transaction) error {
-	return command.perform(trans, command.oldData)
+func (command setObjectBitmapCommand) Undo(modder world.Modder) error {
+	return command.perform(modder, command.oldData)
 }
 
-func (command setObjectBitmapCommand) perform(trans cmd.Transaction, data []byte) error {
-	trans.SetResourceBlock(command.resourceKey.Lang, command.resourceKey.ID, command.resourceKey.Index, data)
+func (command setObjectBitmapCommand) perform(modder world.Modder, data []byte) error {
+	modder.SetResourceBlock(command.resourceKey.Lang, command.resourceKey.ID, command.resourceKey.Index, data)
 
 	command.model.restoreFocus = true
 	command.model.currentObject = command.triple

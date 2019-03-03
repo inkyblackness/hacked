@@ -1,85 +1,42 @@
 package texts
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/inkyblackness/imgui-go"
 
-	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/external"
-	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/ss1/content/audio"
-	"github.com/inkyblackness/hacked/ss1/content/movie"
-	"github.com/inkyblackness/hacked/ss1/content/text"
+	"github.com/inkyblackness/hacked/ss1/edit"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
 )
 
-type textInfo struct {
-	id    resource.ID
-	title string
-}
-
-var knownTextTypes = []textInfo{
-	{id: ids.TrapMessageTexts, title: "Trap Messages"},
-	{id: ids.WordTexts, title: "Words"},
-	{id: ids.LogCategoryTexts, title: "Log Categories"},
-	{id: ids.VariousMessageTexts, title: "Various Messages"},
-	{id: ids.ScreenMessageTexts, title: "Screen Messages"},
-	{id: ids.InfoNodeMessageTexts, title: "Info Node Message Texts (8/5/6)"},
-	{id: ids.AccessCardNameTexts, title: "Access Card Names"},
-	{id: ids.DataletMessageTexts, title: "Datalet Messages (8/5/8)"},
-	{id: ids.PaperTextsStart, title: "Papers"},
-	{id: ids.PanelNameTexts, title: "Panel Names"},
-}
-
-var textToAudio = map[resource.ID]resource.ID{
-	ids.TrapMessageTexts: ids.TrapMessagesAudioStart,
-}
-
 // View provides edit controls for texts.
 type View struct {
-	mod        *model.Mod
-	lineCache  *text.Cache
-	pageCache  *text.Cache
-	cp         text.Codepage
-	movieCache *movie.Cache
+	textService undoable.AugmentedTextService
 
 	modalStateMachine gui.ModalStateMachine
 	clipboard         external.Clipboard
 	guiScale          float32
-	commander         cmd.Commander
 
 	model viewModel
-
-	textTypeTitleByID map[resource.ID]string
 }
 
 // NewTextsView returns a new instance.
-func NewTextsView(mod *model.Mod,
-	lineCache *text.Cache, pageCache *text.Cache, cp text.Codepage, movieCache *movie.Cache,
+func NewTextsView(textService undoable.AugmentedTextService,
 	modalStateMachine gui.ModalStateMachine, clipboard external.Clipboard,
-	guiScale float32, commander cmd.Commander) *View {
+	guiScale float32) *View {
 	view := &View{
-		mod:        mod,
-		lineCache:  lineCache,
-		pageCache:  pageCache,
-		cp:         cp,
-		movieCache: movieCache,
+		textService: textService,
 
 		modalStateMachine: modalStateMachine,
 		clipboard:         clipboard,
 		guiScale:          guiScale,
-		commander:         commander,
 
 		model: freshViewModel(),
-
-		textTypeTitleByID: make(map[resource.ID]string),
-	}
-	for _, info := range knownTextTypes {
-		view.textTypeTitleByID[info.id] = info.title
 	}
 	return view
 }
@@ -106,11 +63,12 @@ func (view *View) Render() {
 }
 
 func (view *View) renderContent() {
+	knownTexts := edit.KnownTexts()
 	imgui.PushItemWidth(-100 * view.guiScale)
-	if imgui.BeginCombo("Text Type", view.textTypeTitleByID[view.model.currentKey.ID]) {
-		for _, info := range knownTextTypes {
-			if imgui.SelectableV(info.title, info.id == view.model.currentKey.ID, 0, imgui.Vec2{}) {
-				view.model.currentKey.ID = info.id
+	if imgui.BeginCombo("Text Type", knownTexts.Title(view.model.currentKey.ID)) {
+		for _, info := range knownTexts {
+			if imgui.SelectableV(info.Title, info.ID == view.model.currentKey.ID, 0, imgui.Vec2{}) {
+				view.model.currentKey.ID = info.ID
 				view.model.currentKey.Index = 0
 			}
 		}
@@ -129,12 +87,11 @@ func (view *View) renderContent() {
 		imgui.EndCombo()
 	}
 
-	if view.hasAudio() {
+	if view.textIsWithAudio() {
 		imgui.Separator()
 		sound := view.currentSound()
-		hasSound := len(sound.Samples) > 0
-		if hasSound {
-			imgui.LabelText("Audio", fmt.Sprintf("%.2f sec", float32(len(sound.Samples))/sound.SampleRate))
+		if !sound.Empty() {
+			imgui.LabelText("Audio", fmt.Sprintf("%.2f sec", sound.Duration()))
 			if imgui.Button("Export") {
 				view.requestExportAudio(sound)
 			}
@@ -182,52 +139,7 @@ func (view *View) renderContent() {
 }
 
 func (view View) currentText() string {
-	var cache *text.Cache
-	resourceInfo, existing := ids.Info(view.model.currentKey.ID)
-	if !existing || resourceInfo.List {
-		cache = view.lineCache
-	} else {
-		cache = view.pageCache
-	}
-	currentValue, cacheErr := cache.Text(view.model.currentKey)
-	if cacheErr != nil {
-		currentValue = ""
-	}
-	return currentValue
-}
-
-func (view View) hasAudio() bool {
-	return view.model.currentKey.ID == ids.TrapMessageTexts
-}
-
-func (view *View) currentSoundKey() (key resource.Key, hasAudio bool) {
-	if !view.hasAudio() {
-		return key, false
-	}
-	key = view.model.currentKey
-	key.ID = textToAudio[key.ID].Plus(key.Index)
-	key.Index = 0
-	return key, true
-
-}
-
-func (view *View) currentSound() (sound audio.L8) {
-	key, hasAudio := view.currentSoundKey()
-	if !hasAudio {
-		return
-	}
-	sound, _ = view.movieCache.Audio(key)
-	return
-}
-
-func (view View) currentModification() (data [][]byte, isList bool) {
-	info, _ := ids.Info(view.model.currentKey.ID)
-	if info.List {
-		data = [][]byte{view.mod.ModifiedBlock(view.model.currentKey.Lang, view.model.currentKey.ID, view.model.currentKey.Index)}
-	} else {
-		data = view.mod.ModifiedBlocks(view.model.currentKey.Lang, view.model.currentKey.ID.Plus(view.model.currentKey.Index))
-	}
-	return data, info.List
+	return view.textService.Text(view.model.currentKey)
 }
 
 func (view View) copyTextToClipboard(text string) {
@@ -242,96 +154,45 @@ func (view *View) setTextFromClipboard() {
 		return
 	}
 
-	blockedValue := text.Blocked(value)
-	oldData, isList := view.currentModification()
-	if isList {
-		newData := view.cp.Encode(blockedValue[0])
-		view.requestSetTextLine(oldData[0], newData, false, nil)
-	} else {
-		newData := make([][]byte, len(blockedValue))
-		for index, blockLine := range blockedValue {
-			newData[index] = view.cp.Encode(blockLine)
-		}
-		view.requestSetTextPage(oldData, newData)
-	}
+	view.textService.RequestSetText(view.model.currentKey, value, view.restoreFunc())
 }
 
 func (view *View) clearText() {
-	emptyLine := view.cp.Encode("")
-	currentModification, isList := view.currentModification()
-	if isList && !bytes.Equal(currentModification[0], emptyLine) {
-		view.requestSetTextLine(currentModification[0], emptyLine, true, &audio.L8{SampleRate: 22050, Samples: []byte{0x80}})
-	} else if !isList && ((len(currentModification) != 1) || !bytes.Equal(currentModification[0], []byte{0x00})) {
-		view.requestSetTextPage(currentModification, [][]byte{emptyLine})
-	}
+	view.textService.RequestClear(view.model.currentKey, view.restoreFunc())
 }
 
 func (view *View) removeText() {
-	currentModification, isList := view.currentModification()
-	if isList && (len(currentModification[0]) > 0) {
-		view.requestSetTextLine(currentModification[0], nil, true, nil)
-	} else if !isList && (len(currentModification) > 0) {
-		view.requestSetTextPage(currentModification, nil)
-	}
+	view.textService.RequestRemove(view.model.currentKey, view.restoreFunc())
+}
+
+func (view View) textIsWithAudio() bool {
+	return view.textService.WithAudio(view.model.currentKey)
+}
+
+func (view *View) currentSound() (sound audio.L8) {
+	return view.textService.Sound(view.model.currentKey)
 }
 
 func (view *View) requestExportAudio(sound audio.L8) {
-	key, hasAudio := view.currentSoundKey()
-	if !hasAudio {
+	if !view.textIsWithAudio() {
 		return
 	}
-	filename := fmt.Sprintf("%05d_%s.wav", key.ID.Value(), view.model.currentKey.Lang.String())
+	filename := fmt.Sprintf("%05d_%03d_%s.wav", view.model.currentKey.ID, view.model.currentKey.Index, view.model.currentKey.Lang.String())
 
 	external.ExportAudio(view.modalStateMachine, filename, sound)
 }
 
 func (view *View) requestImportAudio() {
 	external.ImportAudio(view.modalStateMachine, func(sound audio.L8) {
-		view.requestSetAudio(sound)
+		view.textService.RequestSetSound(view.model.currentKey, sound, view.restoreFunc())
 	})
 }
 
-func (view *View) setAudioCommand(sound *audio.L8) cmd.Command {
-	dataKey, _ := view.currentSoundKey()
-	command := setAudioCommand{
-		restoreKey: view.model.currentKey,
-		model:      &view.model,
+func (view *View) restoreFunc() func() {
+	oldKey := view.model.currentKey
 
-		dataKey: dataKey,
-		oldData: view.mod.ModifiedBlocks(dataKey.Lang, dataKey.ID),
+	return func() {
+		view.model.restoreFocus = true
+		view.model.currentKey = oldKey
 	}
-	if sound != nil {
-		movieData := movie.ContainSoundData(*sound)
-		command.newData = [][]byte{movieData}
-	}
-	return command
-}
-
-func (view *View) requestSetAudio(sound audio.L8) {
-	view.commander.Queue(view.setAudioCommand(&sound))
-}
-
-func (view *View) requestSetTextLine(oldData []byte, newData []byte, withAudio bool, sound *audio.L8) {
-	commands := cmd.List{
-		setTextLineCommand{
-			key:     view.model.currentKey,
-			model:   &view.model,
-			oldData: oldData,
-			newData: newData,
-		},
-	}
-	if withAudio && view.hasAudio() {
-		commands = append(commands, view.setAudioCommand(sound))
-	}
-	view.commander.Queue(commands)
-}
-
-func (view *View) requestSetTextPage(oldData [][]byte, newData [][]byte) {
-	command := setTextPageCommand{
-		key:     view.model.currentKey,
-		model:   &view.model,
-		oldData: oldData,
-		newData: newData,
-	}
-	view.commander.Queue(command)
 }

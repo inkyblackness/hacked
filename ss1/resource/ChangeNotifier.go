@@ -12,23 +12,6 @@ type resourceHash []byte
 type resourceHashes map[ID]resourceHash
 type resourceHashSnapshot map[Language]resourceHashes
 
-// IDMarkerMap is used to collect IDs.
-type IDMarkerMap map[ID]struct{}
-
-// Add adds the given ID to the map.
-func (marker IDMarkerMap) Add(id ID) {
-	marker[id] = struct{}{}
-}
-
-// ToList converts the map to a de-duplicated list.
-func (marker IDMarkerMap) ToList() []ID {
-	result := make([]ID, 0, len(marker))
-	for id := range marker {
-		result = append(result, id)
-	}
-	return result
-}
-
 // ModificationCallback is a callback function to notify a change in resources.
 type ModificationCallback func(modifiedIDs []ID, failedIDs []ID)
 
@@ -65,7 +48,7 @@ func (notifier ChangeNotifier) ModifyAndNotify(modifier func(), affectedIDs ...[
 }
 
 func (notifier ChangeNotifier) hashAll(ids []ID) (hashes resourceHashSnapshot, failedIDs []ID) {
-	failedMap := make(IDMarkerMap)
+	var failedMap IDMarkerMap
 	hashes = make(resourceHashSnapshot)
 	var selectMutex sync.Mutex
 	var mapMutex sync.Mutex
@@ -127,7 +110,7 @@ func (notifier ChangeNotifier) hashResource(selector func(ID) (View, error), id 
 }
 
 func (notifier ChangeNotifier) modifiedIDs(oldHashes resourceHashSnapshot, newHashes resourceHashSnapshot) []ID {
-	modifiedIDs := make(IDMarkerMap)
+	var modifiedIDs IDMarkerMap
 	for _, lang := range Languages() {
 		oldHashesByResourceID := oldHashes[lang]
 		newHashesByResourceID := newHashes[lang]

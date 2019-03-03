@@ -5,16 +5,16 @@ import (
 
 	"github.com/inkyblackness/imgui-go"
 
-	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"
-	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
 	"github.com/inkyblackness/hacked/ss1/content/audio"
 	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/content/text"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
 )
@@ -44,7 +44,7 @@ const videoMailDisplayBase = 256
 
 // View provides edit controls for messages.
 type View struct {
-	mod          *model.Mod
+	mod          *world.Mod
 	messageCache *text.ElectronicMessageCache
 	cp           text.Codepage
 	movieCache   *movie.Cache
@@ -59,7 +59,7 @@ type View struct {
 }
 
 // NewMessagesView returns a new instance.
-func NewMessagesView(mod *model.Mod, messageCache *text.ElectronicMessageCache, cp text.Codepage,
+func NewMessagesView(mod *world.Mod, messageCache *text.ElectronicMessageCache, cp text.Codepage,
 	movieCache *movie.Cache, imageCache *graphics.TextureCache,
 	modalStateMachine gui.ModalStateMachine, clipboard external.Clipboard,
 	guiScale float32, commander cmd.Commander) *View {
@@ -145,9 +145,8 @@ func (view *View) renderContent() {
 		if view.hasAudio() {
 			imgui.Separator()
 			sound := view.currentSound()
-			hasSound := len(sound.Samples) > 0
-			if hasSound {
-				imgui.LabelText("Audio", fmt.Sprintf("%.2f sec", float32(len(sound.Samples))/sound.SampleRate))
+			if !sound.Empty() {
+				imgui.LabelText("Audio", fmt.Sprintf("%.2f sec", sound.Duration()))
 				if imgui.Button("Export") {
 					view.requestExportAudio(sound)
 				}

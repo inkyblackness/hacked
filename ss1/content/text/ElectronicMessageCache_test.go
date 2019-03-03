@@ -145,34 +145,38 @@ func (suite *ElectronicMessageCacheSuite) thenMessageShouldReturnError(key resou
 }
 
 func (suite *ElectronicMessageCacheSuite) someLocalizedResources(lang resource.Language, modifiers ...func(*resource.Store)) resource.LocalizedResources {
-	store := resource.NewProviderBackedStore(resource.NullProvider())
+	var store resource.Store
 	for _, modifier := range modifiers {
-		modifier(store)
+		modifier(&store)
 	}
 	return resource.LocalizedResources{
 		ID:       "unnamed",
 		Language: lang,
-		Provider: store,
+		Viewer:   store,
 	}
 }
 
 func (suite *ElectronicMessageCacheSuite) storing(id int, modifier func(msg text.ElectronicMessage) text.ElectronicMessage) func(*resource.Store) {
-	blocks := modifier(text.EmptyElectronicMessage()).Encode(suite.cp)
+	data := modifier(text.EmptyElectronicMessage()).Encode(suite.cp)
 	return func(store *resource.Store) {
-		store.Put(resource.ID(id), &resource.Resource{
-			ContentType:   resource.Text,
-			Compound:      true,
-			BlockProvider: resource.MemoryBlockProvider(blocks),
+		_ = store.Put(resource.ID(id), resource.Resource{
+			Properties: resource.Properties{
+				ContentType: resource.Text,
+				Compound:    true,
+			},
+			Blocks: resource.BlocksFrom(data),
 		})
 	}
 }
 
 func (suite *ElectronicMessageCacheSuite) storingNonText(id int) func(*resource.Store) {
 	return func(store *resource.Store) {
-		store.Put(resource.ID(id), &resource.Resource{
-			ContentType:   resource.Sound,
-			Compound:      false,
-			BlockProvider: resource.MemoryBlockProvider([][]byte{{}}),
+		_ = store.Put(resource.ID(id), resource.Resource{
+			Properties: resource.Properties{
+				ContentType: resource.Sound,
+				Compound:    false,
+			},
+			Blocks: resource.BlocksFrom([][]byte{{}}),
 		})
 	}
 }

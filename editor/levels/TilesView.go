@@ -5,23 +5,23 @@ import (
 
 	"github.com/inkyblackness/imgui-go"
 
-	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/graphics"
-	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
 	"github.com/inkyblackness/hacked/ss1/content/text"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 )
 
 // TilesView is for tile properties.
 type TilesView struct {
-	mod          *model.Mod
+	mod          *world.Mod
 	textCache    *text.Cache
 	textureCache *graphics.TextureCache
 
@@ -33,7 +33,7 @@ type TilesView struct {
 }
 
 // NewTilesView returns a new instance.
-func NewTilesView(mod *model.Mod, guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
+func NewTilesView(mod *world.Mod, guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
 	commander cmd.Commander, eventListener event.Listener, eventRegistry event.Registry) *TilesView {
 	view := &TilesView{
 		mod:          mod,

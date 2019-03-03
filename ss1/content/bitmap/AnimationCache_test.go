@@ -112,14 +112,14 @@ func (suite AnimationCacheSuite) keyed(index int) resource.Key {
 }
 
 func (suite *AnimationCacheSuite) someLocalizedResources(modifiers ...func(*resource.Store)) resource.LocalizedResources {
-	store := resource.NewProviderBackedStore(resource.NullProvider())
+	var store resource.Store
 	for _, modifier := range modifiers {
-		modifier(store)
+		modifier(&store)
 	}
 	return resource.LocalizedResources{
 		ID:       "unnamed",
 		Language: resource.LangAny,
-		Provider: store,
+		Viewer:   store,
 	}
 }
 
@@ -127,10 +127,12 @@ func (suite *AnimationCacheSuite) storing(id int, anim bitmap.Animation) func(*r
 	buf := bytes.NewBuffer(nil)
 	_ = bitmap.WriteAnimation(buf, anim)
 	return func(store *resource.Store) {
-		store.Put(resource.ID(baseAnimationResourceID).Plus(id), &resource.Resource{
-			ContentType:   resource.Animation,
-			Compound:      true,
-			BlockProvider: resource.MemoryBlockProvider([][]byte{buf.Bytes()}),
+		_ = store.Put(resource.ID(baseAnimationResourceID).Plus(id), resource.Resource{
+			Properties: resource.Properties{
+				ContentType: resource.Animation,
+				Compound:    true,
+			},
+			Blocks: resource.BlocksFrom([][]byte{buf.Bytes()}),
 		})
 	}
 }
@@ -156,10 +158,12 @@ func (suite *AnimationCacheSuite) someAnimation(seed uint8) bitmap.Animation {
 
 func (suite *AnimationCacheSuite) storingNonAnimation(id int) func(*resource.Store) {
 	return func(store *resource.Store) {
-		store.Put(resource.ID(baseAnimationResourceID).Plus(id), &resource.Resource{
-			ContentType:   resource.Sound,
-			Compound:      true,
-			BlockProvider: resource.MemoryBlockProvider([][]byte{{}}),
+		_ = store.Put(resource.ID(baseAnimationResourceID).Plus(id), resource.Resource{
+			Properties: resource.Properties{
+				ContentType: resource.Sound,
+				Compound:    true,
+			},
+			Blocks: resource.BlocksFrom([][]byte{{}}),
 		})
 	}
 }

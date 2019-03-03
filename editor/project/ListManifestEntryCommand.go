@@ -1,7 +1,6 @@
 package project
 
 import (
-	"github.com/inkyblackness/hacked/editor/cmd"
 	"github.com/inkyblackness/hacked/ss1/world"
 )
 
@@ -20,11 +19,11 @@ type listManifestEntryCommand struct {
 	adder bool
 }
 
-func (cmd listManifestEntryCommand) Do(trans cmd.Transaction) error {
+func (cmd listManifestEntryCommand) Do(modder world.Modder) error {
 	return cmd.perform(true)
 }
 
-func (cmd listManifestEntryCommand) Undo(trans cmd.Transaction) error {
+func (cmd listManifestEntryCommand) Undo(modder world.Modder) error {
 	return cmd.perform(false)
 }
 
