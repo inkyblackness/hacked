@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/inkyblackness/hacked/ss1/resource"
 
 	"github.com/stretchr/testify/assert"
@@ -24,7 +26,7 @@ func (list ResourceList) IDs() []resource.ID {
 	return ids
 }
 
-func (list ResourceList) Resource(id resource.ID) (res *resource.Resource, err error) {
+func (list ResourceList) Resource(id resource.ID) (res resource.View, err error) {
 	for _, entry := range list {
 		if entry.id.Value() == id.Value() {
 			res = entry.res
@@ -38,8 +40,8 @@ func (list ResourceList) Resource(id resource.ID) (res *resource.Resource, err e
 
 type StoreSuite struct {
 	suite.Suite
-	provider        ResourceList
-	store           *resource.Store
+
+	store           resource.Store
 	resourceCounter int
 }
 
@@ -48,86 +50,83 @@ func TestStoreSuite(t *testing.T) {
 }
 
 func (suite *StoreSuite) SetupTest() {
-	suite.provider = nil
-	suite.store = nil
+	suite.store = resource.Store{}
 }
 
-func (suite *StoreSuite) TestWithEmptyProvider() {
+func (suite *StoreSuite) TestNewInstanceIsEmpty() {
 	suite.whenInstanceIsCreated()
 	suite.thenIDsShouldBeEmpty()
 }
 
-func (suite *StoreSuite) TestIDsDefaultsToProvider() {
-	suite.givenProviderHas(resource.ID(1), suite.aResource())
-	suite.givenProviderHas(resource.ID(2), suite.aResource())
-	suite.whenInstanceIsCreated()
-	suite.thenIDsShouldBe([]resource.ID{resource.ID(1), resource.ID(2)})
-}
-
-func (suite *StoreSuite) TestResourceDefaultsToResourcesFromProvider() {
-	resA := suite.aResource()
-	resB := suite.aResource()
-	suite.givenProviderHas(resource.ID(1), resA)
-	suite.givenProviderHas(resource.ID(2), resB)
-	suite.whenInstanceIsCreated()
-	suite.thenReturnedResourceShouldBe(resource.ID(1), resA)
-	suite.thenReturnedResourceShouldBe(resource.ID(2), resB)
-}
-
 func (suite *StoreSuite) TestResourceReturnsErrorForUnknownResource() {
 	suite.whenInstanceIsCreated()
-	suite.thenResourceShouldReturnErrorFor(resource.ID(10))
+	suite.thenViewShouldReturnErrorFor(resource.ID(10))
 }
 
-func (suite *StoreSuite) TestDelWillHaveStoreIgnoreResourceFromProvider() {
-	suite.givenProviderHas(resource.ID(1), suite.aResource())
-	suite.givenProviderHas(resource.ID(2), suite.aResource())
+func (suite *StoreSuite) TestDelWillHaveStoreIgnorePreviousEntry() {
 	suite.givenAnInstance()
+	suite.givenStoredResource(resource.ID(1), suite.aResource())
+	suite.givenStoredResource(resource.ID(2), suite.aResource())
 	suite.whenResourceIsDeleted(resource.ID(2))
 	suite.thenIDsShouldBe([]resource.ID{resource.ID(1)})
-	suite.thenResourceShouldReturnErrorFor(resource.ID(2))
+	suite.thenViewShouldReturnErrorFor(resource.ID(2))
 }
 
-func (suite *StoreSuite) TestDelWillHaveStoreIgnoreResourceFromProviderEvenIfReportedMultipleTimes() {
-	suite.givenProviderHas(resource.ID(1), suite.aResource())
-	suite.givenProviderHas(resource.ID(2), suite.aResource())
-	suite.givenProviderHas(resource.ID(2), suite.aResource())
+func (suite *StoreSuite) TestPutOverridesPreviousResources() {
 	suite.givenAnInstance()
-	suite.whenResourceIsDeleted(resource.ID(2))
-	suite.thenIDsShouldBe([]resource.ID{resource.ID(1)})
-	suite.thenResourceShouldReturnErrorFor(resource.ID(2))
-}
-
-func (suite *StoreSuite) TestPutOverridesProviderResources() {
-	suite.givenProviderHas(resource.ID(2), suite.aResource())
-	suite.givenProviderHas(resource.ID(1), suite.aResource())
-	suite.givenAnInstance()
+	suite.givenStoredResource(resource.ID(2), suite.aResource())
+	suite.givenStoredResource(resource.ID(1), suite.aResource())
 	newRes := suite.aResource()
 	suite.whenResourceIsPut(resource.ID(2), newRes)
 	suite.thenIDsShouldBe([]resource.ID{resource.ID(2), resource.ID(1)})
-	suite.thenReturnedResourceShouldBe(resource.ID(2), newRes)
+	suite.thenReturnedViewShouldBe(resource.ID(2), newRes)
+}
+
+func (suite *StoreSuite) TestDelWillHaveStoreIgnoreResourceEvenIfPutMultipleTimes() {
+	suite.givenAnInstance()
+	suite.givenStoredResource(resource.ID(1), suite.aResource())
+	suite.givenStoredResource(resource.ID(2), suite.aResource())
+	suite.givenStoredResource(resource.ID(2), suite.aResource())
+	suite.whenResourceIsDeleted(resource.ID(2))
+	suite.thenIDsShouldBe([]resource.ID{resource.ID(1)})
+	suite.thenViewShouldReturnErrorFor(resource.ID(2))
 }
 
 func (suite *StoreSuite) TestPutAddsNewResourcesAtEnd() {
-	suite.givenProviderHas(resource.ID(2), suite.aResource())
-	suite.givenProviderHas(resource.ID(1), suite.aResource())
 	suite.givenAnInstance()
+	suite.givenStoredResource(resource.ID(2), suite.aResource())
+	suite.givenStoredResource(resource.ID(1), suite.aResource())
 	newRes := suite.aResource()
 	suite.whenResourceIsPut(resource.ID(3), newRes)
 	suite.thenIDsShouldBe([]resource.ID{resource.ID(2), resource.ID(1), resource.ID(3)})
-	suite.thenReturnedResourceShouldBe(resource.ID(3), newRes)
+	suite.thenReturnedViewShouldBe(resource.ID(3), newRes)
 }
 
-func (suite *StoreSuite) givenProviderHas(id resource.ID, res *resource.Resource) {
-	suite.provider = append(suite.provider, IdentifiedResource{id: id, res: res})
+func (suite *StoreSuite) TestPutRestoresIDAtOldPosition() {
+	suite.givenAnInstance()
+	suite.givenStoredResource(resource.ID(2), suite.aResource())
+	suite.givenStoredResource(resource.ID(1), suite.aResource())
+	suite.givenResourceWasDeleted(resource.ID(2))
+	newRes := suite.aResource()
+	suite.whenResourceIsPut(resource.ID(2), newRes)
+	suite.thenIDsShouldBe([]resource.ID{resource.ID(2), resource.ID(1)})
 }
 
 func (suite *StoreSuite) givenAnInstance() {
 	suite.whenInstanceIsCreated()
 }
 
+func (suite *StoreSuite) givenStoredResource(id resource.ID, res *resource.Resource) {
+	err := suite.store.Put(id, res)
+	require.Nil(suite.T(), err, "No error expected storing resource")
+}
+
+func (suite *StoreSuite) givenResourceWasDeleted(id resource.ID) {
+	suite.whenResourceIsDeleted(id)
+}
+
 func (suite *StoreSuite) whenInstanceIsCreated() {
-	suite.store = resource.NewProviderBackedStore(suite.provider)
+	suite.store = resource.Store{}
 }
 
 func (suite *StoreSuite) whenResourceIsDeleted(id resource.ID) {
@@ -135,7 +134,8 @@ func (suite *StoreSuite) whenResourceIsDeleted(id resource.ID) {
 }
 
 func (suite *StoreSuite) whenResourceIsPut(id resource.ID, res *resource.Resource) {
-	suite.store.Put(id, res)
+	err := suite.store.Put(id, res)
+	require.Nil(suite.T(), err, "No error expected putting resource")
 }
 
 func (suite *StoreSuite) thenIDsShouldBeEmpty() {
@@ -146,18 +146,18 @@ func (suite *StoreSuite) thenIDsShouldBe(expected []resource.ID) {
 	assert.Equal(suite.T(), expected, suite.store.IDs())
 }
 
-func (suite *StoreSuite) thenReturnedResourceShouldBe(id resource.ID, expected *resource.Resource) {
-	res, err := suite.store.Resource(id)
+func (suite *StoreSuite) thenReturnedViewShouldBe(id resource.ID, expected *resource.Resource) {
+	res, err := suite.store.View(id)
 	assert.Nil(suite.T(), err, "No error expected for ID %v", id)
 	assert.Equal(suite.T(), expected, res, "Different res returned for ID %v", id)
 }
 
-func (suite *StoreSuite) thenResourceShouldReturnErrorFor(id resource.ID) {
-	_, err := suite.store.Resource(id)
+func (suite *StoreSuite) thenViewShouldReturnErrorFor(id resource.ID) {
+	_, err := suite.store.View(id)
 	assert.Error(suite.T(), err, "Error expected for ID %v ", id) // nolint: vet
 }
 
 func (suite *StoreSuite) aResource() *resource.Resource {
 	suite.resourceCounter++
-	return &resource.Resource{BlockProvider: resource.MemoryBlockProvider([][]byte{{byte(suite.resourceCounter)}})}
+	return &resource.Resource{Blocks: resource.BlocksFrom([][]byte{{byte(suite.resourceCounter)}})}
 }

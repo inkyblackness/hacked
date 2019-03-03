@@ -7,23 +7,23 @@ import (
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
-// Write serializes the resources from given provider into the target.
+// Write serializes the resources from given source into the target.
 // It is a convenience function for using Writer.
-func Write(target io.WriteSeeker, source resource.Provider) error {
+func Write(target io.WriteSeeker, source resource.Viewer) error {
 	writer, writerErr := NewWriter(target)
 	if writerErr != nil {
 		return writerErr
 	}
 
 	for _, id := range source.IDs() {
-		entry, resourceErr := source.Resource(id)
+		entry, resourceErr := source.View(id)
 		if resourceErr != nil {
 			return resourceErr
 		}
 
 		switch {
-		case entry.Compound:
-			resourceWriter, resourceWriterErr := writer.CreateCompoundResource(id, entry.ContentType, entry.Compressed)
+		case entry.Compound():
+			resourceWriter, resourceWriterErr := writer.CreateCompoundResource(id, entry.ContentType(), entry.Compressed())
 			if resourceWriterErr != nil {
 				return resourceWriterErr
 			}
@@ -32,7 +32,7 @@ func Write(target io.WriteSeeker, source resource.Provider) error {
 				return copyErr
 			}
 		case entry.BlockCount() == 1:
-			blockWriter, resourceWriterErr := writer.CreateResource(id, entry.ContentType, entry.Compressed)
+			blockWriter, resourceWriterErr := writer.CreateResource(id, entry.ContentType(), entry.Compressed())
 			if resourceWriterErr != nil {
 				return resourceWriterErr
 			}

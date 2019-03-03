@@ -56,11 +56,11 @@ func (state *addManifestEntryWaitingState) HandleFiles(names []string) {
 			ID: names[0],
 		}
 
-		for filename, provider := range staging.resources {
+		for filename, viewer := range staging.resources {
 			localized := resource.LocalizedResources{
 				ID:       filename,
 				Language: ids.LocalizeFilename(filename),
-				Provider: provider,
+				Viewer:   viewer,
 			}
 			entry.Resources = append(entry.Resources, localized)
 		}

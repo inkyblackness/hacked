@@ -5,28 +5,17 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
+	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/resource/lgres"
 	"github.com/inkyblackness/hacked/ss1/serial"
 	"github.com/inkyblackness/hacked/ss1/world"
 )
 
-func saveModResourcesTo(mod *model.Mod, modPath string) error {
+func saveModResourcesTo(mod *world.Mod, modPath string) error {
 	localized := mod.ModifiedResources()
 	filenamesToSave := mod.ModifiedFilenames()
-	resByFile := make(map[string]model.IdentifiedResources)
-	for _, identifiedIn := range localized {
-		for id, res := range identifiedIn {
-			identifiedOut, exist := resByFile[res.Filename()]
-			if !exist {
-				identifiedOut = make(model.IdentifiedResources)
-				resByFile[res.Filename()] = identifiedOut
-			}
-			identifiedOut[id] = res
-		}
-	}
 
 	shallBeSaved := func(filename string) bool {
 		for _, toSave := range filenamesToSave {
@@ -37,14 +26,15 @@ func saveModResourcesTo(mod *model.Mod, modPath string) error {
 		return false
 	}
 
-	for filename, list := range resByFile {
-		if shallBeSaved(filename) {
-			err := saveResourcesTo(list, filepath.Join(modPath, filename))
+	for _, loc := range localized {
+		if shallBeSaved(loc.Filename) {
+			err := saveResourcesTo(loc.Store, filepath.Join(modPath, loc.Filename))
 			if err != nil {
 				return err
 			}
 		}
 	}
+
 	if shallBeSaved(world.TexturePropertiesFilename) {
 		err := saveTexturePropertiesTo(mod.TextureProperties(), filepath.Join(modPath, world.TexturePropertiesFilename))
 		if err != nil {
@@ -61,7 +51,7 @@ func saveModResourcesTo(mod *model.Mod, modPath string) error {
 	return nil
 }
 
-func saveResourcesTo(list model.IdentifiedResources, absFilename string) error {
+func saveResourcesTo(viewer resource.Viewer, absFilename string) error {
 	file, err := os.Create(absFilename)
 	if err != nil {
 		return err
@@ -69,7 +59,7 @@ func saveResourcesTo(list model.IdentifiedResources, absFilename string) error {
 	defer func() {
 		_ = file.Close() // nolint: gas
 	}()
-	err = lgres.Write(file, list)
+	err = lgres.Write(file, viewer)
 	return err
 }
 

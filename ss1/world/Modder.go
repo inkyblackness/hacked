@@ -1,17 +1,13 @@
-package cmd
+package world
 
 import (
-	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
-// Transaction describes actions meant to modify resources.
-type Transaction interface {
-	// SetResource changes the meta information about a resource.
-	// Should the resource exist in multiple languages, all are modified.
-	SetResource(id resource.ID, compound bool, contentType resource.ContentType, compressed bool)
+// Modder describes actions meant to modify resources.
+type Modder interface {
 
 	// SetResourceBlock changes the block data of a resource.
 	//
@@ -38,7 +34,7 @@ type Transaction interface {
 	DelResource(lang resource.Language, id resource.ID)
 
 	// SetTextureProperties updates the properties of a specific texture.
-	SetTextureProperties(textureIndex level.TextureIndex, properties texture.Properties)
+	SetTextureProperties(textureIndex int, properties texture.Properties)
 
 	// SetObjectProperties updates the properties of a specific object.
 	SetObjectProperties(triple object.Triple, properties object.Properties)

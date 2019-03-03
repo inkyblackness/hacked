@@ -151,37 +151,41 @@ func (suite *CacheSuite) thenTextShouldReturnError(key resource.Key) {
 }
 
 func (suite *CacheSuite) someLocalizedResources(lang resource.Language, modifiers ...func(*resource.Store)) resource.LocalizedResources {
-	store := resource.NewProviderBackedStore(resource.NullProvider())
+	var store resource.Store
 	for _, modifier := range modifiers {
-		modifier(store)
+		modifier(&store)
 	}
 	return resource.LocalizedResources{
 		ID:       "unnamed",
 		Language: lang,
-		Provider: store,
+		Viewer:   store,
 	}
 }
 
 func (suite *CacheSuite) storing(id int, lines ...string) func(*resource.Store) {
-	blocks := make([][]byte, len(lines))
+	data := make([][]byte, len(lines))
 	for i, line := range lines {
-		blocks[i] = suite.cp.Encode(line)
+		data[i] = suite.cp.Encode(line)
 	}
 	return func(store *resource.Store) {
-		store.Put(resource.ID(id), &resource.Resource{
-			ContentType:   resource.Text,
-			Compound:      len(blocks) != 1,
-			BlockProvider: resource.MemoryBlockProvider(blocks),
+		_ = store.Put(resource.ID(id), resource.Resource{
+			Properties: resource.Properties{
+				ContentType: resource.Text,
+				Compound:    len(data) != 1,
+			},
+			Blocks: resource.BlocksFrom(data),
 		})
 	}
 }
 
 func (suite *CacheSuite) storingNonText(id int) func(*resource.Store) {
 	return func(store *resource.Store) {
-		store.Put(resource.ID(id), &resource.Resource{
-			ContentType:   resource.Sound,
-			Compound:      false,
-			BlockProvider: resource.MemoryBlockProvider([][]byte{{}}),
+		_ = store.Put(resource.ID(id), resource.Resource{
+			Properties: resource.Properties{
+				ContentType: resource.Sound,
+				Compound:    false,
+			},
+			Blocks: resource.BlocksFrom([][]byte{{}}),
 		})
 	}
 }

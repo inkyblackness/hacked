@@ -185,8 +185,8 @@ func (suite *ElectronicMessageSuite) TestRecodeMessage() {
 	inMessage.VerboseText = "abcd\nefgh\nsome"
 	inMessage.TerseText = "\n"
 
-	blocks := inMessage.Encode(suite.cp)
-	outMessage, err := text.DecodeElectronicMessage(suite.cp, resource.MemoryBlockProvider(blocks))
+	data := inMessage.Encode(suite.cp)
+	outMessage, err := text.DecodeElectronicMessage(suite.cp, resource.BlocksFrom(data))
 
 	require.Nil(suite.T(), err)
 	require.NotNil(suite.T(), outMessage)
@@ -203,8 +203,8 @@ func (suite *ElectronicMessageSuite) TestRecodeMessageWithMultipleNewLines() {
 	inMessage.VerboseText = "first\n\n\nsecond"
 	inMessage.TerseText = "terse\n"
 
-	blocks := inMessage.Encode(suite.cp)
-	outMessage, err := text.DecodeElectronicMessage(suite.cp, resource.MemoryBlockProvider(blocks))
+	data := inMessage.Encode(suite.cp)
+	outMessage, err := text.DecodeElectronicMessage(suite.cp, resource.BlocksFrom(data))
 
 	require.Nil(suite.T(), err)
 	require.NotNil(suite.T(), outMessage)
@@ -217,7 +217,7 @@ func (suite *ElectronicMessageSuite) verifyBlock(index int, blocks [][]byte, exp
 }
 
 func (suite *ElectronicMessageSuite) holderWithMeta(meta string) resource.BlockProvider {
-	blocks := [][]byte{
+	data := [][]byte{
 		suite.cp.Encode(meta),
 		suite.cp.Encode("title"),
 		suite.cp.Encode("sender"),
@@ -227,13 +227,13 @@ func (suite *ElectronicMessageSuite) holderWithMeta(meta string) resource.BlockP
 		suite.cp.Encode("terse"),
 		suite.cp.Encode("")}
 
-	return resource.MemoryBlockProvider(blocks)
+	return resource.BlocksFrom(data)
 }
 
 func (suite *ElectronicMessageSuite) vanillaStubMail() resource.BlockProvider {
 	// The string resources contain a few mails which aren't used.
 	// They are missing the terminating line for the verbose text.
-	blocks := [][]byte{
+	data := [][]byte{
 		suite.cp.Encode(""),
 		suite.cp.Encode(""),
 		suite.cp.Encode(""),
@@ -242,12 +242,12 @@ func (suite *ElectronicMessageSuite) vanillaStubMail() resource.BlockProvider {
 		suite.cp.Encode("stub email"),
 		suite.cp.Encode("")}
 
-	return resource.MemoryBlockProvider(blocks)
+	return resource.BlocksFrom(data)
 }
 
 func (suite *ElectronicMessageSuite) holderWithMissingTerminatingLine() resource.BlockProvider {
 	// This case is encountered once in gerstrng.res
-	blocks := [][]byte{
+	data := [][]byte{
 		suite.cp.Encode(""),
 		suite.cp.Encode("title"),
 		suite.cp.Encode("sender"),
@@ -258,5 +258,5 @@ func (suite *ElectronicMessageSuite) holderWithMissingTerminatingLine() resource
 		suite.cp.Encode("terse "),
 		suite.cp.Encode("text")}
 
-	return resource.MemoryBlockProvider(blocks)
+	return resource.BlocksFrom(data)
 }

@@ -155,7 +155,7 @@ func (manifest *Manifest) TextureProperties() texture.PropertiesList {
 func (manifest *Manifest) listIDs(entries ...*ManifestEntry) (ids []resource.ID) {
 	for _, entry := range entries {
 		for _, res := range entry.Resources {
-			singleIDs := res.Provider.IDs()
+			singleIDs := res.Viewer.IDs()
 			ids = append(ids, singleIDs...)
 		}
 	}

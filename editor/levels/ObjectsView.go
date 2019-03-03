@@ -8,7 +8,6 @@ import (
 
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/graphics"
-	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
@@ -20,12 +19,13 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 )
 
 // ObjectsView is for object properties.
 type ObjectsView struct {
-	mod          *model.Mod
+	mod          *world.Mod
 	textCache    *text.Cache
 	textureCache *graphics.TextureCache
 
@@ -37,7 +37,7 @@ type ObjectsView struct {
 }
 
 // NewObjectsView returns a new instance.
-func NewObjectsView(mod *model.Mod, guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
+func NewObjectsView(mod *world.Mod, guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
 	commander cmd.Commander, eventListener event.Listener, eventRegistry event.Registry) *ObjectsView {
 	view := &ObjectsView{
 		mod:          mod,

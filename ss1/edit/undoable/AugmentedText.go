@@ -5,6 +5,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/edit"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world"
 )
 
 // AugmentedTextService provides read/write functionality with undo capability.
@@ -78,12 +79,12 @@ func (service AugmentedTextService) RequestRemove(key resource.Key, restoreFunc 
 }
 
 func (service AugmentedTextService) requestCommand(
-	forward func(trans edit.AugmentedTextBlockSetter),
-	reverse func(trans edit.AugmentedTextBlockSetter),
+	forward func(modder edit.AugmentedTextBlockSetter),
+	reverse func(modder edit.AugmentedTextBlockSetter),
 	restore func()) {
 	c := command{
-		forward: func(trans cmd.Transaction) { forward(trans) },
-		reverse: func(trans cmd.Transaction) { reverse(trans) },
+		forward: func(modder world.Modder) { forward(modder) },
+		reverse: func(modder world.Modder) { reverse(modder) },
 		restore: restore,
 	}
 	service.commander.Queue(c)

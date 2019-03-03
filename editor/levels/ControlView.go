@@ -7,7 +7,6 @@ import (
 
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/graphics"
-	"github.com/inkyblackness/hacked/editor/model"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
@@ -22,7 +21,7 @@ import (
 
 // ControlView is the core view for level editing.
 type ControlView struct {
-	mod *model.Mod
+	mod *world.Mod
 
 	guiScale      float32
 	commander     cmd.Commander
@@ -35,7 +34,7 @@ type ControlView struct {
 }
 
 // NewControlView returns a new instance.
-func NewControlView(mod *model.Mod, guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
+func NewControlView(mod *world.Mod, guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
 	commander cmd.Commander, eventListener event.Listener, eventRegistry event.Registry) *ControlView {
 	view := &ControlView{
 		mod:           mod,

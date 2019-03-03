@@ -1,8 +1,8 @@
 package animations
 
 import (
-	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world"
 )
 
 type setAnimationCommand struct {
@@ -18,21 +18,21 @@ type setAnimationCommand struct {
 	newFrames [][]byte
 }
 
-func (command setAnimationCommand) Do(trans cmd.Transaction) error {
-	return command.perform(trans, command.newAnimation, command.newFrames)
+func (command setAnimationCommand) Do(modder world.Modder) error {
+	return command.perform(modder, command.newAnimation, command.newFrames)
 }
 
-func (command setAnimationCommand) Undo(trans cmd.Transaction) error {
-	return command.perform(trans, command.oldAnimation, command.oldFrames)
+func (command setAnimationCommand) Undo(modder world.Modder) error {
+	return command.perform(modder, command.oldAnimation, command.oldFrames)
 }
 
-func (command setAnimationCommand) perform(trans cmd.Transaction, animData []byte, frames [][]byte) error {
+func (command setAnimationCommand) perform(modder world.Modder, animData []byte, frames [][]byte) error {
 	if len(frames) == 0 {
-		trans.DelResource(command.animationKey.Lang, command.animationKey.ID.Plus(command.animationKey.Index))
-		trans.DelResource(command.animationKey.Lang, command.framesID)
+		modder.DelResource(command.animationKey.Lang, command.animationKey.ID.Plus(command.animationKey.Index))
+		modder.DelResource(command.animationKey.Lang, command.framesID)
 	} else {
-		trans.SetResourceBlock(command.animationKey.Lang, command.animationKey.ID.Plus(command.animationKey.Index), 0, animData)
-		trans.SetResourceBlocks(command.animationKey.Lang, command.framesID, frames)
+		modder.SetResourceBlock(command.animationKey.Lang, command.animationKey.ID.Plus(command.animationKey.Index), 0, animData)
+		modder.SetResourceBlocks(command.animationKey.Lang, command.framesID, frames)
 	}
 
 	command.model.restoreFocus = true

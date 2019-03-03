@@ -20,8 +20,8 @@ type fileStaging struct {
 	resultMutex sync.Mutex
 
 	failedFiles int
-	savegames   map[string]resource.Provider
-	resources   map[string]resource.Provider
+	savegames   map[string]resource.Viewer
+	resources   map[string]resource.Viewer
 
 	objectProperties  object.PropertiesTable
 	textureProperties texture.PropertiesList
@@ -29,8 +29,8 @@ type fileStaging struct {
 
 func newFileStaging() *fileStaging {
 	return &fileStaging{
-		resources: make(map[string]resource.Provider),
-		savegames: make(map[string]resource.Provider),
+		resources: make(map[string]resource.Viewer),
+		savegames: make(map[string]resource.Viewer),
 	}
 }
 

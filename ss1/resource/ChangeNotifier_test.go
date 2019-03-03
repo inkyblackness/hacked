@@ -35,7 +35,7 @@ func (suite *ChangeNotifierSuite) SetupTest() {
 func (suite *ChangeNotifierSuite) TestNoIDsAreNotifiedIfDataNotChanged() {
 	suite.givenListIsMadeOf(
 		suite.someLocalizedResources(resource.LangGerman,
-			suite.storing(0x1000, [][]byte{{0x01}})))
+			suite.storing(0x1000, []byte{0x01})))
 	suite.whenResourcesAreModified(func() {}, 0x1000)
 	suite.thenModifiedIDsShouldBe()
 }
@@ -43,11 +43,11 @@ func (suite *ChangeNotifierSuite) TestNoIDsAreNotifiedIfDataNotChanged() {
 func (suite *ChangeNotifierSuite) TestIDsAreNotifiedOfNewData() {
 	suite.givenListIsMadeOf(
 		suite.someLocalizedResources(resource.LangGerman,
-			suite.storing(0x1000, [][]byte{{0x01}})))
+			suite.storing(0x1000, []byte{0x01})))
 	suite.whenResourcesAreModified(func() {
 		suite.extendingListWith(
 			suite.someLocalizedResources(resource.LangGerman,
-				suite.storing(0x2000, [][]byte{{0x01}})))
+				suite.storing(0x2000, []byte{0x01})))
 	}, 0x2000)
 	suite.thenModifiedIDsShouldBe(0x2000)
 }
@@ -55,7 +55,7 @@ func (suite *ChangeNotifierSuite) TestIDsAreNotifiedOfNewData() {
 func (suite *ChangeNotifierSuite) TestIDsAreNotifiedOfRemovedData() {
 	suite.givenListIsMadeOf(
 		suite.someLocalizedResources(resource.LangGerman,
-			suite.storing(0x1000, [][]byte{{0x01}})))
+			suite.storing(0x1000, []byte{0x01})))
 	suite.whenResourcesAreModified(func() {
 		suite.listIsMadeOf()
 	}, 0x1000)
@@ -65,11 +65,11 @@ func (suite *ChangeNotifierSuite) TestIDsAreNotifiedOfRemovedData() {
 func (suite *ChangeNotifierSuite) TestIDsAreNotifiedOfChangedData() {
 	suite.givenListIsMadeOf(
 		suite.someLocalizedResources(resource.LangAny,
-			suite.storing(0x1000, [][]byte{{0x01}})))
+			suite.storing(0x1000, []byte{0x01})))
 	suite.whenResourcesAreModified(func() {
 		suite.listIsMadeOf(
 			suite.someLocalizedResources(resource.LangAny,
-				suite.storing(0x1000, [][]byte{{0x02}})))
+				suite.storing(0x1000, []byte{0x02})))
 	}, 0x1000)
 	suite.thenModifiedIDsShouldBe(0x1000)
 }
@@ -104,21 +104,21 @@ func (suite *ChangeNotifierSuite) thenModifiedIDsShouldBe(expected ...int) {
 }
 
 func (suite *ChangeNotifierSuite) someLocalizedResources(lang resource.Language, modifiers ...func(*resource.Store)) resource.LocalizedResources {
-	store := resource.NewProviderBackedStore(resource.NullProvider())
+	var store resource.Store
 	for _, modifier := range modifiers {
-		modifier(store)
+		modifier(&store)
 	}
 	return resource.LocalizedResources{
 		ID:       "unnamed",
 		Language: lang,
-		Provider: store,
+		Viewer:   store,
 	}
 }
 
-func (suite *ChangeNotifierSuite) storing(id int, blocks [][]byte) func(*resource.Store) {
+func (suite *ChangeNotifierSuite) storing(id int, data ...[]byte) func(*resource.Store) {
 	return func(store *resource.Store) {
-		store.Put(resource.ID(id), &resource.Resource{
-			BlockProvider: resource.MemoryBlockProvider(blocks),
+		_ = store.Put(resource.ID(id), resource.Resource{
+			Blocks: resource.BlocksFrom(data),
 		})
 	}
 }

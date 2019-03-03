@@ -64,14 +64,14 @@ func (suite *ManifestEntrySuite) TestResourceIgnoresResourcesWithSpecificLanguag
 	suite.thenResourceViewShouldNotBeAvailable(1000)
 }
 
-func (suite *ManifestEntrySuite) givenLocalizedResources(lang resource.Language, id int, blocks [][]byte) {
-	store := resource.NewProviderBackedStore(resource.NullProvider())
-	store.Put(resource.ID(id), &resource.Resource{
-		BlockProvider: resource.MemoryBlockProvider(blocks),
+func (suite *ManifestEntrySuite) givenLocalizedResources(lang resource.Language, id int, data [][]byte) {
+	var store resource.Store
+	_ = store.Put(resource.ID(id), resource.Resource{
+		Blocks: resource.BlocksFrom(data),
 	})
 	suite.entry.Resources = append(suite.entry.Resources, resource.LocalizedResources{
 		Language: lang,
-		Provider: store,
+		Viewer:   store,
 	})
 }
 

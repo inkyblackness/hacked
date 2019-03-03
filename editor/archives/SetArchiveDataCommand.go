@@ -1,8 +1,8 @@
 package archives
 
 import (
-	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world"
 )
 
 type setArchiveDataCommand struct {
@@ -14,28 +14,28 @@ type setArchiveDataCommand struct {
 	newData map[resource.ID][]byte
 }
 
-func (command setArchiveDataCommand) Do(trans cmd.Transaction) error {
-	command.delResources(trans, command.oldData)
-	return command.perform(trans, command.newData)
+func (command setArchiveDataCommand) Do(modder world.Modder) error {
+	command.delResources(modder, command.oldData)
+	return command.perform(modder, command.newData)
 }
 
-func (command setArchiveDataCommand) Undo(trans cmd.Transaction) error {
-	command.delResources(trans, command.newData)
-	return command.perform(trans, command.oldData)
+func (command setArchiveDataCommand) Undo(modder world.Modder) error {
+	command.delResources(modder, command.newData)
+	return command.perform(modder, command.oldData)
 }
 
-func (command setArchiveDataCommand) delResources(trans cmd.Transaction, data map[resource.ID][]byte) {
+func (command setArchiveDataCommand) delResources(modder world.Modder, data map[resource.ID][]byte) {
 	for id := range data {
-		trans.DelResource(resource.LangAny, id)
+		modder.DelResource(resource.LangAny, id)
 	}
 }
 
-func (command setArchiveDataCommand) perform(trans cmd.Transaction, data map[resource.ID][]byte) error {
+func (command setArchiveDataCommand) perform(modder world.Modder, data map[resource.ID][]byte) error {
 	for id, blockData := range data {
 		if len(blockData) > 0 {
-			trans.SetResourceBlocks(resource.LangAny, id, [][]byte{blockData})
+			modder.SetResourceBlocks(resource.LangAny, id, [][]byte{blockData})
 		} else {
-			trans.DelResource(resource.LangAny, id)
+			modder.DelResource(resource.LangAny, id)
 		}
 	}
 	command.model.restoreFocus = true

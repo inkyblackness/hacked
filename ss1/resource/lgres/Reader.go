@@ -20,7 +20,7 @@ type Reader struct {
 	firstResourceOffset uint32
 	directory           []resourceDirectoryEntry
 
-	cache map[uint16]*resource.Resource
+	cache map[uint16]resource.View
 }
 
 var errSourceNil = errors.New("source is nil")
@@ -49,7 +49,7 @@ func ReaderFrom(source io.ReaderAt) (reader *Reader, err error) {
 		source:              source,
 		firstResourceOffset: firstResourceOffset,
 		directory:           directory,
-		cache:               make(map[uint16]*resource.Resource)}
+		cache:               make(map[uint16]resource.View)}
 
 	return
 }
@@ -64,9 +64,9 @@ func (reader *Reader) IDs() []resource.ID {
 	return ids
 }
 
-// Resource returns a reader for the specified resource.
+// View returns a reader prepared to extract data for the specified resource.
 // An error is returned if either the ID is not known, or the resource could not be prepared.
-func (reader *Reader) Resource(id resource.ID) (retrievedResource *resource.Resource, err error) {
+func (reader *Reader) View(id resource.ID) (retrievedResource resource.View, err error) {
 	if cachedResource, existing := reader.cache[id.Value()]; existing {
 		return cachedResource, nil
 	}
@@ -149,7 +149,7 @@ type blockListEntry struct {
 }
 
 func (reader *Reader) newCompoundResourceReader(entry *resourceDirectoryEntry,
-	contentType resource.ContentType, compressed bool, resourceStartOffset uint32) (*resource.Resource, error) {
+	contentType resource.ContentType, compressed bool, resourceStartOffset uint32) (resource.View, error) {
 	resourceDataReader := io.NewSectionReader(reader.source, int64(resourceStartOffset), int64(entry.packedLength()))
 
 	firstBlockOffset, blockList, err := reader.readBlockList(resourceDataReader)
@@ -183,11 +183,13 @@ func (reader *Reader) newCompoundResourceReader(entry *resourceDirectoryEntry,
 		return reader, nil
 	}
 
-	return &resource.Resource{
-		Compound:      true,
-		ContentType:   contentType,
-		Compressed:    compressed,
-		BlockProvider: &blockReader{blockCount: len(blockList), blockFunc: blockFunc}}, nil
+	return &readerResource{
+		Properties: resource.Properties{
+			Compound:    true,
+			ContentType: contentType,
+			Compressed:  compressed,
+		},
+		blockReader: blockReader{blockCount: len(blockList), blockFunc: blockFunc}}, nil
 }
 
 func (reader *Reader) readBlockList(source io.Reader) (uint32, []blockListEntry, error) {
@@ -210,7 +212,7 @@ func (reader *Reader) readBlockList(source io.Reader) (uint32, []blockListEntry,
 }
 
 func (reader *Reader) newSingleBlockResourceReader(entry *resourceDirectoryEntry,
-	contentType resource.ContentType, compressed bool, resourceStartOffset uint32) (*resource.Resource, error) {
+	contentType resource.ContentType, compressed bool, resourceStartOffset uint32) (resource.View, error) {
 	blockFunc := func(index int) (io.Reader, error) {
 		if index != 0 {
 			return nil, fmt.Errorf("block index wrong: %v/%v", index, 1)
@@ -224,9 +226,11 @@ func (reader *Reader) newSingleBlockResourceReader(entry *resourceDirectoryEntry
 		return io.LimitReader(resourceSource, int64(resourceSize)), nil
 	}
 
-	return &resource.Resource{
-		Compound:      false,
-		ContentType:   contentType,
-		Compressed:    compressed,
-		BlockProvider: &blockReader{blockCount: 1, blockFunc: blockFunc}}, nil
+	return &readerResource{
+		Properties: resource.Properties{
+			Compound:    false,
+			ContentType: contentType,
+			Compressed:  compressed,
+		},
+		blockReader: blockReader{blockCount: 1, blockFunc: blockFunc}}, nil
 }

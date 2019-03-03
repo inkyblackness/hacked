@@ -113,14 +113,14 @@ func (suite PaletteCacheSuite) keyed(index int) resource.Key {
 }
 
 func (suite *PaletteCacheSuite) someLocalizedResources(modifiers ...func(*resource.Store)) resource.LocalizedResources {
-	store := resource.NewProviderBackedStore(resource.NullProvider())
+	var store resource.Store
 	for _, modifier := range modifiers {
-		modifier(store)
+		modifier(&store)
 	}
 	return resource.LocalizedResources{
 		ID:       "unnamed",
 		Language: resource.LangAny,
-		Provider: store,
+		Viewer:   store,
 	}
 }
 
@@ -129,10 +129,12 @@ func (suite *PaletteCacheSuite) storing(id int, palette bitmap.Palette) func(*re
 	encoder := serial.NewEncoder(buf)
 	encoder.Code(palette)
 	return func(store *resource.Store) {
-		store.Put(resource.ID(basePaletteResourceID).Plus(id), &resource.Resource{
-			ContentType:   resource.Palette,
-			Compound:      false,
-			BlockProvider: resource.MemoryBlockProvider([][]byte{buf.Bytes()}),
+		_ = store.Put(resource.ID(basePaletteResourceID).Plus(id), resource.Resource{
+			Properties: resource.Properties{
+				ContentType: resource.Palette,
+				Compound:    false,
+			},
+			Blocks: resource.BlocksFrom([][]byte{buf.Bytes()}),
 		})
 	}
 }
@@ -149,10 +151,12 @@ func (suite *PaletteCacheSuite) somePalette(seed uint8) bitmap.Palette {
 
 func (suite *PaletteCacheSuite) storingNonPalette(id int) func(*resource.Store) {
 	return func(store *resource.Store) {
-		store.Put(resource.ID(basePaletteResourceID).Plus(id), &resource.Resource{
-			ContentType:   resource.Sound,
-			Compound:      false,
-			BlockProvider: resource.MemoryBlockProvider([][]byte{{}}),
+		_ = store.Put(resource.ID(basePaletteResourceID).Plus(id), resource.Resource{
+			Properties: resource.Properties{
+				ContentType: resource.Sound,
+				Compound:    false,
+			},
+			Blocks: resource.BlocksFrom([][]byte{{}}),
 		})
 	}
 }
