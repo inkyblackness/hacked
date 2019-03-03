@@ -70,7 +70,7 @@ func (data *ModData) DelResource(lang resource.Language, id resource.ID) {
 
 // SetTextureProperties updates the properties of a specific texture.
 func (data *ModData) SetTextureProperties(index int, properties texture.Properties) {
-	if (index >= 0) && (int(index) < len(data.TextureProperties)) {
+	if (index >= 0) && (index < len(data.TextureProperties)) {
 		data.TextureProperties[index] = properties
 		data.notifyFileChanged(TexturePropertiesFilename)
 	}

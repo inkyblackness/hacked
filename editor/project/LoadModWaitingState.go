@@ -63,7 +63,7 @@ func (state *loadModWaitingState) HandleFiles(names []string) {
 			for _, id := range viewer.IDs() {
 				view, err := viewer.View(id)
 				if err == nil {
-					err = loc.Store.Put(id, view)
+					_ = loc.Store.Put(id, view)
 				}
 				// TODO: handle error?
 			}
