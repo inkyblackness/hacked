@@ -3,6 +3,11 @@ package compression
 // ControlWord describes the current compression action.
 type ControlWord uint32
 
+// ControlWordOf returns a word with the given paramters.
+func ControlWordOf(count int, controlType ControlType, param uint32) ControlWord {
+	return (ControlWord(count) << 20) | (ControlWord(controlType&0x7) << 17) | ControlWord(param&0x1FFFF)
+}
+
 // Packed returns the control word packed in a PackedControlWord with the given number of times.
 func (word ControlWord) Packed(times int) PackedControlWord {
 	return PackedControlWord((uint32(word) & 0x00FFFFFF) | (uint32(times) << 24))
