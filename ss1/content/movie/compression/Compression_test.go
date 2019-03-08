@@ -53,7 +53,6 @@ func (suite *CompressionSuite) TestTwoFramesOneTile() {
 	suite.verifyCompression(4, 4, frame0, frame1)
 }
 
-/*
 func (suite *CompressionSuite) TestTwoTiles() {
 	frame0 := []byte{
 		0x01, 0x02, 0x03, 0x04, 0x20, 0x21, 0x22, 0x23,
@@ -63,7 +62,7 @@ func (suite *CompressionSuite) TestTwoTiles() {
 	}
 	suite.verifyCompression(8, 4, frame0)
 }
-*/
+
 func (suite *CompressionSuite) verifyCompression(width, height int, inFrames ...[]byte) {
 	suite.T().Helper()
 	encoder := compression.NewSceneEncoder(width, height)

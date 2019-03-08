@@ -79,16 +79,27 @@ func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookup []byte, fram
 		delta := e.deltas[frameIndex]
 		var bitstream BitstreamWriter
 
-		controlIndex := len(words)
-		paletteIndex := paletteLookupWriter.Write(delta.tiles[0][:])
+		for _, tile := range delta.tiles {
+			paletteIndex := paletteLookupWriter.Write(tile[:])
 
-		words = append(words, ControlWordOf(12, CtrlColorTile16ColorsMasked, paletteIndex))
-		bitstream.Write(12, uint32(controlIndex))
+			controlIndex := len(words)
+			words = append(words, ControlWordOf(12, CtrlColorTile16ColorsMasked, paletteIndex))
+			outFrame.Maskstream = writeMaskstream(outFrame.Maskstream, 8, 0xFEDCBA9876543210)
+			bitstream.Write(12, uint32(controlIndex))
+		}
 
 		outFrame.Bitstream = bitstream.Buffer()
-		outFrame.Maskstream = []byte{0x10, 0x32, 0x54, 0x76, 0x98, 0xBA, 0xDC, 0xFE}
 	}
 	paletteLookup = paletteLookupWriter.Buffer
 
 	return
+}
+
+func writeMaskstream(s []byte, bytes int, mask uint64) []byte {
+	result := make([]byte, len(s), len(s)+bytes)
+	copy(result, s)
+	for b := 0; b < bytes; b++ {
+		result = append(result, byte(mask>>(uint(b)*8)))
+	}
+	return result
 }
