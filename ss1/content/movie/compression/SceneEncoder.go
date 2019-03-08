@@ -76,10 +76,15 @@ func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookup []byte, fram
 	for frameIndex := 0; frameIndex < len(e.deltas); frameIndex++ {
 		outFrame := &frames[frameIndex]
 		delta := e.deltas[frameIndex]
+		var bitstream BitstreamWriter
 
+		controlIndex := len(words)
 		words = append(words, ControlWordOf(12, CtrlColorTile16ColorsMasked, uint32(frameIndex*16)))
+		bitstream.Write(12, uint32(controlIndex))
+
 		paletteLookup = append(paletteLookup, delta.tiles[0][:]...)
-		outFrame.Bitstream = []byte{0x00, byte(frameIndex) << 4}
+
+		outFrame.Bitstream = bitstream.Buffer()
 		outFrame.Maskstream = []byte{0x10, 0x32, 0x54, 0x76, 0x98, 0xBA, 0xDC, 0xFE}
 	}
 
