@@ -35,7 +35,7 @@ func TestMaskstreamWriterOffset(t *testing.T) {
 	for _, tc := range tt {
 		td := tc
 		t.Run(td.name, func(t *testing.T) {
-			w := compression.MaskstreamWriter{Buffer: td.buffer}
+			w := compression.PaletteLookupWriter{Buffer: td.buffer}
 			result := w.Write(td.add)
 			assert.Equal(t, td.expected, result)
 		})
@@ -44,7 +44,7 @@ func TestMaskstreamWriterOffset(t *testing.T) {
 
 func verifyMaskstreamWriter(t *testing.T, expected []byte, parts ...[]byte) {
 	t.Helper()
-	var w compression.MaskstreamWriter
+	var w compression.PaletteLookupWriter
 	for _, part := range parts {
 		w.Write(part)
 	}
