@@ -72,6 +72,7 @@ func (e *SceneEncoder) copyLastFrame(frame []byte) {
 
 // Encode processes all the previously registered frames and creates the necessary components for decoding.
 func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookup []byte, frames []EncodedFrame, err error) {
+	var paletteLookupWriter PaletteLookupWriter
 	frames = make([]EncodedFrame, len(e.deltas))
 	for frameIndex := 0; frameIndex < len(e.deltas); frameIndex++ {
 		outFrame := &frames[frameIndex]
@@ -79,14 +80,15 @@ func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookup []byte, fram
 		var bitstream BitstreamWriter
 
 		controlIndex := len(words)
-		words = append(words, ControlWordOf(12, CtrlColorTile16ColorsMasked, uint32(frameIndex*16)))
-		bitstream.Write(12, uint32(controlIndex))
+		paletteIndex := paletteLookupWriter.Write(delta.tiles[0][:])
 
-		paletteLookup = append(paletteLookup, delta.tiles[0][:]...)
+		words = append(words, ControlWordOf(12, CtrlColorTile16ColorsMasked, paletteIndex))
+		bitstream.Write(12, uint32(controlIndex))
 
 		outFrame.Bitstream = bitstream.Buffer()
 		outFrame.Maskstream = []byte{0x10, 0x32, 0x54, 0x76, 0x98, 0xBA, 0xDC, 0xFE}
 	}
+	paletteLookup = paletteLookupWriter.Buffer
 
 	return
 }
