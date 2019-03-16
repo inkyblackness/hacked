@@ -1,14 +1,12 @@
-package internal
+package compression
 
 import (
 	"errors"
-
-	"github.com/inkyblackness/hacked/ss1/content/movie/compression"
 )
 
 // TileColorOp describes one operation how a tile should be colored.
 type TileColorOp struct {
-	Type   compression.ControlType
+	Type   ControlType
 	Offset uint32
 }
 
@@ -36,7 +34,7 @@ type ControlWordSequence struct {
 }
 
 // ControlWords returns the list of low-level control words of the sequence.
-func (seq ControlWordSequence) ControlWords() []compression.ControlWord {
+func (seq ControlWordSequence) ControlWords() []ControlWord {
 	return nil
 }
 

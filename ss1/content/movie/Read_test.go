@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/inkyblackness/hacked/ss1/content/movie"
-	"github.com/inkyblackness/hacked/ss1/content/movie/format"
+	"github.com/inkyblackness/hacked/ss1/content/movie/internal/format"
 )
 
 func TestReadReturnsErrorOnNil(t *testing.T) {

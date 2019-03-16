@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/inkyblackness/hacked/ss1/content/movie/compression"
+	"github.com/inkyblackness/hacked/ss1/content/movie/internal/compression"
 )
 
 func TestMaskstreamWriter(t *testing.T) {

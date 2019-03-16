@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
-	"github.com/inkyblackness/hacked/ss1/content/movie/compression"
+	"github.com/inkyblackness/hacked/ss1/content/movie/internal/compression"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/serial"
 	"github.com/inkyblackness/hacked/ss1/serial/rle"

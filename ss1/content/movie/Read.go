@@ -8,7 +8,7 @@ import (
 	"io"
 
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
-	"github.com/inkyblackness/hacked/ss1/content/movie/format"
+	"github.com/inkyblackness/hacked/ss1/content/movie/internal/format"
 	"github.com/inkyblackness/hacked/ss1/serial"
 )
 

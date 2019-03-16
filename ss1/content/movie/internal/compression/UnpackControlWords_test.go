@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/inkyblackness/hacked/ss1/content/movie/compression"
+	"github.com/inkyblackness/hacked/ss1/content/movie/internal/compression"
 )
 
 func TestUnpackControlWordsFormatErrorForEmptyArray(t *testing.T) {
