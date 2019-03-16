@@ -92,6 +92,15 @@ func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookup []byte, fram
 	}
 	paletteLookup = paletteLookupWriter.Buffer
 
+	// This needs to be done in several stages:
+	// - gather a list of all necessary resulting tile operations (final palette index & op) over all frames
+	// - these requests need also to be stored per frame
+	// - after all control operations are requested, create a control word snapshot
+	// - this snapshot has all the low-level control words created, as well as a mapping index from
+	//   requested control operation to low-level index
+	// - iterate again per frame, and find low-level index for requested operation - or, rather
+	// - create bitstream out of requested list of control operations.
+
 	return
 }
 
