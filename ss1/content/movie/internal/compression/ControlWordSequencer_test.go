@@ -59,6 +59,15 @@ func (suite *ControlWordSequencerSuite) TestControlWordsAreOrderedByOperationFre
 	suite.thenControlWordsShouldBe(compression.ControlWordOf(12, 0, 0), compression.ControlWordOf(12, 0, 1))
 }
 
+// TODO: Operation frequency might not be the only deciding factor.
+// The further criteria is the arrangement of control word sequences that generate offsets beyond 17 bit.
+// mixed into this then also the magic of reusing extension sequences.
+// I believe the order of the entries is irrelevant for the words that have parameters within 17 bits.
+// the order becomes relevant for those that need extension. Though, even then, what is the benefit
+// of putting an entry with a high parameter value before those with a smaller value? It still needs
+// the same amount of extensions to reach. Perhaps it is important whether the extensions are within
+// the same bucket, or spanning several jumps of 15 indices...
+
 func (suite *ControlWordSequencerSuite) givenRegisteredOperations(ops ...compression.TileColorOp) {
 	suite.T().Helper()
 	for index, op := range ops {
