@@ -11,6 +11,11 @@ func ControlWordOf(count int, controlType ControlType, param uint32) ControlWord
 	return (ControlWord(count) << 20) | (ControlWord(controlType&0x7) << 17) | ControlWord(param&ControlWordParamLimit)
 }
 
+// LongOffsetOf returns a word that indicates a long offset with given value.
+func LongOffsetOf(offset uint32) ControlWord {
+	return ControlWord(offset & 0xFFFFF)
+}
+
 // Packed returns the control word packed in a PackedControlWord with the given number of times.
 func (word ControlWord) Packed(times int) PackedControlWord {
 	return PackedControlWord((uint32(word) & 0x00FFFFFF) | (uint32(times) << 24))

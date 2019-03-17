@@ -14,6 +14,10 @@ type TileColorOp struct {
 // ControlWordSequencer receives a list of requested tile coloring operations
 // and produces a sequence of low-level control words to reproduce the requested list.
 type ControlWordSequencer struct {
+	// BitstreamIndexLimit specifies the highest value the sequencer may use to store offset values in the bitstream.
+	// If this value is 0, then the default of 0xFFF (12 bits) is used.
+	BitstreamIndexLimit uint32
+
 	ops map[TileColorOp]uint32
 }
 
@@ -54,8 +58,22 @@ func (seq ControlWordSequencer) Sequence() (ControlWordSequence, error) {
 		}
 		return false
 	})
+
+	bitstreamOffset := 12
+	bitstreamIndexLimit := seq.BitstreamIndexLimit
+	if bitstreamIndexLimit == 0 {
+		bitstreamIndexLimit = 0xFFF
+	}
 	for _, op := range sortedOps {
-		result.words = append(result.words, ControlWordOf(12, op.Type, op.Offset))
+		wordCount := uint32(len(result.words))
+		if wordCount == bitstreamIndexLimit {
+			bitstreamOffset = 4
+			result.words = append(result.words, LongOffsetOf(wordCount+1))
+		}
+		if (wordCount > bitstreamIndexLimit) && ((wordCount - (bitstreamIndexLimit+1)%16) == 15) {
+			result.words = append(result.words, LongOffsetOf(wordCount+1))
+		}
+		result.words = append(result.words, ControlWordOf(bitstreamOffset, op.Type, op.Offset))
 	}
 
 	return result, nil

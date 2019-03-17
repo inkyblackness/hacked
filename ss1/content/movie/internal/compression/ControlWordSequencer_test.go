@@ -78,6 +78,54 @@ func (suite *ControlWordSequencerSuite) TestControlWordsAreOrderedByControlTypeT
 		compression.ControlWordOf(12, compression.CtrlColorTile16ColorsMasked, 0))
 }
 
+func (suite *ControlWordSequencerSuite) TestControlWordLongOffsetsWhenBitstreamSpaceExhausted_FirstTime() {
+	suite.givenSequencerBitstreamIndexLimitOf(1)
+	suite.givenRegisteredOperations(
+		compression.TileColorOp{Offset: 0},
+		compression.TileColorOp{Offset: 1},
+		compression.TileColorOp{Offset: 2},
+		compression.TileColorOp{Offset: 3})
+	suite.whenSequenceIsCreated()
+	suite.thenControlWordsShouldBe(
+		compression.ControlWordOf(12, 0, 0),
+		compression.ControlWordOf(0, 0, 2), // first long offset jump to index 2
+		compression.ControlWordOf(4, 0, 1),
+		compression.ControlWordOf(4, 0, 2),
+		compression.ControlWordOf(4, 0, 3))
+}
+
+func (suite *ControlWordSequencerSuite) TestControlWordLongOffsetsWhenBitstreamSpaceExhausted_SecondTime() {
+	suite.givenSequencerBitstreamIndexLimitOf(1)
+	suite.givenRegisteredOperations(
+		compression.TileColorOp{Offset: 0}, compression.TileColorOp{Offset: 1},
+		compression.TileColorOp{Offset: 2}, compression.TileColorOp{Offset: 3},
+		compression.TileColorOp{Offset: 4}, compression.TileColorOp{Offset: 5},
+		compression.TileColorOp{Offset: 6}, compression.TileColorOp{Offset: 7},
+		compression.TileColorOp{Offset: 8}, compression.TileColorOp{Offset: 9},
+		compression.TileColorOp{Offset: 10}, compression.TileColorOp{Offset: 11},
+		compression.TileColorOp{Offset: 12}, compression.TileColorOp{Offset: 13},
+		compression.TileColorOp{Offset: 14}, compression.TileColorOp{Offset: 15},
+		compression.TileColorOp{Offset: 16}, compression.TileColorOp{Offset: 17})
+	suite.whenSequenceIsCreated()
+	suite.thenControlWordsShouldBe(
+		compression.ControlWordOf(12, 0, 0),
+		compression.ControlWordOf(0, 0, 2), // first long offset jump to index 2
+		compression.ControlWordOf(4, 0, 1), compression.ControlWordOf(4, 0, 2),
+		compression.ControlWordOf(4, 0, 3), compression.ControlWordOf(4, 0, 4),
+		compression.ControlWordOf(4, 0, 5), compression.ControlWordOf(4, 0, 6),
+		compression.ControlWordOf(4, 0, 7), compression.ControlWordOf(4, 0, 8),
+		compression.ControlWordOf(4, 0, 9), compression.ControlWordOf(4, 0, 10),
+		compression.ControlWordOf(4, 0, 11), compression.ControlWordOf(4, 0, 12),
+		compression.ControlWordOf(4, 0, 13), compression.ControlWordOf(4, 0, 14),
+		compression.ControlWordOf(4, 0, 15),
+		compression.ControlWordOf(0, 0, 18), // second long offset jump to index 18
+		compression.ControlWordOf(4, 0, 16), compression.ControlWordOf(4, 0, 17))
+}
+
+func (suite *ControlWordSequencerSuite) givenSequencerBitstreamIndexLimitOf(value uint32) {
+	suite.sequencer.BitstreamIndexLimit = value
+}
+
 func (suite *ControlWordSequencerSuite) givenRegisteredOperations(ops ...compression.TileColorOp) {
 	suite.T().Helper()
 	for index, op := range ops {
