@@ -35,7 +35,7 @@ func (suite *ControlWordSequencerSuite) TestEmptySequence() {
 }
 
 func (suite *ControlWordSequencerSuite) TestAddReturnsErrorOnWrongOffset() {
-	err := suite.sequencer.Add(compression.TileColorOp{Offset: 0x100000})
+	err := suite.sequencer.Add(compression.TileColorOp{Offset: compression.ControlWordParamLimit + 1})
 	assert.NotNil(suite.T(), err, "error expected adding an operation with too high offset")
 }
 
@@ -51,7 +51,7 @@ func (suite *ControlWordSequencerSuite) TestDuplicatedOperationShouldResultInOne
 	suite.thenControlWordsShouldHaveALenOf(1)
 }
 
-func (suite *ControlWordSequencerSuite) TestControlWordsAreOrderedByOperationFrequency() {
+func (suite *ControlWordSequencerSuite) TestControlWordsAreOrderedByOperationFrequencyFirst() {
 	suite.givenRegisteredOperations(
 		compression.TileColorOp{Offset: 1},
 		compression.TileColorOp{}, compression.TileColorOp{})
@@ -59,14 +59,24 @@ func (suite *ControlWordSequencerSuite) TestControlWordsAreOrderedByOperationFre
 	suite.thenControlWordsShouldBe(compression.ControlWordOf(12, 0, 0), compression.ControlWordOf(12, 0, 1))
 }
 
-// TODO: Operation frequency might not be the only deciding factor.
-// The further criteria is the arrangement of control word sequences that generate offsets beyond 17 bit.
-// mixed into this then also the magic of reusing extension sequences.
-// I believe the order of the entries is irrelevant for the words that have parameters within 17 bits.
-// the order becomes relevant for those that need extension. Though, even then, what is the benefit
-// of putting an entry with a high parameter value before those with a smaller value? It still needs
-// the same amount of extensions to reach. Perhaps it is important whether the extensions are within
-// the same bucket, or spanning several jumps of 15 indices...
+func (suite *ControlWordSequencerSuite) TestControlWordsAreOrderedByOffsetSecond() {
+	suite.givenRegisteredOperations(
+		compression.TileColorOp{Offset: 1}, compression.TileColorOp{Offset: 1},
+		compression.TileColorOp{}, compression.TileColorOp{})
+	suite.whenSequenceIsCreated()
+	suite.thenControlWordsShouldBe(compression.ControlWordOf(12, 0, 0), compression.ControlWordOf(12, 0, 1))
+}
+
+func (suite *ControlWordSequencerSuite) TestControlWordsAreOrderedByControlTypeThird() {
+	suite.givenRegisteredOperations(
+		compression.TileColorOp{Type: compression.CtrlColorTile16ColorsMasked},
+		compression.TileColorOp{Type: compression.CtrlColorTile16ColorsMasked},
+		compression.TileColorOp{}, compression.TileColorOp{})
+	suite.whenSequenceIsCreated()
+	suite.thenControlWordsShouldBe(
+		compression.ControlWordOf(12, 0, 0),
+		compression.ControlWordOf(12, compression.CtrlColorTile16ColorsMasked, 0))
+}
 
 func (suite *ControlWordSequencerSuite) givenRegisteredOperations(ops ...compression.TileColorOp) {
 	suite.T().Helper()

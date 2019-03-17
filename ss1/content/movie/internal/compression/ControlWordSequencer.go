@@ -18,9 +18,9 @@ type ControlWordSequencer struct {
 }
 
 // Add extends the list of requested coloring operations with the given entry.
-// The offset of the entry must use up to 20 bits, otherwise the function returns an error.
+// The offset of the entry must be a value less than or equal ControlWordParamLimit, otherwise the function returns an error.
 func (seq *ControlWordSequencer) Add(op TileColorOp) error {
-	if op.Offset >= 0x100000 {
+	if op.Offset > ControlWordParamLimit {
 		return errors.New("too high operation offset")
 	}
 	if seq.ops == nil {
@@ -39,7 +39,20 @@ func (seq ControlWordSequencer) Sequence() (ControlWordSequence, error) {
 		sortedOps = append(sortedOps, op)
 	}
 	sort.Slice(sortedOps, func(a, b int) bool {
-		return seq.ops[sortedOps[a]] > seq.ops[sortedOps[b]]
+		opA := sortedOps[a]
+		opB := sortedOps[b]
+		countA := seq.ops[opA]
+		countB := seq.ops[opB]
+		if countA != countB {
+			return countA > countB
+		}
+		if opA.Offset != opB.Offset {
+			return opA.Offset < opB.Offset
+		}
+		if opA.Type != opB.Type {
+			return opA.Type < opB.Type
+		}
+		return false
 	})
 	for _, op := range sortedOps {
 		result.words = append(result.words, ControlWordOf(12, op.Type, op.Offset))

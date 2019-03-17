@@ -1,11 +1,14 @@
 package compression
 
+// ControlWordParamLimit is the highest number the param property of a control word can take.
+const ControlWordParamLimit = 0x1FFFF
+
 // ControlWord describes the current compression action.
 type ControlWord uint32
 
 // ControlWordOf returns a word with the given parameters.
 func ControlWordOf(count int, controlType ControlType, param uint32) ControlWord {
-	return (ControlWord(count) << 20) | (ControlWord(controlType&0x7) << 17) | ControlWord(param&0x1FFFF)
+	return (ControlWord(count) << 20) | (ControlWord(controlType&0x7) << 17) | ControlWord(param&ControlWordParamLimit)
 }
 
 // Packed returns the control word packed in a PackedControlWord with the given number of times.
@@ -35,5 +38,5 @@ func (word ControlWord) Type() ControlType {
 
 // Parameter returns the type specific parameter value.
 func (word ControlWord) Parameter() uint32 {
-	return (uint32(word) >> 0) & 0x1FFFF
+	return (uint32(word) >> 0) & ControlWordParamLimit
 }
