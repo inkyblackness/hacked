@@ -66,23 +66,24 @@ func (seq ControlWordSequencer) Sequence() (ControlWordSequence, error) {
 	}
 	result.opPaths = make(map[TileColorOp]nestedTileColorOp)
 	var nestedParent *nestedTileColorOp
+	relOffset := uint32(0)
 	for _, op := range sortedOps {
 		wordCount := uint32(len(result.words))
 		if wordCount == bitstreamIndexLimit {
 			bitstreamOffset = 4
 			result.words = append(result.words, LongOffsetOf(wordCount+1))
 			nestedParent = &nestedTileColorOp{relOffsetBits: 12, relOffset: wordCount}
+			relOffset = 0
 		}
-		if (wordCount > bitstreamIndexLimit) && ((wordCount - (bitstreamIndexLimit+1)%16) == 15) {
+		if (wordCount > bitstreamIndexLimit) && (relOffset == 15) {
 			result.words = append(result.words, LongOffsetOf(wordCount+1))
 			nestedParent = &nestedTileColorOp{parent: nestedParent, relOffsetBits: 4, relOffset: 15}
+			relOffset = 0
 		}
-		if nestedParent == nil {
-			result.opPaths[op] = nestedTileColorOp{relOffsetBits: 12, relOffset: wordCount}
-		} else {
-			result.opPaths[op] = nestedTileColorOp{parent: nestedParent, relOffsetBits: 4, relOffset: wordCount - (bitstreamIndexLimit+1)%16}
-		}
+
+		result.opPaths[op] = nestedTileColorOp{parent: nestedParent, relOffsetBits: uint(bitstreamOffset), relOffset: relOffset}
 		result.words = append(result.words, ControlWordOf(bitstreamOffset, op.Type, op.Offset))
+		relOffset++
 	}
 
 	return result, nil
