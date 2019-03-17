@@ -73,33 +73,39 @@ func (e *SceneEncoder) copyLastFrame(frame []byte) {
 // Encode processes all the previously registered frames and creates the necessary components for decoding.
 func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookup []byte, frames []EncodedFrame, err error) {
 	var paletteLookupWriter PaletteLookupWriter
+	var wordSequencer ControlWordSequencer
+	tileColorOpsPerFrame := make([][]TileColorOp, len(e.deltas))
 	frames = make([]EncodedFrame, len(e.deltas))
+
 	for frameIndex := 0; frameIndex < len(e.deltas); frameIndex++ {
 		outFrame := &frames[frameIndex]
 		delta := e.deltas[frameIndex]
-		var bitstream BitstreamWriter
 
 		for _, tile := range delta.tiles {
 			paletteIndex := paletteLookupWriter.Write(tile[:])
-
-			controlIndex := len(words)
-			words = append(words, ControlWordOf(12, CtrlColorTile16ColorsMasked, paletteIndex))
+			op := TileColorOp{Type: CtrlColorTile16ColorsMasked, Offset: paletteIndex}
 			outFrame.Maskstream = writeMaskstream(outFrame.Maskstream, 8, 0xFEDCBA9876543210)
-			bitstream.Write(12, uint32(controlIndex))
+
+			err = wordSequencer.Add(op)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			tileColorOpsPerFrame[frameIndex] = append(tileColorOpsPerFrame[frameIndex], op)
 		}
-
-		outFrame.Bitstream = bitstream.Buffer()
 	}
-	paletteLookup = paletteLookupWriter.Buffer
 
-	// This needs to be done in several stages:
-	// - gather a list of all necessary resulting tile operations (final palette index & op) over all frames
-	// - these requests need also to be stored per frame
-	// - after all control operations are requested, create a control word snapshot
-	// - this snapshot has all the low-level control words created, as well as a mapping index from
-	//   requested control operation to low-level index
-	// - iterate again per frame, and find low-level index for requested operation - or, rather
-	// - create bitstream out of requested list of control operations.
+	sequence, err := wordSequencer.Sequence()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	words = sequence.ControlWords()
+	paletteLookup = paletteLookupWriter.Buffer
+	for frameIndex, ops := range tileColorOpsPerFrame {
+		frames[frameIndex].Bitstream, err = sequence.BitstreamFor(ops)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+	}
 
 	return
 }
