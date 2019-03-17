@@ -2,7 +2,9 @@ package compression_test
 
 import (
 	"fmt"
+	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/inkyblackness/hacked/ss1/content/movie/internal/compression"
 
@@ -65,15 +67,65 @@ func (suite *CompressionSuite) TestTwoTiles() {
 
 func (suite *CompressionSuite) verifyCompression(width, height int, inFrames ...[]byte) {
 	suite.T().Helper()
+	verifyCompression(suite.T(), width, height, inFrames...)
+}
+
+func BenchmarkRandomFrames(b *testing.B) {
+	// With a frame size of 600x300 we have 150*75=11250 tiles per frame.
+	// The maximum palette offset is 0x1FFFF, allowing for 8191 entries of full 16 byte (fully random tile) palettes.
+	// This means not even one frame of completely randomized tiles can be encoded.
+	// As a result, this test will first create a set of 4000 random tiles, and then create a sequence of frames
+	// using this set of tiles, instead of creating complete random frames.
+	// Still, this test is rather slow, so it is moved to be a benchmark for now.
+
+	seed := time.Now().UnixNano()
+	b.Logf("Running with seed %v", seed)
+	hTiles := 150
+	vTiles := 75
+	width := 4 * hTiles
+	height := 4 * vTiles
+	r := rand.New(rand.NewSource(seed))
+	tiles := make([][4][4]byte, 4000)
+	for tileIndex := 0; tileIndex < len(tiles); tileIndex++ {
+		tile := &tiles[tileIndex]
+		for y := 0; y < 4; y++ {
+			for x := 0; x < 4; x++ {
+				tile[y][x] = byte(1 + r.Intn(255)) // value of 0x00 may not be encoded.
+			}
+		}
+	}
+
+	frames := make([][]byte, 5)
+	for frameIndex := 0; frameIndex < len(frames); frameIndex++ {
+		frame := make([]byte, width*height)
+		for y := 0; y < height; y += 4 {
+			for x := 0; x < width; x += 4 {
+				tile := &tiles[r.Intn(len(tiles))]
+				for line := 0; line < 4; line++ {
+					copy(frame[(y+line)*width+x:], tile[line][:])
+				}
+			}
+		}
+		frames[frameIndex] = frame
+	}
+
+	b.ResetTimer()
+	verifyCompression(b, width, height, frames...)
+}
+
+func verifyCompression(t testing.TB, width, height int, inFrames ...[]byte) {
+	t.Helper()
 	encoder := compression.NewSceneEncoder(width, height)
 	for frameIndex, frame := range inFrames {
-		require.Equal(suite.T(), width*height, len(frame), fmt.Sprintf("Length of frame %d is wrong for dimension", frameIndex))
+		require.Equal(t, width*height, len(frame), fmt.Sprintf("Length of frame %d is wrong for dimension", frameIndex))
 		err := encoder.AddFrame(frame)
-		require.Nil(suite.T(), err, fmt.Sprintf("no error expected adding frame %d: %v", frameIndex, err))
+		require.Nil(t, err, fmt.Sprintf("no error expected adding frame %d: %v", frameIndex, err))
 	}
 	controlWords, paletteLookup, encodedFrames, err := encoder.Encode()
-	require.Equal(suite.T(), len(inFrames), len(encodedFrames), "expected equal amount of encoded frames for input frames")
-	require.Nil(suite.T(), err, fmt.Sprintf("no error expected encoding: %v", err))
+	require.Equal(t, len(inFrames), len(encodedFrames), "expected equal amount of encoded frames for input frames")
+	require.Nil(t, err, fmt.Sprintf("no error expected encoding: %v", err))
+
+	t.Logf("Statistics: ControlWords: %v, PaletteLookup: %v", len(controlWords), len(paletteLookup))
 
 	decoderBuilder := compression.NewFrameDecoderBuilder(width, height)
 	decoderBuilder.WithControlWords(controlWords)
@@ -83,6 +135,6 @@ func (suite *CompressionSuite) verifyCompression(width, height int, inFrames ...
 	for frameIndex, encodedFrame := range encodedFrames {
 		decoder := decoderBuilder.Build()
 		decoder.Decode(encodedFrame.Bitstream, encodedFrame.Maskstream)
-		assert.Equal(suite.T(), inFrames[frameIndex], frameBuffer, fmt.Sprintf("Frame decode error for frame %d", frameIndex))
+		assert.Equal(t, inFrames[frameIndex], frameBuffer, fmt.Sprintf("Frame content mismatch for frame %d", frameIndex))
 	}
 }
