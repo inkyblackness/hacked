@@ -143,6 +143,23 @@ func (suite *ControlWordSequencerSuite) TestBitstreamForSimpleSequence() {
 		[]bitstreamExpectation{bits12(1), bits12(0), bits12(0)})
 }
 
+func (suite *ControlWordSequencerSuite) TestBitstreamForExtendedSequence() {
+	suite.givenSequencerBitstreamIndexLimitOf(1)
+	suite.givenRegisteredOperations(
+		compression.TileColorOp{Offset: 0}, compression.TileColorOp{Offset: 1},
+		compression.TileColorOp{Offset: 2}, compression.TileColorOp{Offset: 3},
+		compression.TileColorOp{Offset: 4}, compression.TileColorOp{Offset: 5},
+		compression.TileColorOp{Offset: 6}, compression.TileColorOp{Offset: 7},
+		compression.TileColorOp{Offset: 8}, compression.TileColorOp{Offset: 9},
+		compression.TileColorOp{Offset: 10}, compression.TileColorOp{Offset: 11},
+		compression.TileColorOp{Offset: 12}, compression.TileColorOp{Offset: 13},
+		compression.TileColorOp{Offset: 14}, compression.TileColorOp{Offset: 15},
+		compression.TileColorOp{Offset: 16}, compression.TileColorOp{Offset: 17})
+	suite.whenSequenceIsCreated()
+	suite.thenBitstreamShouldBeFor([]compression.TileColorOp{{Offset: 17}},
+		[]bitstreamExpectation{bits12(1), bits4(15), bits4(1)})
+}
+
 func (suite *ControlWordSequencerSuite) givenSequencerBitstreamIndexLimitOf(value uint32) {
 	suite.sequencer.BitstreamIndexLimit = value
 }
@@ -151,7 +168,7 @@ func (suite *ControlWordSequencerSuite) givenRegisteredOperations(ops ...compres
 	suite.T().Helper()
 	for index, op := range ops {
 		err := suite.sequencer.Add(op)
-		require.Nil(suite.T(), err, "no error expected adding operation ", index)
+		require.Nil(suite.T(), err, "no error expected adding operation %v", index)
 	}
 }
 
@@ -182,7 +199,7 @@ func (suite *ControlWordSequencerSuite) thenBitstreamShouldBeFor(
 	bitstream := compression.NewBitstreamReader(data)
 	for index, exp := range expected {
 		value := bitstream.Read(exp.bits)
-		assert.Equal(suite.T(), exp.value, value, "Value mismatch at index ", index)
+		assert.Equal(suite.T(), exp.value, value, "Value mismatch at index %v", index)
 		bitstream.Advance(exp.bits)
 	}
 }

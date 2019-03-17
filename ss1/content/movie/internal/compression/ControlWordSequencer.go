@@ -71,14 +71,16 @@ func (seq ControlWordSequencer) Sequence() (ControlWordSequence, error) {
 		if wordCount == bitstreamIndexLimit {
 			bitstreamOffset = 4
 			result.words = append(result.words, LongOffsetOf(wordCount+1))
+			nestedParent = &nestedTileColorOp{relOffsetBits: 12, relOffset: wordCount}
 		}
 		if (wordCount > bitstreamIndexLimit) && ((wordCount - (bitstreamIndexLimit+1)%16) == 15) {
 			result.words = append(result.words, LongOffsetOf(wordCount+1))
+			nestedParent = &nestedTileColorOp{parent: nestedParent, relOffsetBits: 4, relOffset: 15}
 		}
 		if nestedParent == nil {
 			result.opPaths[op] = nestedTileColorOp{relOffsetBits: 12, relOffset: wordCount}
 		} else {
-			// TODO
+			result.opPaths[op] = nestedTileColorOp{parent: nestedParent, relOffsetBits: 4, relOffset: wordCount - (bitstreamIndexLimit+1)%16}
 		}
 		result.words = append(result.words, ControlWordOf(bitstreamOffset, op.Type, op.Offset))
 	}
