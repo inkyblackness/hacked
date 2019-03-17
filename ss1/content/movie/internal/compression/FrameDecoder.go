@@ -61,6 +61,7 @@ func (decoder *FrameDecoder) Decode(bitstreamData []byte, maskstreamData []byte)
 
 func (decoder *FrameDecoder) readNextControlWord(bitstream *BitstreamReader) ControlWord {
 	controlIndex := bitstream.Read(12)
+	// TODO: sanity check to verify controlIndex (avoid array index panic)
 	control := decoder.controlWords[controlIndex]
 
 	if control.IsLongOffset() {
@@ -69,6 +70,8 @@ func (decoder *FrameDecoder) readNextControlWord(bitstream *BitstreamReader) Con
 			bitstream.Advance(4)
 			offset := bitstream.Read(4)
 			controlIndex = control.LongOffset() + offset
+			// TODO: sanity check to verify controlIndex changes (avoid endless loop if offset is zero)
+			// TODO: sanity check to verify controlIndex (avoid array index panic)
 			control = decoder.controlWords[controlIndex]
 		}
 	}
