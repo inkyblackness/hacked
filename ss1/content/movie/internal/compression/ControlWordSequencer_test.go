@@ -122,6 +122,27 @@ func (suite *ControlWordSequencerSuite) TestControlWordLongOffsetsWhenBitstreamS
 		compression.ControlWordOf(4, 0, 16), compression.ControlWordOf(4, 0, 17))
 }
 
+type bitstreamExpectation struct {
+	bits  int
+	value uint32
+}
+
+func bits12(value uint32) bitstreamExpectation {
+	return bitstreamExpectation{bits: 12, value: value}
+}
+
+func bits4(value uint32) bitstreamExpectation {
+	return bitstreamExpectation{bits: 4, value: value}
+}
+
+func (suite *ControlWordSequencerSuite) TestBitstreamForSimpleSequence() {
+	ops := []compression.TileColorOp{{Offset: 1}, {}, {}}
+	suite.givenRegisteredOperations(ops...)
+	suite.whenSequenceIsCreated()
+	suite.thenBitstreamShouldBeFor(ops,
+		[]bitstreamExpectation{bits12(1), bits12(0), bits12(0)})
+}
+
 func (suite *ControlWordSequencerSuite) givenSequencerBitstreamIndexLimitOf(value uint32) {
 	suite.sequencer.BitstreamIndexLimit = value
 }
@@ -150,4 +171,18 @@ func (suite *ControlWordSequencerSuite) thenControlWordsShouldBe(expected ...com
 	words := suite.sequence.ControlWords()
 	assert.Equal(suite.T(), len(expected), len(words), "length mismatch")
 	assert.Equal(suite.T(), expected, words, "words mismatch")
+}
+
+func (suite *ControlWordSequencerSuite) thenBitstreamShouldBeFor(
+	ops []compression.TileColorOp,
+	expected []bitstreamExpectation) {
+	data, err := suite.sequence.BitstreamFor(ops)
+	suite.T().Helper()
+	require.Nil(suite.T(), err, "no error expected extracting bitstream")
+	bitstream := compression.NewBitstreamReader(data)
+	for index, exp := range expected {
+		value := bitstream.Read(exp.bits)
+		assert.Equal(suite.T(), exp.value, value, "Value mismatch at index ", index)
+		bitstream.Advance(exp.bits)
+	}
 }

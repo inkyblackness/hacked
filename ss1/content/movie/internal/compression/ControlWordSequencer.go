@@ -64,6 +64,8 @@ func (seq ControlWordSequencer) Sequence() (ControlWordSequence, error) {
 	if bitstreamIndexLimit == 0 {
 		bitstreamIndexLimit = 0xFFF
 	}
+	result.opPaths = make(map[TileColorOp]nestedTileColorOp)
+	var nestedParent *nestedTileColorOp
 	for _, op := range sortedOps {
 		wordCount := uint32(len(result.words))
 		if wordCount == bitstreamIndexLimit {
@@ -73,17 +75,29 @@ func (seq ControlWordSequencer) Sequence() (ControlWordSequence, error) {
 		if (wordCount > bitstreamIndexLimit) && ((wordCount - (bitstreamIndexLimit+1)%16) == 15) {
 			result.words = append(result.words, LongOffsetOf(wordCount+1))
 		}
+		if nestedParent == nil {
+			result.opPaths[op] = nestedTileColorOp{relOffsetBits: 12, relOffset: wordCount}
+		} else {
+			// TODO
+		}
 		result.words = append(result.words, ControlWordOf(bitstreamOffset, op.Type, op.Offset))
 	}
 
 	return result, nil
 }
 
+type nestedTileColorOp struct {
+	parent        *nestedTileColorOp
+	relOffsetBits uint
+	relOffset     uint32
+}
+
 // ControlWordSequence is a finalized set of control words to reproduce a list of
 // tile coloring operations. Based on this sequence, a bitstream can be created based
 // on a selection of such coloring operations (i.e., per frame).
 type ControlWordSequence struct {
-	words []ControlWord
+	words   []ControlWord
+	opPaths map[TileColorOp]nestedTileColorOp
 }
 
 // ControlWords returns the list of low-level control words of the sequence.
@@ -94,5 +108,18 @@ func (seq ControlWordSequence) ControlWords() []ControlWord {
 // BitstreamFor returns the bitstream to reproduce the provided list of coloring operations
 // from this sequence.
 func (seq ControlWordSequence) BitstreamFor(ops []TileColorOp) ([]byte, error) {
-	return nil, errors.New("not implemented")
+	var writer BitstreamWriter
+	for _, op := range ops {
+		nested := seq.opPaths[op]
+		path := []nestedTileColorOp{nested}
+		for nested.parent != nil {
+			nested = *nested.parent
+			path = append(path, nested)
+		}
+		for index := len(path) - 1; index >= 0; index-- {
+			nested := path[index]
+			writer.Write(nested.relOffsetBits, nested.relOffset)
+		}
+	}
+	return writer.Buffer(), nil
 }
