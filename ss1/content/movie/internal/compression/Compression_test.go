@@ -134,6 +134,8 @@ func verifyCompression(t testing.TB, width, height int, inFrames ...[]byte) {
 	decoderBuilder.ForStandardFrame(frameBuffer, width)
 	for frameIndex, encodedFrame := range encodedFrames {
 		decoder := decoderBuilder.Build()
+		t.Logf("Statistics F%2d: Bitstream: %v, Maskstream: %v",
+			frameIndex, len(encodedFrame.Bitstream), len(encodedFrame.Maskstream))
 		decoder.Decode(encodedFrame.Bitstream, encodedFrame.Maskstream)
 		assert.Equal(t, inFrames[frameIndex], frameBuffer, fmt.Sprintf("Frame content mismatch for frame %d", frameIndex))
 	}

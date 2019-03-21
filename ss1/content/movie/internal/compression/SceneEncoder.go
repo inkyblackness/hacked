@@ -1,5 +1,10 @@
 package compression
 
+import (
+	"math/bits"
+	"sort"
+)
+
 // EncodedFrame contains the streams of one compressed frame.
 type EncodedFrame struct {
 	Bitstream  []byte
@@ -82,9 +87,40 @@ func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookup []byte, fram
 		delta := e.deltas[frameIndex]
 
 		for _, tile := range delta.tiles {
-			paletteIndex := paletteLookupWriter.Write(tile[:])
-			op := TileColorOp{Type: CtrlColorTile16ColorsMasked, Offset: paletteIndex}
-			outFrame.Maskstream = writeMaskstream(outFrame.Maskstream, 8, 0xFEDCBA9876543210)
+			var op TileColorOp
+			pal, mask := maskOfTile(tile)
+			palSize := len(pal)
+			// TODO: determine how to implement skip (and skip row)...
+			switch {
+			case palSize == 2 && mask == 0xAA:
+				op.Type = CtrlColorTile2ColorsStatic
+				op.Offset = uint32(pal[1])<<8 | uint32(pal[0])
+			case palSize <= 2:
+				op.Type = CtrlColorTile2ColorsMasked
+				if palSize == 2 {
+					op.Offset = uint32(pal[1])
+					op.Offset <<= 8
+				}
+				if palSize > 0 {
+					op.Offset |= uint32(pal[0])
+				}
+				outFrame.Maskstream = writeMaskstream(outFrame.Maskstream, 2, mask)
+			case palSize <= 4:
+				paletteIndex := paletteLookupWriter.Write(pal)
+				op.Type = CtrlColorTile4ColorsMasked
+				op.Offset = paletteIndex
+				outFrame.Maskstream = writeMaskstream(outFrame.Maskstream, 4, mask)
+			case palSize <= 8:
+				paletteIndex := paletteLookupWriter.Write(pal)
+				op.Type = CtrlColorTile8ColorsMasked
+				op.Offset = paletteIndex
+				outFrame.Maskstream = writeMaskstream(outFrame.Maskstream, 6, mask)
+			default:
+				paletteIndex := paletteLookupWriter.Write(pal)
+				op.Type = CtrlColorTile16ColorsMasked
+				op.Offset = paletteIndex
+				outFrame.Maskstream = writeMaskstream(outFrame.Maskstream, 8, mask)
+			}
 
 			err = wordSequencer.Add(op)
 			if err != nil {
@@ -108,6 +144,36 @@ func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookup []byte, fram
 	}
 
 	return
+}
+
+func maskOfTile(tile tileDelta) (pal []byte, mask uint64) {
+	sorted := tile
+	sort.Slice(sorted[:], func(a, b int) bool { return sorted[a] < sorted[b] })
+
+	usedColors := 1
+	last := sorted[PixelPerTile-1]
+	for index := PixelPerTile - 1; index > 0; index-- {
+		prev := index - 1
+		if sorted[prev] == last {
+			copy(sorted[prev:], sorted[index:])
+		} else {
+			usedColors++
+		}
+		last = sorted[prev]
+	}
+
+	var mapped [256]int
+	for index, value := range sorted[0:usedColors] {
+		mapped[value] = index
+	}
+
+	bitSize := uint(bits.Len(uint(usedColors - 1)))
+	for index := PixelPerTile - 1; index >= 0; index-- {
+		mask <<= bitSize
+		mask |= uint64(mapped[tile[index]])
+	}
+
+	return sorted[0:usedColors], mask
 }
 
 func writeMaskstream(s []byte, bytes int, mask uint64) []byte {
