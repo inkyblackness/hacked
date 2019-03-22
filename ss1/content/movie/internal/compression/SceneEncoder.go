@@ -92,6 +92,8 @@ func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookup []byte, fram
 			palSize := len(pal)
 			// TODO: determine how to implement skip (and skip row)...
 			switch {
+			case palSize == 1 && (pal[0] == 0x00):
+				op.Type = CtrlSkip
 			case palSize == 1:
 				op.Type = CtrlColorTile2ColorsStatic
 				op.Offset = uint32(pal[0])<<8 | uint32(pal[0])
@@ -140,6 +142,7 @@ func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookup []byte, fram
 	if err != nil {
 		return nil, nil, nil, err
 	}
+	sequence.HTiles = uint32(e.hTiles)
 	words = sequence.ControlWords()
 	paletteLookup = paletteLookupWriter.Buffer
 	for frameIndex, ops := range tileColorOpsPerFrame {

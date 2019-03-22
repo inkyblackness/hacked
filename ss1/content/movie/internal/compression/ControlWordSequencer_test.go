@@ -17,6 +17,7 @@ type ControlWordSequencerSuite struct {
 
 	sequenceErr error
 	sequence    compression.ControlWordSequence
+	hTiles      uint32
 }
 
 func TestControlWordSequencer(t *testing.T) {
@@ -27,6 +28,7 @@ func (suite *ControlWordSequencerSuite) SetupTest() {
 	suite.sequencer = compression.ControlWordSequencer{}
 	suite.sequenceErr = nil
 	suite.sequence = compression.ControlWordSequence{}
+	suite.hTiles = 0
 }
 
 func (suite *ControlWordSequencerSuite) TestEmptySequence() {
@@ -131,6 +133,10 @@ func bits12(value uint32) bitstreamExpectation {
 	return bitstreamExpectation{bits: 12, value: value}
 }
 
+func bits5(value uint32) bitstreamExpectation {
+	return bitstreamExpectation{bits: 5, value: value}
+}
+
 func bits4(value uint32) bitstreamExpectation {
 	return bitstreamExpectation{bits: 4, value: value}
 }
@@ -160,8 +166,43 @@ func (suite *ControlWordSequencerSuite) TestBitstreamForExtendedSequence() {
 		[]bitstreamExpectation{bits12(1), bits4(15), bits4(1)})
 }
 
+func (suite *ControlWordSequencerSuite) TestSkipOperation_Single() {
+	suite.givenHorizontalTileCountOf(3)
+	ops := []compression.TileColorOp{{Offset: 0}, {Type: compression.CtrlSkip}, {Offset: 1}}
+	suite.givenRegisteredOperations(ops...)
+	suite.whenSequenceIsCreated()
+	suite.thenBitstreamShouldBeFor(ops,
+		[]bitstreamExpectation{bits12(0), bits12(1), bits5(0), bits12(2)})
+}
+
+func (suite *ControlWordSequencerSuite) TestSkipOperation_Double() {
+	suite.givenHorizontalTileCountOf(4)
+	ops := []compression.TileColorOp{
+		{Offset: 0}, {Type: compression.CtrlSkip},
+		{Type: compression.CtrlSkip}, {Offset: 1}}
+	suite.givenRegisteredOperations(ops...)
+	suite.whenSequenceIsCreated()
+	suite.thenBitstreamShouldBeFor(ops,
+		[]bitstreamExpectation{bits12(1), bits12(0), bits5(1), bits12(2)})
+}
+
+func (suite *ControlWordSequencerSuite) TestSkipOperation_EndOfLine() {
+	suite.givenHorizontalTileCountOf(2)
+	ops := []compression.TileColorOp{
+		{Offset: 0}, {Type: compression.CtrlSkip},
+		{Offset: 1}, {Offset: 2}}
+	suite.givenRegisteredOperations(ops...)
+	suite.whenSequenceIsCreated()
+	suite.thenBitstreamShouldBeFor(ops,
+		[]bitstreamExpectation{bits12(0), bits12(1), bits5(0x1F), bits12(2), bits12(3)})
+}
+
 func (suite *ControlWordSequencerSuite) givenSequencerBitstreamIndexLimitOf(value uint32) {
 	suite.sequencer.BitstreamIndexLimit = value
+}
+
+func (suite *ControlWordSequencerSuite) givenHorizontalTileCountOf(value uint32) {
+	suite.hTiles = value
 }
 
 func (suite *ControlWordSequencerSuite) givenRegisteredOperations(ops ...compression.TileColorOp) {
@@ -174,6 +215,7 @@ func (suite *ControlWordSequencerSuite) givenRegisteredOperations(ops ...compres
 
 func (suite *ControlWordSequencerSuite) whenSequenceIsCreated() {
 	suite.sequence, suite.sequenceErr = suite.sequencer.Sequence()
+	suite.sequence.HTiles = suite.hTiles
 }
 
 func (suite *ControlWordSequencerSuite) thenControlWordsShouldHaveALenOf(expected int) {
@@ -199,7 +241,7 @@ func (suite *ControlWordSequencerSuite) thenBitstreamShouldBeFor(
 	bitstream := compression.NewBitstreamReader(data)
 	for index, exp := range expected {
 		value := bitstream.Read(exp.bits)
-		assert.Equal(suite.T(), exp.value, value, "Value mismatch at index %v", index)
+		assert.Equal(suite.T(), exp.value, value, "Value mismatch at index %v - bitstream is %v", index, data)
 		bitstream.Advance(exp.bits)
 	}
 }

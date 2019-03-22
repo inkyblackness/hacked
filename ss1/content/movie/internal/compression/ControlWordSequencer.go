@@ -99,6 +99,10 @@ type nestedTileColorOp struct {
 // tile coloring operations. Based on this sequence, a bitstream can be created based
 // on a selection of such coloring operations (i.e., per frame).
 type ControlWordSequence struct {
+	// HTiles specifies the amount of horizontal tiles (= operations) a frame has.
+	// This number is relevant for skip operations. If 0, then no skip operation-compression is done.
+	HTiles uint32
+
 	words   []ControlWord
 	opPaths map[TileColorOp]nestedTileColorOp
 }
@@ -112,7 +116,8 @@ func (seq ControlWordSequence) ControlWords() []ControlWord {
 // from this sequence.
 func (seq ControlWordSequence) BitstreamFor(ops []TileColorOp) ([]byte, error) {
 	var writer BitstreamWriter
-	for _, op := range ops {
+	writeOp := func(op TileColorOp) {
+		// TODO: if previous op is to be written, write repeat?
 		nested := seq.opPaths[op]
 		path := []nestedTileColorOp{nested}
 		for nested.parent != nil {
@@ -123,6 +128,43 @@ func (seq ControlWordSequence) BitstreamFor(ops []TileColorOp) ([]byte, error) {
 			nested := path[index]
 			writer.Write(nested.relOffsetBits, nested.relOffset)
 		}
+	}
+	pendingSkips := uint32(0)
+	writePendingSkips := func() {
+		for pendingSkips != 0 {
+			toSkip := pendingSkips
+			if toSkip >= 0x1F {
+				toSkip = 0x1E
+			}
+			writeOp(TileColorOp{Type: CtrlSkip})
+			writer.Write(5, toSkip-1)
+			pendingSkips -= toSkip
+		}
+	}
+	writeLineSkip := func() {
+		if pendingSkips > 0 {
+			writeOp(TileColorOp{Type: CtrlSkip})
+			writer.Write(5, 0x1F)
+			pendingSkips = 0
+		}
+	}
+	for opIndex, op := range ops {
+		if (pendingSkips > 0) && (uint32(opIndex)%seq.HTiles) == 0 {
+			writeLineSkip()
+		}
+		switch {
+		case (op.Type == CtrlSkip) && (seq.HTiles == 0):
+			pendingSkips = 1
+			writePendingSkips()
+		case op.Type == CtrlSkip:
+			pendingSkips++
+		default:
+			writePendingSkips()
+			writeOp(op)
+		}
+	}
+	if pendingSkips > 0 {
+		writeLineSkip()
 	}
 	return writer.Buffer(), nil
 }
