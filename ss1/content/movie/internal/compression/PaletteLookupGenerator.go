@@ -1,10 +1,13 @@
 package compression
 
-import "math/bits"
+import (
+	"math/bits"
+	"sort"
+)
 
 type tilePaletteKey struct {
 	usedColors [4]uint64
-	size       byte
+	size       int
 }
 
 func (entry *tilePaletteKey) buffer() []byte {
@@ -12,6 +15,21 @@ func (entry *tilePaletteKey) buffer() []byte {
 	for i := 0; i < 256; i++ {
 		if entry.hasColor(byte(i)) {
 			result = append(result, byte(i))
+		}
+	}
+	return result
+}
+
+func (entry *tilePaletteKey) joinedBuffer(source []byte) []byte {
+	result := make([]byte, 0, entry.size)
+	var addedColors tilePaletteKey
+	for _, color := range source {
+		addedColors.useColor(color)
+		result = append(result, color)
+	}
+	for color := 0; color < 256; color++ {
+		if entry.hasColor(byte(color)) && !addedColors.hasColor(byte(color)) {
+			result = append(result, byte(color))
 		}
 	}
 	return result
@@ -80,10 +98,56 @@ type PaletteLookupGenerator struct {
 func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 	var lookup PaletteLookup
 	lookup.starts = make(map[tilePaletteKey]int)
+
+	remainder := make(map[tilePaletteKey]struct{})
 	for key := range gen.keyUses {
+		remainder[key] = struct{}{}
+	}
+
+	for size := PixelPerTile; size > 2; size-- {
+		var keysInSize []tilePaletteKey
+
+		// find all keys with this current size
+		for key := range remainder {
+			if key.size == size {
+				keysInSize = append(keysInSize, key)
+			}
+		}
+
+		toRemove := keysInSize[:]
+		for _, key := range keysInSize {
+			var containedKeys []tilePaletteKey
+
+			// find all contained keys, sort them by usage
+			for nestedKey := range remainder {
+				if key.contains(&nestedKey) {
+					containedKeys = append(containedKeys, nestedKey)
+				}
+			}
+			sort.Slice(containedKeys, func(a, b int) bool {
+				return gen.keyUses[containedKeys[a]] > gen.keyUses[containedKeys[b]]
+			})
+
+			lookup.starts[key] = len(lookup.buffer)
+			if len(containedKeys) > 0 {
+				containedKey := containedKeys[0]
+				toRemove = append(toRemove, containedKey)
+				lookup.starts[containedKey] = len(lookup.buffer)
+				lookup.buffer = append(lookup.buffer, key.joinedBuffer(containedKey.buffer())...)
+			} else {
+				lookup.buffer = append(lookup.buffer, key.buffer()...)
+			}
+		}
+		for _, key := range toRemove {
+			delete(remainder, key)
+		}
+	}
+
+	for key := range remainder {
 		lookup.starts[key] = len(lookup.buffer)
 		lookup.buffer = append(lookup.buffer, key.buffer()...)
 	}
+
 	return lookup
 }
 
