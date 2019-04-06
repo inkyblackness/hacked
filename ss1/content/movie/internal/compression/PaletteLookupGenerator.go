@@ -108,16 +108,6 @@ type nestedEntry struct {
 	nested []nestedEntry
 }
 
-/*
-func (entry nestedEntry) buffer() []byte {
-	var nestedData []byte
-	if len(entry.nested) > 0 {
-		nestedData = entry.nested[0].buffer()
-	}
-	return entry.key.joinedBuffer(nestedData)
-}
-*/
-
 func (entry nestedEntry) buffer() []byte {
 	return entry.extractBuffer(0, func(tilePaletteKey, int) {})
 }
@@ -131,13 +121,23 @@ func (entry nestedEntry) byteSize() int {
 }
 
 func (entry *nestedEntry) populate(keys map[tilePaletteKey]struct{}) {
+	remainingKey := entry.key
+	foundSomething := true
+	for remainingKey.size > 2 && foundSomething {
+		var lastAddedKey tilePaletteKey
+		lastAddedKey, foundSomething = entry.populateRemaining(keys, remainingKey)
+		remainingKey = remainingKey.without(&lastAddedKey)
+	}
+}
+
+func (entry *nestedEntry) populateRemaining(keys map[tilePaletteKey]struct{}, remainingKey tilePaletteKey) (tilePaletteKey, bool) {
 	maxByteSize := 0
 	var maxNested *nestedEntry
-	keySize := entry.key.size
+	keySize := remainingKey.size
 	for (keySize > 2) && (maxNested == nil) {
 		keySize--
 		for otherKey := range keys {
-			if otherKey.size == keySize && entry.key.contains(&otherKey) {
+			if otherKey.size == keySize && remainingKey.contains(&otherKey) {
 				nested := nestedEntry{key: otherKey}
 				nested.populate(keys)
 				nestedSize := nested.byteSize()
@@ -149,14 +149,10 @@ func (entry *nestedEntry) populate(keys map[tilePaletteKey]struct{}) {
 		}
 	}
 	if maxNested == nil {
-		return
+		return tilePaletteKey{}, false
 	}
 	entry.nested = append(entry.nested, *maxNested)
-	/*
-		sort.Slice(entry.nested, func(a, b int) bool {
-			return entry.nested[a].byteSize() > entry.nested[b].byteSize()
-		})
-	*/
+	return maxNested.key, true
 }
 
 func (entry *nestedEntry) extractBuffer(startOffset int, marker func(tilePaletteKey, int)) []byte {
@@ -184,7 +180,7 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 	for size := PixelPerTile; size > 2; size-- {
 		var keysInSize []tilePaletteKey
 
-		{ // TODO: consider removing this block again should it not bring too much of a benefit.
+		{
 			var earlyRemoved []tilePaletteKey
 			for key := range remainder {
 				if key.size == size {
@@ -217,7 +213,6 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 
 		toRemove := keysInSize[:]
 		for _, key := range keysInSize {
-			/* one-pass variant, with multiples */
 			nestedRoot := nestedEntry{key: key}
 			nestedRoot.populate(remainder)
 
@@ -226,60 +221,6 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 				lookup.starts[nestedKey] = offset
 			})
 			lookup.buffer = append(lookup.buffer, bytes...)
-			/**/
-
-			/* working less good
-			nestedRoot := nestedEntry{key: key}
-			nestedRoot.populateMore(remainder)
-
-			bytes := nestedRoot.extractBuffer(len(lookup.buffer), func(nestedKey tilePaletteKey, offset int) {
-				lookup.starts[nestedKey] = offset
-			})
-			lookup.buffer = append(lookup.buffer, bytes...)
-			*/
-
-			/* one-pass variant
-			nestedRoot := nestedEntry{key: key}
-			nestedRoot.populate(remainder)
-
-			var markKeys func(entry nestedEntry)
-
-			markKeys = func(entry nestedEntry) {
-				toRemove = append(toRemove, entry.key)
-				lookup.starts[entry.key] = len(lookup.buffer)
-				if len(entry.nested) > 0 {
-					markKeys(entry.nested[0])
-				}
-			}
-			markKeys(nestedRoot)
-			lookup.buffer = append(lookup.buffer, nestedRoot.buffer()...)
-			/**/
-
-			/*
-				var containedKeys []tilePaletteKey
-
-				// find all contained keys, sort them by usage
-				for nestedKey := range remainder {
-					if (nestedKey.size < key.size) && key.contains(&nestedKey) {
-						containedKeys = append(containedKeys, nestedKey)
-					}
-				}
-
-				sort.Slice(containedKeys, func(a, b int) bool {
-					// return gen.keyUses[containedKeys[a]] > gen.keyUses[containedKeys[b]] // sort by use has no point
-					return containedKeys[a].size > containedKeys[b].size
-				})
-
-				lookup.starts[key] = len(lookup.buffer)
-				if len(containedKeys) > 0 {
-					containedKey := containedKeys[0]
-					toRemove = append(toRemove, containedKey)
-					lookup.starts[containedKey] = len(lookup.buffer)
-					lookup.buffer = append(lookup.buffer, key.joinedBuffer(containedKey.buffer())...)
-				} else {
-					lookup.buffer = append(lookup.buffer, key.buffer()...)
-				}
-			*/
 		}
 		for _, key := range toRemove {
 			delete(remainder, key)
