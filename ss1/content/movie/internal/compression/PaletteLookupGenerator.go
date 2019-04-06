@@ -94,6 +94,48 @@ type PaletteLookupGenerator struct {
 	keyUses map[tilePaletteKey]int
 }
 
+type nestedEntry struct {
+	key    tilePaletteKey
+	nested []nestedEntry
+}
+
+func (entry nestedEntry) buffer() []byte {
+	var nestedData []byte
+	if len(entry.nested) > 0 {
+		nestedData = entry.nested[0].buffer()
+	}
+	return entry.key.joinedBuffer(nestedData)
+}
+
+func (entry nestedEntry) byteSize() int {
+	maxNestedSize := 0
+	for _, nested := range entry.nested {
+		nestedSize := nested.byteSize()
+		if nestedSize > maxNestedSize {
+			maxNestedSize = nestedSize
+		}
+	}
+
+	return entry.key.size + maxNestedSize
+}
+
+func (entry *nestedEntry) populate(keys map[tilePaletteKey]struct{}) {
+	keySize := entry.key.size
+	for (keySize > 2) && len(entry.nested) == 0 {
+		keySize--
+		for otherKey := range keys {
+			if otherKey.size == keySize && entry.key.contains(&otherKey) {
+				nested := nestedEntry{key: otherKey}
+				nested.populate(keys)
+				entry.nested = append(entry.nested, nested)
+			}
+		}
+	}
+	sort.Slice(entry.nested, func(a, b int) bool {
+		return entry.nested[a].byteSize() > entry.nested[b].byteSize()
+	})
+}
+
 // Generate creates a lookup based on all currently registered tile deltas.
 func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 	var lookup PaletteLookup
@@ -140,29 +182,45 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 
 		toRemove := keysInSize[:]
 		for _, key := range keysInSize {
-			var containedKeys []tilePaletteKey
+			nestedRoot := nestedEntry{key: key}
+			nestedRoot.populate(remainder)
 
-			// find all contained keys, sort them by usage
-			for nestedKey := range remainder {
-				if (nestedKey.size < key.size) && key.contains(&nestedKey) {
-					containedKeys = append(containedKeys, nestedKey)
+			var markKeys func(entry nestedEntry)
+
+			markKeys = func(entry nestedEntry) {
+				toRemove = append(toRemove, entry.key)
+				lookup.starts[entry.key] = len(lookup.buffer)
+				if len(entry.nested) > 0 {
+					markKeys(entry.nested[0])
 				}
 			}
+			markKeys(nestedRoot)
+			lookup.buffer = append(lookup.buffer, nestedRoot.buffer()...)
+			/*
+				var containedKeys []tilePaletteKey
 
-			sort.Slice(containedKeys, func(a, b int) bool {
-				// return gen.keyUses[containedKeys[a]] > gen.keyUses[containedKeys[b]] // sort by use has no point
-				return containedKeys[a].size > containedKeys[b].size
-			})
+				// find all contained keys, sort them by usage
+				for nestedKey := range remainder {
+					if (nestedKey.size < key.size) && key.contains(&nestedKey) {
+						containedKeys = append(containedKeys, nestedKey)
+					}
+				}
 
-			lookup.starts[key] = len(lookup.buffer)
-			if len(containedKeys) > 0 {
-				containedKey := containedKeys[0]
-				toRemove = append(toRemove, containedKey)
-				lookup.starts[containedKey] = len(lookup.buffer)
-				lookup.buffer = append(lookup.buffer, key.joinedBuffer(containedKey.buffer())...)
-			} else {
-				lookup.buffer = append(lookup.buffer, key.buffer()...)
-			}
+				sort.Slice(containedKeys, func(a, b int) bool {
+					// return gen.keyUses[containedKeys[a]] > gen.keyUses[containedKeys[b]] // sort by use has no point
+					return containedKeys[a].size > containedKeys[b].size
+				})
+
+				lookup.starts[key] = len(lookup.buffer)
+				if len(containedKeys) > 0 {
+					containedKey := containedKeys[0]
+					toRemove = append(toRemove, containedKey)
+					lookup.starts[containedKey] = len(lookup.buffer)
+					lookup.buffer = append(lookup.buffer, key.joinedBuffer(containedKey.buffer())...)
+				} else {
+					lookup.buffer = append(lookup.buffer, key.buffer()...)
+				}
+			*/
 		}
 		for _, key := range toRemove {
 			delete(remainder, key)
