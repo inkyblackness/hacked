@@ -107,6 +107,30 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 	for size := PixelPerTile; size > 2; size-- {
 		var keysInSize []tilePaletteKey
 
+		{ // TODO: consider removing this block again should it not bring too much of a benefit.
+			var earlyRemoved []tilePaletteKey
+			for key := range remainder {
+				if key.size == size {
+					wasRemoved := false
+					for start := 0; start < (len(lookup.buffer)-key.size) && !wasRemoved; start++ {
+						var tempKey tilePaletteKey
+						for _, color := range lookup.buffer[start : start+key.size] {
+							tempKey.useColor(color)
+						}
+						if tempKey.contains(&key) {
+							earlyRemoved = append(earlyRemoved, key)
+							wasRemoved = true
+
+							lookup.starts[key] = start
+						}
+					}
+				}
+			}
+			for _, key := range earlyRemoved {
+				delete(remainder, key)
+			}
+		}
+
 		// find all keys with this current size
 		for key := range remainder {
 			if key.size == size {
@@ -120,12 +144,14 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 
 			// find all contained keys, sort them by usage
 			for nestedKey := range remainder {
-				if key.contains(&nestedKey) {
+				if (nestedKey.size < key.size) && key.contains(&nestedKey) {
 					containedKeys = append(containedKeys, nestedKey)
 				}
 			}
+
 			sort.Slice(containedKeys, func(a, b int) bool {
-				return gen.keyUses[containedKeys[a]] > gen.keyUses[containedKeys[b]]
+				// return gen.keyUses[containedKeys[a]] > gen.keyUses[containedKeys[b]] // sort by use has no point
+				return containedKeys[a].size > containedKeys[b].size
 			})
 
 			lookup.starts[key] = len(lookup.buffer)
