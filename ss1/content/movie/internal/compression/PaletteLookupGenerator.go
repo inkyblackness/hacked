@@ -2,6 +2,7 @@ package compression
 
 import (
 	"math/bits"
+	"sync"
 )
 
 type tilePaletteKey struct {
@@ -103,6 +104,31 @@ type PaletteLookupGenerator struct {
 	keyUses map[tilePaletteKey]int
 }
 
+type nestedEntryCache struct {
+	m       sync.Mutex
+	keys    map[tilePaletteKey]struct{}
+	entries map[tilePaletteKey]*nestedEntry
+}
+
+func (cache *nestedEntryCache) query(key tilePaletteKey, found func(*nestedEntry)) {
+	go func() {
+		cache.m.Lock()
+		entry, hasEntry := cache.entries[key]
+		cache.m.Unlock()
+		if hasEntry {
+			found(entry)
+			return
+		}
+
+		entry = &nestedEntry{key: key}
+		entry.populate(cache)
+		cache.m.Lock()
+		cache.entries[key] = entry
+		cache.m.Unlock()
+		found(entry)
+	}()
+}
+
 type nestedEntry struct {
 	key    tilePaletteKey
 	nested []nestedEntry
@@ -120,35 +146,44 @@ func (entry nestedEntry) byteSize() int {
 	return entry.key.size + nestedSize
 }
 
-func (entry *nestedEntry) populate(keys map[tilePaletteKey]struct{}) {
+func (entry *nestedEntry) populate(cache *nestedEntryCache) {
 	remainingKey := entry.key
 	foundSomething := true
 	keySearchSize := remainingKey.size - 1
 	for remainingKey.size > 2 && foundSomething {
 		var lastAddedKey tilePaletteKey
-		lastAddedKey, foundSomething = entry.populateRemaining(keys, remainingKey, keySearchSize)
+		lastAddedKey, foundSomething = entry.populateRemaining(cache, remainingKey, keySearchSize)
 		remainingKey = remainingKey.without(&lastAddedKey)
 		keySearchSize = remainingKey.size
 	}
 }
 
-func (entry *nestedEntry) populateRemaining(keys map[tilePaletteKey]struct{},
+func (entry *nestedEntry) populateRemaining(cache *nestedEntryCache,
 	remainingKey tilePaletteKey, startSize int) (tilePaletteKey, bool) {
 	maxByteSize := 0
 	var maxNested *nestedEntry
 	keySize := startSize
 	for (keySize > 2) && (maxNested == nil) {
-		for otherKey := range keys {
+		results := make(chan *nestedEntry)
+		resultsPending := 0
+		for otherKey := range cache.keys {
 			if otherKey.size == keySize && remainingKey.contains(&otherKey) {
-				nested := nestedEntry{key: otherKey}
-				nested.populate(keys)
-				nestedSize := nested.byteSize()
-				if nestedSize > maxByteSize {
-					maxByteSize = nestedSize
-					maxNested = &nested
-				}
+				resultsPending++
+				cache.query(otherKey, func(nested *nestedEntry) {
+					results <- nested
+				})
 			}
 		}
+		for resultsPending > 0 {
+			nested := <-results
+			nestedSize := nested.byteSize()
+			if nestedSize > maxByteSize {
+				maxByteSize = nestedSize
+				maxNested = nested
+			}
+			resultsPending--
+		}
+		close(results)
 		keySize--
 	}
 	if maxNested == nil {
@@ -214,19 +249,23 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 			}
 		}
 
-		toRemove := keysInSize[:]
 		for _, key := range keysInSize {
+			var toRemove []tilePaletteKey
+			cache := nestedEntryCache{
+				keys:    remainder,
+				entries: make(map[tilePaletteKey]*nestedEntry),
+			}
 			nestedRoot := nestedEntry{key: key}
-			nestedRoot.populate(remainder)
+			nestedRoot.populate(&cache)
 
 			bytes := nestedRoot.extractBuffer(len(lookup.buffer), func(nestedKey tilePaletteKey, offset int) {
 				toRemove = append(toRemove, nestedKey)
 				lookup.starts[nestedKey] = offset
 			})
 			lookup.buffer = append(lookup.buffer, bytes...)
-		}
-		for _, key := range toRemove {
-			delete(remainder, key)
+			for _, key := range toRemove {
+				delete(remainder, key)
+			}
 		}
 	}
 
