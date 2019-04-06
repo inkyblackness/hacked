@@ -7,6 +7,16 @@ type tilePaletteKey struct {
 	size       byte
 }
 
+func (entry *tilePaletteKey) buffer() []byte {
+	result := make([]byte, 0, entry.size)
+	for i := 0; i < 256; i++ {
+		if entry.hasColor(byte(i)) {
+			result = append(result, byte(i))
+		}
+	}
+	return result
+}
+
 func (entry *tilePaletteKey) useColor(index byte) {
 	if !entry.hasColor(index) {
 		entry.usedColors[index/64] |= 1 << uint(index%64)
@@ -42,8 +52,12 @@ func (lookup *PaletteLookup) Lookup(tile tileDelta) (index int, pal []byte, mask
 	for _, pal := range tile {
 		key.useColor(pal)
 	}
-	index = lookup.starts[key]
-	pal = lookup.buffer[index : index+int(key.size)]
+	index, inLookup := lookup.starts[key]
+	if inLookup {
+		pal = lookup.buffer[index : index+int(key.size)]
+	} else {
+		pal = key.buffer()
+	}
 	var mapped [256]byte
 	for mappedIndex, b := range pal {
 		mapped[b] = byte(mappedIndex)
@@ -68,11 +82,7 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 	lookup.starts = make(map[tilePaletteKey]int)
 	for key := range gen.keyUses {
 		lookup.starts[key] = len(lookup.buffer)
-		for i := 0; i < 256; i++ {
-			if key.hasColor(byte(i)) {
-				lookup.buffer = append(lookup.buffer, byte(i))
-			}
-		}
+		lookup.buffer = append(lookup.buffer, key.buffer()...)
 	}
 	return lookup
 }
@@ -83,8 +93,10 @@ func (gen *PaletteLookupGenerator) Add(delta tileDelta) {
 	for _, pal := range delta {
 		key.useColor(pal)
 	}
-	if gen.keyUses == nil {
-		gen.keyUses = make(map[tilePaletteKey]int)
+	if key.size > 2 {
+		if gen.keyUses == nil {
+			gen.keyUses = make(map[tilePaletteKey]int)
+		}
+		gen.keyUses[key]++
 	}
-	gen.keyUses[key]++
 }
