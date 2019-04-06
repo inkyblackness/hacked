@@ -2,7 +2,6 @@ package compression
 
 import (
 	"math/bits"
-	"sort"
 )
 
 type tilePaletteKey struct {
@@ -10,47 +9,57 @@ type tilePaletteKey struct {
 	size       int
 }
 
-func (entry *tilePaletteKey) buffer() []byte {
-	result := make([]byte, 0, entry.size)
+func (key *tilePaletteKey) buffer() []byte {
+	result := make([]byte, 0, key.size)
 	for i := 0; i < 256; i++ {
-		if entry.hasColor(byte(i)) {
+		if key.hasColor(byte(i)) {
 			result = append(result, byte(i))
 		}
 	}
 	return result
 }
 
-func (entry *tilePaletteKey) joinedBuffer(source []byte) []byte {
-	result := make([]byte, 0, entry.size)
+func (key *tilePaletteKey) joinedBuffer(source []byte) []byte {
+	result := make([]byte, 0, key.size)
 	var addedColors tilePaletteKey
 	for _, color := range source {
 		addedColors.useColor(color)
 		result = append(result, color)
 	}
 	for color := 0; color < 256; color++ {
-		if entry.hasColor(byte(color)) && !addedColors.hasColor(byte(color)) {
+		if key.hasColor(byte(color)) && !addedColors.hasColor(byte(color)) {
 			result = append(result, byte(color))
 		}
 	}
 	return result
 }
 
-func (entry *tilePaletteKey) useColor(index byte) {
-	if !entry.hasColor(index) {
-		entry.usedColors[index/64] |= 1 << uint(index%64)
-		entry.size++
+func (key *tilePaletteKey) useColor(index byte) {
+	if !key.hasColor(index) {
+		key.usedColors[index/64] |= 1 << uint(index%64)
+		key.size++
 	}
 }
 
-func (entry *tilePaletteKey) hasColor(index byte) bool {
-	return (entry.usedColors[index/64] & (1 << uint(index%64))) != 0
+func (key *tilePaletteKey) hasColor(index byte) bool {
+	return (key.usedColors[index/64] & (1 << uint(index%64))) != 0
 }
 
-func (entry *tilePaletteKey) contains(other *tilePaletteKey) bool {
-	return ((^entry.usedColors[0] & other.usedColors[0]) == 0) &&
-		((^entry.usedColors[1] & other.usedColors[1]) == 0) &&
-		((^entry.usedColors[2] & other.usedColors[2]) == 0) &&
-		((^entry.usedColors[3] & other.usedColors[3]) == 0)
+func (key *tilePaletteKey) contains(other *tilePaletteKey) bool {
+	return ((^key.usedColors[0] & other.usedColors[0]) == 0) &&
+		((^key.usedColors[1] & other.usedColors[1]) == 0) &&
+		((^key.usedColors[2] & other.usedColors[2]) == 0) &&
+		((^key.usedColors[3] & other.usedColors[3]) == 0)
+}
+
+func (key *tilePaletteKey) without(other *tilePaletteKey) tilePaletteKey {
+	var result tilePaletteKey
+	for i := 0; i < 256; i++ {
+		if key.hasColor(byte(i)) && !(*other).hasColor(byte(i)) {
+			result.useColor(byte(i))
+		}
+	}
+	return result
 }
 
 // PaletteLookup is a dictionary of tile delta data, found in a palette buffer.
@@ -99,6 +108,7 @@ type nestedEntry struct {
 	nested []nestedEntry
 }
 
+/*
 func (entry nestedEntry) buffer() []byte {
 	var nestedData []byte
 	if len(entry.nested) > 0 {
@@ -106,34 +116,59 @@ func (entry nestedEntry) buffer() []byte {
 	}
 	return entry.key.joinedBuffer(nestedData)
 }
+*/
+
+func (entry nestedEntry) buffer() []byte {
+	return entry.extractBuffer(0, func(tilePaletteKey, int) {})
+}
 
 func (entry nestedEntry) byteSize() int {
-	maxNestedSize := 0
+	nestedSize := 0
 	for _, nested := range entry.nested {
-		nestedSize := nested.byteSize()
-		if nestedSize > maxNestedSize {
-			maxNestedSize = nestedSize
-		}
+		nestedSize += nested.byteSize()
 	}
-
-	return entry.key.size + maxNestedSize
+	return entry.key.size + nestedSize
 }
 
 func (entry *nestedEntry) populate(keys map[tilePaletteKey]struct{}) {
+	maxByteSize := 0
+	var maxNested *nestedEntry
 	keySize := entry.key.size
-	for (keySize > 2) && len(entry.nested) == 0 {
+	for (keySize > 2) && (maxNested == nil) {
 		keySize--
 		for otherKey := range keys {
 			if otherKey.size == keySize && entry.key.contains(&otherKey) {
 				nested := nestedEntry{key: otherKey}
 				nested.populate(keys)
-				entry.nested = append(entry.nested, nested)
+				nestedSize := nested.byteSize()
+				if nestedSize > maxByteSize {
+					maxByteSize = nestedSize
+					maxNested = &nested
+				}
 			}
 		}
 	}
-	sort.Slice(entry.nested, func(a, b int) bool {
-		return entry.nested[a].byteSize() > entry.nested[b].byteSize()
-	})
+	if maxNested == nil {
+		return
+	}
+	entry.nested = append(entry.nested, *maxNested)
+	/*
+		sort.Slice(entry.nested, func(a, b int) bool {
+			return entry.nested[a].byteSize() > entry.nested[b].byteSize()
+		})
+	*/
+}
+
+func (entry *nestedEntry) extractBuffer(startOffset int, marker func(tilePaletteKey, int)) []byte {
+	var nestedBuffer []byte
+	marker(entry.key, startOffset)
+	relativeOffset := 0
+	for _, nested := range entry.nested {
+		bufferPart := nested.extractBuffer(startOffset+relativeOffset, marker)
+		nestedBuffer = append(nestedBuffer, bufferPart...)
+		relativeOffset += nested.key.size
+	}
+	return entry.key.joinedBuffer(nestedBuffer)
 }
 
 // Generate creates a lookup based on all currently registered tile deltas.
@@ -182,6 +217,28 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 
 		toRemove := keysInSize[:]
 		for _, key := range keysInSize {
+			/* one-pass variant, with multiples */
+			nestedRoot := nestedEntry{key: key}
+			nestedRoot.populate(remainder)
+
+			bytes := nestedRoot.extractBuffer(len(lookup.buffer), func(nestedKey tilePaletteKey, offset int) {
+				toRemove = append(toRemove, nestedKey)
+				lookup.starts[nestedKey] = offset
+			})
+			lookup.buffer = append(lookup.buffer, bytes...)
+			/**/
+
+			/* working less good
+			nestedRoot := nestedEntry{key: key}
+			nestedRoot.populateMore(remainder)
+
+			bytes := nestedRoot.extractBuffer(len(lookup.buffer), func(nestedKey tilePaletteKey, offset int) {
+				lookup.starts[nestedKey] = offset
+			})
+			lookup.buffer = append(lookup.buffer, bytes...)
+			*/
+
+			/* one-pass variant
 			nestedRoot := nestedEntry{key: key}
 			nestedRoot.populate(remainder)
 
@@ -196,6 +253,8 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 			}
 			markKeys(nestedRoot)
 			lookup.buffer = append(lookup.buffer, nestedRoot.buffer()...)
+			/**/
+
 			/*
 				var containedKeys []tilePaletteKey
 
