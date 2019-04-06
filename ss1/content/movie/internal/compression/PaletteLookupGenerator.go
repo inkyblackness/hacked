@@ -123,19 +123,21 @@ func (entry nestedEntry) byteSize() int {
 func (entry *nestedEntry) populate(keys map[tilePaletteKey]struct{}) {
 	remainingKey := entry.key
 	foundSomething := true
+	keySearchSize := remainingKey.size - 1
 	for remainingKey.size > 2 && foundSomething {
 		var lastAddedKey tilePaletteKey
-		lastAddedKey, foundSomething = entry.populateRemaining(keys, remainingKey)
+		lastAddedKey, foundSomething = entry.populateRemaining(keys, remainingKey, keySearchSize)
 		remainingKey = remainingKey.without(&lastAddedKey)
+		keySearchSize = remainingKey.size
 	}
 }
 
-func (entry *nestedEntry) populateRemaining(keys map[tilePaletteKey]struct{}, remainingKey tilePaletteKey) (tilePaletteKey, bool) {
+func (entry *nestedEntry) populateRemaining(keys map[tilePaletteKey]struct{},
+	remainingKey tilePaletteKey, startSize int) (tilePaletteKey, bool) {
 	maxByteSize := 0
 	var maxNested *nestedEntry
-	keySize := remainingKey.size
+	keySize := startSize
 	for (keySize > 2) && (maxNested == nil) {
-		keySize--
 		for otherKey := range keys {
 			if otherKey.size == keySize && remainingKey.contains(&otherKey) {
 				nested := nestedEntry{key: otherKey}
@@ -147,6 +149,7 @@ func (entry *nestedEntry) populateRemaining(keys map[tilePaletteKey]struct{}, re
 				}
 			}
 		}
+		keySize--
 	}
 	if maxNested == nil {
 		return tilePaletteKey{}, false
