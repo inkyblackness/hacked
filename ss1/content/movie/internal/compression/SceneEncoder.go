@@ -1,6 +1,7 @@
 package compression
 
 import (
+	"fmt"
 	"math/bits"
 	"sort"
 )
@@ -76,11 +77,26 @@ func (e *SceneEncoder) copyLastFrame(frame []byte) {
 }
 
 // Encode processes all the previously registered frames and creates the necessary components for decoding.
-func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookup []byte, frames []EncodedFrame, err error) {
-	var paletteLookupWriter PaletteLookupWriter
+func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookupBuffer []byte, frames []EncodedFrame, err error) {
+	// var paletteLookupWriter PaletteLookupWriter
 	var wordSequencer ControlWordSequencer
 	tileColorOpsPerFrame := make([][]TileColorOp, len(e.deltas))
 	frames = make([]EncodedFrame, len(e.deltas))
+
+	var paletteLookupGenerator PaletteLookupGenerator
+	for frameIndex := 0; frameIndex < len(e.deltas); frameIndex++ {
+		delta := e.deltas[frameIndex]
+
+		for _, tile := range delta.tiles {
+			paletteLookupGenerator.Add(tile)
+		}
+	}
+	paletteLookup := paletteLookupGenerator.Generate()
+	paletteLookupBuffer = paletteLookup.Buffer()
+	if len(paletteLookupBuffer) > 0x1FFFF {
+		err = fmt.Errorf("palette lookup is too big: %vB", len(paletteLookupBuffer))
+		return
+	}
 
 	for frameIndex := 0; frameIndex < len(e.deltas); frameIndex++ {
 		outFrame := &frames[frameIndex]
@@ -88,7 +104,8 @@ func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookup []byte, fram
 
 		for _, tile := range delta.tiles {
 			var op TileColorOp
-			pal, mask := maskOfTile(tile)
+			paletteIndex, pal, mask := paletteLookup.Lookup(tile)
+			//pal, mask := maskOfTile(tile)
 			palSize := len(pal)
 			// TODO: determine how to implement skip (and skip row)...
 			switch {
@@ -114,19 +131,19 @@ func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookup []byte, fram
 				}
 				outFrame.Maskstream = writeMaskstream(outFrame.Maskstream, 2, mask)
 			case palSize <= 4:
-				paletteIndex := paletteLookupWriter.Write(pal)
+				//paletteIndex := paletteLookupWriter.Write(pal)
 				op.Type = CtrlColorTile4ColorsMasked
-				op.Offset = paletteIndex
+				op.Offset = uint32(paletteIndex)
 				outFrame.Maskstream = writeMaskstream(outFrame.Maskstream, 4, mask)
 			case palSize <= 8:
-				paletteIndex := paletteLookupWriter.Write(pal)
+				//paletteIndex := paletteLookupWriter.Write(pal)
 				op.Type = CtrlColorTile8ColorsMasked
-				op.Offset = paletteIndex
+				op.Offset = uint32(paletteIndex)
 				outFrame.Maskstream = writeMaskstream(outFrame.Maskstream, 6, mask)
 			default:
-				paletteIndex := paletteLookupWriter.Write(pal)
+				//paletteIndex := paletteLookupWriter.Write(pal)
 				op.Type = CtrlColorTile16ColorsMasked
-				op.Offset = paletteIndex
+				op.Offset = uint32(paletteIndex)
 				outFrame.Maskstream = writeMaskstream(outFrame.Maskstream, 8, mask)
 			}
 
@@ -144,7 +161,8 @@ func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookup []byte, fram
 	}
 	sequence.HTiles = uint32(e.hTiles)
 	words = sequence.ControlWords()
-	paletteLookup = paletteLookupWriter.Buffer
+	// paletteLookup = paletteLookupWriter.Buffer
+	paletteLookupBuffer = paletteLookup.Buffer()
 	for frameIndex, ops := range tileColorOpsPerFrame {
 		frames[frameIndex].Bitstream, err = sequence.BitstreamFor(ops)
 		if err != nil {
