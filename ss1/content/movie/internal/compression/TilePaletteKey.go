@@ -1,5 +1,7 @@
 package compression
 
+import "math/bits"
+
 type tilePaletteKey struct {
 	usedColors [4]uint64
 	size       int
@@ -58,10 +60,9 @@ func (key *tilePaletteKey) contains(other *tilePaletteKey) bool {
 
 func (key *tilePaletteKey) without(other *tilePaletteKey) tilePaletteKey {
 	var result tilePaletteKey
-	for i := 0; i < 256; i++ {
-		if key.hasColor(byte(i)) && !(*other).hasColor(byte(i)) {
-			result.useColor(byte(i))
-		}
+	for i := 0; i < 4; i++ {
+		result.usedColors[i] = key.usedColors[i] & ^other.usedColors[i]
+		result.size += bits.OnesCount64(result.usedColors[i])
 	}
 	return result
 }
