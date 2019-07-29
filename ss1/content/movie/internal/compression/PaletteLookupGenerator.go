@@ -5,10 +5,15 @@ import (
 	"sync"
 )
 
+type paletteLookupEntry struct {
+	start int
+	size  int
+}
+
 // PaletteLookup is a dictionary of tile delta data, found in a palette buffer.
 type PaletteLookup struct {
-	buffer []byte
-	starts map[tilePaletteKey]int
+	buffer  []byte
+	entries map[tilePaletteKey]paletteLookupEntry
 }
 
 // Buffer returns the underlying slice.
@@ -22,9 +27,10 @@ func (lookup *PaletteLookup) Lookup(tile tileDelta) (index int, pal []byte, mask
 	for _, pal := range tile {
 		key.useColor(pal)
 	}
-	index, inLookup := lookup.starts[key]
+	entry, inLookup := lookup.entries[key]
 	if inLookup {
-		pal = lookup.buffer[index : index+int(key.size)]
+		index = entry.start
+		pal = lookup.buffer[entry.start : entry.start+entry.size]
 	} else {
 		pal = key.buffer()
 	}
@@ -150,7 +156,7 @@ func (entry *nestedEntry) extractBuffer(startOffset int, marker func(tilePalette
 // Generate creates a lookup based on all currently registered tile deltas.
 func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 	var lookup PaletteLookup
-	lookup.starts = make(map[tilePaletteKey]int)
+	lookup.entries = make(map[tilePaletteKey]paletteLookupEntry)
 
 	remainder := make(map[tilePaletteKey]struct{})
 	for key := range gen.keyUses {
@@ -174,7 +180,7 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 							earlyRemoved = append(earlyRemoved, key)
 							wasRemoved = true
 
-							lookup.starts[key] = start
+							lookup.entries[key] = paletteLookupEntry{start: start, size: tempKey.size}
 						}
 					}
 				}
@@ -202,7 +208,7 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 
 			bytes := nestedRoot.extractBuffer(len(lookup.buffer), func(nestedKey tilePaletteKey, offset int) {
 				toRemove = append(toRemove, nestedKey)
-				lookup.starts[nestedKey] = offset
+				lookup.entries[nestedKey] = paletteLookupEntry{start: offset, size: nestedKey.size}
 			})
 			lookup.buffer = append(lookup.buffer, bytes...)
 			for _, key := range toRemove {
@@ -212,8 +218,9 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 	}
 
 	for key := range remainder {
-		lookup.starts[key] = len(lookup.buffer)
-		lookup.buffer = append(lookup.buffer, key.buffer()...)
+		bytes := key.buffer()
+		lookup.entries[key] = paletteLookupEntry{start: len(lookup.buffer), size: len(bytes)}
+		lookup.buffer = append(lookup.buffer, bytes...)
 	}
 
 	return lookup
