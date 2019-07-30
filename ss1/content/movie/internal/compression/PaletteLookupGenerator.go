@@ -190,6 +190,8 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 				}
 			}
 			entry.lastOffset = fitLimit
+
+			// remove all entries beyond a certain limit. as these bytes don't change, retrying won't help.
 			var toDelete []tilePaletteKey
 			limit := newSize - 2*16
 			for key, entry := range entry.entries {
