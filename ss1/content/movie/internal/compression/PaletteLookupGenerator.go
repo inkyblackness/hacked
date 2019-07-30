@@ -31,6 +31,7 @@ func (lookup *PaletteLookup) Lookup(tile tileDelta) (index int, pal []byte, mask
 	if inLookup {
 		index = entry.start
 		pal = lookup.buffer[entry.start : entry.start+entry.size]
+		key = tilePaletteKeyFrom(pal)
 	} else {
 		pal = key.buffer()
 	}
@@ -169,18 +170,20 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 		{
 			var earlyRemoved []tilePaletteKey
 			for key := range remainder {
-				if key.size == size {
-					wasRemoved := false
-					for start := 0; start < (len(lookup.buffer)-key.size) && !wasRemoved; start++ {
-						var tempKey tilePaletteKey
-						for _, color := range lookup.buffer[start : start+key.size] {
-							tempKey.useColor(color)
-						}
-						if tempKey.contains(&key) {
-							earlyRemoved = append(earlyRemoved, key)
-							wasRemoved = true
+				wasRemoved := false
+				for _, fitSize := range []int{4, 8, 16} {
+					if key.size <= fitSize {
+						for start := 0; start < (len(lookup.buffer)-fitSize) && !wasRemoved; start++ {
+							var tempKey tilePaletteKey
+							for _, color := range lookup.buffer[start : start+fitSize] {
+								tempKey.useColor(color)
+							}
+							if tempKey.contains(&key) {
+								earlyRemoved = append(earlyRemoved, key)
+								wasRemoved = true
 
-							lookup.entries[key] = paletteLookupEntry{start: start, size: tempKey.size}
+								lookup.entries[key] = paletteLookupEntry{start: start, size: fitSize}
+							}
 						}
 					}
 				}
