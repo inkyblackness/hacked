@@ -23,15 +23,11 @@ func (lookup *PaletteLookup) Buffer() []byte {
 
 // Lookup finds the given tile again and returns the properties where and how to reproduce it.
 func (lookup *PaletteLookup) Lookup(tile tileDelta) (index int, pal []byte, mask uint64) {
-	var key tilePaletteKey
-	for _, pal := range tile {
-		key.useColor(pal)
-	}
+	key := tilePaletteKeyFrom(tile[:])
 	entry, inLookup := lookup.entries[key]
 	if inLookup {
 		index = entry.start
 		pal = lookup.buffer[entry.start : entry.start+entry.size]
-		key = tilePaletteKeyFrom(pal)
 	} else {
 		pal = key.buffer()
 	}
@@ -39,7 +35,7 @@ func (lookup *PaletteLookup) Lookup(tile tileDelta) (index int, pal []byte, mask
 	for mappedIndex, b := range pal {
 		mapped[b] = byte(mappedIndex)
 	}
-	bitSize := uint(bits.Len(uint(key.size - 1)))
+	bitSize := uint(bits.Len(uint(len(pal) - 1)))
 	for tileIndex := PixelPerTile - 1; tileIndex >= 0; tileIndex-- {
 		mask <<= bitSize
 		mask |= uint64(mapped[tile[tileIndex]])
@@ -165,7 +161,6 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 	}
 
 	for size := PixelPerTile; size > 2; size-- {
-		var keysInSize []tilePaletteKey
 
 		{
 			var earlyRemoved []tilePaletteKey
@@ -174,10 +169,7 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 				for _, fitSize := range []int{4, 8, 16} {
 					if key.size <= fitSize {
 						for start := 0; start < (len(lookup.buffer)-fitSize) && !wasRemoved; start++ {
-							var tempKey tilePaletteKey
-							for _, color := range lookup.buffer[start : start+fitSize] {
-								tempKey.useColor(color)
-							}
+							tempKey := tilePaletteKeyFrom(lookup.buffer[start : start+fitSize])
 							if tempKey.contains(&key) {
 								earlyRemoved = append(earlyRemoved, key)
 								wasRemoved = true
@@ -193,6 +185,7 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 			}
 		}
 
+		var keysInSize []tilePaletteKey
 		// find all keys with this current size
 		for key := range remainder {
 			if key.size == size {
@@ -231,10 +224,7 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 
 // Add registers a further delta to the generator.
 func (gen *PaletteLookupGenerator) Add(delta tileDelta) {
-	var key tilePaletteKey
-	for _, pal := range delta {
-		key.useColor(pal)
-	}
+	key := tilePaletteKeyFrom(delta[:])
 	if key.size > 2 {
 		if gen.keyUses == nil {
 			gen.keyUses = make(map[tilePaletteKey]int)
