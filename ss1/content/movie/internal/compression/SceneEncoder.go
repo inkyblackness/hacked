@@ -40,10 +40,11 @@ func NewSceneEncoder(width, height int) *SceneEncoder {
 // AddFrame registers a further frame to the scene.
 func (e *SceneEncoder) AddFrame(frame []byte) error {
 	var delta frameDelta
+	isFirstFrame := len(e.deltas) == 0
 	for vTile := 0; vTile < e.vTiles; vTile++ {
 		vStart := vTile * e.stride * TileSideLength
 		for hTile := 0; hTile < e.hTiles; hTile++ {
-			delta.tiles = append(delta.tiles, e.deltaTile(vStart+(hTile*TileSideLength), frame))
+			delta.tiles = append(delta.tiles, e.deltaTile(isFirstFrame, vStart+(hTile*TileSideLength), frame))
 		}
 	}
 	e.deltas = append(e.deltas, delta)
@@ -52,13 +53,13 @@ func (e *SceneEncoder) AddFrame(frame []byte) error {
 	return nil
 }
 
-func (e *SceneEncoder) deltaTile(offset int, frame []byte) tileDelta {
+func (e *SceneEncoder) deltaTile(isFirstFrame bool, offset int, frame []byte) tileDelta {
 	var delta tileDelta
 	for y := 0; y < TileSideLength; y++ {
 		start := offset + (y * e.stride)
 		for x := 0; x < TileSideLength; x++ {
 			pixel := frame[start+x]
-			if pixel != e.lastFrame[start+x] {
+			if isFirstFrame || (pixel != e.lastFrame[start+x]) {
 				delta[y*TileSideLength+x] = pixel
 			}
 		}
