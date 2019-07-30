@@ -160,24 +160,58 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 		remainder[key] = struct{}{}
 	}
 
+	type sizedEntry struct {
+		entries    map[tilePaletteKey]paletteLookupEntry
+		lastOffset int
+	}
+	sizedEntries := make(map[int]*sizedEntry)
+	knownSizes := []int{4, 8, 16}
+	for _, size := range knownSizes {
+		sizedEntries[size] = &sizedEntry{
+			entries: make(map[tilePaletteKey]paletteLookupEntry),
+		}
+	}
+
+	addToBuffer := func(data []byte) {
+		lookup.buffer = append(lookup.buffer, data...)
+
+		newSize := len(lookup.buffer)
+		for _, fitSize := range knownSizes {
+			fitLimit := newSize - fitSize
+			entry := sizedEntries[fitSize]
+			for start := entry.lastOffset; start < fitLimit; start++ {
+				tempKey := tilePaletteKeyFrom(lookup.buffer[start : start+fitSize])
+				if _, existing := entry.entries[tempKey]; !existing {
+					entry.entries[tempKey] = paletteLookupEntry{
+						start: start,
+						size:  fitSize,
+					}
+				}
+			}
+			entry.lastOffset = fitLimit
+		}
+	}
+
+	addEarlyEntry := func(key tilePaletteKey) bool {
+		for _, fitSize := range knownSizes {
+			entry := sizedEntries[fitSize]
+			for tempKey, paletteEntry := range entry.entries {
+				if tempKey.contains(&key) {
+					lookup.entries[key] = paletteEntry
+					return true
+				}
+			}
+		}
+		return false
+	}
+
 	for size := PixelPerTile; size > 2; size-- {
 
 		{
 			var earlyRemoved []tilePaletteKey
 			for key := range remainder {
-				wasRemoved := false
-				for _, fitSize := range []int{4, 8, 16} {
-					if key.size <= fitSize {
-						for start := 0; start < (len(lookup.buffer)-fitSize) && !wasRemoved; start++ {
-							tempKey := tilePaletteKeyFrom(lookup.buffer[start : start+fitSize])
-							if tempKey.contains(&key) {
-								earlyRemoved = append(earlyRemoved, key)
-								wasRemoved = true
-
-								lookup.entries[key] = paletteLookupEntry{start: start, size: fitSize}
-							}
-						}
-					}
+				if addEarlyEntry(key) {
+					earlyRemoved = append(earlyRemoved, key)
 				}
 			}
 			for _, key := range earlyRemoved {
@@ -206,7 +240,7 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 				toRemove = append(toRemove, nestedKey)
 				lookup.entries[nestedKey] = paletteLookupEntry{start: offset, size: nestedKey.size}
 			})
-			lookup.buffer = append(lookup.buffer, bytes...)
+			addToBuffer(bytes)
 			for _, key := range toRemove {
 				delete(remainder, key)
 			}
@@ -216,7 +250,7 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 	for key := range remainder {
 		bytes := key.buffer()
 		lookup.entries[key] = paletteLookupEntry{start: len(lookup.buffer), size: len(bytes)}
-		lookup.buffer = append(lookup.buffer, bytes...)
+		addToBuffer(bytes)
 	}
 
 	return lookup
