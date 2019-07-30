@@ -111,10 +111,10 @@ func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookupBuffer []byte
 			case palSize == 1:
 				op.Type = CtrlColorTile2ColorsStatic
 				op.Offset = uint32(pal[0])<<8 | uint32(pal[0])
-			case palSize == 2 && mask == 0xAA:
+			case palSize == 2 && mask == 0xAAAA:
 				op.Type = CtrlColorTile2ColorsStatic
 				op.Offset = uint32(pal[1])<<8 | uint32(pal[0])
-			case palSize == 2 && mask == 0x55:
+			case palSize == 2 && mask == 0x5555:
 				op.Type = CtrlColorTile2ColorsStatic
 				op.Offset = uint32(pal[0])<<8 | uint32(pal[1])
 			case palSize <= 2:
