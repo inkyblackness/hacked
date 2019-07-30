@@ -1,6 +1,7 @@
 package compression
 
 import (
+	"fmt"
 	"math/bits"
 	"sync"
 )
@@ -189,16 +190,28 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 				}
 			}
 			entry.lastOffset = fitLimit
+			var toDelete []tilePaletteKey
+			limit := newSize - 2*16
+			for key, entry := range entry.entries {
+				if entry.start < limit {
+					toDelete = append(toDelete, key)
+				}
+			}
+			for _, key := range toDelete {
+				delete(entry.entries, key)
+			}
 		}
 	}
 
 	addEarlyEntry := func(key tilePaletteKey) bool {
 		for _, fitSize := range knownSizes {
-			entry := sizedEntries[fitSize]
-			for tempKey, paletteEntry := range entry.entries {
-				if tempKey.contains(&key) {
-					lookup.entries[key] = paletteEntry
-					return true
+			if key.size <= fitSize {
+				entry := sizedEntries[fitSize]
+				for tempKey, paletteEntry := range entry.entries {
+					if tempKey.contains(&key) {
+						lookup.entries[key] = paletteEntry
+						return true
+					}
 				}
 			}
 		}
@@ -207,46 +220,65 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 
 	for size := PixelPerTile; size > 2; size-- {
 
-		{
-			var earlyRemoved []tilePaletteKey
-			for key := range remainder {
-				if addEarlyEntry(key) {
-					earlyRemoved = append(earlyRemoved, key)
-				}
-			}
-			for _, key := range earlyRemoved {
-				delete(remainder, key)
-			}
-		}
-
-		var keysInSize []tilePaletteKey
-		// find all keys with this current size
+		keysInSize := make(map[tilePaletteKey]struct{})
 		for key := range remainder {
 			if key.size == size {
-				keysInSize = append(keysInSize, key)
+				keysInSize[key] = struct{}{}
 			}
 		}
 
-		for _, key := range keysInSize {
-			var toRemove []tilePaletteKey
-			cache := nestedEntryCache{
-				keys:    remainder,
-				entries: make(map[tilePaletteKey]*nestedEntry),
+		fmt.Printf("Working on key size %v, have %v sized, %v total remaining\n", size, len(keysInSize), len(remainder))
+		for sizedKey := range keysInSize {
+			{
+				var earlyRemoved []tilePaletteKey
+				for key := range remainder {
+					if addEarlyEntry(key) {
+						earlyRemoved = append(earlyRemoved, key)
+					}
+				}
+				for _, key := range earlyRemoved {
+					delete(remainder, key)
+				}
 			}
-			nestedRoot := nestedEntry{key: key}
-			nestedRoot.populate(&cache)
+			if _, stillRemaining := remainder[sizedKey]; stillRemaining {
+				bytes := sizedKey.buffer()
+				lookup.entries[sizedKey] = paletteLookupEntry{start: len(lookup.buffer), size: len(bytes)}
+				addToBuffer(bytes)
 
-			bytes := nestedRoot.extractBuffer(len(lookup.buffer), func(nestedKey tilePaletteKey, offset int) {
-				toRemove = append(toRemove, nestedKey)
-				lookup.entries[nestedKey] = paletteLookupEntry{start: offset, size: nestedKey.size}
-			})
-			addToBuffer(bytes)
-			for _, key := range toRemove {
-				delete(remainder, key)
+				delete(remainder, sizedKey)
 			}
 		}
+
+		/*
+			var keysInSize []tilePaletteKey
+			// find all keys with this current size
+			for key := range remainder {
+				if key.size == size {
+					keysInSize = append(keysInSize, key)
+				}
+			}
+
+			for _, key := range keysInSize {
+				var toRemove []tilePaletteKey
+				cache := nestedEntryCache{
+					keys:    remainder,
+					entries: make(map[tilePaletteKey]*nestedEntry),
+				}
+				nestedRoot := nestedEntry{key: key}
+				nestedRoot.populate(&cache)
+
+				bytes := nestedRoot.extractBuffer(len(lookup.buffer), func(nestedKey tilePaletteKey, offset int) {
+					toRemove = append(toRemove, nestedKey)
+					lookup.entries[nestedKey] = paletteLookupEntry{start: offset, size: nestedKey.size}
+				})
+				addToBuffer(bytes)
+				for _, key := range toRemove {
+					delete(remainder, key)
+				}
+			}
+		*/
 	}
-
+	fmt.Printf("last remaining keys: %v\n", len(remainder))
 	for key := range remainder {
 		bytes := key.buffer()
 		lookup.entries[key] = paletteLookupEntry{start: len(lookup.buffer), size: len(bytes)}
