@@ -59,9 +59,9 @@ func (e *SceneEncoder) deltaTile(isFirstFrame bool, offset int, frame []byte) ti
 		start := offset + (y * e.stride)
 		for x := 0; x < TileSideLength; x++ {
 			pixel := frame[start+x]
-			if isFirstFrame || (pixel != e.lastFrame[start+x]) {
-				delta[y*TileSideLength+x] = pixel
-			}
+			//if isFirstFrame || pixel != e.lastFrame[start+x] {
+			delta[y*TileSideLength+x] = pixel
+			//}
 		}
 	}
 	return delta
@@ -99,8 +99,10 @@ func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookupBuffer []byte
 	for frameIndex := 0; frameIndex < len(e.deltas); frameIndex++ {
 		outFrame := &frames[frameIndex]
 		delta := e.deltas[frameIndex]
+		controlStatistics := make(map[int]int)
 
-		for _, tile := range delta.tiles {
+		lastOp := TileColorOp{Type: CtrlUnknown}
+		for tileIndex, tile := range delta.tiles {
 			var op TileColorOp
 			paletteIndex, pal, mask := paletteLookup.Lookup(tile)
 			palSize := len(pal)
@@ -111,10 +113,10 @@ func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookupBuffer []byte
 			case palSize == 1:
 				op.Type = CtrlColorTile2ColorsStatic
 				op.Offset = uint32(pal[0])<<8 | uint32(pal[0])
-			case palSize == 2 && mask == 0xAAAA:
+			case palSize == 2 && mask == 0xAAAA && (pal[0] != 0x00) && (pal[1] != 0x00):
 				op.Type = CtrlColorTile2ColorsStatic
 				op.Offset = uint32(pal[1])<<8 | uint32(pal[0])
-			case palSize == 2 && mask == 0x5555:
+			case palSize == 2 && mask == 0x5555 && (pal[0] != 0x00) && (pal[1] != 0x00):
 				op.Type = CtrlColorTile2ColorsStatic
 				op.Offset = uint32(pal[0])<<8 | uint32(pal[1])
 			case palSize <= 2:
@@ -140,13 +142,21 @@ func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookupBuffer []byte
 				op.Offset = uint32(paletteIndex)
 				outFrame.Maskstream = writeMaskstream(outFrame.Maskstream, 8, mask)
 			}
-
+			/* todo: see if this skipping could be moved to op sequencer */
+			if op.Type != CtrlSkip && (tileIndex%e.hTiles) != 0 && lastOp == op {
+				op = TileColorOp{Type: CtrlRepeatPrevious}
+			} else {
+				lastOp = op
+			}
+			/**/
+			controlStatistics[int(op.Type)]++
 			err = wordSequencer.Add(op)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			tileColorOpsPerFrame[frameIndex] = append(tileColorOpsPerFrame[frameIndex], op)
 		}
+		fmt.Printf("Out %v control statistics: %v\n", frameIndex, controlStatistics)
 	}
 
 	sequence, err := wordSequencer.Sequence()
@@ -162,7 +172,6 @@ func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookupBuffer []byte
 			return nil, nil, nil, err
 		}
 	}
-
 	return
 }
 
