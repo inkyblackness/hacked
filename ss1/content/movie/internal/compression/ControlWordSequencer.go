@@ -59,31 +59,40 @@ func (seq ControlWordSequencer) Sequence() (ControlWordSequence, error) {
 		return false
 	})
 
-	bitstreamOffset := 12
 	bitstreamIndexLimit := seq.BitstreamIndexLimit
 	if bitstreamIndexLimit == 0 {
 		bitstreamIndexLimit = 0xFFF
 	}
-	result.opPaths = make(map[TileColorOp]nestedTileColorOp)
-	var nestedParent *nestedTileColorOp
-	relOffset := uint32(0)
-	for _, op := range sortedOps {
-		wordCount := uint32(len(result.words))
-		if wordCount == bitstreamIndexLimit {
-			bitstreamOffset = 4
-			result.words = append(result.words, LongOffsetOf(wordCount+1))
-			nestedParent = &nestedTileColorOp{relOffsetBits: 12, relOffset: wordCount}
-			relOffset = 0
-		}
-		if (wordCount > bitstreamIndexLimit) && (relOffset == 15) {
-			result.words = append(result.words, LongOffsetOf(wordCount+1))
-			nestedParent = &nestedTileColorOp{parent: nestedParent, relOffsetBits: 4, relOffset: 15}
-			relOffset = 0
-		}
+	maximumDirect := int(bitstreamIndexLimit / 2)
+	requiredExtensions := 0
 
-		result.opPaths[op] = nestedTileColorOp{parent: nestedParent, relOffsetBits: uint(bitstreamOffset), relOffset: relOffset}
-		result.words = append(result.words, ControlWordOf(bitstreamOffset, op.Type, op.Offset))
-		relOffset++
+	if len(sortedOps) > maximumDirect {
+		requiredExtensions = (len(sortedOps) - maximumDirect + 15) / 16
+		if requiredExtensions > int(bitstreamIndexLimit)-maximumDirect {
+			return result, errors.New("too many words")
+		}
+	}
+	extensionStart := maximumDirect + requiredExtensions
+
+	result.opPaths = make(map[TileColorOp]nestedTileColorOp)
+	for opIndex, op := range sortedOps {
+		if opIndex == maximumDirect {
+			// write required amount of long offset entries
+			for i := 0; i < requiredExtensions; i++ {
+				result.words = append(result.words, LongOffsetOf(uint32(extensionStart+i*16)))
+			}
+		}
+		if opIndex >= maximumDirect {
+			offset := uint32(opIndex - maximumDirect)
+			result.opPaths[op] = nestedTileColorOp{
+				parent:        &nestedTileColorOp{relOffsetBits: 12, relOffset: uint32(maximumDirect) + offset/16},
+				relOffsetBits: 4,
+				relOffset:     offset % 16}
+			result.words = append(result.words, ControlWordOf(4, op.Type, op.Offset))
+		} else {
+			result.opPaths[op] = nestedTileColorOp{parent: nil, relOffsetBits: 12, relOffset: uint32(opIndex)}
+			result.words = append(result.words, ControlWordOf(12, op.Type, op.Offset))
+		}
 	}
 
 	return result, nil

@@ -1,6 +1,7 @@
 package compression_test
 
 import (
+	"encoding/hex"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -89,15 +90,15 @@ func (suite *ControlWordSequencerSuite) TestControlWordLongOffsetsWhenBitstreamS
 		compression.TileColorOp{Offset: 3})
 	suite.whenSequenceIsCreated()
 	suite.thenControlWordsShouldBe(
-		compression.ControlWordOf(12, 0, 0),
-		compression.ControlWordOf(0, 0, 2), // first long offset jump to index 2
+		compression.ControlWordOf(0, 0, 1), // first long offset jump to index 1
+		compression.ControlWordOf(4, 0, 0),
 		compression.ControlWordOf(4, 0, 1),
 		compression.ControlWordOf(4, 0, 2),
 		compression.ControlWordOf(4, 0, 3))
 }
 
 func (suite *ControlWordSequencerSuite) TestControlWordLongOffsetsWhenBitstreamSpaceExhausted_SecondTime() {
-	suite.givenSequencerBitstreamIndexLimitOf(1)
+	suite.givenSequencerBitstreamIndexLimitOf(3)
 	suite.givenRegisteredOperations(
 		compression.TileColorOp{Offset: 0}, compression.TileColorOp{Offset: 1},
 		compression.TileColorOp{Offset: 2}, compression.TileColorOp{Offset: 3},
@@ -111,7 +112,8 @@ func (suite *ControlWordSequencerSuite) TestControlWordLongOffsetsWhenBitstreamS
 	suite.whenSequenceIsCreated()
 	suite.thenControlWordsShouldBe(
 		compression.ControlWordOf(12, 0, 0),
-		compression.ControlWordOf(0, 0, 2), // first long offset jump to index 2
+		compression.ControlWordOf(0, 0, 3),  // first long offset jump to index 3
+		compression.ControlWordOf(0, 0, 19), // first long offset jump to index 19
 		compression.ControlWordOf(4, 0, 1), compression.ControlWordOf(4, 0, 2),
 		compression.ControlWordOf(4, 0, 3), compression.ControlWordOf(4, 0, 4),
 		compression.ControlWordOf(4, 0, 5), compression.ControlWordOf(4, 0, 6),
@@ -119,9 +121,8 @@ func (suite *ControlWordSequencerSuite) TestControlWordLongOffsetsWhenBitstreamS
 		compression.ControlWordOf(4, 0, 9), compression.ControlWordOf(4, 0, 10),
 		compression.ControlWordOf(4, 0, 11), compression.ControlWordOf(4, 0, 12),
 		compression.ControlWordOf(4, 0, 13), compression.ControlWordOf(4, 0, 14),
-		compression.ControlWordOf(4, 0, 15),
-		compression.ControlWordOf(0, 0, 18), // second long offset jump to index 18
-		compression.ControlWordOf(4, 0, 16), compression.ControlWordOf(4, 0, 17))
+		compression.ControlWordOf(4, 0, 15), compression.ControlWordOf(4, 0, 16),
+		compression.ControlWordOf(4, 0, 17))
 }
 
 type bitstreamExpectation struct {
@@ -150,7 +151,7 @@ func (suite *ControlWordSequencerSuite) TestBitstreamForSimpleSequence() {
 }
 
 func (suite *ControlWordSequencerSuite) TestBitstreamForExtendedSequence() {
-	suite.givenSequencerBitstreamIndexLimitOf(1)
+	suite.givenSequencerBitstreamIndexLimitOf(2)
 	suite.givenRegisteredOperations(
 		compression.TileColorOp{Offset: 0}, compression.TileColorOp{Offset: 1},
 		compression.TileColorOp{Offset: 2}, compression.TileColorOp{Offset: 3},
@@ -160,10 +161,10 @@ func (suite *ControlWordSequencerSuite) TestBitstreamForExtendedSequence() {
 		compression.TileColorOp{Offset: 10}, compression.TileColorOp{Offset: 11},
 		compression.TileColorOp{Offset: 12}, compression.TileColorOp{Offset: 13},
 		compression.TileColorOp{Offset: 14}, compression.TileColorOp{Offset: 15},
-		compression.TileColorOp{Offset: 16}, compression.TileColorOp{Offset: 17})
+		compression.TileColorOp{Offset: 16})
 	suite.whenSequenceIsCreated()
-	suite.thenBitstreamShouldBeFor([]compression.TileColorOp{{Offset: 17}},
-		[]bitstreamExpectation{bits12(1), bits4(15), bits4(1)})
+	suite.thenBitstreamShouldBeFor([]compression.TileColorOp{{Offset: 16}},
+		[]bitstreamExpectation{bits12(1), bits4(15)})
 }
 
 func (suite *ControlWordSequencerSuite) TestSkipOperation_Single() {
@@ -227,21 +228,21 @@ func (suite *ControlWordSequencerSuite) thenControlWordsShouldHaveALenOf(expecte
 
 func (suite *ControlWordSequencerSuite) thenControlWordsShouldBe(expected ...compression.ControlWord) {
 	suite.T().Helper()
+	require.Nil(suite.T(), suite.sequenceErr, "no error expected in this verification")
 	words := suite.sequence.ControlWords()
 	assert.Equal(suite.T(), len(expected), len(words), "length mismatch")
 	assert.Equal(suite.T(), expected, words, "words mismatch")
 }
 
-func (suite *ControlWordSequencerSuite) thenBitstreamShouldBeFor(
-	ops []compression.TileColorOp,
-	expected []bitstreamExpectation) {
-	data, err := suite.sequence.BitstreamFor(ops)
+func (suite *ControlWordSequencerSuite) thenBitstreamShouldBeFor(ops []compression.TileColorOp, expected []bitstreamExpectation) {
 	suite.T().Helper()
+	require.Nil(suite.T(), suite.sequenceErr, "no error expected in this verification")
+	data, err := suite.sequence.BitstreamFor(ops)
 	require.Nil(suite.T(), err, "no error expected extracting bitstream")
 	bitstream := compression.NewBitstreamReader(data)
 	for index, exp := range expected {
 		value := bitstream.Read(exp.bits)
-		assert.Equal(suite.T(), exp.value, value, "Value mismatch at index %v - bitstream is %v", index, data)
+		assert.Equal(suite.T(), exp.value, value, "Value mismatch at index %v - bitstream is 0x%v", index, hex.EncodeToString(data))
 		bitstream.Advance(exp.bits)
 	}
 }
