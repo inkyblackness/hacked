@@ -2,6 +2,7 @@ package compression
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 )
 
@@ -17,6 +18,10 @@ type ControlWordSequencer struct {
 	// BitstreamIndexLimit specifies the highest value the sequencer may use to store offset values in the bitstream.
 	// If this value is 0, then the default of 0xFFF (12 bits) is used.
 	BitstreamIndexLimit uint32
+
+	// DirectIndexLimit specifies the amount of direct pointers into the bitstream.
+	// If this value is 0, then the default of BitstreamIndexLimit / 4 is used.
+	DirectIndexLimit uint32
 
 	ops map[TileColorOp]uint32
 }
@@ -63,29 +68,36 @@ func (seq ControlWordSequencer) Sequence() (ControlWordSequence, error) {
 	if bitstreamIndexLimit == 0 {
 		bitstreamIndexLimit = 0xFFF
 	}
-	maximumDirect := int(bitstreamIndexLimit / 2)
-	requiredExtensions := 0
+	maximumDirect := seq.DirectIndexLimit
+	if maximumDirect > bitstreamIndexLimit {
+		maximumDirect = bitstreamIndexLimit
+	} else if maximumDirect == 0 {
+		maximumDirect = bitstreamIndexLimit / 4
+	}
+	requiredExtensions := uint32(0)
 
-	if len(sortedOps) > maximumDirect {
-		requiredExtensions = (len(sortedOps) - maximumDirect + 15) / 16
-		if requiredExtensions > int(bitstreamIndexLimit)-maximumDirect {
-			return result, errors.New("too many words")
+	totalOps := uint32(len(sortedOps))
+	if totalOps > maximumDirect {
+		requiredExtensions = (totalOps - maximumDirect + 15) / 16
+		if requiredExtensions > (bitstreamIndexLimit - maximumDirect) {
+			return result, fmt.Errorf("too many words: total=%v, maxDirect=%v, indexLimit=%v",
+				totalOps, maximumDirect, bitstreamIndexLimit)
 		}
 	}
 	extensionStart := maximumDirect + requiredExtensions
 
 	result.opPaths = make(map[TileColorOp]nestedTileColorOp)
 	for opIndex, op := range sortedOps {
-		if opIndex == maximumDirect {
+		if uint32(opIndex) == maximumDirect {
 			// write required amount of long offset entries
-			for i := 0; i < requiredExtensions; i++ {
-				result.words = append(result.words, LongOffsetOf(uint32(extensionStart+i*16)))
+			for i := uint32(0); i < requiredExtensions; i++ {
+				result.words = append(result.words, LongOffsetOf(extensionStart+i*16))
 			}
 		}
-		if opIndex >= maximumDirect {
-			offset := uint32(opIndex - maximumDirect)
+		if uint32(opIndex) >= maximumDirect {
+			offset := uint32(opIndex) - maximumDirect
 			result.opPaths[op] = nestedTileColorOp{
-				parent:        &nestedTileColorOp{relOffsetBits: 12, relOffset: uint32(maximumDirect) + offset/16},
+				parent:        &nestedTileColorOp{relOffsetBits: 12, relOffset: maximumDirect + offset/16},
 				relOffsetBits: 4,
 				relOffset:     offset % 16}
 			result.words = append(result.words, ControlWordOf(4, op.Type, op.Offset))

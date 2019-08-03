@@ -82,7 +82,7 @@ func (suite *ControlWordSequencerSuite) TestControlWordsAreOrderedByControlTypeT
 }
 
 func (suite *ControlWordSequencerSuite) TestControlWordLongOffsetsWhenBitstreamSpaceExhausted_FirstTime() {
-	suite.givenSequencerBitstreamIndexLimitOf(1)
+	suite.givenSequencerLimitsOf(1, 0)
 	suite.givenRegisteredOperations(
 		compression.TileColorOp{Offset: 0},
 		compression.TileColorOp{Offset: 1},
@@ -98,7 +98,7 @@ func (suite *ControlWordSequencerSuite) TestControlWordLongOffsetsWhenBitstreamS
 }
 
 func (suite *ControlWordSequencerSuite) TestControlWordLongOffsetsWhenBitstreamSpaceExhausted_SecondTime() {
-	suite.givenSequencerBitstreamIndexLimitOf(3)
+	suite.givenSequencerLimitsOf(3, 1)
 	suite.givenRegisteredOperations(
 		compression.TileColorOp{Offset: 0}, compression.TileColorOp{Offset: 1},
 		compression.TileColorOp{Offset: 2}, compression.TileColorOp{Offset: 3},
@@ -151,7 +151,7 @@ func (suite *ControlWordSequencerSuite) TestBitstreamForSimpleSequence() {
 }
 
 func (suite *ControlWordSequencerSuite) TestBitstreamForExtendedSequence() {
-	suite.givenSequencerBitstreamIndexLimitOf(2)
+	suite.givenSequencerLimitsOf(2, 1)
 	suite.givenRegisteredOperations(
 		compression.TileColorOp{Offset: 0}, compression.TileColorOp{Offset: 1},
 		compression.TileColorOp{Offset: 2}, compression.TileColorOp{Offset: 3},
@@ -198,8 +198,9 @@ func (suite *ControlWordSequencerSuite) TestSkipOperation_EndOfLine() {
 		[]bitstreamExpectation{bits12(0), bits12(1), bits5(0x1F), bits12(2), bits12(3)})
 }
 
-func (suite *ControlWordSequencerSuite) givenSequencerBitstreamIndexLimitOf(value uint32) {
-	suite.sequencer.BitstreamIndexLimit = value
+func (suite *ControlWordSequencerSuite) givenSequencerLimitsOf(bitstream uint32, direct uint32) {
+	suite.sequencer.BitstreamIndexLimit = bitstream
+	suite.sequencer.DirectIndexLimit = direct
 }
 
 func (suite *ControlWordSequencerSuite) givenHorizontalTileCountOf(value uint32) {
