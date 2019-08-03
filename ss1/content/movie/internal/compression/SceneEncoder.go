@@ -59,9 +59,9 @@ func (e *SceneEncoder) deltaTile(isFirstFrame bool, offset int, frame []byte) ti
 		start := offset + (y * e.stride)
 		for x := 0; x < TileSideLength; x++ {
 			pixel := frame[start+x]
-			//if isFirstFrame || pixel != e.lastFrame[start+x] {
-			delta[y*TileSideLength+x] = pixel
-			//}
+			if isFirstFrame || (pixel != e.lastFrame[start+x]) {
+				delta[y*TileSideLength+x] = pixel
+			}
 		}
 	}
 	return delta
