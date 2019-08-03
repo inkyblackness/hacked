@@ -66,3 +66,12 @@ func (key *tilePaletteKey) without(other *tilePaletteKey) tilePaletteKey {
 	}
 	return result
 }
+
+func (key *tilePaletteKey) lessThan(other *tilePaletteKey) bool {
+	for i := 0; i < 4; i++ {
+		if key.usedColors[i] < other.usedColors[i] {
+			return true
+		}
+	}
+	return false
+}

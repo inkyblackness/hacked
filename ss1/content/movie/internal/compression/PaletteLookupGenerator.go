@@ -3,6 +3,7 @@ package compression
 import (
 	"fmt"
 	"math/bits"
+	"sort"
 )
 
 type paletteLookupEntry struct {
@@ -126,15 +127,16 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 	sizeLimitForSize := map[int]int{3: 4, 4: 8, 5: 8, 6: 8, 7: 8, 8: 8, 9: 16, 10: 16, 11: 16, 12: 16, 13: 16, 14: 16, 15: 16, 16: 16}
 	for size := PixelPerTile; size > 2; size-- {
 
-		keysInSize := make(map[tilePaletteKey]struct{})
+		keysInSize := make([]tilePaletteKey, 0, len(remainder))
 		for key := range remainder {
 			if key.size == size {
-				keysInSize[key] = struct{}{}
+				keysInSize = append(keysInSize, key)
 			}
 		}
+		sort.Slice(keysInSize, func(a, b int) bool { return keysInSize[a].lessThan(&keysInSize[b]) })
 
 		fmt.Printf("Working on key size %v, have %v sized, %v total remaining\n", size, len(keysInSize), len(remainder))
-		for sizedKey := range keysInSize {
+		for _, sizedKey := range keysInSize {
 			{
 				var earlyRemoved []tilePaletteKey
 				for key := range remainder {
@@ -154,13 +156,6 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 				delete(remainder, sizedKey)
 			}
 		}
-	}
-	// TODO: this block can be removed if remaining is always zero
-	fmt.Printf("last remaining keys: %v\n", len(remainder))
-	for key := range remainder {
-		bytes := key.buffer()
-		lookup.entries[key] = paletteLookupEntry{start: len(lookup.buffer), size: len(bytes)}
-		addToBuffer(bytes)
 	}
 
 	return lookup
