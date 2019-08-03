@@ -75,9 +75,24 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 		lookup.buffer = append(lookup.buffer, data...)
 
 		newSize := len(lookup.buffer)
+
 		for _, fitSize := range knownSizes {
 			fitLimit := newSize - fitSize
 			entry := sizedEntries[fitSize]
+
+			// remove all entries beyond a certain limit. as these bytes don't change, retrying won't help.
+			var toDelete []tilePaletteKey
+			limit := newSize - 16 - len(data)
+			for key, entry := range entry.entries {
+				if entry.start < limit {
+					toDelete = append(toDelete, key)
+				}
+			}
+			for _, key := range toDelete {
+				delete(entry.entries, key)
+			}
+
+			// find any new keys
 			for start := entry.lastOffset; start < fitLimit; start++ {
 				tempKey := tilePaletteKeyFrom(lookup.buffer[start : start+fitSize])
 				if _, existing := entry.entries[tempKey]; !existing {
@@ -89,18 +104,6 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 			}
 			if fitLimit > 0 {
 				entry.lastOffset = fitLimit
-			}
-
-			// remove all entries beyond a certain limit. as these bytes don't change, retrying won't help.
-			var toDelete []tilePaletteKey
-			limit := newSize - 2*16 // TODO: this limit could be calculated better
-			for key, entry := range entry.entries {
-				if entry.start < limit {
-					toDelete = append(toDelete, key)
-				}
-			}
-			for _, key := range toDelete {
-				delete(entry.entries, key)
 			}
 		}
 	}
