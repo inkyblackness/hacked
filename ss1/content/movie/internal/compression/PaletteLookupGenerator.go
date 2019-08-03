@@ -46,7 +46,6 @@ func (lookup *PaletteLookup) Lookup(tile tileDelta) (index int, pal []byte, mask
 
 // PaletteLookupGenerator creates palette lookups based on a set of registered tiles.
 type PaletteLookupGenerator struct {
-	// deltaToKey map[tileDelta]tilePaletteKey
 	keyUses map[tilePaletteKey]int
 }
 
