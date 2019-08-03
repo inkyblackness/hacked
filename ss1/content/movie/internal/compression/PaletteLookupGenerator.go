@@ -32,8 +32,8 @@ func (lookup *PaletteLookup) Lookup(tile tileDelta) (index int, pal []byte, mask
 		pal = key.buffer()
 	}
 	var mapped [256]byte
-	for mappedIndex, b := range pal {
-		mapped[b] = byte(mappedIndex)
+	for mappedIndex := len(pal) - 1; mappedIndex >= 0; mappedIndex-- {
+		mapped[pal[mappedIndex]] = byte(mappedIndex)
 	}
 	bitSize := uint(bits.Len(uint(len(pal) - 1)))
 	for tileIndex := PixelPerTile - 1; tileIndex >= 0; tileIndex-- {
@@ -87,11 +87,13 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 					}
 				}
 			}
-			entry.lastOffset = fitLimit
+			if fitLimit > 0 {
+				entry.lastOffset = fitLimit
+			}
 
 			// remove all entries beyond a certain limit. as these bytes don't change, retrying won't help.
 			var toDelete []tilePaletteKey
-			limit := newSize - 2*16
+			limit := newSize - 2*16 // TODO: this limit could be calculated better
 			for key, entry := range entry.entries {
 				if entry.start < limit {
 					toDelete = append(toDelete, key)
@@ -103,12 +105,12 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 		}
 	}
 
-	addEarlyEntry := func(key tilePaletteKey) bool {
+	addEarlyEntry := func(key tilePaletteKey, limitSize int) bool {
 		for _, fitSize := range knownSizes {
-			if key.size <= fitSize {
+			if key.size <= fitSize && fitSize <= limitSize {
 				entry := sizedEntries[fitSize]
 				for tempKey, paletteEntry := range entry.entries {
-					if tempKey.contains(&key) {
+					if tempKey.contains(&key) && (!key.hasColor(0x00) || (lookup.buffer[paletteEntry.start] == 0x00)) {
 						lookup.entries[key] = paletteEntry
 						return true
 					}
@@ -118,7 +120,9 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 		return false
 	}
 
+	sizeLimitForSize := map[int]int{3: 4, 4: 8, 5: 8, 6: 8, 7: 8, 8: 8, 9: 16, 10: 16, 11: 16, 12: 16, 13: 16, 14: 16, 15: 16, 16: 16}
 	for size := PixelPerTile; size > 2; size-- {
+		//for size := 3; size <= PixelPerTile; size++ {
 
 		keysInSize := make(map[tilePaletteKey]struct{})
 		for key := range remainder {
@@ -132,7 +136,7 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 			{
 				var earlyRemoved []tilePaletteKey
 				for key := range remainder {
-					if addEarlyEntry(key) {
+					if addEarlyEntry(key, sizeLimitForSize[size]) { // instead of 16 use size when counting from smaller up
 						earlyRemoved = append(earlyRemoved, key)
 					}
 				}
