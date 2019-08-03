@@ -35,19 +35,23 @@ func newFrameDecoder(builder *FrameDecoderBuilder) *FrameDecoder {
 func (decoder *FrameDecoder) Decode(bitstreamData []byte, maskstreamData []byte) error {
 	bitstream := NewBitstreamReader(bitstreamData)
 	maskstream := NewMaskstreamReader(maskstreamData)
-	lastControl := ControlWord(0)
 
 	for vTile := 0; vTile < decoder.verticalTiles && !bitstream.Exhausted(); vTile++ {
+		lastControl := ControlWordOf(0, CtrlUnknown, 0)
 		for hTile := 0; hTile < decoder.horizontalTiles && !bitstream.Exhausted(); hTile++ {
 			control, err := decoder.readNextControlWord(bitstream)
 			if err != nil {
 				return err
 			}
 
+			if control.Type() == CtrlRepeatPrevious {
+				if hTile == 0 {
+					return errors.New("can't repeat word on first tile of row")
+				}
+				control = lastControl
+			}
 			if control.Type() == CtrlUnknown {
 				return errors.New("found unknown control, can not proceed")
-			} else if control.Type() == CtrlRepeatPrevious {
-				control = lastControl
 			}
 
 			if control.Type() == CtrlSkip {
