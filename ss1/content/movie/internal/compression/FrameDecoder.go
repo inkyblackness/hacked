@@ -1,5 +1,10 @@
 package compression
 
+import (
+	"errors"
+	"fmt"
+)
+
 // FrameDecoder is for decoding compressed frames with the help of data streams.
 // A new instance of a decoder is created with a FrameDecoderBuilder.
 type FrameDecoder struct {
@@ -27,17 +32,20 @@ func newFrameDecoder(builder *FrameDecoderBuilder) *FrameDecoder {
 }
 
 // Decode reads the provided streams to paint a frame.
-func (decoder *FrameDecoder) Decode(bitstreamData []byte, maskstreamData []byte) {
+func (decoder *FrameDecoder) Decode(bitstreamData []byte, maskstreamData []byte) error {
 	bitstream := NewBitstreamReader(bitstreamData)
 	maskstream := NewMaskstreamReader(maskstreamData)
 	lastControl := ControlWord(0)
 
 	for vTile := 0; vTile < decoder.verticalTiles && !bitstream.Exhausted(); vTile++ {
 		for hTile := 0; hTile < decoder.horizontalTiles && !bitstream.Exhausted(); hTile++ {
-			control := decoder.readNextControlWord(bitstream)
+			control, err := decoder.readNextControlWord(bitstream)
+			if err != nil {
+				return err
+			}
 
 			if control.Type() == CtrlUnknown {
-				panic("Unknown control in use")
+				return errors.New("found unknown control, can not proceed")
 			} else if control.Type() == CtrlRepeatPrevious {
 				control = lastControl
 			}
@@ -57,27 +65,38 @@ func (decoder *FrameDecoder) Decode(bitstreamData []byte, maskstreamData []byte)
 			lastControl = control
 		}
 	}
+	return nil
 }
 
-func (decoder *FrameDecoder) readNextControlWord(bitstream *BitstreamReader) ControlWord {
+func (decoder *FrameDecoder) readNextControlWord(bitstream *BitstreamReader) (ControlWord, error) {
+	availableWords := uint32(len(decoder.controlWords))
 	controlIndex := bitstream.Read(12)
-	// TODO: sanity check to verify controlIndex (avoid array index panic)
-	control := decoder.controlWords[controlIndex]
+	if controlIndex > availableWords {
+		return ControlWordOf(0, CtrlUnknown, 0),
+			fmt.Errorf("control word index out of range: %v/%v", controlIndex, availableWords)
+	}
 
+	control := decoder.controlWords[controlIndex]
 	if control.IsLongOffset() {
+		longOffsetCount := 0
 		bitstream.Advance(8)
 		for control.IsLongOffset() {
+			longOffsetCount++
+			if longOffsetCount > 100 {
+				return ControlWordOf(0, CtrlUnknown, 0), errors.New("too many long offsets")
+			}
 			bitstream.Advance(4)
 			offset := bitstream.Read(4)
 			controlIndex = control.LongOffset() + offset
-			// TODO: sanity check to verify controlIndex changes (avoid endless loop if offset is zero)
-			// TODO: sanity check to verify controlIndex (avoid array index panic)
+			if controlIndex > availableWords {
+				return ControlWordOf(0, CtrlUnknown, 0),
+					fmt.Errorf("control word index out of range: %v/%v", controlIndex, availableWords)
+			}
 			control = decoder.controlWords[controlIndex]
 		}
 	}
 	bitstream.Advance(control.Count())
-
-	return control
+	return control, nil
 }
 
 func (decoder *FrameDecoder) colorTile(hTile, vTile int, control ControlWord, maskstream *MaskstreamReader) {

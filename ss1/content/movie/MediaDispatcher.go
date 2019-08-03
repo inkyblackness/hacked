@@ -133,7 +133,10 @@ func (dispatcher *MediaDispatcher) process(entry Entry) (dispatched bool, err er
 			maskstreamData := entry.Data()[videoHeader.PixelDataOffset:]
 			decoder := dispatcher.decoderBuilder.Build()
 
-			decoder.Decode(bitstreamData, maskstreamData)
+			err = decoder.Decode(bitstreamData, maskstreamData)
+			if err != nil {
+				return
+			}
 			dispatcher.notifyVideoFrame(entry.Timestamp())
 			dispatched = true
 		}
