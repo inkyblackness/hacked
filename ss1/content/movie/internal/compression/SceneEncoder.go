@@ -1,6 +1,7 @@
 package compression
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -18,9 +19,10 @@ type frameDelta struct {
 
 // SceneEncoder encodes an entire scene of bitmaps sharing the same palette.
 type SceneEncoder struct {
-	hTiles int
-	vTiles int
-	stride int
+	hTiles     int
+	vTiles     int
+	lineStride int
+	tileStride int
 
 	lastFrame []byte
 	deltas    []frameDelta
@@ -29,34 +31,40 @@ type SceneEncoder struct {
 // NewSceneEncoder returns a new instance.
 func NewSceneEncoder(width, height int) *SceneEncoder {
 	e := &SceneEncoder{
-		hTiles: width / TileSideLength,
-		vTiles: height / TileSideLength,
-		stride: width,
+		hTiles:     width / TileSideLength,
+		vTiles:     height / TileSideLength,
+		lineStride: width,
 	}
-	e.lastFrame = make([]byte, e.vTiles*TileSideLength*e.stride)
+	e.tileStride = e.lineStride * TileSideLength
+	e.lastFrame = make([]byte, e.vTiles*TileSideLength*e.lineStride)
 	return e
 }
 
 // AddFrame registers a further frame to the scene.
 func (e *SceneEncoder) AddFrame(frame []byte) error {
+	if len(frame) != len(e.lastFrame) {
+		return errors.New("invalid frame size")
+	}
 	var delta frameDelta
 	isFirstFrame := len(e.deltas) == 0
+	vStart := 0
 	for vTile := 0; vTile < e.vTiles; vTile++ {
-		vStart := vTile * e.stride * TileSideLength
+		tileStart := vStart
 		for hTile := 0; hTile < e.hTiles; hTile++ {
-			delta.tiles = append(delta.tiles, e.deltaTile(isFirstFrame, vStart+(hTile*TileSideLength), frame))
+			delta.tiles = append(delta.tiles, e.deltaTile(isFirstFrame, tileStart, frame))
+			tileStart += TileSideLength
 		}
+		vStart += e.tileStride
 	}
 	e.deltas = append(e.deltas, delta)
-
-	e.copyLastFrame(frame)
+	copy(e.lastFrame, frame)
 	return nil
 }
 
 func (e *SceneEncoder) deltaTile(isFirstFrame bool, offset int, frame []byte) tileDelta {
 	var delta tileDelta
 	for y := 0; y < TileSideLength; y++ {
-		start := offset + (y * e.stride)
+		start := offset + (y * e.lineStride)
 		for x := 0; x < TileSideLength; x++ {
 			pixel := frame[start+x]
 			if isFirstFrame || (pixel != e.lastFrame[start+x]) {
@@ -67,34 +75,18 @@ func (e *SceneEncoder) deltaTile(isFirstFrame bool, offset int, frame []byte) ti
 	return delta
 }
 
-func (e *SceneEncoder) copyLastFrame(frame []byte) {
-	hPixel := e.hTiles * TileSideLength
-	for y := 0; y < e.vTiles*TileSideLength; y++ {
-		start := y * e.stride
-		copy(e.lastFrame[start:start+hPixel], frame[start:])
-	}
-}
-
 // Encode processes all the previously registered frames and creates the necessary components for decoding.
 func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookupBuffer []byte, frames []EncodedFrame, err error) {
 	var wordSequencer ControlWordSequencer
 	tileColorOpsPerFrame := make([][]TileColorOp, len(e.deltas))
-	frames = make([]EncodedFrame, len(e.deltas))
+	paletteLookup := e.createPaletteLookup()
 
-	var paletteLookupGenerator PaletteLookupGenerator
-	for frameIndex := 0; frameIndex < len(e.deltas); frameIndex++ {
-		delta := e.deltas[frameIndex]
-
-		for _, tile := range delta.tiles {
-			paletteLookupGenerator.Add(tile)
-		}
-	}
-	paletteLookup := paletteLookupGenerator.Generate()
 	paletteLookupBuffer = paletteLookup.Buffer()
 	if len(paletteLookupBuffer) > 0x1FFFF {
 		err = fmt.Errorf("palette lookup is too big: %vB", len(paletteLookupBuffer))
 		return
 	}
+	frames = make([]EncodedFrame, len(e.deltas))
 
 	for frameIndex := 0; frameIndex < len(e.deltas); frameIndex++ {
 		outFrame := &frames[frameIndex]
@@ -156,7 +148,7 @@ func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookupBuffer []byte
 			}
 			tileColorOpsPerFrame[frameIndex] = append(tileColorOpsPerFrame[frameIndex], op)
 		}
-		fmt.Printf("Out %v control statistics: %v\n", frameIndex, controlStatistics)
+		// fmt.Printf("Out %v control statistics: %v\n", frameIndex, controlStatistics)
 	}
 
 	sequence, err := wordSequencer.Sequence()
@@ -173,6 +165,16 @@ func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookupBuffer []byte
 		}
 	}
 	return
+}
+
+func (e *SceneEncoder) createPaletteLookup() PaletteLookup {
+	var paletteLookupGenerator PaletteLookupGenerator
+	for _, delta := range e.deltas {
+		for _, tile := range delta.tiles {
+			paletteLookupGenerator.Add(tile)
+		}
+	}
+	return paletteLookupGenerator.Generate()
 }
 
 func writeMaskstream(s []byte, bytes int, mask uint64) []byte {
