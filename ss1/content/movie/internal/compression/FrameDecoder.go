@@ -85,24 +85,14 @@ func (decoder *FrameDecoder) colorTile(hTile, vTile int, control ControlWord, ma
 
 	switch control.Type() {
 	case CtrlColorTile2ColorsStatic:
-		{
-			decoder.colorer(hTile, vTile, []byte{byte(param & 0xFF), byte(param >> 8 & 0xFF)}, 0xAAAA, 1)
-		}
+		decoder.colorer(hTile, vTile, []byte{byte(param & 0xFF), byte(param >> 8 & 0xFF)}, 0xAAAA, 1)
 	case CtrlColorTile2ColorsMasked:
-		{
-			decoder.colorer(hTile, vTile, []byte{byte(param & 0xFF), byte(param >> 8 & 0xFF)}, maskstream.Read(2), 1)
-		}
+		decoder.colorer(hTile, vTile, []byte{byte(param & 0xFF), byte(param >> 8 & 0xFF)}, maskstream.Read(2), 1)
 	case CtrlColorTile4ColorsMasked:
-		{
-			decoder.colorer(hTile, vTile, decoder.paletteLookupList[param:param+4], maskstream.Read(4), 2)
-		}
+		decoder.colorer(hTile, vTile, decoder.paletteLookupList[param:param+4], maskstream.Read(4), 2)
 	case CtrlColorTile8ColorsMasked:
-		{
-			decoder.colorer(hTile, vTile, decoder.paletteLookupList[param:param+8], maskstream.Read(6), 3)
-		}
+		decoder.colorer(hTile, vTile, decoder.paletteLookupList[param:param+8], maskstream.Read(6), 3)
 	case CtrlColorTile16ColorsMasked:
-		{
-			decoder.colorer(hTile, vTile, decoder.paletteLookupList[param:param+16], maskstream.Read(8), 4)
-		}
+		decoder.colorer(hTile, vTile, decoder.paletteLookupList[param:param+16], maskstream.Read(8), 4)
 	}
 }
