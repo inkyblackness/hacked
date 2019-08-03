@@ -2,7 +2,9 @@ package compression_test
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math/rand"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -70,6 +72,73 @@ func (suite *CompressionSuite) verifyCompression(width, height int, inFrames ...
 	verifyCompression(suite.T(), width, height, inFrames...)
 }
 
+func BenchmarkRecompressionDeth00(b *testing.B) {
+	recompress(b, "deth", "scene00")
+}
+
+func BenchmarkRecompressionDeth01(b *testing.B) {
+	recompress(b, "deth", "scene01")
+}
+
+func BenchmarkRecompressionDeth02(b *testing.B) {
+	recompress(b, "deth", "scene02")
+}
+
+func recompress(t testing.TB, dir1, dir2 string) {
+	t.Helper()
+	scenepath := filepath.Join(".", "_testdata", dir1, dir2)
+	read := func(name string) []byte {
+		data, err := ioutil.ReadFile(filepath.Join(scenepath, name))
+		require.Nil(t, err, "no error expected reading %v", name)
+		return data
+	}
+	controlWordsData := read("controlDict.bin")
+	controlWords, err := compression.UnpackControlWords(controlWordsData)
+	require.Nil(t, err, "no error expected unpacking control words")
+	paletteLookup := read("paletteLookup.bin")
+
+	width := 600
+	height := 300
+	frame := make([]byte, width*height)
+	decoderBuilder := compression.NewFrameDecoderBuilder(600, 300)
+
+	logStatistics(t, "In", controlWords, paletteLookup)
+
+	decoderBuilder.WithControlWords(controlWords)
+	decoderBuilder.WithPaletteLookupList(paletteLookup)
+	decoderBuilder.ForStandardFrame(frame, width)
+	decoder := decoderBuilder.Build()
+	canDecodeFrame := func(index int) bool {
+		bitstream, err := ioutil.ReadFile(filepath.Join(scenepath, fmt.Sprintf("frame%02d_bitstream.bin", index)))
+		if err != nil {
+			return false
+		}
+		maskstream, err := ioutil.ReadFile(filepath.Join(scenepath, fmt.Sprintf("frame%02d_maskstream.bin", index)))
+		if err != nil {
+			return false
+		}
+
+		t.Logf("InStatistics F%2d: Bitstream: %v, Maskstream: %v", index, len(bitstream), len(maskstream))
+		err = decoder.Decode(bitstream, maskstream)
+		if err != nil {
+			t.Logf("Failed to decode frame F%2d: %v", index, err)
+			return false
+		}
+		return true
+	}
+	frameIndex := 0
+	var frames [][]byte
+	for canDecodeFrame(frameIndex) {
+		frameCopy := make([]byte, len(frame))
+		copy(frameCopy, frame)
+		frames = append(frames, frameCopy)
+		frameIndex++
+	}
+
+	fmt.Printf("verifying compression of %v frames\n", len(frames))
+	verifyCompression(t, width, height, frames...)
+}
+
 func BenchmarkRandomFrames(b *testing.B) {
 	// With a frame size of 600x300 we have 150*75=11250 tiles per frame.
 	// The maximum palette offset is 0x1FFFF, allowing for 8191 entries of full 16 byte (fully random tile) palettes.
@@ -125,7 +194,7 @@ func verifyCompression(t testing.TB, width, height int, inFrames ...[]byte) {
 	require.Equal(t, len(inFrames), len(encodedFrames), "expected equal amount of encoded frames for input frames")
 	require.Nil(t, err, fmt.Sprintf("no error expected encoding: %v", err))
 
-	t.Logf("Statistics: ControlWords: %v, PaletteLookup: %v", len(controlWords), len(paletteLookup))
+	logStatistics(t, "Out", controlWords, paletteLookup)
 
 	decoderBuilder := compression.NewFrameDecoderBuilder(width, height)
 	decoderBuilder.WithControlWords(controlWords)
@@ -136,7 +205,35 @@ func verifyCompression(t testing.TB, width, height int, inFrames ...[]byte) {
 		decoder := decoderBuilder.Build()
 		t.Logf("Statistics F%2d: Bitstream: %v, Maskstream: %v",
 			frameIndex, len(encodedFrame.Bitstream), len(encodedFrame.Maskstream))
-		decoder.Decode(encodedFrame.Bitstream, encodedFrame.Maskstream)
+		err = decoder.Decode(encodedFrame.Bitstream, encodedFrame.Maskstream)
+		assert.Nil(t, err, fmt.Sprintf("no error expected re-decoding: %v", err))
 		assert.Equal(t, inFrames[frameIndex], frameBuffer, fmt.Sprintf("Frame content mismatch for frame %d", frameIndex))
 	}
+}
+
+func logStatistics(t testing.TB, prefix string, controlWords []compression.ControlWord, paletteLookup []byte) {
+	controls := make(map[compression.ControlType]int)
+	skips := make(map[int]int)
+	longOffsets := 0
+	for _, word := range controlWords {
+		if word.IsLongOffset() {
+			longOffsets++
+		} else {
+			skips[word.Count()]++
+			controls[word.Type()]++
+		}
+	}
+	firstWords := ""
+	for i := 0; i < 16; i++ {
+		if i < len(controlWords) {
+			word := controlWords[i]
+			if word.IsLongOffset() {
+				firstWords += fmt.Sprintf(" LO: %v", word.LongOffset())
+			} else {
+				firstWords += fmt.Sprintf(" [%v %v %v]", word.Count(), word.Type(), word.Parameter())
+			}
+		}
+	}
+	t.Logf("%vStatistics: PaletteLookup: %vB, ControlWords: %v, LO: %v, CTRL: %v, SKIP: %v -- firstWords: %v",
+		prefix, len(paletteLookup), len(controlWords), longOffsets, controls, skips, firstWords)
 }
