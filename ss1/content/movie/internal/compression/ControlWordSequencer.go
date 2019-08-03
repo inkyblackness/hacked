@@ -116,12 +116,19 @@ type nestedTileColorOp struct {
 	relOffset     uint32
 }
 
+func (op nestedTileColorOp) writeTo(w *BitstreamWriter) {
+	if op.parent != nil {
+		op.parent.writeTo(w)
+	}
+	w.Write(op.relOffsetBits, op.relOffset)
+}
+
 // ControlWordSequence is a finalized set of control words to reproduce a list of
 // tile coloring operations. Based on this sequence, a bitstream can be created based
 // on a selection of such coloring operations (i.e., per frame).
 type ControlWordSequence struct {
 	// HTiles specifies the amount of horizontal tiles (= operations) a frame has.
-	// This number is relevant for skip operations. If 0, then no skip operation-compression is done.
+	// This number is relevant for skip operations. If 0, then no compression of skip-operations is done.
 	HTiles uint32
 
 	words   []ControlWord
@@ -138,17 +145,8 @@ func (seq ControlWordSequence) ControlWords() []ControlWord {
 func (seq ControlWordSequence) BitstreamFor(ops []TileColorOp) ([]byte, error) {
 	var writer BitstreamWriter
 	writeOp := func(op TileColorOp) {
-		// TODO: if previous op is to be written, write repeat?
 		nested := seq.opPaths[op]
-		path := []nestedTileColorOp{nested}
-		for nested.parent != nil {
-			nested = *nested.parent
-			path = append(path, nested)
-		}
-		for index := len(path) - 1; index >= 0; index-- {
-			nested := path[index]
-			writer.Write(nested.relOffsetBits, nested.relOffset)
-		}
+		nested.writeTo(&writer)
 	}
 	pendingSkips := uint32(0)
 	writePendingSkips := func() {
@@ -169,17 +167,18 @@ func (seq ControlWordSequence) BitstreamFor(ops []TileColorOp) ([]byte, error) {
 			pendingSkips = 0
 		}
 	}
+	hasWidthConfig := seq.HTiles > 0
 	for opIndex, op := range ops {
-		if (pendingSkips > 0) && (uint32(opIndex)%seq.HTiles) == 0 {
+		atRowStart := hasWidthConfig && ((uint32(opIndex) % seq.HTiles) == 0)
+		if (pendingSkips > 0) && atRowStart {
 			writeLineSkip()
 		}
-		switch {
-		case (op.Type == CtrlSkip) && (seq.HTiles == 0):
-			pendingSkips = 1
-			writePendingSkips()
-		case op.Type == CtrlSkip:
+		if op.Type == CtrlSkip {
 			pendingSkips++
-		default:
+			if !hasWidthConfig {
+				writePendingSkips()
+			}
+		} else {
 			writePendingSkips()
 			writeOp(op)
 		}
