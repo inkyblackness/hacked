@@ -71,6 +71,7 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 		}
 	}
 
+	toDeleteCache := make([]tilePaletteKey, 0, len(remainder))
 	addToBuffer := func(data []byte) {
 		lookup.buffer = append(lookup.buffer, data...)
 
@@ -81,7 +82,7 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 			entry := sizedEntries[fitSize]
 
 			// remove all entries beyond a certain limit. as these bytes don't change, retrying won't help.
-			var toDelete []tilePaletteKey
+			toDelete := toDeleteCache[0:0]
 			limit := newSize - 16 - len(data)
 			for key, entry := range entry.entries {
 				if entry.start < limit {
