@@ -85,9 +85,10 @@ func (cached *cachedMovie) subtitles(language resource.Language) Subtitles {
 			continue
 		}
 		//if header.Control == Sub
-		text := cached.cp.Decode(entry.Data()[SubtitleHeaderSize:])
+
 		subtitleEntry := SubtitleEntry{
-			text: text,
+			Timestamp: entry.Timestamp(),
+			Text:      cached.cp.Decode(entry.Data()[SubtitleHeaderSize:]),
 		}
 		sub.entries = append(sub.entries, subtitleEntry)
 
@@ -173,7 +174,8 @@ func (cache *Cache) Video(key resource.Key) ([][]bitmap.Bitmap, error) {
 }
 
 type SubtitleEntry struct {
-	text string
+	Timestamp Timestamp
+	Text      string
 }
 
 type Subtitles struct {
