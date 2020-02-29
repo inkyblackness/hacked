@@ -5,7 +5,7 @@ import (
 )
 
 type memoryContainer struct {
-	mediaDuration float32
+	endTimestamp Timestamp
 
 	videoWidth   uint16
 	videoHeight  uint16
@@ -16,8 +16,8 @@ type memoryContainer struct {
 	entries []Entry
 }
 
-func (container *memoryContainer) MediaDuration() float32 {
-	return container.mediaDuration
+func (container *memoryContainer) EndTimestamp() Timestamp {
+	return container.endTimestamp
 }
 
 func (container *memoryContainer) VideoWidth() uint16 {

@@ -37,7 +37,7 @@ func TestWriteSavesEntries(t *testing.T) {
 	dataBytes := []byte{0x01, 0x02, 0x03}
 	builder := NewContainerBuilder()
 	builder.AudioSampleRate(22050.0)
-	builder.AddEntry(NewMemoryEntry(0.0, Audio, dataBytes))
+	builder.AddEntry(NewMemoryEntry(Timestamp{}, Audio, dataBytes))
 	container := builder.Build()
 	buffer := bytes.NewBuffer(nil)
 

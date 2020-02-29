@@ -75,7 +75,7 @@ func (cached *cachedMovie) subtitles(language resource.Language) Subtitles {
 		if entry.Type() == HighResVideo {
 			fmt.Println()
 		}
-		fmt.Printf("%02X[%03.3f] ", int(entry.Type()), entry.Timestamp())
+		fmt.Printf("%02X[%03d.%04X] ", int(entry.Type()), entry.Timestamp().Second, entry.Timestamp().Fraction)
 		if entry.Type() != Subtitle {
 			continue
 		}

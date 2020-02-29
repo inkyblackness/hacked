@@ -12,21 +12,19 @@ const audioEntrySize = 0x2000
 func ContainSoundData(soundData audio.L8) []byte {
 	builder := NewContainerBuilder()
 	startOffset := 0
-	entryStartTime := float32(0)
-	timePerEntry := timeFromRaw(timeToRaw(float32(audioEntrySize) / soundData.SampleRate))
 
 	for (startOffset + audioEntrySize) <= len(soundData.Samples) {
+		ts := TimestampFromSeconds(float32(startOffset) / soundData.SampleRate)
 		endOffset := startOffset + audioEntrySize
-		builder.AddEntry(NewMemoryEntry(entryStartTime, Audio, soundData.Samples[startOffset:endOffset]))
-		entryStartTime += timePerEntry
+		builder.AddEntry(NewMemoryEntry(ts, Audio, soundData.Samples[startOffset:endOffset]))
 		startOffset = endOffset
 	}
 	if startOffset < len(soundData.Samples) {
-		builder.AddEntry(NewMemoryEntry(entryStartTime, Audio, soundData.Samples[startOffset:]))
-		entryStartTime += timeFromRaw(timeToRaw(float32(len(soundData.Samples)-startOffset) / soundData.SampleRate))
+		ts := TimestampFromSeconds(float32(startOffset) / soundData.SampleRate)
+		builder.AddEntry(NewMemoryEntry(ts, Audio, soundData.Samples[startOffset:]))
 	}
 
-	builder.MediaDuration(entryStartTime)
+	builder.EndTimestamp(TimestampFromSeconds(float32(len(soundData.Samples)) / soundData.SampleRate))
 	builder.AudioSampleRate(uint16(soundData.SampleRate))
 
 	container := builder.Build()

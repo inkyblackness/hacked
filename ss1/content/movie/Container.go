@@ -6,8 +6,8 @@ import (
 
 // Container wraps the information and data of a MOVI container.
 type Container interface {
-	// MediaDuration returns the duration of the media in seconds.
-	MediaDuration() float32
+	// EndTimestamp returns the time of the end of the movie.
+	EndTimestamp() Timestamp
 
 	// VideoWidth returns the width of a video in pixel.
 	VideoWidth() uint16

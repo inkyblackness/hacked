@@ -21,9 +21,9 @@ func (builder *ContainerBuilder) Build() Container {
 	return builder.container
 }
 
-// MediaDuration sets the duration for the new container in seconds.
-func (builder *ContainerBuilder) MediaDuration(value float32) *ContainerBuilder {
-	builder.container.mediaDuration = value
+// EndTimestamp sets the end timestamp of the container.
+func (builder *ContainerBuilder) EndTimestamp(value Timestamp) *ContainerBuilder {
+	builder.container.endTimestamp = value
 	return builder
 }
 

@@ -18,7 +18,8 @@ func Write(dest io.Writer, container Container) error {
 
 	// setup header
 	copy(header.Tag[:], bytes.NewBufferString(format.Tag).Bytes())
-	header.DurationSeconds, header.DurationFraction = timeToRaw(container.MediaDuration())
+	header.DurationSeconds = container.EndTimestamp().Second
+	header.DurationFraction = container.EndTimestamp().Fraction
 	header.VideoWidth = container.VideoWidth()
 	header.VideoHeight = container.VideoHeight()
 	header.SampleRate = container.AudioSampleRate()
@@ -34,11 +35,13 @@ func Write(dest io.Writer, container Container) error {
 	for i := 0; i < container.EntryCount(); i++ {
 		dataEntry := container.Entry(i)
 		indexEntry := format.IndexTableEntry{
-			Type:       byte(dataEntry.Type()),
-			DataOffset: header.ContentSize}
+			Type:              byte(dataEntry.Type()),
+			DataOffset:        header.ContentSize,
+			TimestampSecond:   dataEntry.Timestamp().Second,
+			TimestampFraction: dataEntry.Timestamp().Fraction,
+		}
 
 		header.ContentSize += int32(len(dataEntry.Data()))
-		indexEntry.TimestampSecond, indexEntry.TimestampFraction = timeToRaw(dataEntry.Timestamp())
 		indexEntries = append(indexEntries, indexEntry)
 	}
 	// calculate size fields

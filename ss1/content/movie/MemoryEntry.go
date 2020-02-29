@@ -1,13 +1,13 @@
 package movie
 
 type memoryEntry struct {
-	timestamp float32
+	timestamp Timestamp
 	dataType  DataType
 	data      []byte
 }
 
 // NewMemoryEntry returns an Entry instance that has the properties in memory.
-func NewMemoryEntry(timestamp float32, dataType DataType, data []byte) Entry {
+func NewMemoryEntry(timestamp Timestamp, dataType DataType, data []byte) Entry {
 	entry := &memoryEntry{
 		timestamp: timestamp,
 		dataType:  dataType,
@@ -16,7 +16,7 @@ func NewMemoryEntry(timestamp float32, dataType DataType, data []byte) Entry {
 	return entry
 }
 
-func (entry *memoryEntry) Timestamp() float32 {
+func (entry *memoryEntry) Timestamp() Timestamp {
 	return entry.timestamp
 }
 

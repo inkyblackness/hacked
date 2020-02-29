@@ -155,7 +155,7 @@ func (dispatcher *MediaDispatcher) clearFrameBuffer() {
 	}
 }
 
-func (dispatcher *MediaDispatcher) notifyVideoFrame(timestamp float32) {
+func (dispatcher *MediaDispatcher) notifyVideoFrame(timestamp Timestamp) {
 	bmp := bitmap.Bitmap{
 		Header: bitmap.Header{
 			Type:   bitmap.TypeFlat8Bit,

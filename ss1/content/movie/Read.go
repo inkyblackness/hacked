@@ -49,7 +49,7 @@ func verifyAndExtractHeader(builder *ContainerBuilder, header *format.Header) er
 		return errors.New("not a MOVI format")
 	}
 
-	builder.MediaDuration(timeFromRaw(header.DurationSeconds, header.DurationFraction))
+	builder.EndTimestamp(Timestamp{Second: header.DurationSeconds, Fraction: header.DurationFraction})
 	builder.VideoHeight(header.VideoHeight)
 	builder.VideoWidth(header.VideoWidth)
 	builder.AudioSampleRate(header.SampleRate)
@@ -79,7 +79,10 @@ func readIndexAndEntries(source io.ReadSeeker, startPos int64, builder *Containe
 		entryType := DataType(indexEntry.Type)
 
 		if entryType != endOfMedia {
-			timestamp := timeFromRaw(indexEntry.TimestampSecond, indexEntry.TimestampFraction)
+			timestamp := Timestamp{
+				Second:   indexEntry.TimestampSecond,
+				Fraction: indexEntry.TimestampFraction,
+			}
 			length := int(indexEntries[index+1].DataOffset - indexEntry.DataOffset)
 			data := make([]byte, length)
 
