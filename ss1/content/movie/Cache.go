@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 
 	"github.com/inkyblackness/hacked/ss1/content/audio"
+	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
@@ -19,10 +20,11 @@ type Cache struct {
 type cachedMovie struct {
 	container Container
 
-	sound *audio.L8
+	sound       *audio.L8
+	sceneFrames [][]bitmap.Bitmap
 }
 
-func (cached *cachedMovie) audio() (sound audio.L8) {
+func (cached *cachedMovie) audio() audio.L8 {
 	if cached.sound != nil {
 		return *cached.sound
 	}
@@ -38,6 +40,14 @@ func (cached *cachedMovie) audio() (sound audio.L8) {
 		SampleRate: float32(cached.container.AudioSampleRate()),
 	}
 	return *cached.sound
+}
+
+func (cached *cachedMovie) video() [][]bitmap.Bitmap {
+	if len(cached.sceneFrames) > 0 {
+		return cached.sceneFrames
+	}
+	// TODO
+	return nil
 }
 
 // NewCache returns a new instance.
@@ -98,4 +108,12 @@ func (cache *Cache) Audio(key resource.Key) (sound audio.L8, err error) {
 		return
 	}
 	return cached.audio(), nil
+}
+
+func (cache *Cache) Video(key resource.Key) ([][]bitmap.Bitmap, error) {
+	cached, err := cache.cached(key)
+	if err != nil {
+		return nil, err
+	}
+	return cached.video(), nil
 }
