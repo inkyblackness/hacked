@@ -13,7 +13,31 @@ import (
 type Cache struct {
 	localizer resource.Localizer
 
-	movies map[resource.Key]Container
+	movies map[resource.Key]*cachedMovie
+}
+
+type cachedMovie struct {
+	container Container
+
+	sound *audio.L8
+}
+
+func (cached *cachedMovie) audio() (sound audio.L8) {
+	if cached.sound != nil {
+		return *cached.sound
+	}
+	var samples []byte
+	for index := 0; index < cached.container.EntryCount(); index++ {
+		entry := cached.container.Entry(index)
+		if entry.Type() == Audio {
+			samples = append(samples, entry.Data()...)
+		}
+	}
+	cached.sound = &audio.L8{
+		Samples:    samples,
+		SampleRate: float32(cached.container.AudioSampleRate()),
+	}
+	return *cached.sound
 }
 
 // NewCache returns a new instance.
@@ -21,7 +45,7 @@ func NewCache(localizer resource.Localizer) *Cache {
 	cache := &Cache{
 		localizer: localizer,
 
-		movies: make(map[resource.Key]Container),
+		movies: make(map[resource.Key]*cachedMovie),
 	}
 	return cache
 }
@@ -37,8 +61,7 @@ func (cache *Cache) InvalidateResources(ids []resource.ID) {
 	}
 }
 
-// Movie retrieves and caches the message of given key.
-func (cache *Cache) Movie(key resource.Key) (Container, error) {
+func (cache *Cache) cached(key resource.Key) (*cachedMovie, error) {
 	value, existing := cache.movies[key]
 	if existing {
 		return value, nil
@@ -59,29 +82,20 @@ func (cache *Cache) Movie(key resource.Key) (Container, error) {
 	if err != nil {
 		return nil, err
 	}
-	value, err = Read(bytes.NewReader(data))
+	container, err := Read(bytes.NewReader(data))
 	if err != nil {
 		return nil, err
 	}
-	cache.movies[key] = value
-	return value, nil
+	cached := &cachedMovie{container: container}
+	cache.movies[key] = cached
+	return cached, nil
 }
 
 // Audio retrieves and caches the underlying movie, and returns the audio only.
 func (cache *Cache) Audio(key resource.Key) (sound audio.L8, err error) {
-	container, err := cache.Movie(key)
+	cached, err := cache.cached(key)
 	if err != nil {
 		return
 	}
-	var samples []byte
-	for index := 0; index < container.EntryCount(); index++ {
-		entry := container.Entry(index)
-		if entry.Type() == Audio {
-			samples = append(samples, entry.Data()...)
-		}
-	}
-	return audio.L8{
-		Samples:    samples,
-		SampleRate: float32(container.AudioSampleRate()),
-	}, nil
+	return cached.audio(), nil
 }
