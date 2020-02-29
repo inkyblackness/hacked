@@ -425,7 +425,7 @@ func (app *Application) initModel() {
 	app.textLineCache = text.NewLineCache(app.cp, app.mod)
 	app.textPageCache = text.NewPageCache(app.cp, app.mod)
 	app.messagesCache = text.NewElectronicMessageCache(app.cp, app.mod)
-	app.movieCache = movie.NewCache(app.mod)
+	app.movieCache = movie.NewCache(app.cp, app.mod)
 
 	for i := 0; i < archive.MaxLevels; i++ {
 		app.levels[i] = level.NewLevel(ids.LevelResourcesStart, i, app.mod)

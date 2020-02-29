@@ -2,6 +2,7 @@ package undoable
 
 import (
 	"github.com/inkyblackness/hacked/ss1/content/audio"
+	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/edit"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -24,4 +25,9 @@ func NewMovieService(wrapped edit.MovieService, commander cmd.Commander) MovieSe
 // Audio returns the audio component of identified movie.
 func (service MovieService) Audio(key resource.Key) audio.L8 {
 	return service.wrapped.Audio(key)
+}
+
+// Subtitles returns the subtitles associated with the given key.
+func (service MovieService) Subtitles(key resource.Key, language resource.Language) movie.Subtitles {
+	return service.wrapped.Subtitles(key, language)
 }

@@ -9,11 +9,13 @@ type viewModel struct {
 	windowOpen   bool
 	restoreFocus bool
 
-	currentKey resource.Key
+	currentKey          resource.Key
+	currentSubtitleLang resource.Language
 }
 
 func freshViewModel() viewModel {
 	return viewModel{
-		currentKey: resource.KeyOf(ids.MovieIntro, resource.LangDefault, 0),
+		currentKey:          resource.KeyOf(ids.MovieIntro, resource.LangDefault, 0),
+		currentSubtitleLang: resource.LangDefault,
 	}
 }

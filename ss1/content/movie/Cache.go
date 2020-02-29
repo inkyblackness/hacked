@@ -2,26 +2,34 @@ package movie
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
+	"fmt"
 	"io/ioutil"
 
 	"github.com/inkyblackness/hacked/ss1/content/audio"
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
+	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
 // Cache retrieves movie container from a localizer and keeps them decoded until they are invalidated.
 type Cache struct {
+	cp text.Codepage
+
 	localizer resource.Localizer
 
 	movies map[resource.Key]*cachedMovie
 }
 
 type cachedMovie struct {
+	cp text.Codepage
+
 	container Container
 
-	sound       *audio.L8
-	sceneFrames [][]bitmap.Bitmap
+	sound           *audio.L8
+	sceneFrames     [][]bitmap.Bitmap
+	subtitlesByLang map[resource.Language]*Subtitles
 }
 
 func (cached *cachedMovie) audio() audio.L8 {
@@ -50,9 +58,52 @@ func (cached *cachedMovie) video() [][]bitmap.Bitmap {
 	return nil
 }
 
+func (cached *cachedMovie) subtitles(language resource.Language) Subtitles {
+	sub := cached.subtitlesByLang[language]
+	if sub != nil {
+		return *sub
+	}
+
+	sub = &Subtitles{}
+
+	fmt.Println("new query:")
+	for index := 0; index < cached.container.EntryCount(); index++ {
+		entry := cached.container.Entry(index)
+		if entry.Type() == Audio {
+			continue
+		}
+		if entry.Type() == HighResVideo {
+			fmt.Println()
+		}
+		fmt.Printf("%02X[%03.3f] ", int(entry.Type()), entry.Timestamp())
+		if entry.Type() != Subtitle {
+			continue
+		}
+		var subtitleHeader SubtitleHeader
+		err := binary.Read(bytes.NewReader(entry.Data()), binary.LittleEndian, &subtitleHeader)
+		if err != nil {
+			continue
+		}
+		//if header.Control == Sub
+		text := cached.cp.Decode(entry.Data()[SubtitleHeaderSize:])
+		subtitleEntry := SubtitleEntry{
+			text: text,
+		}
+		sub.entries = append(sub.entries, subtitleEntry)
+
+	}
+	fmt.Println()
+	if cached.subtitlesByLang == nil {
+		cached.subtitlesByLang = make(map[resource.Language]*Subtitles)
+	}
+	cached.subtitlesByLang[language] = sub
+	return *sub
+}
+
 // NewCache returns a new instance.
-func NewCache(localizer resource.Localizer) *Cache {
+func NewCache(cp text.Codepage, localizer resource.Localizer) *Cache {
 	cache := &Cache{
+		cp:        cp,
 		localizer: localizer,
 
 		movies: make(map[resource.Key]*cachedMovie),
@@ -96,7 +147,10 @@ func (cache *Cache) cached(key resource.Key) (*cachedMovie, error) {
 	if err != nil {
 		return nil, err
 	}
-	cached := &cachedMovie{container: container}
+	cached := &cachedMovie{
+		cp:        cache.cp,
+		container: container,
+	}
 	cache.movies[key] = cached
 	return cached, nil
 }
@@ -116,4 +170,20 @@ func (cache *Cache) Video(key resource.Key) ([][]bitmap.Bitmap, error) {
 		return nil, err
 	}
 	return cached.video(), nil
+}
+
+type SubtitleEntry struct {
+	text string
+}
+
+type Subtitles struct {
+	entries []SubtitleEntry
+}
+
+func (cache *Cache) Subtitles(key resource.Key, language resource.Language) (Subtitles, error) {
+	cached, err := cache.cached(key)
+	if err != nil {
+		return Subtitles{}, err
+	}
+	return cached.subtitles(language), nil
 }

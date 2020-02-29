@@ -38,3 +38,12 @@ func (service MovieViewerService) Audio(key resource.Key) audio.L8 {
 	}
 	return currentValue
 }
+
+// Subtitles returns the subtitles associated with the given key.
+func (service MovieViewerService) Subtitles(key resource.Key, language resource.Language) movie.Subtitles {
+	currentValue, cacheErr := service.movieCache.Subtitles(key, language)
+	if cacheErr != nil {
+		return movie.Subtitles{}
+	}
+	return currentValue
+}

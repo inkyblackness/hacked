@@ -7,6 +7,7 @@ import (
 
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/ss1/content/audio"
+	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -130,6 +131,11 @@ func (view *View) renderContent() {
 func (view *View) renderProperties() {
 	// gui.StepSliderInt("Frame Index", &view.model.currentFrame, 0, lastFrame)
 
+	view.renderAudioProperties()
+	view.renderSubtitlesProperties()
+}
+
+func (view *View) renderAudioProperties() {
 	imgui.Separator()
 	sound := view.currentSound()
 	imgui.LabelText("Audio", fmt.Sprintf("%.2f sec", sound.Duration()))
@@ -140,24 +146,31 @@ func (view *View) renderProperties() {
 	if imgui.Button("Import") {
 		view.requestImportAudio()
 	}
+}
+
+func (view *View) renderSubtitlesProperties() {
+	imgui.Separator()
+	view.currentSubtitles()
 
 }
 
 func (view *View) restoreFunc() func() {
 	oldKey := view.model.currentKey
+	oldSubtitlesLang := view.model.currentSubtitleLang
 
 	return func() {
 		view.model.restoreFocus = true
 		view.model.currentKey = oldKey
+		view.model.currentSubtitleLang = oldSubtitlesLang
 	}
 }
 
-func (view *View) currentSound() (sound audio.L8) {
+func (view *View) currentSound() audio.L8 {
 	return view.movieService.Audio(view.model.currentKey)
 }
 
 func (view *View) requestExportAudio(sound audio.L8) {
-	filename := fmt.Sprintf("%05d_%03d_%s.wav", view.model.currentKey.ID, view.model.currentKey.Index, view.model.currentKey.Lang.String())
+	filename := fmt.Sprintf("%s_%s.wav", knownMovies[view.model.currentKey.ID].title, view.model.currentKey.Lang.String())
 
 	external.ExportAudio(view.modalStateMachine, filename, sound)
 }
@@ -166,4 +179,8 @@ func (view *View) requestImportAudio() {
 	external.ImportAudio(view.modalStateMachine, func(sound audio.L8) {
 		// view.movieService.RequestSetAudio(view.model.currentKey, sound, view.restoreFunc())
 	})
+}
+
+func (view *View) currentSubtitles() movie.Subtitles {
+	return view.movieService.Subtitles(view.model.currentKey, view.model.currentSubtitleLang)
 }
