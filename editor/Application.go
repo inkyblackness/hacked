@@ -459,7 +459,9 @@ func (app *Application) initView() {
 	textSetter := media.NewTextSetterService(app.cp)
 	audioViewer := media.NewAudioViewerService(app.movieCache, app.mod)
 	audioSetter := media.NewAudioSetterService()
+	movieViewer := media.NewMovieViewerService(app.movieCache, app.mod)
 	augmentedTextService := undoable.NewAugmentedTextService(edit.NewAugmentedTextService(textViewer, textSetter, audioViewer, audioSetter), app)
+	movieService := undoable.NewMovieService(edit.NewMovieService(movieViewer), app)
 
 	app.projectView = project.NewView(app.mod, &app.modalState, app.GuiScale, app)
 	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)
@@ -471,7 +473,7 @@ func (app *Application) initView() {
 	app.bitmapsView = bitmaps.NewBitmapsView(app.mod, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.texturesView = textures.NewTexturesView(app.mod, app.textLineCache, app.cp, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.animationsView = animations.NewAnimationsView(app.mod, app.textureCache, app.paletteCache, app.animationCache, &app.modalState, app.GuiScale, app)
-	app.moviesView = movies.NewMoviesView(app.mod, &app.modalState, app.GuiScale, app)
+	app.moviesView = movies.NewMoviesView(app.mod, movieService, &app.modalState, app.GuiScale, app)
 	app.objectsView = objects.NewView(app.mod, app.textLineCache, app.cp, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 	app.licensesView = about.NewLicensesView(app.GuiScale)

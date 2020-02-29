@@ -1,8 +1,13 @@
 package movies
 
 import (
+	"fmt"
+
 	"github.com/inkyblackness/imgui-go"
 
+	"github.com/inkyblackness/hacked/editor/external"
+	"github.com/inkyblackness/hacked/ss1/content/audio"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
@@ -27,6 +32,8 @@ var knownMoviesOrder = []resource.ID{ids.MovieIntro, ids.MovieDeath, ids.MovieEn
 type View struct {
 	mod *world.Mod
 
+	movieService undoable.MovieService
+
 	modalStateMachine gui.ModalStateMachine
 	guiScale          float32
 	commander         cmd.Commander
@@ -36,9 +43,12 @@ type View struct {
 
 // NewMoviesView returns a new instance.
 func NewMoviesView(mod *world.Mod,
+	movieService undoable.MovieService,
 	modalStateMachine gui.ModalStateMachine, guiScale float32, commander cmd.Commander) *View {
 	view := &View{
 		mod: mod,
+
+		movieService: movieService,
 
 		modalStateMachine: modalStateMachine,
 		guiScale:          guiScale,
@@ -94,7 +104,7 @@ func (view *View) renderContent() {
 				imgui.EndCombo()
 			}
 		} else {
-			// TODO: skip a line
+			imgui.LabelText("Language", "(not localized)")
 		}
 
 		//		info, _ := ids.Info(view.model.currentKey.ID)
@@ -119,4 +129,41 @@ func (view *View) renderContent() {
 
 func (view *View) renderProperties() {
 	// gui.StepSliderInt("Frame Index", &view.model.currentFrame, 0, lastFrame)
+
+	imgui.Separator()
+	sound := view.currentSound()
+	imgui.LabelText("Audio", fmt.Sprintf("%.2f sec", sound.Duration()))
+	if imgui.Button("Export") {
+		view.requestExportAudio(sound)
+	}
+	imgui.SameLine()
+	if imgui.Button("Import") {
+		view.requestImportAudio()
+	}
+
+}
+
+func (view *View) restoreFunc() func() {
+	oldKey := view.model.currentKey
+
+	return func() {
+		view.model.restoreFocus = true
+		view.model.currentKey = oldKey
+	}
+}
+
+func (view *View) currentSound() (sound audio.L8) {
+	return view.movieService.Audio(view.model.currentKey)
+}
+
+func (view *View) requestExportAudio(sound audio.L8) {
+	filename := fmt.Sprintf("%05d_%03d_%s.wav", view.model.currentKey.ID, view.model.currentKey.Index, view.model.currentKey.Lang.String())
+
+	external.ExportAudio(view.modalStateMachine, filename, sound)
+}
+
+func (view *View) requestImportAudio() {
+	external.ImportAudio(view.modalStateMachine, func(sound audio.L8) {
+		// view.movieService.RequestSetAudio(view.model.currentKey, sound, view.restoreFunc())
+	})
 }
