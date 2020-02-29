@@ -36,6 +36,13 @@ const (
 	VideoMailAnimationsStart resource.ID = 0x0A4C
 )
 
+// Movies
+const (
+	MovieIntro resource.ID = 0x0BD6
+	MovieDeath resource.ID = 0x0BD7
+	MovieEnd   resource.ID = 0x0BD8
+)
+
 // Texts
 const (
 	PaperTextsStart      resource.ID = 0x003C

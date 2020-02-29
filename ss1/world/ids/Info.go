@@ -126,6 +126,10 @@ var infoList = []ResourceInfo{
 	{VideoMailBitmapsStart, VideoMailBitmapsStart.Plus(12), resource.Bitmap, true, false, false, 12, VidMail},
 	{VideoMailAnimationsStart, VideoMailAnimationsStart.Plus(12), resource.Animation, true, false, false, 12, VidMail},
 
+	{MovieIntro, MovieIntro.Plus(1), resource.Movie, false, false, false, 1, SvgaIntr},
+	{MovieDeath, MovieDeath.Plus(1), resource.Movie, false, false, false, 1, SvgaDeth},
+	{MovieEnd, MovieEnd.Plus(1), resource.Movie, false, false, false, 1, SvgaEnd},
+
 	{PaperTextsStart, PaperTextsStart.Plus(16), resource.Text, true, false, false, 16, CybStrng},
 
 	{TrapMessageTexts, TrapMessageTexts.Plus(1), resource.Text, true, false, true, 256, CybStrng},
