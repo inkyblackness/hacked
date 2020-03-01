@@ -71,7 +71,7 @@ func (dispatcher *MediaDispatcher) process(entry Entry) (dispatched bool, err er
 			if err != nil {
 				return
 			}
-			subtitle := dispatcher.codepage.Decode(entry.Data()[SubtitleHeaderSize:])
+			subtitle := dispatcher.codepage.Decode(entry.Data()[subtitleHeader.TextOffset:])
 			dispatcher.handler.OnSubtitle(entry.Timestamp(), subtitleHeader.Control, subtitle)
 			dispatched = true
 		}

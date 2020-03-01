@@ -21,5 +21,10 @@ func TimestampFromSeconds(value float32) Timestamp {
 
 // ToDuration returns the equivalent duration for this timestamp.
 func (ts Timestamp) ToDuration() time.Duration {
-	return time.Second * time.Duration(float64(ts.Second)+float64(ts.Fraction)/fractionDivisor)
+	return time.Duration((float64(ts.Second) + float64(ts.Fraction)/fractionDivisor) * float64(time.Second))
+}
+
+// IsAfter returns true if this timestamp is later than the given one.
+func (ts Timestamp) IsAfter(other Timestamp) bool {
+	return (ts.Second > other.Second) || ((ts.Second == other.Second) && (ts.Fraction > other.Fraction))
 }

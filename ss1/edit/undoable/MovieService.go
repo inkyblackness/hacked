@@ -4,8 +4,10 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/audio"
 	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/edit"
+	"github.com/inkyblackness/hacked/ss1/edit/media"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/world"
 )
 
 // MovieService provides read/write functionality with undo capability.
@@ -30,4 +32,27 @@ func (service MovieService) Audio(key resource.Key) audio.L8 {
 // Subtitles returns the subtitles associated with the given key.
 func (service MovieService) Subtitles(key resource.Key, language resource.Language) movie.Subtitles {
 	return service.wrapped.Subtitles(key, language)
+}
+
+// RequestSetSubtitles queues the change to update subtitles.
+func (service MovieService) RequestSetSubtitles(key resource.Key,
+	language resource.Language, subtitles movie.Subtitles, restoreFunc func()) {
+	service.requestCommand(
+		func(setter media.MovieBlockSetter) {
+			service.wrapped.SetSubtitles(setter, key, language, subtitles)
+		},
+		service.wrapped.RestoreFunc(key),
+		restoreFunc)
+}
+
+func (service MovieService) requestCommand(
+	forward func(modder media.MovieBlockSetter),
+	reverse func(modder media.MovieBlockSetter),
+	restore func()) {
+	c := command{
+		forward: func(modder world.Modder) { forward(modder) },
+		reverse: func(modder world.Modder) { reverse(modder) },
+		restore: restore,
+	}
+	service.commander.Queue(c)
 }

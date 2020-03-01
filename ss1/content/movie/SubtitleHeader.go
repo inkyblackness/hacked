@@ -1,13 +1,12 @@
 package movie
 
-// SubtitleHeaderSize is the size, in bytes, of the header structure
-const SubtitleHeaderSize = 16
+// SubtitleDefaultTextOffset is the typical offset, in bytes, to text content.
+const SubtitleDefaultTextOffset = 16
 
 // SubtitleHeader is the header structure of a subtitle data
 type SubtitleHeader struct {
 	// Control specifies how to interpret the string content
 	Control SubtitleControl
-
-	Unknown0004 byte
-	Unknown0005 [11]byte
+	// TextOffset specifies the offset, in bytes from beginning of entry data, where the text starts.
+	TextOffset byte
 }

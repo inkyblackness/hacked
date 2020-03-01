@@ -30,6 +30,11 @@ func (service MovieViewerService) Modified(key resource.Key) bool {
 	return len(service.getter.ModifiedBlock(key.Lang, key.ID, key.Index)) > 0
 }
 
+// Container returns the base container of the movie.
+func (service MovieViewerService) Container(key resource.Key) (movie.Container, error) {
+	return service.movieCache.Container(key)
+}
+
 // Audio returns the audio data associated with the given key.
 func (service MovieViewerService) Audio(key resource.Key) audio.L8 {
 	currentValue, cacheErr := service.movieCache.Audio(key)

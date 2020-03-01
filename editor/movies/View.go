@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/asticode/go-astisub"
 	"github.com/inkyblackness/imgui-go"
@@ -243,5 +244,41 @@ func (view View) requestExportSubtitles() {
 }
 
 func (view *View) requestImportSubtitles() {
+	info := "File must be an .SRT file."
+	types := []external.TypeInfo{{Title: "Subtitle files (*.srt)", Extensions: []string{"srt"}}}
+	var fileHandler func(string)
 
+	fileHandler = func(filename string) {
+		reader, err := os.Open(filename)
+		if err != nil {
+			external.Import(view.modalStateMachine, "Could not open file.\n"+info, types, fileHandler, true)
+			return
+		}
+		defer func() { _ = reader.Close() }()
+
+		subtitles, err := astisub.ReadFromSRT(reader)
+		if err != nil {
+			external.Import(view.modalStateMachine, "File not recognized as SRT.\n"+info, types, fileHandler, true)
+			return
+		}
+		var newSubtitles movie.Subtitles
+		for _, item := range subtitles.Items {
+			var newEntry movie.SubtitleEntry
+			newEntry.Timestamp = movie.TimestampFromSeconds(float32(item.StartAt) / float32(time.Second))
+			for _, line := range item.Lines {
+				for _, lineItem := range line.Items {
+					if len(newEntry.Text) > 0 {
+						newEntry.Text += "\n"
+					}
+					newEntry.Text = newEntry.Text + lineItem.Text
+				}
+			}
+			newSubtitles.Entries = append(newSubtitles.Entries, newEntry)
+		}
+
+		view.movieService.RequestSetSubtitles(view.model.currentKey, view.model.currentSubtitleLang,
+			newSubtitles, view.restoreFunc())
+	}
+
+	external.Import(view.modalStateMachine, info, types, fileHandler, false)
 }

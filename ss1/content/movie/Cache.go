@@ -75,7 +75,8 @@ func (cached *cachedMovie) subtitles(language resource.Language) Subtitles {
 			continue
 		}
 		if subtitleHeader.Control == expectedControl {
-			sub.add(entry.Timestamp(), cached.cp.Decode(entry.Data()[SubtitleHeaderSize:]))
+			text := cached.cp.Decode(entry.Data()[subtitleHeader.TextOffset:])
+			sub.add(entry.Timestamp(), text)
 		}
 	}
 	if (len(sub.Entries) > 0) && (len(sub.Entries[len(sub.Entries)-1].Text) > 0) {
@@ -141,6 +142,15 @@ func (cache *Cache) cached(key resource.Key) (*cachedMovie, error) {
 	}
 	cache.movies[key] = cached
 	return cached, nil
+}
+
+// Container retrieves and caches the underlying movie, and returns the complete container.
+func (cache *Cache) Container(key resource.Key) (Container, error) {
+	cached, err := cache.cached(key)
+	if err != nil {
+		return Container{}, err
+	}
+	return cached.container, nil
 }
 
 // Audio retrieves and caches the underlying movie, and returns the audio only.
