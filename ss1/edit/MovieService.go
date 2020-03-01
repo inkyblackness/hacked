@@ -10,14 +10,21 @@ import (
 // MovieService provides read/write functionality.
 type MovieService struct {
 	movieViewer media.MovieViewerService
+	movieSetter media.MovieSetterService
 }
 
 // NewMovieService returns a new instance based on given accessor.
 func NewMovieService(
-	movieViewer media.MovieViewerService) MovieService {
+	movieViewer media.MovieViewerService, movieSetter media.MovieSetterService) MovieService {
 	return MovieService{
 		movieViewer: movieViewer,
+		movieSetter: movieSetter,
 	}
+}
+
+// Remove erases the movie from the resources.
+func (service MovieService) Remove(setter media.MovieBlockSetter, key resource.Key) {
+	service.movieSetter.Remove(setter, key)
 }
 
 // Audio returns the audio component of identified movie.
