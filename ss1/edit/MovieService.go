@@ -87,7 +87,12 @@ func (service MovieService) SetSubtitles(setter media.MovieBlockSetter, key reso
 
 	var newEntries []movie.Entry
 	if areaIndex < 0 {
-		// TODO: create area index
+		// Ensure a subtitle area is defined.
+		// The area is hardcoded. While the engine respects any area, placing the text in the
+		// frame area will have the pixels become overwritten. As such, there are many "wrong" options,
+		// and only a few right ones. There's no need to make them editable.
+		newEntries = append(newEntries,
+			movie.NewSubtitleEntry(movie.Timestamp{}, movie.SubtitleArea, service.cp.Encode("20 365 620 395 CLR")))
 	}
 	lastInsertIndex := -1
 	for filteredIndex, filteredEntry := range filteredEntries {
@@ -98,15 +103,8 @@ func (service MovieService) SetSubtitles(setter media.MovieBlockSetter, key reso
 					break
 				}
 
-				buf := bytes.NewBuffer(nil)
-				var subtitleHeader movie.SubtitleHeader
-				subtitleHeader.Control = subtitleControl
-				subtitleHeader.TextOffset = movie.SubtitleDefaultTextOffset
-				_ = binary.Write(buf, binary.LittleEndian, &subtitleHeader)
-				buf.Write(make([]byte, movie.SubtitleDefaultTextOffset-buf.Len()))
-				buf.Write(service.cp.Encode(subEntry.Text))
-
-				newEntries = append(newEntries, movie.NewMemoryEntry(subEntry.Timestamp, movie.Subtitle, buf.Bytes()))
+				newEntries = append(newEntries,
+					movie.NewSubtitleEntry(subEntry.Timestamp, subtitleControl, service.cp.Encode(subEntry.Text)))
 				lastInsertIndex++
 			}
 		}
