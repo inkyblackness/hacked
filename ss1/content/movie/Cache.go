@@ -57,7 +57,7 @@ func (cached *cachedMovie) video() []Scene {
 	}
 
 	var scenes []Scene
-	var currentPalette bitmap.Palette
+	currentPalette := cached.container.StartPalette
 	width := int(cached.container.VideoWidth)
 	height := int(cached.container.VideoHeight)
 	frameBuffer := make([]byte, width*height)

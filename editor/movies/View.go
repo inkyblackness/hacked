@@ -10,6 +10,8 @@ import (
 	"github.com/inkyblackness/imgui-go"
 
 	"github.com/inkyblackness/hacked/editor/external"
+	"github.com/inkyblackness/hacked/editor/graphics"
+	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/ss1/content/audio"
 	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable"
@@ -37,6 +39,9 @@ var knownMoviesOrder = []resource.ID{ids.MovieIntro, ids.MovieDeath, ids.MovieEn
 type View struct {
 	mod *world.Mod
 
+	frameCache    *graphics.FrameCache
+	frameCacheKey graphics.FrameCacheKey
+
 	movieService undoable.MovieService
 
 	modalStateMachine gui.ModalStateMachine
@@ -47,11 +52,14 @@ type View struct {
 }
 
 // NewMoviesView returns a new instance.
-func NewMoviesView(mod *world.Mod,
+func NewMoviesView(mod *world.Mod, frameCache *graphics.FrameCache,
 	movieService undoable.MovieService,
 	modalStateMachine gui.ModalStateMachine, guiScale float32, commander cmd.Commander) *View {
 	view := &View{
 		mod: mod,
+
+		frameCache:    frameCache,
+		frameCacheKey: frameCache.AllocateKey(),
 
 		movieService: movieService,
 
@@ -124,7 +132,11 @@ func (view *View) renderContent() {
 	if imgui.BeginChildV("Frames", imgui.Vec2{X: -1, Y: 0}, false, 0) {
 		scenes := view.movieService.Video(view.model.currentKey)
 		if len(scenes) > 0 && len(scenes[0].Frames) > 0 {
-			// TODO: download frame & palette to GPU.
+			frame := scenes[0].Frames[0]
+			view.frameCache.SetTexture(view.frameCacheKey, frame) // TODO: only update if something changed
+
+			render.FrameImage("Frame", view.frameCache, view.frameCacheKey,
+				imgui.Vec2{X: float32(600) * view.guiScale, Y: float32(300) * view.guiScale})
 		}
 	}
 	imgui.EndChild()
