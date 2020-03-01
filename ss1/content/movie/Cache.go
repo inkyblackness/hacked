@@ -75,8 +75,7 @@ func (cached *cachedMovie) subtitles(language resource.Language) Subtitles {
 			continue
 		}
 		if subtitleHeader.Control == expectedControl {
-			text := cached.cp.Decode(entry.Data()[subtitleHeader.TextOffset:])
-			sub.add(entry.Timestamp(), text)
+			sub.add(entry.Timestamp(), cached.cp.Decode(entry.Data()[subtitleHeader.TextOffset:]))
 		}
 	}
 	if (len(sub.Entries) > 0) && (len(sub.Entries[len(sub.Entries)-1].Text) > 0) {
