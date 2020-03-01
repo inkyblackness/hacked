@@ -2,7 +2,10 @@ package movies
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
+	"github.com/asticode/go-astisub"
 	"github.com/inkyblackness/imgui-go"
 
 	"github.com/inkyblackness/hacked/editor/external"
@@ -108,11 +111,6 @@ func (view *View) renderContent() {
 			imgui.LabelText("Language", "(not localized)")
 		}
 
-		//		info, _ := ids.Info(view.model.currentKey.ID)
-		//		if gui.StepSliderInt("Index", &view.model.currentKey.Index, 0, info.MaxCount-1) {
-		//			view.model.currentFrame = 0
-		//		}
-
 		imgui.Separator()
 
 		view.renderProperties()
@@ -136,6 +134,7 @@ func (view *View) renderProperties() {
 }
 
 func (view *View) renderAudioProperties() {
+	imgui.PushID("audio")
 	imgui.Separator()
 	sound := view.currentSound()
 	imgui.LabelText("Audio", fmt.Sprintf("%.2f sec", sound.Duration()))
@@ -146,12 +145,29 @@ func (view *View) renderAudioProperties() {
 	if imgui.Button("Import") {
 		view.requestImportAudio()
 	}
+	imgui.PopID()
 }
 
 func (view *View) renderSubtitlesProperties() {
+	imgui.PushID("subtitles")
 	imgui.Separator()
-	view.currentSubtitles()
-
+	if imgui.BeginCombo("Sub Language", view.model.currentSubtitleLang.String()) {
+		languages := resource.Languages()
+		for _, lang := range languages {
+			if imgui.SelectableV(lang.String(), lang == view.model.currentSubtitleLang, 0, imgui.Vec2{}) {
+				view.model.currentSubtitleLang = lang
+			}
+		}
+		imgui.EndCombo()
+	}
+	if imgui.Button("Export") {
+		view.requestExportSubtitles()
+	}
+	imgui.SameLine()
+	if imgui.Button("Import") {
+		view.requestImportSubtitles()
+	}
+	imgui.PopID()
 }
 
 func (view *View) restoreFunc() func() {
@@ -183,4 +199,49 @@ func (view *View) requestImportAudio() {
 
 func (view *View) currentSubtitles() movie.Subtitles {
 	return view.movieService.Subtitles(view.model.currentKey, view.model.currentSubtitleLang)
+}
+
+func (view View) requestExportSubtitles() {
+	filename := fmt.Sprintf("%s_%s.srt", knownMovies[view.model.currentKey.ID].title, view.model.currentSubtitleLang.String())
+	info := "File to be written: " + filename
+	var exportTo func(string)
+	currentSubtitles := view.currentSubtitles()
+
+	exportTo = func(dirname string) {
+		writer, err := os.Create(filepath.Join(dirname, filename))
+		if err != nil {
+			external.Export(view.modalStateMachine, "Could not create file.\n"+info, exportTo, true)
+			return
+		}
+		defer func() { _ = writer.Close() }()
+
+		sub := astisub.NewSubtitles()
+
+		var lastItem *astisub.Item
+		for _, entry := range currentSubtitles.Entries {
+			var item astisub.Item
+			var line astisub.Line
+			line.Items = append(line.Items, astisub.LineItem{Text: entry.Text})
+			item.Lines = []astisub.Line{line}
+			item.StartAt = entry.Timestamp.ToDuration()
+			item.EndAt = item.StartAt
+			if lastItem != nil {
+				lastItem.EndAt = item.StartAt
+			}
+			lastItem = &item
+			sub.Items = append(sub.Items, lastItem)
+		}
+
+		err = sub.WriteToSRT(writer)
+		if err != nil {
+			external.Export(view.modalStateMachine, "Could not export subtitles.\n"+info, exportTo, true)
+			return
+		}
+	}
+
+	external.Export(view.modalStateMachine, info, exportTo, false)
+}
+
+func (view *View) requestImportSubtitles() {
+
 }

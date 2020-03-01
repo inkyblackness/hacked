@@ -2,7 +2,7 @@ package movie
 
 // Subtitles describe the textual representation of a movie.
 type Subtitles struct {
-	entries []SubtitleEntry
+	Entries []SubtitleEntry
 }
 
 // SubtitleEntry is a timestamped text for subtitles.
@@ -12,7 +12,7 @@ type SubtitleEntry struct {
 }
 
 func (sub *Subtitles) add(ts Timestamp, text string) {
-	sub.entries = append(sub.entries, SubtitleEntry{
+	sub.Entries = append(sub.Entries, SubtitleEntry{
 		Timestamp: ts,
 		Text:      text,
 	})

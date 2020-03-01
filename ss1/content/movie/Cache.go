@@ -80,7 +80,7 @@ func (cached *cachedMovie) subtitles(language resource.Language) Subtitles {
 			sub.add(entry.Timestamp(), cached.cp.Decode(entry.Data()[SubtitleHeaderSize:]))
 		}
 	}
-	if (len(sub.entries) > 0) && (len(sub.entries[len(sub.entries)-1].Text) > 0) {
+	if (len(sub.Entries) > 0) && (len(sub.Entries[len(sub.Entries)-1].Text) > 0) {
 		sub.add(cached.container.EndTimestamp(), "")
 	}
 	if cached.subtitlesByLang == nil {

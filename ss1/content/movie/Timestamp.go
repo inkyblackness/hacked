@@ -1,6 +1,8 @@
 package movie
 
-const fractionDivisor = float32(0x10000)
+import "time"
+
+const fractionDivisor = 0x10000
 
 // Timestamp represents a point in time using fixed resolution.
 type Timestamp struct {
@@ -15,4 +17,9 @@ func TimestampFromSeconds(value float32) Timestamp {
 		Second:   second,
 		Fraction: uint16((value - float32(second)) * fractionDivisor),
 	}
+}
+
+// ToDuration returns the equivalent duration for this timestamp.
+func (ts Timestamp) ToDuration() time.Duration {
+	return time.Second * time.Duration(float64(ts.Second)+float64(ts.Fraction)/fractionDivisor)
 }
