@@ -36,15 +36,14 @@ func (cached *cachedMovie) audio() audio.L8 {
 		return *cached.sound
 	}
 	var samples []byte
-	for index := 0; index < cached.container.EntryCount(); index++ {
-		entry := cached.container.Entry(index)
+	for _, entry := range cached.container.Entries {
 		if entry.Type() == Audio {
 			samples = append(samples, entry.Data()...)
 		}
 	}
 	cached.sound = &audio.L8{
 		Samples:    samples,
-		SampleRate: float32(cached.container.AudioSampleRate()),
+		SampleRate: float32(cached.container.AudioSampleRate),
 	}
 	return *cached.sound
 }
@@ -66,8 +65,7 @@ func (cached *cachedMovie) subtitles(language resource.Language) Subtitles {
 	sub = &Subtitles{}
 	expectedControl := SubtitleControlForLanguage(language)
 
-	for index := 0; index < cached.container.EntryCount(); index++ {
-		entry := cached.container.Entry(index)
+	for _, entry := range cached.container.Entries {
 		if entry.Type() != Subtitle {
 			continue
 		}
@@ -81,7 +79,7 @@ func (cached *cachedMovie) subtitles(language resource.Language) Subtitles {
 		}
 	}
 	if (len(sub.Entries) > 0) && (len(sub.Entries[len(sub.Entries)-1].Text) > 0) {
-		sub.add(cached.container.EndTimestamp(), "")
+		sub.add(cached.container.EndTimestamp, "")
 	}
 	if cached.subtitlesByLang == nil {
 		cached.subtitlesByLang = make(map[resource.Language]*Subtitles)

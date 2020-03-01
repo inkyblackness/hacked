@@ -15,48 +15,47 @@ import (
 // Read tries to extract a MOVI container from the provided reader.
 // On success the position of the reader is past the last data entry.
 // On failure the position of the reader is undefined.
-func Read(source io.ReadSeeker) (container Container, err error) {
+func Read(source io.ReadSeeker) (Container, error) {
 	if source == nil {
-		return nil, fmt.Errorf("source is nil")
+		return Container{}, fmt.Errorf("source is nil")
 	}
 
 	var header format.Header
 	startPos, _ := source.Seek(0, io.SeekCurrent)
+	var container Container
+	err := binary.Read(source, binary.LittleEndian, &header)
+	if err != nil {
+		return Container{}, err
+	}
+	err = verifyAndExtractHeader(&container, &header)
+	if err != nil {
+		return Container{}, err
+	}
+	err = readPalette(source, &container)
+	if err != nil {
+		return Container{}, err
+	}
+	err = readIndexAndEntries(source, startPos, &container, &header)
+	if err != nil {
+		return Container{}, err
+	}
 
-	err = binary.Read(source, binary.LittleEndian, &header)
-	if err != nil {
-		return
-	}
-	builder := NewContainerBuilder()
-	err = verifyAndExtractHeader(builder, &header)
-	if err != nil {
-		return
-	}
-	err = readPalette(source, builder)
-	if err != nil {
-		return
-	}
-	err = readIndexAndEntries(source, startPos, builder, &header)
-	if err != nil {
-		return
-	}
-
-	return builder.Build(), nil
+	return container, nil
 }
 
-func verifyAndExtractHeader(builder *ContainerBuilder, header *format.Header) error {
+func verifyAndExtractHeader(container *Container, header *format.Header) error {
 	if !bytes.Equal(header.Tag[:], bytes.NewBufferString(format.Tag).Bytes()) {
 		return errors.New("not a MOVI format")
 	}
 
-	builder.EndTimestamp(Timestamp{Second: header.DurationSeconds, Fraction: header.DurationFraction})
-	builder.VideoHeight(header.VideoHeight)
-	builder.VideoWidth(header.VideoWidth)
-	builder.AudioSampleRate(header.SampleRate)
+	container.EndTimestamp = Timestamp{Second: header.DurationSeconds, Fraction: header.DurationFraction}
+	container.VideoHeight = header.VideoHeight
+	container.VideoWidth = header.VideoWidth
+	container.AudioSampleRate = header.SampleRate
 	return nil
 }
 
-func readPalette(source io.Reader, builder *ContainerBuilder) error {
+func readPalette(source io.Reader, container *Container) error {
 	var pal bitmap.Palette
 	decoder := serial.NewDecoder(source)
 	decoder.Code(&pal)
@@ -65,11 +64,11 @@ func readPalette(source io.Reader, builder *ContainerBuilder) error {
 		return decoder.FirstError()
 	}
 
-	builder.StartPalette(&pal)
+	container.StartPalette = pal
 	return nil
 }
 
-func readIndexAndEntries(source io.ReadSeeker, startPos int64, builder *ContainerBuilder, header *format.Header) error {
+func readIndexAndEntries(source io.ReadSeeker, startPos int64, container *Container, header *format.Header) error {
 	indexEntries := make([]format.IndexTableEntry, header.IndexEntryCount)
 	err := binary.Read(source, binary.LittleEndian, indexEntries)
 	if err != nil {
@@ -95,7 +94,7 @@ func readIndexAndEntries(source io.ReadSeeker, startPos int64, builder *Containe
 				return err
 			}
 
-			builder.AddEntry(NewMemoryEntry(timestamp, entryType, data))
+			container.AddEntry(NewMemoryEntry(timestamp, entryType, data))
 		}
 	}
 	return nil

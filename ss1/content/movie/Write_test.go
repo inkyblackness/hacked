@@ -9,8 +9,7 @@ import (
 )
 
 func TestWriteOfEmptyContainerCreatesMinimumSizeData(t *testing.T) {
-	builder := NewContainerBuilder()
-	container := builder.Build()
+	var container Container
 	buffer := bytes.NewBuffer(nil)
 
 	err := Write(buffer, container)
@@ -19,8 +18,7 @@ func TestWriteOfEmptyContainerCreatesMinimumSizeData(t *testing.T) {
 }
 
 func TestWriteCanSaveEmptyContainer(t *testing.T) {
-	builder := NewContainerBuilder()
-	container := builder.Build()
+	var container Container
 	buffer := bytes.NewBuffer(nil)
 
 	err := Write(buffer, container)
@@ -30,15 +28,14 @@ func TestWriteCanSaveEmptyContainer(t *testing.T) {
 
 	require.Nil(t, err)
 	require.NotNil(t, result)
-	assert.Equal(t, 0, result.EntryCount())
+	assert.Equal(t, 0, len(result.Entries))
 }
 
 func TestWriteSavesEntries(t *testing.T) {
 	dataBytes := []byte{0x01, 0x02, 0x03}
-	builder := NewContainerBuilder()
-	builder.AudioSampleRate(22050.0)
-	builder.AddEntry(NewMemoryEntry(Timestamp{}, Audio, dataBytes))
-	container := builder.Build()
+	var container Container
+	container.AudioSampleRate = 22050.0
+	container.AddEntry(NewMemoryEntry(Timestamp{}, Audio, dataBytes))
 	buffer := bytes.NewBuffer(nil)
 
 	err := Write(buffer, container)
@@ -48,8 +45,8 @@ func TestWriteSavesEntries(t *testing.T) {
 
 	require.Nil(t, err)
 	require.NotNil(t, result)
-	assert.Equal(t, 1, result.EntryCount())
-	assert.Equal(t, dataBytes, result.Entry(0).Data())
+	assert.Equal(t, 1, len(result.Entries))
+	assert.Equal(t, dataBytes, result.Entries[0].Data())
 }
 
 func TestIndexTableSizeFor_ExistingSizes(t *testing.T) {

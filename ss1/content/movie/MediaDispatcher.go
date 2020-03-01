@@ -28,8 +28,8 @@ type MediaDispatcher struct {
 
 // NewMediaDispatcher returns a new instance of a dispatcher reading the provided container.
 func NewMediaDispatcher(container Container, handler MediaHandler) *MediaDispatcher {
-	width := int(container.VideoWidth())
-	height := int(container.VideoHeight())
+	width := int(container.VideoWidth)
+	height := int(container.VideoHeight)
 	dispatcher := &MediaDispatcher{
 		handler:        handler,
 		container:      container,
@@ -37,7 +37,7 @@ func NewMediaDispatcher(container Container, handler MediaHandler) *MediaDispatc
 		frameBuffer:    make([]byte, width*height),
 		decoderBuilder: compression.NewFrameDecoderBuilder(width, height)}
 
-	startPalette := container.StartPalette()
+	startPalette := container.StartPalette
 	dispatcher.setPalette(&startPalette)
 	dispatcher.decoderBuilder.ForStandardFrame(dispatcher.frameBuffer, width)
 
@@ -47,8 +47,8 @@ func NewMediaDispatcher(container Container, handler MediaHandler) *MediaDispatc
 // DispatchNext processes the next entries from the container to call the handler.
 // Returns false if the dispatcher reached the end of the container.
 func (dispatcher *MediaDispatcher) DispatchNext() (result bool, err error) {
-	for !result && (dispatcher.nextIndex < dispatcher.container.EntryCount()) {
-		entry := dispatcher.container.Entry(dispatcher.nextIndex)
+	for !result && (dispatcher.nextIndex < len(dispatcher.container.Entries)) {
+		entry := dispatcher.container.Entries[dispatcher.nextIndex]
 		result, err = dispatcher.process(entry)
 		dispatcher.nextIndex++
 	}
@@ -159,9 +159,9 @@ func (dispatcher *MediaDispatcher) notifyVideoFrame(timestamp Timestamp) {
 	bmp := bitmap.Bitmap{
 		Header: bitmap.Header{
 			Type:   bitmap.TypeFlat8Bit,
-			Width:  int16(dispatcher.container.VideoWidth()),
-			Height: int16(dispatcher.container.VideoHeight()),
-			Stride: dispatcher.container.VideoWidth(),
+			Width:  int16(dispatcher.container.VideoWidth),
+			Height: int16(dispatcher.container.VideoHeight),
+			Stride: dispatcher.container.VideoWidth,
 		},
 		Palette: &dispatcher.palette,
 		Pixels:  dispatcher.frameBuffer,

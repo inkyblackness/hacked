@@ -52,10 +52,10 @@ func TestReadReturnsContainerWithBasicPropertiesSet(t *testing.T) {
 	source := bytes.NewReader(emptyFile)
 	container, _ := movie.Read(source)
 
-	assert.Equal(t, uint16(640), container.VideoWidth())
-	assert.Equal(t, uint16(480), container.VideoHeight())
-	assert.Equal(t, uint16(22050), container.AudioSampleRate())
-	assert.Equal(t, 0, container.EntryCount())
+	assert.Equal(t, uint16(640), container.VideoWidth)
+	assert.Equal(t, uint16(480), container.VideoHeight)
+	assert.Equal(t, uint16(22050), container.AudioSampleRate)
+	assert.Equal(t, 0, len(container.Entries))
 }
 
 func TestReadReturnsContainerWithDataEntriesExceptTerminator(t *testing.T) {
@@ -83,7 +83,7 @@ func TestReadReturnsContainerWithDataEntriesExceptTerminator(t *testing.T) {
 	source := bytes.NewReader(raw)
 	container, _ := movie.Read(source)
 
-	assert.Equal(t, 1, container.EntryCount())
-	assert.Equal(t, movie.Audio, container.Entry(0).Type())
-	assert.Equal(t, testData, container.Entry(0).Data())
+	assert.Equal(t, 1, len(container.Entries))
+	assert.Equal(t, movie.Audio, container.Entries[0].Type())
+	assert.Equal(t, testData, container.Entries[0].Data())
 }

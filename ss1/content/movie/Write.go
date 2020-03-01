@@ -18,11 +18,11 @@ func Write(dest io.Writer, container Container) error {
 
 	// setup header
 	copy(header.Tag[:], bytes.NewBufferString(format.Tag).Bytes())
-	header.DurationSeconds = container.EndTimestamp().Second
-	header.DurationFraction = container.EndTimestamp().Fraction
-	header.VideoWidth = container.VideoWidth()
-	header.VideoHeight = container.VideoHeight()
-	header.SampleRate = container.AudioSampleRate()
+	header.DurationSeconds = container.EndTimestamp.Second
+	header.DurationFraction = container.EndTimestamp.Fraction
+	header.VideoWidth = container.VideoWidth
+	header.VideoHeight = container.VideoHeight
+	header.SampleRate = container.AudioSampleRate
 
 	if header.VideoWidth != 0 {
 		header.Unknown001C = 0x0008
@@ -32,8 +32,7 @@ func Write(dest io.Writer, container Container) error {
 	header.Unknown0022 = 0x00000001
 
 	// create index
-	for i := 0; i < container.EntryCount(); i++ {
-		dataEntry := container.Entry(i)
+	for _, dataEntry := range container.Entries {
 		indexEntry := format.IndexTableEntry{
 			Type:              byte(dataEntry.Type()),
 			DataOffset:        header.ContentSize,
@@ -77,8 +76,7 @@ func Write(dest io.Writer, container Container) error {
 	if err != nil {
 		return err
 	}
-	for i := 0; i < container.EntryCount(); i++ {
-		dataEntry := container.Entry(i)
+	for _, dataEntry := range container.Entries {
 		_, err = dest.Write(dataEntry.Data())
 		if err != nil {
 			return err
@@ -88,7 +86,7 @@ func Write(dest io.Writer, container Container) error {
 }
 
 func paletteDataFromContainer(container Container) []byte {
-	palette := container.StartPalette()
+	palette := container.StartPalette
 	buf := bytes.NewBuffer(nil)
 	_ = binary.Write(buf, binary.LittleEndian, &palette)
 	return buf.Bytes()
