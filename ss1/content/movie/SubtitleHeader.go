@@ -8,5 +8,5 @@ type SubtitleHeader struct {
 	// Control specifies how to interpret the string content
 	Control SubtitleControl
 	// TextOffset specifies the offset, in bytes from beginning of entry data, where the text starts.
-	TextOffset byte
+	TextOffset uint32
 }

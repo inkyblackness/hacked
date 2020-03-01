@@ -3,7 +3,6 @@ package edit
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 
 	"github.com/inkyblackness/hacked/ss1/content/audio"
 	"github.com/inkyblackness/hacked/ss1/content/movie"
@@ -92,10 +91,11 @@ func (service MovieService) SetSubtitles(setter media.MovieBlockSetter, key reso
 	}
 	lastInsertIndex := -1
 	for filteredIndex, filteredEntry := range filteredEntries {
-		if filteredIndex > areaIndex {
-			for subIndex, subEntry := range subtitles.Entries {
-				if subIndex <= lastInsertIndex || subEntry.Timestamp.IsAfter(filteredEntry.Timestamp()) {
-					continue
+		if filteredIndex > areaIndex && filteredEntry.Type() != movie.PaletteReset && filteredEntry.Type() != movie.Palette &&
+			filteredEntry.Type() != movie.Audio {
+			for _, subEntry := range subtitles.Entries[lastInsertIndex+1:] {
+				if subEntry.Timestamp.IsAfter(filteredEntry.Timestamp()) {
+					break
 				}
 
 				buf := bytes.NewBuffer(nil)
@@ -106,9 +106,8 @@ func (service MovieService) SetSubtitles(setter media.MovieBlockSetter, key reso
 				buf.Write(make([]byte, movie.SubtitleDefaultTextOffset-buf.Len()))
 				buf.Write(service.cp.Encode(subEntry.Text))
 
-				fmt.Printf("add %v - %s\n", subEntry.Timestamp, subEntry.Text)
 				newEntries = append(newEntries, movie.NewMemoryEntry(subEntry.Timestamp, movie.Subtitle, buf.Bytes()))
-				lastInsertIndex = subIndex
+				lastInsertIndex++
 			}
 		}
 		newEntries = append(newEntries, filteredEntry)
