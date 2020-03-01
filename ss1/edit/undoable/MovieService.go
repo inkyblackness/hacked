@@ -24,6 +24,11 @@ func NewMovieService(wrapped edit.MovieService, commander cmd.Commander) MovieSe
 	}
 }
 
+// Video returns the video component of identified movie.
+func (service MovieService) Video(key resource.Key) []movie.Scene {
+	return service.wrapped.Video(key)
+}
+
 // Audio returns the audio component of identified movie.
 func (service MovieService) Audio(key resource.Key) audio.L8 {
 	return service.wrapped.Audio(key)

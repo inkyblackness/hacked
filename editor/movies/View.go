@@ -122,7 +122,10 @@ func (view *View) renderContent() {
 	imgui.SameLine()
 
 	if imgui.BeginChildV("Frames", imgui.Vec2{X: -1, Y: 0}, false, 0) {
-
+		scenes := view.movieService.Video(view.model.currentKey)
+		if len(scenes) > 0 && len(scenes[0].Frames) > 0 {
+			// TODO: download frame & palette to GPU.
+		}
 	}
 	imgui.EndChild()
 }

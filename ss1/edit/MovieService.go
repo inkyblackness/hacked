@@ -51,6 +51,11 @@ func (service MovieService) Remove(setter media.MovieBlockSetter, key resource.K
 	service.movieSetter.Remove(setter, key)
 }
 
+// Video returns the video component of identified movie.
+func (service MovieService) Video(key resource.Key) []movie.Scene {
+	return service.movieViewer.Video(key)
+}
+
 // Audio returns the audio component of identified movie.
 func (service MovieService) Audio(key resource.Key) audio.L8 {
 	return service.movieViewer.Audio(key)

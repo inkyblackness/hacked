@@ -35,6 +35,15 @@ func (service MovieViewerService) Container(key resource.Key) (movie.Container, 
 	return service.movieCache.Container(key)
 }
 
+// Video returns the visual component associated with the given key.
+func (service MovieViewerService) Video(key resource.Key) []movie.Scene {
+	currentValue, cacheErr := service.movieCache.Video(key)
+	if cacheErr != nil {
+		return nil
+	}
+	return currentValue
+}
+
 // Audio returns the audio data associated with the given key.
 func (service MovieViewerService) Audio(key resource.Key) audio.L8 {
 	currentValue, cacheErr := service.movieCache.Audio(key)
