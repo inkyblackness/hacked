@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"io/ioutil"
 
 	"github.com/inkyblackness/hacked/ss1/content/audio"
@@ -65,17 +64,10 @@ func (cached *cachedMovie) subtitles(language resource.Language) Subtitles {
 	}
 
 	sub = &Subtitles{}
+	expectedControl := SubtitleControlForLanguage(language)
 
-	fmt.Println("new query:")
 	for index := 0; index < cached.container.EntryCount(); index++ {
 		entry := cached.container.Entry(index)
-		if entry.Type() == Audio {
-			continue
-		}
-		if entry.Type() == HighResVideo {
-			fmt.Println()
-		}
-		fmt.Printf("%02X[%03d.%04X] ", int(entry.Type()), entry.Timestamp().Second, entry.Timestamp().Fraction)
 		if entry.Type() != Subtitle {
 			continue
 		}
@@ -84,16 +76,13 @@ func (cached *cachedMovie) subtitles(language resource.Language) Subtitles {
 		if err != nil {
 			continue
 		}
-		//if header.Control == Sub
-
-		subtitleEntry := SubtitleEntry{
-			Timestamp: entry.Timestamp(),
-			Text:      cached.cp.Decode(entry.Data()[SubtitleHeaderSize:]),
+		if subtitleHeader.Control == expectedControl {
+			sub.add(entry.Timestamp(), cached.cp.Decode(entry.Data()[SubtitleHeaderSize:]))
 		}
-		sub.entries = append(sub.entries, subtitleEntry)
-
 	}
-	fmt.Println()
+	if (len(sub.entries) > 0) && (len(sub.entries[len(sub.entries)-1].Text) > 0) {
+		sub.add(cached.container.EndTimestamp(), "")
+	}
 	if cached.subtitlesByLang == nil {
 		cached.subtitlesByLang = make(map[resource.Language]*Subtitles)
 	}
@@ -171,15 +160,6 @@ func (cache *Cache) Video(key resource.Key) ([][]bitmap.Bitmap, error) {
 		return nil, err
 	}
 	return cached.video(), nil
-}
-
-type SubtitleEntry struct {
-	Timestamp Timestamp
-	Text      string
-}
-
-type Subtitles struct {
-	entries []SubtitleEntry
 }
 
 func (cache *Cache) Subtitles(key resource.Key, language resource.Language) (Subtitles, error) {
