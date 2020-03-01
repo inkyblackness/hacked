@@ -11,6 +11,8 @@ import (
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
+const audioEntrySize = 0x2000
+
 // MovieService provides read/write functionality.
 type MovieService struct {
 	cp text.Codepage
@@ -54,11 +56,59 @@ func (service MovieService) Audio(key resource.Key) audio.L8 {
 	return service.movieViewer.Audio(key)
 }
 
+// SetAudio sets the audio component of identified movie.
+func (service MovieService) SetAudio(setter media.MovieBlockSetter, key resource.Key, soundData audio.L8) {
+	baseContainer := service.getBaseContainer(key)
+	var filteredEntries []movie.Entry
+
+	for _, entry := range baseContainer.Entries {
+		if entry.Type() == movie.Audio {
+			continue
+		}
+		filteredEntries = append(filteredEntries, entry)
+	}
+
+	var audioEntries []movie.Entry
+	startOffset := 0
+	for (startOffset + audioEntrySize) <= len(soundData.Samples) {
+		ts := movie.TimestampFromSeconds(float32(startOffset) / soundData.SampleRate)
+		endOffset := startOffset + audioEntrySize
+		audioEntries = append(audioEntries, movie.NewMemoryEntry(ts, movie.Audio, soundData.Samples[startOffset:endOffset]))
+		startOffset = endOffset
+	}
+	if startOffset < len(soundData.Samples) {
+		ts := movie.TimestampFromSeconds(float32(startOffset) / soundData.SampleRate)
+		audioEntries = append(audioEntries, movie.NewMemoryEntry(ts, movie.Audio, soundData.Samples[startOffset:]))
+	}
+	endTimestamp := movie.TimestampFromSeconds(float32(len(soundData.Samples)) / soundData.SampleRate)
+
+	var newEntries []movie.Entry
+	lastInsertIndex := -1
+	for _, filteredEntry := range filteredEntries {
+		for _, audioEntry := range audioEntries[lastInsertIndex+1:] {
+			if audioEntry.Timestamp().IsAfter(filteredEntry.Timestamp()) {
+				break
+			}
+			newEntries = append(newEntries, audioEntry)
+			lastInsertIndex++
+		}
+		newEntries = append(newEntries, filteredEntry)
+	}
+	baseContainer.AudioSampleRate = uint16(soundData.SampleRate)
+	if endTimestamp.IsAfter(baseContainer.EndTimestamp) {
+		baseContainer.EndTimestamp = endTimestamp
+	}
+
+	baseContainer.Entries = newEntries
+	service.movieSetter.Set(setter, key, baseContainer)
+}
+
 // Subtitles returns the subtitles associated with the given key.
 func (service MovieService) Subtitles(key resource.Key, language resource.Language) movie.Subtitles {
 	return service.movieViewer.Subtitles(key, language)
 }
 
+// SetSubtitles sets the subtitles of identified movie in given language.
 func (service MovieService) SetSubtitles(setter media.MovieBlockSetter, key resource.Key,
 	language resource.Language, subtitles movie.Subtitles) {
 	baseContainer := service.getBaseContainer(key)

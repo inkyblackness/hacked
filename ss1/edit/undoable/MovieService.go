@@ -29,6 +29,16 @@ func (service MovieService) Audio(key resource.Key) audio.L8 {
 	return service.wrapped.Audio(key)
 }
 
+// RequestSetAudio queues the change to update the audio track.
+func (service MovieService) RequestSetAudio(key resource.Key, soundData audio.L8, restoreFunc func()) {
+	service.requestCommand(
+		func(setter media.MovieBlockSetter) {
+			service.wrapped.SetAudio(setter, key, soundData)
+		},
+		service.wrapped.RestoreFunc(key),
+		restoreFunc)
+}
+
 // Subtitles returns the subtitles associated with the given key.
 func (service MovieService) Subtitles(key resource.Key, language resource.Language) movie.Subtitles {
 	return service.wrapped.Subtitles(key, language)

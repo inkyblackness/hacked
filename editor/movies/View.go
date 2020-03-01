@@ -194,7 +194,7 @@ func (view *View) requestExportAudio(sound audio.L8) {
 
 func (view *View) requestImportAudio() {
 	external.ImportAudio(view.modalStateMachine, func(sound audio.L8) {
-		// view.movieService.RequestSetAudio(view.model.currentKey, sound, view.restoreFunc())
+		view.movieService.RequestSetAudio(view.model.currentKey, sound, view.restoreFunc())
 	})
 }
 
