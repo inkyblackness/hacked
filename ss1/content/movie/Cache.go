@@ -151,6 +151,9 @@ func (cached *cachedMovie) video() []Scene {
 			}
 		}
 	}
+	if currentScene != nil {
+		scenes = append(scenes, *currentScene)
+	}
 
 	cached.scenes = scenes
 
