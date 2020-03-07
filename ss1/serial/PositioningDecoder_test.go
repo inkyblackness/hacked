@@ -35,7 +35,8 @@ func TestPositioningDecoderFirstErrorBySetCurPos(t *testing.T) {
 	var target errorBuffer
 	coder := serial.NewPositioningDecoder(&target)
 
-	coder.Code(uint32(0))
+	data := uint32(0)
+	coder.Code(&data)
 	target.errorOnNextCall = true
 	coder.SetCurPos(0)
 
