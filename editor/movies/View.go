@@ -2,6 +2,8 @@ package movies
 
 import (
 	"fmt"
+	"image"
+	"image/gif"
 	"os"
 	"path/filepath"
 	"time"
@@ -13,7 +15,6 @@ import (
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/ss1/content/audio"
-	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
@@ -156,7 +157,7 @@ func (view *View) renderContent() {
 
 	}
 	if imgui.Button("Export") {
-
+		view.requestExportVideo()
 	}
 	imgui.SameLine()
 	if imgui.Button("Import") {
@@ -165,13 +166,13 @@ func (view *View) renderContent() {
 	imgui.EndGroup()
 	imgui.SameLine()
 	if imgui.BeginChildV("Frames", imgui.Vec2{X: -1, Y: 0}, false, 0) {
-		var frames []bitmap.Bitmap
+		var frames []movie.Frame
 		if view.model.currentScene >= 0 && view.model.currentScene < len(scenes) {
 			frames = scenes[view.model.currentScene].Frames
 		}
 		if view.model.currentFrame >= 0 && view.model.currentFrame < len(frames) {
 			frame := frames[view.model.currentFrame]
-			view.frameCache.SetTexture(view.frameCacheKey, frame) // TODO: only update if something changed
+			view.frameCache.SetTexture(view.frameCacheKey, frame.Bitmap) // TODO: only update if something changed
 
 			render.FrameImage("Frame", view.frameCache, view.frameCacheKey,
 				imgui.Vec2{X: float32(600) * view.guiScale, Y: float32(300) * view.guiScale})
@@ -337,4 +338,59 @@ func (view *View) requestImportSubtitles() {
 	}
 
 	external.Import(view.modalStateMachine, info, types, fileHandler, false)
+}
+
+func (view *View) requestExportVideo() {
+	filename := fmt.Sprintf("%s_Scene%02d_%s.gif",
+		knownMovies[view.model.currentKey.ID].title,
+		view.model.currentScene,
+		view.model.currentKey.Lang.String())
+	info := "File to be written: " + filename
+	var exportTo func(string)
+
+	scenes := view.movieService.Video(view.model.currentKey)
+	var frames []movie.Frame
+	if view.model.currentScene >= 0 && view.model.currentScene < len(scenes) {
+		frames = scenes[view.model.currentScene].Frames
+	}
+
+	if len(frames) == 0 {
+		return
+	}
+
+	exportTo = func(dirname string) {
+		writer, err := os.Create(filepath.Join(dirname, filename))
+		if err != nil {
+			external.Export(view.modalStateMachine, "Could not create file.\n"+info, exportTo, true)
+			return
+		}
+		defer func() { _ = writer.Close() }()
+
+		refBitmap := frames[0].Bitmap
+		colorPalette := refBitmap.Palette.ColorPalette(false)
+		data := gif.GIF{
+			Config: image.Config{
+				Width:      int(refBitmap.Header.Width),
+				Height:     int(refBitmap.Header.Height),
+				ColorModel: colorPalette,
+			},
+			LoopCount: -1,
+		}
+
+		imageRect := image.Rect(0, 0, data.Config.Width, data.Config.Height)
+		for _, frame := range frames {
+			frameImg := image.NewPaletted(imageRect, colorPalette)
+			frameImg.Pix = frame.Bitmap.Pixels
+			data.Image = append(data.Image, frameImg)
+			data.Delay = append(data.Delay, int(frame.DisplayTime.ToDuration()/time.Millisecond)/10)
+		}
+
+		err = gif.EncodeAll(writer, &data)
+		if err != nil {
+			external.Export(view.modalStateMachine, info, exportTo, true)
+			return
+		}
+	}
+
+	external.Export(view.modalStateMachine, info, exportTo, false)
 }

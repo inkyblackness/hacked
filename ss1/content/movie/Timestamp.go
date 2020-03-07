@@ -28,3 +28,34 @@ func (ts Timestamp) ToDuration() time.Duration {
 func (ts Timestamp) IsAfter(other Timestamp) bool {
 	return (ts.Second > other.Second) || ((ts.Second == other.Second) && (ts.Fraction > other.Fraction))
 }
+
+// DeltaTo returns the absolute difference between this and the given timestamp.
+func (ts Timestamp) DeltaTo(other Timestamp) Timestamp {
+	tsLinear := ts.toLinear()
+	otherLinear := other.toLinear()
+	if tsLinear < otherLinear {
+		return timestampFromLinear(otherLinear - tsLinear)
+	}
+	return timestampFromLinear(tsLinear - otherLinear)
+}
+
+// Plus returns a timestamp with the given one added to the current one.
+// The result is saturated if the addition is larger than the timestamp can hold.
+func (ts Timestamp) Plus(other Timestamp) Timestamp {
+	delta := ts.toLinear() + other.toLinear()
+	if delta > 0xFFFFFF {
+		return timestampFromLinear(0xFFFFFF)
+	}
+	return timestampFromLinear(delta)
+}
+
+func (ts Timestamp) toLinear() uint32 {
+	return uint32(ts.Second)<<16 + uint32(ts.Fraction)
+}
+
+func timestampFromLinear(value uint32) Timestamp {
+	return Timestamp{
+		Second:   uint8(value >> 16),
+		Fraction: uint16(value),
+	}
+}

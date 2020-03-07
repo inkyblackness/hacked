@@ -75,85 +75,93 @@ func (cached *cachedMovie) video() []Scene {
 	}
 
 	var currentScene *Scene
-	for _, entry := range cached.container.Entries {
-		switch entry.Type() {
-		case Palette:
-			{
-				if currentScene != nil {
-					scenes = append(scenes, *currentScene)
-				}
-				currentScene = nil
-				decoder := serial.NewDecoder(bytes.NewReader(entry.Data()))
-				decoder.Code(&currentPalette)
-			}
-		case ControlDictionary:
-			{
-				words, wordsErr := compression.UnpackControlWords(entry.Data())
 
-				if wordsErr == nil {
-					decoderBuilder.WithControlWords(words)
-				}
+	setPreviousFrameEndTime := func(ts Timestamp) {
+		if currentScene != nil && len(currentScene.Frames) > 0 {
+			previousIndex := len(currentScene.Frames) - 1
+			previousFrame := currentScene.Frames[previousIndex]
+			if ts.IsAfter(previousFrame.DisplayTime) {
+				previousFrame.DisplayTime = previousFrame.DisplayTime.DeltaTo(ts)
+			} else {
+				previousFrame.DisplayTime = Timestamp{}
 			}
-		case PaletteLookupList:
-			{
-				if currentScene != nil {
-					scenes = append(scenes, *currentScene)
-				}
-				currentScene = nil
-				decoderBuilder.WithPaletteLookupList(entry.Data())
-			}
-		case LowResVideo:
-			{
-				var videoHeader LowResVideoHeader
-				reader := bytes.NewReader(entry.Data())
-
-				err := binary.Read(reader, binary.LittleEndian, &videoHeader)
-				if err != nil {
-					break
-				}
-				frameErr := rle.Decompress(reader, frameBuffer)
-				if frameErr == nil {
-					// TODO
-				}
-			}
-		case HighResVideo:
-			{
-				var videoHeader HighResVideoHeader
-				reader := bytes.NewReader(entry.Data())
-
-				err := binary.Read(reader, binary.LittleEndian, &videoHeader)
-				if err != nil {
-					break
-				}
-				bitstreamData := entry.Data()[HighResVideoHeaderSize:videoHeader.PixelDataOffset]
-				maskstreamData := entry.Data()[videoHeader.PixelDataOffset:]
-				decoder := decoderBuilder.Build()
-
-				err = decoder.Decode(bitstreamData, maskstreamData)
-				if err != nil {
-					break
-				}
-				if currentScene == nil {
-					currentScene = &Scene{}
-				}
-
-				bmp := bitmap.Bitmap{
-					Header: bitmap.Header{
-						Type:   bitmap.TypeFlat8Bit,
-						Width:  int16(cached.container.VideoWidth),
-						Height: int16(cached.container.VideoHeight),
-						Stride: cached.container.VideoWidth,
-					},
-					Palette: clonePalette(),
-					Pixels:  cloneFramebuffer(),
-				}
-				currentScene.Frames = append(currentScene.Frames, bmp)
-			}
+			currentScene.Frames[previousIndex] = previousFrame
 		}
 	}
-	if currentScene != nil {
-		scenes = append(scenes, *currentScene)
+	finishScene := func(now Timestamp) {
+		if currentScene != nil {
+			setPreviousFrameEndTime(now)
+			scenes = append(scenes, *currentScene)
+		}
+		currentScene = nil
 	}
+	for _, entry := range cached.container.Entries {
+		switch entry.Type() {
+		case endOfMedia:
+			finishScene(entry.Timestamp())
+		case Palette:
+			finishScene(entry.Timestamp())
+			decoder := serial.NewDecoder(bytes.NewReader(entry.Data()))
+			decoder.Code(&currentPalette)
+		case ControlDictionary:
+			words, wordsErr := compression.UnpackControlWords(entry.Data())
+
+			if wordsErr == nil {
+				decoderBuilder.WithControlWords(words)
+			}
+		case PaletteLookupList:
+			finishScene(entry.Timestamp())
+			decoderBuilder.WithPaletteLookupList(entry.Data())
+		case LowResVideo:
+			var videoHeader LowResVideoHeader
+			reader := bytes.NewReader(entry.Data())
+
+			err := binary.Read(reader, binary.LittleEndian, &videoHeader)
+			if err != nil {
+				break
+			}
+			frameErr := rle.Decompress(reader, frameBuffer)
+			if frameErr == nil {
+				// TODO
+			}
+		case HighResVideo:
+			var videoHeader HighResVideoHeader
+			reader := bytes.NewReader(entry.Data())
+
+			err := binary.Read(reader, binary.LittleEndian, &videoHeader)
+			if err != nil {
+				break
+			}
+			bitstreamData := entry.Data()[HighResVideoHeaderSize:videoHeader.PixelDataOffset]
+			maskstreamData := entry.Data()[videoHeader.PixelDataOffset:]
+			decoder := decoderBuilder.Build()
+
+			err = decoder.Decode(bitstreamData, maskstreamData)
+			if err != nil {
+				break
+			}
+			if currentScene == nil {
+				currentScene = &Scene{}
+			}
+
+			bmp := bitmap.Bitmap{
+				Header: bitmap.Header{
+					Type:   bitmap.TypeFlat8Bit,
+					Width:  int16(cached.container.VideoWidth),
+					Height: int16(cached.container.VideoHeight),
+					Stride: cached.container.VideoWidth,
+				},
+				Palette: clonePalette(),
+				Pixels:  cloneFramebuffer(),
+			}
+			setPreviousFrameEndTime(entry.Timestamp())
+			currentScene.Frames = append(currentScene.Frames, Frame{
+				Bitmap:      bmp,
+				DisplayTime: entry.Timestamp(),
+			})
+		}
+	}
+	finishScene(cached.container.EndTimestamp) // paranoia - there should have been an 'end' tag.
 
 	cached.scenes = scenes
 
@@ -263,11 +271,6 @@ func (cache *Cache) Audio(key resource.Key) (sound audio.L8, err error) {
 		return
 	}
 	return cached.audio(), nil
-}
-
-// Scene describes a series of frames that share a common palette and framerate.
-type Scene struct {
-	Frames []bitmap.Bitmap
 }
 
 // Video retrieves and caches the underlying movie, and returns the complete list of decoded scenes.
