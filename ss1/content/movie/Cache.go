@@ -262,10 +262,12 @@ func (cache *Cache) Audio(key resource.Key) (sound audio.L8, err error) {
 	return cached.audio(), nil
 }
 
+// Scene describes a series of frames that share a common palette and framerate.
 type Scene struct {
 	Frames []bitmap.Bitmap
 }
 
+// Video retrieves and caches the underlying movie, and returns the complete list of decoded scenes.
 func (cache *Cache) Video(key resource.Key) ([]Scene, error) {
 	cached, err := cache.cached(key)
 	if err != nil {
@@ -274,6 +276,7 @@ func (cache *Cache) Video(key resource.Key) ([]Scene, error) {
 	return cached.video(), nil
 }
 
+// Subtitles retrieves and caches the underlying movie, and returns the subtitles for given language.
 func (cache *Cache) Subtitles(key resource.Key, language resource.Language) (Subtitles, error) {
 	cached, err := cache.cached(key)
 	if err != nil {

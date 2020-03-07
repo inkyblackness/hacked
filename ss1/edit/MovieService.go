@@ -32,7 +32,7 @@ func NewMovieService(codepage text.Codepage,
 	}
 }
 
-// MovieService creates a snapshot of the current movie and returns a function to restore it.
+// RestoreFunc creates a snapshot of the current movie and returns a function to restore it.
 func (service MovieService) RestoreFunc(key resource.Key) func(setter media.MovieBlockSetter) {
 	oldContainer, _ := service.movieViewer.Container(key)
 	isModified := service.movieViewer.Modified(key)

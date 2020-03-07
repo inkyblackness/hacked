@@ -375,7 +375,6 @@ func (display *MapDisplay) renderPositionOverlay(lvl *level.Level) {
 		}
 		imgui.End()
 	}
-
 }
 
 // WindowResized must be called to notify of a change in window geometry.

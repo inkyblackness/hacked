@@ -121,15 +121,13 @@ func (view *ControlView) renderLevelHeight(lvl *level.Level, readOnly bool) {
 	_, _, currentShift := lvl.Size()
 	if readOnly {
 		imgui.LabelText("Level Height", levelHeights[currentShift])
-	} else {
-		if imgui.BeginCombo("Level Height", levelHeights[currentShift]) {
-			for shift, height := range levelHeights {
-				if imgui.SelectableV(height, shift == int(currentShift), 0, imgui.Vec2{}) {
-					view.requestSetZShift(lvl, shift)
-				}
+	} else if imgui.BeginCombo("Level Height", levelHeights[currentShift]) {
+		for shift, height := range levelHeights {
+			if imgui.SelectableV(height, shift == int(currentShift), 0, imgui.Vec2{}) {
+				view.requestSetZShift(lvl, shift)
 			}
-			imgui.EndCombo()
 		}
+		imgui.EndCombo()
 	}
 }
 
@@ -314,10 +312,8 @@ func (view *ControlView) renderSliderInt(readOnly bool, label string, selectedVa
 	labelValue := fmt.Sprintf(selectedString, selectedValue)
 	if readOnly {
 		imgui.LabelText(label, labelValue)
-	} else {
-		if gui.StepSliderIntV(label, &selectedValue, min, max, selectedString) {
-			changeHandler(selectedValue)
-		}
+	} else if gui.StepSliderIntV(label, &selectedValue, min, max, selectedString) {
+		changeHandler(selectedValue)
 	}
 }
 

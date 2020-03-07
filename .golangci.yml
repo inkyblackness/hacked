@@ -1,5 +1,5 @@
 run:
-  deadline: 5m
+  deadline: 10m
 
 linters:
   enable-all: true
@@ -15,6 +15,7 @@ linters:
     - nakedret
     - prealloc
     - unparam
+    - wsl
 
 issues:
   exclude-use-default: false # disable filtering of defaults for better zero-issue policy
