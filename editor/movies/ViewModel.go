@@ -11,6 +11,8 @@ type viewModel struct {
 
 	currentKey          resource.Key
 	currentSubtitleLang resource.Language
+	currentScene        int
+	currentFrame        int
 }
 
 func freshViewModel() viewModel {

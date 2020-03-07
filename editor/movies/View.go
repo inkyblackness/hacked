@@ -13,6 +13,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/ss1/content/audio"
+	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
@@ -101,6 +102,8 @@ func (view *View) renderContent() {
 				if imgui.SelectableV(knownMovies[id].title, id == view.model.currentKey.ID, 0, imgui.Vec2{}) {
 					view.model.currentKey.ID = id
 					view.model.currentKey.Index = 0
+					view.model.currentScene = 0
+					view.model.currentFrame = 0
 				}
 			}
 			imgui.EndCombo()
@@ -127,24 +130,58 @@ func (view *View) renderContent() {
 		imgui.PopItemWidth()
 	}
 	imgui.EndChild()
-	imgui.SameLine()
 
+	scenes := view.movieService.Video(view.model.currentKey)
+	imgui.SameLine()
+	imgui.BeginGroup()
+	imgui.BeginChildV("Scenes", imgui.Vec2{X: 200 * view.guiScale, Y: -60 * view.guiScale}, true,
+		imgui.WindowFlagsHorizontalScrollbar|imgui.WindowFlagsAlwaysVerticalScrollbar)
+	for index, scene := range scenes {
+		sceneInfo := fmt.Sprintf("Scene %02d (%d frames)", index, len(scene.Frames))
+		if imgui.SelectableV(sceneInfo, view.model.currentScene == index, 0, imgui.Vec2{}) {
+			view.model.currentScene = index
+			view.model.currentFrame = 0
+		}
+	}
+	imgui.EndChild()
+	if imgui.Button("Up") {
+
+	}
+	imgui.SameLine()
+	if imgui.Button("Down") {
+
+	}
+	imgui.SameLine()
+	if imgui.Button("Remove") {
+
+	}
+	if imgui.Button("Export") {
+
+	}
+	imgui.SameLine()
+	if imgui.Button("Import") {
+
+	}
+	imgui.EndGroup()
+	imgui.SameLine()
 	if imgui.BeginChildV("Frames", imgui.Vec2{X: -1, Y: 0}, false, 0) {
-		scenes := view.movieService.Video(view.model.currentKey)
-		if len(scenes) > 0 && len(scenes[0].Frames) > 0 {
-			frame := scenes[0].Frames[0]
+		var frames []bitmap.Bitmap
+		if view.model.currentScene >= 0 && view.model.currentScene < len(scenes) {
+			frames = scenes[view.model.currentScene].Frames
+		}
+		if view.model.currentFrame >= 0 && view.model.currentFrame < len(frames) {
+			frame := frames[view.model.currentFrame]
 			view.frameCache.SetTexture(view.frameCacheKey, frame) // TODO: only update if something changed
 
 			render.FrameImage("Frame", view.frameCache, view.frameCacheKey,
 				imgui.Vec2{X: float32(600) * view.guiScale, Y: float32(300) * view.guiScale})
 		}
+		gui.StepSliderInt("Frame Index", &view.model.currentFrame, 0, len(frames)-1)
 	}
 	imgui.EndChild()
 }
 
 func (view *View) renderProperties() {
-	// gui.StepSliderInt("Frame Index", &view.model.currentFrame, 0, lastFrame)
-
 	view.renderAudioProperties()
 	view.renderSubtitlesProperties()
 }
@@ -189,11 +226,15 @@ func (view *View) renderSubtitlesProperties() {
 func (view *View) restoreFunc() func() {
 	oldKey := view.model.currentKey
 	oldSubtitlesLang := view.model.currentSubtitleLang
+	oldScene := view.model.currentScene
+	oldFrame := view.model.currentFrame
 
 	return func() {
 		view.model.restoreFocus = true
 		view.model.currentKey = oldKey
 		view.model.currentSubtitleLang = oldSubtitlesLang
+		view.model.currentScene = oldScene
+		view.model.currentFrame = oldFrame
 	}
 }
 
