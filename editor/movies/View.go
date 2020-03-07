@@ -285,7 +285,7 @@ func (view *View) requestImportSubtitles() {
 					if len(newEntry.Text) > 0 {
 						newEntry.Text += "\n"
 					}
-					newEntry.Text = newEntry.Text + lineItem.Text
+					newEntry.Text += lineItem.Text
 				}
 			}
 			newSubtitles.Entries = append(newSubtitles.Entries, newEntry)

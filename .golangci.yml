@@ -16,6 +16,10 @@ linters:
     - prealloc
     - unparam
     - wsl
+    - funlen
+    - gocognit
+    - stylecheck # enable again for doing all the package documentation.
+    - gomnd # too many false positives with constants themselves.
 
 issues:
   exclude-use-default: false # disable filtering of defaults for better zero-issue policy

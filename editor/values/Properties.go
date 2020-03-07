@@ -17,7 +17,6 @@ const (
 // RenderUnifiedSliderInt renders a control for an unified integer value.
 func RenderUnifiedSliderInt(readOnly, multiple bool, label string, unifier Unifier,
 	intConverter func(Unifier) int, formatter func(int) string, min, max int, changeHandler func(int)) {
-
 	var labelValue string
 	var selectedString string
 	selectedValue := -1

@@ -20,7 +20,6 @@ var crate = standardContainer.
 	With("SideTexture", 12, 1)
 
 func initContainers() interpreterRetriever {
-
 	standardContainers := newInterpreterLeaf(standardContainer)
 	crates := newInterpreterLeaf(crate)
 

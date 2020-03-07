@@ -186,17 +186,6 @@ func (suite *ModSuite) thenResourceBlockShouldBe(lang resource.Language, id int,
 	assert.Equal(suite.T(), expected, data, "Data mismatch in block")
 }
 
-func (suite *ModSuite) thenResourceMetaShouldBe(lang resource.Language, id int,
-	compound bool, contentType resource.ContentType, compressed bool) {
-	view, viewErr := suite.mod.LocalizedResources(lang).Select(resource.ID(id))
-	require.Nil(suite.T(), viewErr, "No error expected selecting resource")
-
-	key := fmt.Sprintf("lang %v, res %v", lang, resource.ID(id))
-	assert.Equal(suite.T(), compound, view.Compound(), "Compound property does not match for "+key)
-	assert.Equal(suite.T(), contentType, view.ContentType(), "ContentType property does not match for "+key)
-	assert.Equal(suite.T(), compressed, view.Compressed(), "Compressed property does not match for "+key)
-}
-
 func (suite *ModSuite) thenResourcesCanBeSelected(id int) {
 	view, err := suite.selector.Select(resource.ID(id))
 	assert.Nil(suite.T(), err, "No error expected")

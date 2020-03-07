@@ -353,6 +353,5 @@ var unconditionalAction = interpreters.New().
 
 // Unconditional returns the description of actions without a condition.
 func Unconditional() *interpreters.Description {
-
 	return unconditionalAction
 }

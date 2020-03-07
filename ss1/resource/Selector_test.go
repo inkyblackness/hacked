@@ -155,7 +155,6 @@ func (suite *ResourceSelectorSuite) givenSpecificResource(modifier func(*resourc
 }
 
 func (suite *ResourceSelectorSuite) whenInstanceIsCreated() {
-
 	selector := resource.Selector{
 		Lang: resource.LangAny,
 		From: suite,

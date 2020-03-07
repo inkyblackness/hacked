@@ -126,7 +126,6 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 
 	sizeLimitForSize := map[int]int{3: 4, 4: 8, 5: 8, 6: 8, 7: 8, 8: 8, 9: 16, 10: 16, 11: 16, 12: 16, 13: 16, 14: 16, 15: 16, 16: 16}
 	for size := PixelPerTile; size > 2; size-- {
-
 		keysInSize := make([]tilePaletteKey, 0, len(remainder))
 		for key := range remainder {
 			if key.size == size {

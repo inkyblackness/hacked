@@ -184,7 +184,6 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 		})
 
 	if imgui.TreeNodeV("Base Properties", imgui.TreeNodeFlagsDefaultOpen|imgui.TreeNodeFlagsFramed) {
-
 		values.RenderUnifiedSliderInt(readOnly, multiple, "Z", zUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(level.HeightUnit)) },
 			objectHeightFormatter,
@@ -272,7 +271,6 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 func (view *ObjectsView) renderProperties(lvl *level.Level, readOnly bool,
 	dataRetriever func(level.ObjectID, *level.ObjectMasterEntry) []byte,
 	interpreterFactory lvlobj.InterpreterFactory) {
-
 	propertyUnifier := make(map[string]*values.Unifier)
 	propertyDescribers := make(map[string]func(*interpreters.Simplifier))
 	var propertyOrder []string
@@ -855,7 +853,6 @@ func (view *ObjectsView) requestDeleteObjects(lvl *level.Level, objectIDs []leve
 }
 
 func (view *ObjectsView) patchLevel(lvl *level.Level, forwardObjectIDs []level.ObjectID, reverseObjectIDs []level.ObjectID) {
-
 	command := patchLevelDataCommand{
 		restoreState: func(forward bool) {
 			view.model.restoreFocus = true

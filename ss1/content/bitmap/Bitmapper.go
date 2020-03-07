@@ -81,7 +81,7 @@ func (bitmapper *Bitmapper) Map(img image.Image) Bitmap {
 
 // MapColor maps the provided color to the nearest index in the palette.
 func (bitmapper *Bitmapper) MapColor(clr color.Color) (palIndex byte) {
-	_, _, _, a := clr.RGBA()
+	_, _, _, a := clr.RGBA() // nolint:dogsled
 	indexWithin := func(index, from, to int) bool {
 		return (index >= from) && (index <= to)
 	}

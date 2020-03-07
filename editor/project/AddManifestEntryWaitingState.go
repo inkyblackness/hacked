@@ -21,7 +21,6 @@ type addManifestEntryWaitingState struct {
 func (state *addManifestEntryWaitingState) Render() {
 	if imgui.BeginPopupModalV("Add static world data", nil,
 		imgui.WindowFlagsNoResize|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoSavedSettings|imgui.WindowFlagsAlwaysAutoResize) {
-
 		imgui.Text("Waiting for folders/files.")
 		if !state.failureTime.IsZero() {
 			imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 0, Z: 0, W: 1})

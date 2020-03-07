@@ -151,7 +151,6 @@ var inactiveCyberspaceSwitch = gameVariablePanel.
 	Refining("Action", 0, 22, actions.Unconditional(), interpreters.Always)
 
 func initFixtures() interpreterRetriever {
-
 	standardRecepticles := newInterpreterLeaf(standardRecepticle)
 	antennaRelays := newInterpreterLeaf(antennaRelayPanel)
 	recepticles := newInterpreterEntry(recepticlePanel)
@@ -196,7 +195,6 @@ func initFixtures() interpreterRetriever {
 }
 
 func initCyberspaceFixtures() interpreterRetriever {
-
 	cyberspaceSwitches := newInterpreterEntry(baseFixture)
 	cyberspaceSwitches.set(0, newInterpreterLeaf(inactiveCyberspaceSwitch))
 

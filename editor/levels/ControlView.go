@@ -307,7 +307,6 @@ func (view *ControlView) editingAllowed(id int) bool {
 
 func (view *ControlView) renderSliderInt(readOnly bool, label string, selectedValue int,
 	formatter func(int) string, min, max int, changeHandler func(int)) {
-
 	selectedString := formatter(selectedValue)
 	labelValue := fmt.Sprintf(selectedString, selectedValue)
 	if readOnly {
@@ -396,7 +395,6 @@ func (view *ControlView) requestSetTextureAnimationType(lvl *level.Level, index 
 }
 
 func (view *ControlView) patchLevelResources(lvl *level.Level, extraRestoreState func()) {
-
 	command := patchLevelDataCommand{
 		restoreState: func(bool) {
 			view.model.restoreFocus = true
