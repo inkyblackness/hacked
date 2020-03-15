@@ -2,6 +2,7 @@ package movie
 
 import (
 	"bytes"
+	"io"
 
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/content/movie/internal/compression"
@@ -36,13 +37,15 @@ type UnknownEntry struct {
 }
 
 // UnknownEntryFrom decodes an entry from given data.
-func UnknownEntryFrom(timestamp Timestamp, dataType DataType, data []byte) (UnknownEntry, error) {
+func UnknownEntryFrom(timestamp Timestamp, dataType DataType, r io.Reader, dataSize int) (UnknownEntry, error) {
 	entry := UnknownEntry{
 		EntryBase: EntryBase{Time: timestamp},
 		DataType:  dataType,
-		Bytes:     data,
+		Bytes:     make([]byte, dataSize),
 	}
-	return entry, nil
+	coder := serial.NewDecoder(r)
+	coder.Code(entry.Bytes)
+	return entry, coder.FirstError()
 }
 
 // Type describes the entry.
@@ -55,21 +58,6 @@ func (entry UnknownEntry) Data() []byte {
 	return entry.Bytes
 }
 
-// EndOfMediaEntry marks the end of a list of entries.
-type EndOfMediaEntry struct {
-	EntryBase
-}
-
-// Type describes the entry.
-func (entry EndOfMediaEntry) Type() DataType {
-	return dataTypeEndOfMedia
-}
-
-// Code serializes the entry.
-func (entry EndOfMediaEntry) Data() []byte {
-	return nil
-}
-
 // LowResVideoEntry is a compressed low-resolution video frame.
 type LowResVideoEntry struct {
 	EntryBase
@@ -79,12 +67,12 @@ type LowResVideoEntry struct {
 }
 
 // LowResVideoEntryFrom decodes an entry from given data.
-func LowResVideoEntryFrom(timestamp Timestamp, data []byte) (LowResVideoEntry, error) {
+func LowResVideoEntryFrom(timestamp Timestamp, r io.Reader, dataSize int) (LowResVideoEntry, error) {
 	var entry LowResVideoEntry
 	entry.Time = timestamp
-	coder := serial.NewPositioningDecoder(bytes.NewReader(data))
+	coder := serial.NewDecoder(r)
 	coder.Code(&entry.BoundingBox)
-	entry.Packed = make([]byte, len(data)-int(coder.CurPos()))
+	entry.Packed = make([]byte, dataSize-int(coder.CurPos()))
 	coder.Code(entry.Packed)
 	return entry, coder.FirstError()
 }
@@ -112,14 +100,14 @@ type HighResVideoEntry struct {
 }
 
 // HighResVideoEntryFrom decodes an entry from given data.
-func HighResVideoEntryFrom(timestamp Timestamp, data []byte) (HighResVideoEntry, error) {
+func HighResVideoEntryFrom(timestamp Timestamp, r io.Reader, dataSize int) (HighResVideoEntry, error) {
 	var entry HighResVideoEntry
 	entry.Time = timestamp
-	coder := serial.NewDecoder(bytes.NewReader(data))
+	coder := serial.NewDecoder(r)
 	var bitstreamLen uint16
 	coder.Code(&bitstreamLen)
 	entry.Bitstream = make([]byte, bitstreamLen)
-	entry.Maskstream = make([]byte, len(data)-int(bitstreamLen))
+	entry.Maskstream = make([]byte, dataSize-int(bitstreamLen))
 	coder.Code(entry.Bitstream)
 	coder.Code(entry.Maskstream)
 	return entry, coder.FirstError()
@@ -149,11 +137,13 @@ type AudioEntry struct {
 }
 
 // AudioEntryFrom decodes an entry from given data.
-func AudioEntryFrom(timestamp Timestamp, data []byte) (AudioEntry, error) {
+func AudioEntryFrom(timestamp Timestamp, r io.Reader, dataSize int) (AudioEntry, error) {
 	var entry AudioEntry
 	entry.Time = timestamp
-	entry.Samples = data
-	return entry, nil
+	entry.Samples = make([]byte, dataSize)
+	coder := serial.NewDecoder(r)
+	coder.Code(entry.Samples)
+	return entry, coder.FirstError()
 }
 
 // Type describes the entry.
@@ -175,16 +165,16 @@ type SubtitleEntry struct {
 }
 
 // SubtitleEntryFrom decodes an entry from given data.
-func SubtitleEntryFrom(timestamp Timestamp, data []byte) (SubtitleEntry, error) {
+func SubtitleEntryFrom(timestamp Timestamp, r io.Reader, dataSize int) (SubtitleEntry, error) {
 	var entry SubtitleEntry
 	entry.Time = timestamp
-	coder := serial.NewDecoder(bytes.NewReader(data))
+	coder := serial.NewDecoder(r)
 	var header SubtitleHeader
 	coder.Code(&header)
 	if header.TextOffset > coder.CurPos() {
 		coder.Code(make([]byte, header.TextOffset-coder.CurPos()))
 	}
-	entry.Text = make([]byte, len(data)-int(coder.CurPos()))
+	entry.Text = make([]byte, dataSize-int(coder.CurPos()))
 	coder.Code(entry.Text)
 	return entry, coder.FirstError()
 }
@@ -216,10 +206,10 @@ type PaletteEntry struct {
 }
 
 // PaletteEntryFrom decodes an entry from given data.
-func PaletteEntryFrom(timestamp Timestamp, data []byte) (PaletteEntry, error) {
+func PaletteEntryFrom(timestamp Timestamp, r io.Reader) (PaletteEntry, error) {
 	var entry PaletteEntry
 	entry.Time = timestamp
-	coder := serial.NewDecoder(bytes.NewReader(data))
+	coder := serial.NewDecoder(r)
 	coder.Code(&entry.Colors)
 	return entry, coder.FirstError()
 }
@@ -243,7 +233,7 @@ type PaletteResetEntry struct {
 }
 
 // PaletteResetEntryFrom decodes an entry from given data.
-func PaletteResetEntryFrom(timestamp Timestamp, data []byte) (PaletteResetEntry, error) {
+func PaletteResetEntryFrom(timestamp Timestamp) (PaletteResetEntry, error) {
 	var entry PaletteResetEntry
 	entry.Time = timestamp
 	return entry, nil
@@ -267,11 +257,13 @@ type PaletteLookupEntry struct {
 }
 
 // PaletteLookupEntryFrom decodes an entry from given data.
-func PaletteLookupEntryFrom(timestamp Timestamp, data []byte) (PaletteLookupEntry, error) {
+func PaletteLookupEntryFrom(timestamp Timestamp, r io.Reader, dataSize int) (PaletteLookupEntry, error) {
 	var entry PaletteLookupEntry
 	entry.Time = timestamp
-	entry.List = data
-	return entry, nil
+	entry.List = make([]byte, dataSize)
+	coder := serial.NewDecoder(r)
+	coder.Code(entry.List)
+	return entry, coder.FirstError()
 }
 
 // Type describes the entry.
@@ -291,10 +283,16 @@ type ControlDictionaryEntry struct {
 	Words []compression.ControlWord
 }
 
-// PaletteDictionaryEntryFrom decodes an entry from given data.
-func PaletteDictionaryEntryFrom(timestamp Timestamp, data []byte) (ControlDictionaryEntry, error) {
+// ControlDictionaryEntryFrom decodes an entry from given data.
+func ControlDictionaryEntryFrom(timestamp Timestamp, r io.Reader, dataSize int) (ControlDictionaryEntry, error) {
 	var entry ControlDictionaryEntry
 	entry.Time = timestamp
+	coder := serial.NewDecoder(r)
+	data := make([]byte, dataSize)
+	coder.Code(data)
+	if coder.FirstError() != nil {
+		return entry, coder.FirstError()
+	}
 	var err error
 	entry.Words, err = compression.UnpackControlWords(data)
 	return entry, err

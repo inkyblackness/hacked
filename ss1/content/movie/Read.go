@@ -83,20 +83,42 @@ func readIndexAndEntries(source io.ReadSeeker, startPos int64, container *Contai
 				Fraction: indexEntry.TimestampFraction,
 			}
 			length := int(indexEntries[index+1].DataOffset - indexEntry.DataOffset)
-			data := make([]byte, length)
 
-			_, err = source.Seek(startPos+int64(indexEntry.DataOffset), 0)
-			if err != nil {
-				return err
-			}
-			_, err = source.Read(data)
+			_, err = source.Seek(startPos+int64(indexEntry.DataOffset), io.SeekStart)
 			if err != nil {
 				return err
 			}
 
-			entry, _ := UnknownEntryFrom(timestamp, entryType, data)
+			entry, err := readEntry(timestamp, entryType, source, length)
+			if err != nil {
+				return err
+			}
 			container.AddEntry(entry)
 		}
 	}
 	return nil
+}
+
+func readEntry(timestamp Timestamp, entryType DataType, source io.Reader, dataSize int) (Entry, error) {
+	limited := io.LimitReader(source, int64(dataSize))
+	switch entryType {
+	case DataTypeLowResVideo:
+		return LowResVideoEntryFrom(timestamp, limited, dataSize)
+	case DataTypeHighResVideo:
+		return HighResVideoEntryFrom(timestamp, limited, dataSize)
+	case DataTypeAudio:
+		return AudioEntryFrom(timestamp, limited, dataSize)
+	case DataTypeSubtitle:
+		return SubtitleEntryFrom(timestamp, limited, dataSize)
+	case DataTypePalette:
+		return PaletteEntryFrom(timestamp, limited)
+	case DataTypePaletteReset:
+		return PaletteResetEntryFrom(timestamp)
+	case DataTypePaletteLookupList:
+		return PaletteLookupEntryFrom(timestamp, limited, dataSize)
+	case DataTypeControlDictionary:
+		return ControlDictionaryEntryFrom(timestamp, limited, dataSize)
+	default:
+		return UnknownEntryFrom(timestamp, entryType, limited, dataSize)
+	}
 }
