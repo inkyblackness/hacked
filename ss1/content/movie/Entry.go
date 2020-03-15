@@ -9,50 +9,37 @@ import (
 	"github.com/inkyblackness/hacked/ss1/serial"
 )
 
-// Entry describes a block from a MOVI container.
-type Entry interface {
+// Entry describes a timestamped block from a MOVI container.
+type Entry struct {
 	// Timestamp marks the beginning time of the entry.
-	Timestamp() Timestamp
-	// SetTimestamp changes the point in time of the entry.
-	SetTimestamp(value Timestamp)
+	Timestamp Timestamp
+	// Data is a type specific information of a movie.
+	Data EntryData
+}
+
+// EntryData describes one entry in a MOVI container.
+type EntryData interface {
 	// Type describes the content type of the data.
 	Type() DataType
 	// Data returns the raw bytes of the entry.
 	Data() []byte
 }
 
-// EntryBase is the core structure for all entries.
-type EntryBase struct {
-	Time Timestamp
-}
-
-// Timestamp helps implement the Entry interface.
-func (entry EntryBase) Timestamp() Timestamp {
-	return entry.Time
-}
-
-// SetTimestamp changes the timestamp of the entry.
-func (entry *EntryBase) SetTimestamp(value Timestamp) {
-	entry.Time = value
-}
-
 // UnknownEntry is an entry that is not know to this codebase.
 type UnknownEntry struct {
-	EntryBase
 	DataType DataType
 	Bytes    []byte
 }
 
 // UnknownEntryFrom decodes an entry from given data.
-func UnknownEntryFrom(timestamp Timestamp, dataType DataType, r io.Reader, dataSize int) (*UnknownEntry, error) {
+func UnknownEntryFrom(dataType DataType, r io.Reader, dataSize int) (UnknownEntry, error) {
 	entry := UnknownEntry{
-		EntryBase: EntryBase{Time: timestamp},
-		DataType:  dataType,
-		Bytes:     make([]byte, dataSize),
+		DataType: dataType,
+		Bytes:    make([]byte, dataSize),
 	}
 	coder := serial.NewDecoder(r)
 	coder.Code(entry.Bytes)
-	return &entry, coder.FirstError()
+	return entry, coder.FirstError()
 }
 
 // Type describes the entry.
@@ -67,21 +54,18 @@ func (entry UnknownEntry) Data() []byte {
 
 // LowResVideoEntry is a compressed low-resolution video frame.
 type LowResVideoEntry struct {
-	EntryBase
-
 	BoundingBox [4]uint16
 	Packed      []byte
 }
 
 // LowResVideoEntryFrom decodes an entry from given data.
-func LowResVideoEntryFrom(timestamp Timestamp, r io.Reader, dataSize int) (*LowResVideoEntry, error) {
+func LowResVideoEntryFrom(r io.Reader, dataSize int) (LowResVideoEntry, error) {
 	var entry LowResVideoEntry
-	entry.Time = timestamp
 	coder := serial.NewDecoder(r)
 	coder.Code(&entry.BoundingBox)
 	entry.Packed = make([]byte, dataSize-int(coder.CurPos()))
 	coder.Code(entry.Packed)
-	return &entry, coder.FirstError()
+	return entry, coder.FirstError()
 }
 
 // Type describes the entry.
@@ -100,16 +84,13 @@ func (entry LowResVideoEntry) Data() []byte {
 
 // HighResVideoEntry is a compressed high-resolution video frame.
 type HighResVideoEntry struct {
-	EntryBase
-
 	Bitstream  []byte
 	Maskstream []byte
 }
 
 // HighResVideoEntryFrom decodes an entry from given data.
-func HighResVideoEntryFrom(timestamp Timestamp, r io.Reader, dataSize int) (*HighResVideoEntry, error) {
+func HighResVideoEntryFrom(r io.Reader, dataSize int) (HighResVideoEntry, error) {
 	var entry HighResVideoEntry
-	entry.Time = timestamp
 	coder := serial.NewDecoder(r)
 	var maskstreamOffset uint16
 	coder.Code(&maskstreamOffset)
@@ -117,7 +98,7 @@ func HighResVideoEntryFrom(timestamp Timestamp, r io.Reader, dataSize int) (*Hig
 	coder.Code(entry.Bitstream)
 	entry.Maskstream = make([]byte, dataSize-int(coder.CurPos()))
 	coder.Code(entry.Maskstream)
-	return &entry, coder.FirstError()
+	return entry, coder.FirstError()
 }
 
 // Type describes the entry.
@@ -138,19 +119,16 @@ func (entry HighResVideoEntry) Data() []byte {
 
 // AudioEntry is an entry with audio samples.
 type AudioEntry struct {
-	EntryBase
-
 	Samples []byte
 }
 
 // AudioEntryFrom decodes an entry from given data.
-func AudioEntryFrom(timestamp Timestamp, r io.Reader, dataSize int) (*AudioEntry, error) {
+func AudioEntryFrom(r io.Reader, dataSize int) (AudioEntry, error) {
 	var entry AudioEntry
-	entry.Time = timestamp
 	entry.Samples = make([]byte, dataSize)
 	coder := serial.NewDecoder(r)
 	coder.Code(entry.Samples)
-	return &entry, coder.FirstError()
+	return entry, coder.FirstError()
 }
 
 // Type describes the entry.
@@ -165,16 +143,13 @@ func (entry AudioEntry) Data() []byte {
 
 // SubtitleEntry is an entry with Subtitle samples.
 type SubtitleEntry struct {
-	EntryBase
-
 	Control SubtitleControl
 	Text    []byte
 }
 
 // SubtitleEntryFrom decodes an entry from given data.
-func SubtitleEntryFrom(timestamp Timestamp, r io.Reader, dataSize int) (*SubtitleEntry, error) {
+func SubtitleEntryFrom(r io.Reader, dataSize int) (SubtitleEntry, error) {
 	var entry SubtitleEntry
-	entry.Time = timestamp
 	coder := serial.NewDecoder(r)
 	var header SubtitleHeader
 	coder.Code(&header)
@@ -184,7 +159,7 @@ func SubtitleEntryFrom(timestamp Timestamp, r io.Reader, dataSize int) (*Subtitl
 	}
 	entry.Text = make([]byte, dataSize-int(coder.CurPos()))
 	coder.Code(entry.Text)
-	return &entry, coder.FirstError()
+	return entry, coder.FirstError()
 }
 
 // Type describes the entry.
@@ -208,18 +183,15 @@ func (entry SubtitleEntry) Data() []byte {
 
 // PaletteEntry is an entry with a palette.
 type PaletteEntry struct {
-	EntryBase
-
 	Colors bitmap.Palette
 }
 
 // PaletteEntryFrom decodes an entry from given data.
-func PaletteEntryFrom(timestamp Timestamp, r io.Reader) (*PaletteEntry, error) {
+func PaletteEntryFrom(r io.Reader) (PaletteEntry, error) {
 	var entry PaletteEntry
-	entry.Time = timestamp
 	coder := serial.NewDecoder(r)
 	coder.Code(&entry.Colors)
-	return &entry, coder.FirstError()
+	return entry, coder.FirstError()
 }
 
 // Type describes the entry.
@@ -237,14 +209,12 @@ func (entry PaletteEntry) Data() []byte {
 
 // PaletteResetEntry marks a reset of the palette.
 type PaletteResetEntry struct {
-	EntryBase
 }
 
 // PaletteResetEntryFrom decodes an entry from given data.
-func PaletteResetEntryFrom(timestamp Timestamp) (*PaletteResetEntry, error) {
+func PaletteResetEntryFrom() (PaletteResetEntry, error) {
 	var entry PaletteResetEntry
-	entry.Time = timestamp
-	return &entry, nil
+	return entry, nil
 }
 
 // Type describes the entry.
@@ -259,19 +229,16 @@ func (entry PaletteResetEntry) Data() []byte {
 
 // PaletteLookupEntry contains a list of palette indices.
 type PaletteLookupEntry struct {
-	EntryBase
-
 	List []byte
 }
 
 // PaletteLookupEntryFrom decodes an entry from given data.
-func PaletteLookupEntryFrom(timestamp Timestamp, r io.Reader, dataSize int) (*PaletteLookupEntry, error) {
+func PaletteLookupEntryFrom(r io.Reader, dataSize int) (PaletteLookupEntry, error) {
 	var entry PaletteLookupEntry
-	entry.Time = timestamp
 	entry.List = make([]byte, dataSize)
 	coder := serial.NewDecoder(r)
 	coder.Code(entry.List)
-	return &entry, coder.FirstError()
+	return entry, coder.FirstError()
 }
 
 // Type describes the entry.
@@ -286,24 +253,21 @@ func (entry PaletteLookupEntry) Data() []byte {
 
 // ControlDictionaryEntry contains control words for compression.
 type ControlDictionaryEntry struct {
-	EntryBase
-
 	Words []compression.ControlWord
 }
 
 // ControlDictionaryEntryFrom decodes an entry from given data.
-func ControlDictionaryEntryFrom(timestamp Timestamp, r io.Reader, dataSize int) (*ControlDictionaryEntry, error) {
+func ControlDictionaryEntryFrom(r io.Reader, dataSize int) (ControlDictionaryEntry, error) {
 	var entry ControlDictionaryEntry
-	entry.Time = timestamp
 	coder := serial.NewDecoder(r)
 	data := make([]byte, dataSize)
 	coder.Code(data)
 	if coder.FirstError() != nil {
-		return nil, coder.FirstError()
+		return entry, coder.FirstError()
 	}
 	var err error
 	entry.Words, err = compression.UnpackControlWords(data)
-	return &entry, err
+	return entry, err
 }
 
 // Type describes the entry.

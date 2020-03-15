@@ -89,36 +89,39 @@ func readIndexAndEntries(source io.ReadSeeker, startPos int64, container *Contai
 				return err
 			}
 
-			entry, err := readEntry(timestamp, entryType, source, length)
+			entryData, err := readEntry(entryType, source, length)
 			if err != nil {
 				return err
 			}
-			container.AddEntry(entry)
+			container.AddEntry(Entry{
+				Timestamp: timestamp,
+				Data:      entryData,
+			})
 		}
 	}
 	return nil
 }
 
-func readEntry(timestamp Timestamp, entryType DataType, source io.Reader, dataSize int) (Entry, error) {
+func readEntry(entryType DataType, source io.Reader, dataSize int) (EntryData, error) {
 	limited := io.LimitReader(source, int64(dataSize))
 	switch entryType {
 	case DataTypeLowResVideo:
-		return LowResVideoEntryFrom(timestamp, limited, dataSize)
+		return LowResVideoEntryFrom(limited, dataSize)
 	case DataTypeHighResVideo:
-		return HighResVideoEntryFrom(timestamp, limited, dataSize)
+		return HighResVideoEntryFrom(limited, dataSize)
 	case DataTypeAudio:
-		return AudioEntryFrom(timestamp, limited, dataSize)
+		return AudioEntryFrom(limited, dataSize)
 	case DataTypeSubtitle:
-		return SubtitleEntryFrom(timestamp, limited, dataSize)
+		return SubtitleEntryFrom(limited, dataSize)
 	case DataTypePalette:
-		return PaletteEntryFrom(timestamp, limited)
+		return PaletteEntryFrom(limited)
 	case DataTypePaletteReset:
-		return PaletteResetEntryFrom(timestamp)
+		return PaletteResetEntryFrom()
 	case DataTypePaletteLookupList:
-		return PaletteLookupEntryFrom(timestamp, limited, dataSize)
+		return PaletteLookupEntryFrom(limited, dataSize)
 	case DataTypeControlDictionary:
-		return ControlDictionaryEntryFrom(timestamp, limited, dataSize)
+		return ControlDictionaryEntryFrom(limited, dataSize)
 	default:
-		return UnknownEntryFrom(timestamp, entryType, limited, dataSize)
+		return UnknownEntryFrom(entryType, limited, dataSize)
 	}
 }

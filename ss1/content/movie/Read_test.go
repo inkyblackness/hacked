@@ -84,6 +84,6 @@ func TestReadReturnsContainerWithDataEntriesExceptTerminator(t *testing.T) {
 	container, _ := movie.Read(source)
 
 	assert.Equal(t, 1, len(container.Entries))
-	assert.Equal(t, movie.DataTypeAudio, container.Entries[0].Type())
-	assert.Equal(t, testData, container.Entries[0].Data())
+	assert.Equal(t, movie.DataTypeAudio, container.Entries[0].Data.Type())
+	assert.Equal(t, testData, container.Entries[0].Data.Data())
 }

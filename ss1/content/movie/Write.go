@@ -34,13 +34,13 @@ func Write(dest io.Writer, container Container) error {
 	// create index
 	for _, dataEntry := range container.Entries {
 		indexEntry := format.IndexTableEntry{
-			Type:              byte(dataEntry.Type()),
+			Type:              byte(dataEntry.Data.Type()),
 			DataOffset:        header.ContentSize,
-			TimestampSecond:   dataEntry.Timestamp().Second,
-			TimestampFraction: dataEntry.Timestamp().Fraction,
+			TimestampSecond:   dataEntry.Timestamp.Second,
+			TimestampFraction: dataEntry.Timestamp.Fraction,
 		}
 
-		header.ContentSize += int32(len(dataEntry.Data()))
+		header.ContentSize += int32(len(dataEntry.Data.Data()))
 		indexEntries = append(indexEntries, indexEntry)
 	}
 	// calculate size fields
@@ -77,7 +77,7 @@ func Write(dest io.Writer, container Container) error {
 		return err
 	}
 	for _, dataEntry := range container.Entries {
-		_, err = dest.Write(dataEntry.Data())
+		_, err = dest.Write(dataEntry.Data.Data())
 		if err != nil {
 			return err
 		}

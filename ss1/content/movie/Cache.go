@@ -38,8 +38,8 @@ func (cached *cachedMovie) audio() audio.L8 {
 	}
 	var samples []byte
 	for _, entry := range cached.container.Entries {
-		if audioEntry, isAudio := entry.(*AudioEntry); isAudio {
-			samples = append(samples, audioEntry.Samples...)
+		if audioData, isAudio := entry.Data.(AudioEntry); isAudio {
+			samples = append(samples, audioData.Samples...)
 		}
 	}
 	cached.sound = &audio.L8{
@@ -94,24 +94,24 @@ func (cached *cachedMovie) video() []Scene {
 		currentScene = nil
 	}
 	for _, entry := range cached.container.Entries {
-		switch typedEntry := entry.(type) {
-		case *PaletteEntry:
-			finishScene(typedEntry.Timestamp())
-			currentPalette = typedEntry.Colors
+		switch entryData := entry.Data.(type) {
+		case PaletteEntry:
+			finishScene(entry.Timestamp)
+			currentPalette = entryData.Colors
 		case *ControlDictionaryEntry:
-			decoderBuilder.WithControlWords(typedEntry.Words)
+			decoderBuilder.WithControlWords(entryData.Words)
 		case *PaletteLookupEntry:
-			finishScene(entry.Timestamp())
-			decoderBuilder.WithPaletteLookupList(typedEntry.List)
+			finishScene(entry.Timestamp)
+			decoderBuilder.WithPaletteLookupList(entryData.List)
 		case *LowResVideoEntry:
-			err := rle.Decompress(bytes.NewReader(typedEntry.Packed), frameBuffer)
+			err := rle.Decompress(bytes.NewReader(entryData.Packed), frameBuffer)
 			if err != nil {
 				break
 			}
 		case *HighResVideoEntry:
 			decoder := decoderBuilder.Build()
 
-			err := decoder.Decode(typedEntry.Bitstream, typedEntry.Maskstream)
+			err := decoder.Decode(entryData.Bitstream, entryData.Maskstream)
 			if err != nil {
 				break
 			}
@@ -129,10 +129,10 @@ func (cached *cachedMovie) video() []Scene {
 				Palette: clonePalette(),
 				Pixels:  cloneFramebuffer(),
 			}
-			setPreviousFrameEndTime(entry.Timestamp())
+			setPreviousFrameEndTime(entry.Timestamp)
 			currentScene.Frames = append(currentScene.Frames, Frame{
 				Bitmap:      bmp,
-				DisplayTime: entry.Timestamp(),
+				DisplayTime: entry.Timestamp,
 			})
 		}
 	}
@@ -153,12 +153,12 @@ func (cached *cachedMovie) subtitles(language resource.Language) Subtitles {
 	expectedControl := SubtitleControlForLanguage(language)
 
 	for _, entry := range cached.container.Entries {
-		subtitleEntry, isSubtitle := entry.(*SubtitleEntry)
+		subtitleData, isSubtitle := entry.Data.(SubtitleEntry)
 		if !isSubtitle {
 			continue
 		}
-		if subtitleEntry.Control == expectedControl {
-			sub.add(entry.Timestamp(), cached.cp.Decode(subtitleEntry.Text))
+		if subtitleData.Control == expectedControl {
+			sub.add(entry.Timestamp, cached.cp.Decode(subtitleData.Text))
 		}
 	}
 	if (len(sub.Entries) > 0) && (len(sub.Entries[len(sub.Entries)-1].Text) > 0) {
