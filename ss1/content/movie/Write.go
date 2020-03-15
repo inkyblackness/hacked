@@ -54,7 +54,7 @@ func Write(dest io.Writer, container Container) error {
 	lastEntry := format.IndexTableEntry{
 		TimestampSecond:   header.DurationSeconds,
 		TimestampFraction: header.DurationFraction,
-		Type:              byte(endOfMedia),
+		Type:              byte(dataTypeEndOfMedia),
 		DataOffset:        dataStartOffset + header.ContentSize}
 	indexEntries = append(indexEntries, lastEntry)
 	header.IndexEntryCount = int32(len(indexEntries))

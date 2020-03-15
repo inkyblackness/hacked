@@ -58,12 +58,12 @@ func (dispatcher *MediaDispatcher) DispatchNext() (result bool, err error) {
 
 func (dispatcher *MediaDispatcher) process(entry Entry) (dispatched bool, err error) {
 	switch entry.Type() {
-	case Audio:
+	case DataTypeAudio:
 		{
 			dispatcher.handler.OnAudio(entry.Timestamp(), entry.Data())
 			dispatched = true
 		}
-	case Subtitle:
+	case DataTypeSubtitle:
 		{
 			var subtitleHeader SubtitleHeader
 
@@ -76,7 +76,7 @@ func (dispatcher *MediaDispatcher) process(entry Entry) (dispatched bool, err er
 			dispatched = true
 		}
 
-	case Palette:
+	case DataTypePalette:
 		{
 			var pal bitmap.Palette
 			decoder := serial.NewDecoder(bytes.NewReader(entry.Data()))
@@ -88,7 +88,7 @@ func (dispatcher *MediaDispatcher) process(entry Entry) (dispatched bool, err er
 				err = decoder.FirstError()
 			}
 		}
-	case ControlDictionary:
+	case DataTypeControlDictionary:
 		{
 			words, wordsErr := compression.UnpackControlWords(entry.Data())
 
@@ -98,12 +98,12 @@ func (dispatcher *MediaDispatcher) process(entry Entry) (dispatched bool, err er
 				err = wordsErr
 			}
 		}
-	case PaletteLookupList:
+	case DataTypePaletteLookupList:
 		{
 			dispatcher.decoderBuilder.WithPaletteLookupList(entry.Data())
 		}
 
-	case LowResVideo:
+	case DataTypeLowResVideo:
 		{
 			var videoHeader LowResVideoHeader
 			reader := bytes.NewReader(entry.Data())
@@ -120,7 +120,7 @@ func (dispatcher *MediaDispatcher) process(entry Entry) (dispatched bool, err er
 				err = frameErr
 			}
 		}
-	case HighResVideo:
+	case DataTypeHighResVideo:
 		{
 			var videoHeader HighResVideoHeader
 			reader := bytes.NewReader(entry.Data())

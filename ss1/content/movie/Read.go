@@ -77,7 +77,7 @@ func readIndexAndEntries(source io.ReadSeeker, startPos int64, container *Contai
 	for index, indexEntry := range indexEntries {
 		entryType := DataType(indexEntry.Type)
 
-		if entryType != endOfMedia {
+		if entryType != dataTypeEndOfMedia {
 			timestamp := Timestamp{
 				Second:   indexEntry.TimestampSecond,
 				Fraction: indexEntry.TimestampFraction,

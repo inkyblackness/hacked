@@ -320,7 +320,7 @@ func (view *View) requestImportSubtitles() {
 		}
 		var newSubtitles movie.Subtitles
 		for _, item := range subtitles.Items {
-			var newEntry movie.SubtitleEntry
+			var newEntry movie.Subtitle
 			newEntry.Timestamp = movie.TimestampFromSeconds(float32(item.StartAt) / float32(time.Second))
 			for _, line := range item.Lines {
 				for _, lineItem := range line.Items {

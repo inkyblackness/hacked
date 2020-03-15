@@ -72,7 +72,7 @@ func (service MovieService) SetAudio(setter media.MovieBlockSetter, key resource
 	var filteredEntries []movie.Entry
 
 	for _, entry := range baseContainer.Entries {
-		if entry.Type() == movie.Audio {
+		if entry.Type() == movie.DataTypeAudio {
 			continue
 		}
 		filteredEntries = append(filteredEntries, entry)
@@ -83,12 +83,12 @@ func (service MovieService) SetAudio(setter media.MovieBlockSetter, key resource
 	for (startOffset + audioEntrySize) <= len(soundData.Samples) {
 		ts := movie.TimestampFromSeconds(float32(startOffset) / soundData.SampleRate)
 		endOffset := startOffset + audioEntrySize
-		audioEntries = append(audioEntries, movie.NewMemoryEntry(ts, movie.Audio, soundData.Samples[startOffset:endOffset]))
+		audioEntries = append(audioEntries, movie.NewMemoryEntry(ts, movie.DataTypeAudio, soundData.Samples[startOffset:endOffset]))
 		startOffset = endOffset
 	}
 	if startOffset < len(soundData.Samples) {
 		ts := movie.TimestampFromSeconds(float32(startOffset) / soundData.SampleRate)
-		audioEntries = append(audioEntries, movie.NewMemoryEntry(ts, movie.Audio, soundData.Samples[startOffset:]))
+		audioEntries = append(audioEntries, movie.NewMemoryEntry(ts, movie.DataTypeAudio, soundData.Samples[startOffset:]))
 	}
 	endTimestamp := movie.TimestampFromSeconds(float32(len(soundData.Samples)) / soundData.SampleRate)
 
@@ -127,7 +127,7 @@ func (service MovieService) SetSubtitles(setter media.MovieBlockSetter, key reso
 	areaIndex := -1
 
 	for _, entry := range baseContainer.Entries {
-		if entry.Type() != movie.Subtitle {
+		if entry.Type() != movie.DataTypeSubtitle {
 			filteredEntries = append(filteredEntries, entry)
 			continue
 		}
@@ -156,8 +156,8 @@ func (service MovieService) SetSubtitles(setter media.MovieBlockSetter, key reso
 	}
 	lastInsertIndex := -1
 	for filteredIndex, filteredEntry := range filteredEntries {
-		if filteredIndex > areaIndex && filteredEntry.Type() != movie.PaletteReset && filteredEntry.Type() != movie.Palette &&
-			filteredEntry.Type() != movie.Audio {
+		if filteredIndex > areaIndex && filteredEntry.Type() != movie.DataTypePaletteReset && filteredEntry.Type() != movie.DataTypePalette &&
+			filteredEntry.Type() != movie.DataTypeAudio {
 			for _, subEntry := range subtitles.Entries[lastInsertIndex+1:] {
 				if subEntry.Timestamp.IsAfter(filteredEntry.Timestamp()) {
 					break

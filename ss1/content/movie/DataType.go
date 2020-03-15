@@ -4,22 +4,22 @@ package movie
 type DataType byte
 
 const (
-	// endOfMedia marks the last entry
-	endOfMedia = DataType(0)
-	// LowResVideo for low resolution (low compression) video
-	LowResVideo = DataType(0x21)
-	// HighResVideo for high resolution (high compression) video
-	HighResVideo = DataType(0x79)
-	// Audio marks an audio entry.
-	Audio = DataType(2)
-	// Subtitle control
-	Subtitle = DataType(3)
+	// dataTypeEndOfMedia marks the last entry
+	dataTypeEndOfMedia = DataType(0)
+	// DataTypeLowResVideo for low resolution (low compression) video
+	DataTypeLowResVideo = DataType(0x21)
+	// DataTypeHighResVideo for high resolution (high compression) video
+	DataTypeHighResVideo = DataType(0x79)
+	// DataTypeAudio marks an audio entry.
+	DataTypeAudio = DataType(2)
+	// DataTypeSubtitle control
+	DataTypeSubtitle = DataType(3)
 	// Palette data
-	Palette = DataType(4)
-	// PaletteReset is a zero-byte entry immediately before a Palette entry.
-	PaletteReset = DataType(0x4C)
-	// PaletteLookupList for high compression video.
-	PaletteLookupList = DataType(5)
-	// ControlDictionary for high compression video
-	ControlDictionary = DataType(0x0D)
+	DataTypePalette = DataType(4)
+	// DataTypePaletteReset is a zero-byte entry immediately before a Palette entry.
+	DataTypePaletteReset = DataType(0x4C)
+	// DataTypePaletteLookupList for high compression video.
+	DataTypePaletteLookupList = DataType(5)
+	// DataTypeControlDictionary for high compression video
+	DataTypeControlDictionary = DataType(0x0D)
 )

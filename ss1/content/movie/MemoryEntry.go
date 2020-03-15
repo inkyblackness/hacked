@@ -31,7 +31,7 @@ func NewSubtitleEntry(timestamp Timestamp, control SubtitleControl, text []byte)
 	buf.Write(make([]byte, SubtitleDefaultTextOffset-buf.Len()))
 	buf.Write(text)
 
-	return NewMemoryEntry(timestamp, Subtitle, buf.Bytes())
+	return NewMemoryEntry(timestamp, DataTypeSubtitle, buf.Bytes())
 }
 
 func (entry *memoryEntry) Timestamp() Timestamp {

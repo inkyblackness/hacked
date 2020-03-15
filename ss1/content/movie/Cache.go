@@ -40,7 +40,7 @@ func (cached *cachedMovie) audio() audio.L8 {
 	}
 	var samples []byte
 	for _, entry := range cached.container.Entries {
-		if entry.Type() == Audio {
+		if entry.Type() == DataTypeAudio {
 			samples = append(samples, entry.Data()...)
 		}
 	}
@@ -97,22 +97,22 @@ func (cached *cachedMovie) video() []Scene {
 	}
 	for _, entry := range cached.container.Entries {
 		switch entry.Type() {
-		case endOfMedia:
+		case dataTypeEndOfMedia:
 			finishScene(entry.Timestamp())
-		case Palette:
+		case DataTypePalette:
 			finishScene(entry.Timestamp())
 			decoder := serial.NewDecoder(bytes.NewReader(entry.Data()))
 			decoder.Code(&currentPalette)
-		case ControlDictionary:
+		case DataTypeControlDictionary:
 			words, wordsErr := compression.UnpackControlWords(entry.Data())
 
 			if wordsErr == nil {
 				decoderBuilder.WithControlWords(words)
 			}
-		case PaletteLookupList:
+		case DataTypePaletteLookupList:
 			finishScene(entry.Timestamp())
 			decoderBuilder.WithPaletteLookupList(entry.Data())
-		case LowResVideo:
+		case DataTypeLowResVideo:
 			var videoHeader LowResVideoHeader
 			reader := bytes.NewReader(entry.Data())
 
@@ -124,7 +124,7 @@ func (cached *cachedMovie) video() []Scene {
 			if frameErr == nil {
 				// TODO
 			}
-		case HighResVideo:
+		case DataTypeHighResVideo:
 			var videoHeader HighResVideoHeader
 			reader := bytes.NewReader(entry.Data())
 
@@ -178,7 +178,7 @@ func (cached *cachedMovie) subtitles(language resource.Language) Subtitles {
 	expectedControl := SubtitleControlForLanguage(language)
 
 	for _, entry := range cached.container.Entries {
-		if entry.Type() != Subtitle {
+		if entry.Type() != DataTypeSubtitle {
 			continue
 		}
 		var subtitleHeader SubtitleHeader
