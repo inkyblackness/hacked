@@ -178,6 +178,7 @@ func SubtitleEntryFrom(timestamp Timestamp, r io.Reader, dataSize int) (*Subtitl
 	coder := serial.NewDecoder(r)
 	var header SubtitleHeader
 	coder.Code(&header)
+	entry.Control = header.Control
 	if header.TextOffset > coder.CurPos() {
 		coder.Code(make([]byte, header.TextOffset-coder.CurPos()))
 	}
