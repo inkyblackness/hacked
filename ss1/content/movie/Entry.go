@@ -29,6 +29,11 @@ func (entry EntryBase) Timestamp() Timestamp {
 	return entry.Time
 }
 
+// SetTimestamp changes the timestamp of the entry.
+func (entry *EntryBase) SetTimestamp(value Timestamp) {
+	entry.Time = value
+}
+
 // UnknownEntry is an entry that is not know to this codebase.
 type UnknownEntry struct {
 	EntryBase
@@ -104,11 +109,11 @@ func HighResVideoEntryFrom(timestamp Timestamp, r io.Reader, dataSize int) (High
 	var entry HighResVideoEntry
 	entry.Time = timestamp
 	coder := serial.NewDecoder(r)
-	var bitstreamLen uint16
-	coder.Code(&bitstreamLen)
-	entry.Bitstream = make([]byte, bitstreamLen)
-	entry.Maskstream = make([]byte, dataSize-int(bitstreamLen))
+	var maskstreamOffset uint16
+	coder.Code(&maskstreamOffset)
+	entry.Bitstream = make([]byte, int(maskstreamOffset)-int(coder.CurPos()))
 	coder.Code(entry.Bitstream)
+	entry.Maskstream = make([]byte, dataSize-int(coder.CurPos()))
 	coder.Code(entry.Maskstream)
 	return entry, coder.FirstError()
 }
@@ -122,8 +127,8 @@ func (entry HighResVideoEntry) Type() DataType {
 func (entry HighResVideoEntry) Data() []byte {
 	buf := bytes.NewBuffer(nil)
 	coder := serial.NewEncoder(buf)
-	bitstreamLen := uint16(len(entry.Bitstream))
-	coder.Code(&bitstreamLen)
+	maskstreamOffset := uint16(len(entry.Bitstream)) + 2
+	coder.Code(&maskstreamOffset)
 	coder.Code(entry.Bitstream)
 	coder.Code(entry.Maskstream)
 	return buf.Bytes()
