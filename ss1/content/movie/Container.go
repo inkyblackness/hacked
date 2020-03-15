@@ -21,6 +21,10 @@ type Container struct {
 
 	// Entries are all the parts of the movie.
 	Entries []Entry
+
+	Audio        Audio
+	HighResVideo *HighResVideo
+	Subtitles    AllSubtitles
 }
 
 // AddEntry adds the given entry to the existing list.

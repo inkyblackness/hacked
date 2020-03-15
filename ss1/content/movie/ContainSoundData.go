@@ -6,8 +6,6 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/audio"
 )
 
-const audioEntrySize = 0x2000
-
 // ContainSoundData packs a sound data into a container and encodes it.
 func ContainSoundData(soundData audio.L8) []byte {
 	var container Container

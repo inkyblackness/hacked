@@ -9,6 +9,31 @@ import (
 	"github.com/inkyblackness/hacked/ss1/serial"
 )
 
+// EntryBucketPriority describes the general priority of the bucket.
+// Lower numbers are put before higher numbers if the bucket has the same timestamp.
+type EntryBucketPriority int
+
+// List of entry bucket priorities.
+const (
+	EntryBucketPriorityAudio           = 0
+	EntryBucketPriorityVideoControl    = 1
+	EntryBucketPrioritySubtitleControl = 2
+	EntryBucketPrioritySubtitle        = 3
+	EntryBucketPriorityFrame           = 4
+)
+
+// EntryBucket is a set of entries that need to be together within the stream.
+// This exists mainly to cover special cases of entry within a stream that have no valid timestamp.
+type EntryBucket struct {
+	// Priority helps in merging content from multiple buckets.
+	Priority EntryBucketPriority
+	// Timestamp specifies at which time the bucket should be inserted into the stream.
+	// This is typically derived from one of the timestamps of the contained entries.
+	Timestamp Timestamp
+	// Entries is the list of entries within this bucket.
+	Entries []Entry
+}
+
 // Entry describes a timestamped block from a MOVI container.
 type Entry struct {
 	// Timestamp marks the beginning time of the entry.
