@@ -55,7 +55,36 @@ func (service MovieService) Video(key resource.Key) []movie.Scene {
 
 // RemoveScene cuts out the given scene from the movie.
 func (service MovieService) RemoveScene(setter media.MovieBlockSetter, key resource.Key, scene int) {
-	// TODO
+	baseContainer := service.getBaseContainer(key)
+	var newEntries []movie.Entry
+	var removedSceneStart movie.Timestamp
+	var removedSceneDuration movie.Timestamp
+	currentScene := 0
+
+	for _, entry := range baseContainer.Entries {
+		if entry.Type() == movie.DataTypeAudio || entry.Type() == movie.DataTypeSubtitle {
+			newEntries = append(newEntries, entry)
+			continue
+		}
+		if entry.Type() == movie.DataTypePaletteReset {
+			if currentScene == scene {
+				removedSceneDuration = entry.Timestamp().DeltaTo(removedSceneStart)
+			}
+			currentScene++
+			if currentScene == scene {
+				removedSceneStart = entry.Timestamp()
+			}
+		}
+		if currentScene <= scene {
+			continue
+		}
+
+		entry.SetTimestamp(entry.Timestamp().Minus(removedSceneDuration))
+		newEntries = append(newEntries, entry)
+	}
+
+	baseContainer.Entries = newEntries
+	service.movieSetter.Set(setter, key, baseContainer)
 }
 
 // Audio returns the audio component of identified movie.
@@ -80,7 +109,7 @@ func (service MovieService) SetAudio(setter media.MovieBlockSetter, key resource
 	for (startOffset + audioEntrySize) <= len(soundData.Samples) {
 		ts := movie.TimestampFromSeconds(float32(startOffset) / soundData.SampleRate)
 		endOffset := startOffset + audioEntrySize
-		audioEntries = append(audioEntries, movie.AudioEntry{
+		audioEntries = append(audioEntries, &movie.AudioEntry{
 			EntryBase: movie.EntryBase{Time: ts},
 			Samples:   soundData.Samples[startOffset:endOffset],
 		})
@@ -88,7 +117,7 @@ func (service MovieService) SetAudio(setter media.MovieBlockSetter, key resource
 	}
 	if startOffset < len(soundData.Samples) {
 		ts := movie.TimestampFromSeconds(float32(startOffset) / soundData.SampleRate)
-		audioEntries = append(audioEntries, movie.AudioEntry{
+		audioEntries = append(audioEntries, &movie.AudioEntry{
 			EntryBase: movie.EntryBase{Time: ts},
 			Samples:   soundData.Samples[startOffset:],
 		})
@@ -130,7 +159,7 @@ func (service MovieService) SetSubtitles(setter media.MovieBlockSetter, key reso
 	areaIndex := -1
 
 	for _, entry := range baseContainer.Entries {
-		subtitleEntry, isSubtitle := entry.(movie.SubtitleEntry)
+		subtitleEntry, isSubtitle := entry.(*movie.SubtitleEntry)
 		if !isSubtitle {
 			filteredEntries = append(filteredEntries, entry)
 			continue
@@ -151,7 +180,7 @@ func (service MovieService) SetSubtitles(setter media.MovieBlockSetter, key reso
 		// frame area will have the pixels become overwritten. As such, there are many "wrong" options,
 		// and only a few right ones. There's no need to make them editable.
 		newEntries = append(newEntries,
-			movie.SubtitleEntry{
+			&movie.SubtitleEntry{
 				EntryBase: movie.EntryBase{},
 				Control:   movie.SubtitleArea,
 				Text:      service.cp.Encode("20 365 620 395 CLR"),
@@ -167,7 +196,7 @@ func (service MovieService) SetSubtitles(setter media.MovieBlockSetter, key reso
 				}
 
 				newEntries = append(newEntries,
-					movie.SubtitleEntry{
+					&movie.SubtitleEntry{
 						EntryBase: movie.EntryBase{Time: subEntry.Timestamp},
 						Control:   subtitleControl,
 						Text:      service.cp.Encode(subEntry.Text),

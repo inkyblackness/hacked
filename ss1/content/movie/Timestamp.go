@@ -49,6 +49,17 @@ func (ts Timestamp) Plus(other Timestamp) Timestamp {
 	return timestampFromLinear(delta)
 }
 
+// Minus returns a timestamp with given one removed from the current one.
+// The result is clipped to 0 if subtraction would result in a negative number.
+func (ts Timestamp) Minus(other Timestamp) Timestamp {
+	otherLinear := other.toLinear()
+	tsLinear := ts.toLinear()
+	if otherLinear >= tsLinear {
+		return timestampFromLinear(0)
+	}
+	return timestampFromLinear(tsLinear - otherLinear)
+}
+
 func (ts Timestamp) toLinear() uint32 {
 	return uint32(ts.Second)<<16 + uint32(ts.Fraction)
 }
