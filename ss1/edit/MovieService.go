@@ -56,6 +56,11 @@ func (service MovieService) Video(key resource.Key) []movie.Scene {
 	return service.movieViewer.Video(key)
 }
 
+// RemoveScene cuts out the given scene from the movie.
+func (service MovieService) RemoveScene(setter media.MovieBlockSetter, key resource.Key, scene int) {
+	// TODO
+}
+
 // Audio returns the audio component of identified movie.
 func (service MovieService) Audio(key resource.Key) audio.L8 {
 	return service.movieViewer.Audio(key)

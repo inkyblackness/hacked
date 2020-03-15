@@ -154,7 +154,7 @@ func (view *View) renderContent() {
 	}
 	imgui.SameLine()
 	if imgui.Button("Remove") {
-
+		view.requestRemoveCurrentScene()
 	}
 	if imgui.Button("Export") {
 		view.requestExportVideo()
@@ -167,10 +167,10 @@ func (view *View) renderContent() {
 	imgui.SameLine()
 	if imgui.BeginChildV("Frames", imgui.Vec2{X: -1, Y: 0}, false, 0) {
 		var frames []movie.Frame
-		if view.model.currentScene >= 0 && view.model.currentScene < len(scenes) {
+		if (view.model.currentScene >= 0) && (view.model.currentScene < len(scenes)) {
 			frames = scenes[view.model.currentScene].Frames
 		}
-		if view.model.currentFrame >= 0 && view.model.currentFrame < len(frames) {
+		if (view.model.currentFrame >= 0) && (view.model.currentFrame < len(frames)) {
 			frame := frames[view.model.currentFrame]
 			view.frameCache.SetTexture(view.frameCacheKey, frame.Bitmap) // TODO: only update if something changed
 
@@ -393,4 +393,11 @@ func (view *View) requestExportVideo() {
 	}
 
 	external.Export(view.modalStateMachine, info, exportTo, false)
+}
+
+func (view *View) requestRemoveCurrentScene() {
+	scenes := view.movieService.Video(view.model.currentKey)
+	if (view.model.currentScene >= 0) && (view.model.currentScene < len(scenes)) {
+		view.movieService.RequestRemoveScene(view.model.currentKey, view.model.currentScene, view.restoreFunc())
+	}
 }

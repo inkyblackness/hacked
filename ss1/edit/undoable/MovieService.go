@@ -29,6 +29,16 @@ func (service MovieService) Video(key resource.Key) []movie.Scene {
 	return service.wrapped.Video(key)
 }
 
+// RequestRemoveScene queues to remove the identified scene.
+func (service MovieService) RequestRemoveScene(key resource.Key, scene int, restoreFunc func()) {
+	service.requestCommand(
+		func(setter media.MovieBlockSetter) {
+			service.wrapped.RemoveScene(setter, key, scene)
+		},
+		service.wrapped.RestoreFunc(key),
+		restoreFunc)
+}
+
 // Audio returns the audio component of identified movie.
 func (service MovieService) Audio(key resource.Key) audio.L8 {
 	return service.wrapped.Audio(key)
