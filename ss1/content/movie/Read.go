@@ -94,7 +94,8 @@ func readIndexAndEntries(source io.ReadSeeker, startPos int64, container *Contai
 				return err
 			}
 
-			container.AddEntry(NewMemoryEntry(timestamp, entryType, data))
+			entry, _ := UnknownEntryFrom(timestamp, entryType, data)
+			container.AddEntry(entry)
 		}
 	}
 	return nil

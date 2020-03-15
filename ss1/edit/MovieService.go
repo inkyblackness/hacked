@@ -83,12 +83,18 @@ func (service MovieService) SetAudio(setter media.MovieBlockSetter, key resource
 	for (startOffset + audioEntrySize) <= len(soundData.Samples) {
 		ts := movie.TimestampFromSeconds(float32(startOffset) / soundData.SampleRate)
 		endOffset := startOffset + audioEntrySize
-		audioEntries = append(audioEntries, movie.NewMemoryEntry(ts, movie.DataTypeAudio, soundData.Samples[startOffset:endOffset]))
+		audioEntries = append(audioEntries, movie.AudioEntry{
+			EntryBase: movie.EntryBase{Time: ts},
+			Samples:   soundData.Samples[startOffset:endOffset],
+		})
 		startOffset = endOffset
 	}
 	if startOffset < len(soundData.Samples) {
 		ts := movie.TimestampFromSeconds(float32(startOffset) / soundData.SampleRate)
-		audioEntries = append(audioEntries, movie.NewMemoryEntry(ts, movie.DataTypeAudio, soundData.Samples[startOffset:]))
+		audioEntries = append(audioEntries, movie.AudioEntry{
+			EntryBase: movie.EntryBase{Time: ts},
+			Samples:   soundData.Samples[startOffset:],
+		})
 	}
 	endTimestamp := movie.TimestampFromSeconds(float32(len(soundData.Samples)) / soundData.SampleRate)
 
@@ -152,7 +158,11 @@ func (service MovieService) SetSubtitles(setter media.MovieBlockSetter, key reso
 		// frame area will have the pixels become overwritten. As such, there are many "wrong" options,
 		// and only a few right ones. There's no need to make them editable.
 		newEntries = append(newEntries,
-			movie.NewSubtitleEntry(movie.Timestamp{}, movie.SubtitleArea, service.cp.Encode("20 365 620 395 CLR")))
+			movie.SubtitleEntry{
+				EntryBase: movie.EntryBase{},
+				Control:   movie.SubtitleArea,
+				Text:      service.cp.Encode("20 365 620 395 CLR"),
+			})
 	}
 	lastInsertIndex := -1
 	for filteredIndex, filteredEntry := range filteredEntries {
@@ -164,7 +174,11 @@ func (service MovieService) SetSubtitles(setter media.MovieBlockSetter, key reso
 				}
 
 				newEntries = append(newEntries,
-					movie.NewSubtitleEntry(subEntry.Timestamp, subtitleControl, service.cp.Encode(subEntry.Text)))
+					movie.SubtitleEntry{
+						EntryBase: movie.EntryBase{Time: subEntry.Timestamp},
+						Control:   subtitleControl,
+						Text:      service.cp.Encode(subEntry.Text),
+					})
 				lastInsertIndex++
 			}
 		}

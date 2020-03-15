@@ -28,6 +28,33 @@ func (entry EntryBase) Timestamp() Timestamp {
 	return entry.Time
 }
 
+// UnknownEntry is an entry that is not know to this codebase.
+type UnknownEntry struct {
+	EntryBase
+	DataType DataType
+	Bytes    []byte
+}
+
+// UnknownEntryFrom decodes an entry from given data.
+func UnknownEntryFrom(timestamp Timestamp, dataType DataType, data []byte) (UnknownEntry, error) {
+	entry := UnknownEntry{
+		EntryBase: EntryBase{Time: timestamp},
+		DataType:  dataType,
+		Bytes:     data,
+	}
+	return entry, nil
+}
+
+// Type describes the entry.
+func (entry UnknownEntry) Type() DataType {
+	return entry.DataType
+}
+
+// Data returns the raw bytes of the entry.
+func (entry UnknownEntry) Data() []byte {
+	return entry.Bytes
+}
+
 // EndOfMediaEntry marks the end of a list of entries.
 type EndOfMediaEntry struct {
 	EntryBase

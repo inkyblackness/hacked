@@ -16,12 +16,18 @@ func ContainSoundData(soundData audio.L8) []byte {
 	for (startOffset + audioEntrySize) <= len(soundData.Samples) {
 		ts := TimestampFromSeconds(float32(startOffset) / soundData.SampleRate)
 		endOffset := startOffset + audioEntrySize
-		container.AddEntry(NewMemoryEntry(ts, DataTypeAudio, soundData.Samples[startOffset:endOffset]))
+		container.AddEntry(AudioEntry{
+			EntryBase: EntryBase{Time: ts},
+			Samples:   soundData.Samples[startOffset:endOffset],
+		})
 		startOffset = endOffset
 	}
 	if startOffset < len(soundData.Samples) {
 		ts := TimestampFromSeconds(float32(startOffset) / soundData.SampleRate)
-		container.AddEntry(NewMemoryEntry(ts, DataTypeAudio, soundData.Samples[startOffset:]))
+		container.AddEntry(AudioEntry{
+			EntryBase: EntryBase{Time: ts},
+			Samples:   soundData.Samples[startOffset:],
+		})
 	}
 
 	container.EndTimestamp = TimestampFromSeconds(float32(len(soundData.Samples)) / soundData.SampleRate)
