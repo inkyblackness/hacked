@@ -23,6 +23,11 @@ func (coder *Encoder) FirstError() error {
 	return coder.firstError
 }
 
+// CurPos returns the current encoding position, in bytes.
+func (coder *Encoder) CurPos() uint32 {
+	return coder.offset
+}
+
 // Code serializes the given value in little endian format using binary.Write().
 func (coder *Encoder) Code(value interface{}) {
 	if coder.firstError != nil {
