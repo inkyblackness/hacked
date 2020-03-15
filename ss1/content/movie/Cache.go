@@ -38,7 +38,7 @@ func (cached *cachedMovie) audio() audio.L8 {
 	}
 	var samples []byte
 	for _, entry := range cached.container.Entries {
-		if audioData, isAudio := entry.Data.(AudioEntry); isAudio {
+		if audioData, isAudio := entry.Data.(AudioEntryData); isAudio {
 			samples = append(samples, audioData.Samples...)
 		}
 	}
@@ -95,20 +95,20 @@ func (cached *cachedMovie) video() []Scene {
 	}
 	for _, entry := range cached.container.Entries {
 		switch entryData := entry.Data.(type) {
-		case PaletteEntry:
+		case PaletteEntryData:
 			finishScene(entry.Timestamp)
 			currentPalette = entryData.Colors
-		case *ControlDictionaryEntry:
+		case ControlDictionaryEntryData:
 			decoderBuilder.WithControlWords(entryData.Words)
-		case *PaletteLookupEntry:
+		case PaletteLookupEntryData:
 			finishScene(entry.Timestamp)
 			decoderBuilder.WithPaletteLookupList(entryData.List)
-		case *LowResVideoEntry:
+		case LowResVideoEntryData:
 			err := rle.Decompress(bytes.NewReader(entryData.Packed), frameBuffer)
 			if err != nil {
 				break
 			}
-		case *HighResVideoEntry:
+		case HighResVideoEntryData:
 			decoder := decoderBuilder.Build()
 
 			err := decoder.Decode(entryData.Bitstream, entryData.Maskstream)
@@ -153,7 +153,7 @@ func (cached *cachedMovie) subtitles(language resource.Language) Subtitles {
 	expectedControl := SubtitleControlForLanguage(language)
 
 	for _, entry := range cached.container.Entries {
-		subtitleData, isSubtitle := entry.Data.(SubtitleEntry)
+		subtitleData, isSubtitle := entry.Data.(SubtitleEntryData)
 		if !isSubtitle {
 			continue
 		}

@@ -111,7 +111,7 @@ func (service MovieService) SetAudio(setter media.MovieBlockSetter, key resource
 		endOffset := startOffset + audioEntrySize
 		audioEntries = append(audioEntries, movie.Entry{
 			Timestamp: ts,
-			Data: movie.AudioEntry{
+			Data: movie.AudioEntryData{
 				Samples: soundData.Samples[startOffset:endOffset],
 			},
 		})
@@ -121,7 +121,7 @@ func (service MovieService) SetAudio(setter media.MovieBlockSetter, key resource
 		ts := movie.TimestampFromSeconds(float32(startOffset) / soundData.SampleRate)
 		audioEntries = append(audioEntries, movie.Entry{
 			Timestamp: ts,
-			Data: movie.AudioEntry{
+			Data: movie.AudioEntryData{
 				Samples: soundData.Samples[startOffset:],
 			},
 		})
@@ -163,7 +163,7 @@ func (service MovieService) SetSubtitles(setter media.MovieBlockSetter, key reso
 	areaIndex := -1
 
 	for _, entry := range baseContainer.Entries {
-		subtitleData, isSubtitle := entry.Data.(movie.SubtitleEntry)
+		subtitleData, isSubtitle := entry.Data.(movie.SubtitleEntryData)
 		if !isSubtitle {
 			filteredEntries = append(filteredEntries, entry)
 			continue
@@ -185,7 +185,7 @@ func (service MovieService) SetSubtitles(setter media.MovieBlockSetter, key reso
 		// and only a few right ones. There's no need to make them editable.
 		newEntries = append(newEntries,
 			movie.Entry{
-				Data: movie.SubtitleEntry{
+				Data: movie.SubtitleEntryData{
 					Control: movie.SubtitleArea,
 					Text:    service.cp.Encode("20 365 620 395 CLR"),
 				},
@@ -205,7 +205,7 @@ func (service MovieService) SetSubtitles(setter media.MovieBlockSetter, key reso
 				newEntries = append(newEntries,
 					movie.Entry{
 						Timestamp: subEntry.Timestamp,
-						Data: movie.SubtitleEntry{
+						Data: movie.SubtitleEntryData{
 							Control: subtitleControl,
 							Text:    service.cp.Encode(subEntry.Text),
 						},

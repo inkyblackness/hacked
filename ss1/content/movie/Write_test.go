@@ -36,7 +36,7 @@ func TestWriteSavesEntries(t *testing.T) {
 	var container Container
 	container.AudioSampleRate = 22050.0
 	container.AddEntry(Entry{
-		Data: AudioEntry{
+		Data: AudioEntryData{
 			Samples: dataBytes,
 		},
 	})
