@@ -40,7 +40,7 @@ func Write(dest io.Writer, container Container) error {
 			TimestampFraction: dataEntry.Timestamp.Fraction,
 		}
 
-		header.ContentSize += int32(len(dataEntry.Data.Data()))
+		header.ContentSize += int32(len(dataEntry.Data.Bytes()))
 		indexEntries = append(indexEntries, indexEntry)
 	}
 	// calculate size fields
@@ -77,7 +77,7 @@ func Write(dest io.Writer, container Container) error {
 		return err
 	}
 	for _, dataEntry := range container.Entries {
-		_, err = dest.Write(dataEntry.Data.Data())
+		_, err = dest.Write(dataEntry.Data.Bytes())
 		if err != nil {
 			return err
 		}

@@ -21,24 +21,24 @@ type Entry struct {
 type EntryData interface {
 	// Type describes the content type of the data.
 	Type() DataType
-	// Data returns the raw bytes of the entry.
-	Data() []byte
+	// Bytes returns the raw bytes of the entry.
+	Bytes() []byte
 }
 
 // UnknownEntry is an entry that is not know to this codebase.
 type UnknownEntry struct {
 	DataType DataType
-	Bytes    []byte
+	Raw      []byte
 }
 
 // UnknownEntryFrom decodes an entry from given data.
 func UnknownEntryFrom(dataType DataType, r io.Reader, dataSize int) (UnknownEntry, error) {
 	entry := UnknownEntry{
 		DataType: dataType,
-		Bytes:    make([]byte, dataSize),
+		Raw:      make([]byte, dataSize),
 	}
 	coder := serial.NewDecoder(r)
-	coder.Code(entry.Bytes)
+	coder.Code(entry.Raw)
 	return entry, coder.FirstError()
 }
 
@@ -47,9 +47,9 @@ func (entry UnknownEntry) Type() DataType {
 	return entry.DataType
 }
 
-// Data returns the raw bytes of the entry.
-func (entry UnknownEntry) Data() []byte {
-	return entry.Bytes
+// Bytes returns the raw bytes of the entry.
+func (entry UnknownEntry) Bytes() []byte {
+	return entry.Raw
 }
 
 // LowResVideoEntry is a compressed low-resolution video frame.
@@ -73,8 +73,8 @@ func (entry LowResVideoEntry) Type() DataType {
 	return DataTypeLowResVideo
 }
 
-// Data returns the raw bytes of the entry.
-func (entry LowResVideoEntry) Data() []byte {
+// Bytes returns the raw bytes of the entry.
+func (entry LowResVideoEntry) Bytes() []byte {
 	buf := bytes.NewBuffer(nil)
 	coder := serial.NewEncoder(buf)
 	coder.Code(entry.BoundingBox)
@@ -106,8 +106,8 @@ func (entry HighResVideoEntry) Type() DataType {
 	return DataTypeHighResVideo
 }
 
-// Data returns the raw bytes of the entry.
-func (entry HighResVideoEntry) Data() []byte {
+// Bytes returns the raw bytes of the entry.
+func (entry HighResVideoEntry) Bytes() []byte {
 	buf := bytes.NewBuffer(nil)
 	coder := serial.NewEncoder(buf)
 	maskstreamOffset := uint16(len(entry.Bitstream)) + 2
@@ -136,8 +136,8 @@ func (entry AudioEntry) Type() DataType {
 	return DataTypeAudio
 }
 
-// Data returns the raw bytes of the entry.
-func (entry AudioEntry) Data() []byte {
+// Bytes returns the raw bytes of the entry.
+func (entry AudioEntry) Bytes() []byte {
 	return entry.Samples
 }
 
@@ -167,8 +167,8 @@ func (entry SubtitleEntry) Type() DataType {
 	return DataTypeSubtitle
 }
 
-// Data returns the raw bytes of the entry.
-func (entry SubtitleEntry) Data() []byte {
+// Bytes returns the raw bytes of the entry.
+func (entry SubtitleEntry) Bytes() []byte {
 	header := SubtitleHeader{
 		Control:    entry.Control,
 		TextOffset: SubtitleDefaultTextOffset,
@@ -199,8 +199,8 @@ func (entry PaletteEntry) Type() DataType {
 	return DataTypePalette
 }
 
-// Data returns the raw bytes of the entry.
-func (entry PaletteEntry) Data() []byte {
+// Bytes returns the raw bytes of the entry.
+func (entry PaletteEntry) Bytes() []byte {
 	buf := bytes.NewBuffer(nil)
 	coder := serial.NewEncoder(buf)
 	coder.Code(&entry.Colors)
@@ -223,7 +223,7 @@ func (entry PaletteResetEntry) Type() DataType {
 }
 
 // Code serializes the entry.
-func (entry PaletteResetEntry) Data() []byte {
+func (entry PaletteResetEntry) Bytes() []byte {
 	return nil
 }
 
@@ -247,7 +247,7 @@ func (entry PaletteLookupEntry) Type() DataType {
 }
 
 // Code serializes the entry.
-func (entry PaletteLookupEntry) Data() []byte {
+func (entry PaletteLookupEntry) Bytes() []byte {
 	return entry.List
 }
 
@@ -276,6 +276,6 @@ func (entry ControlDictionaryEntry) Type() DataType {
 }
 
 // Code serializes the entry.
-func (entry ControlDictionaryEntry) Data() []byte {
+func (entry ControlDictionaryEntry) Bytes() []byte {
 	return compression.PackControlWords(entry.Words)
 }

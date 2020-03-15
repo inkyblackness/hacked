@@ -50,7 +50,7 @@ func TestWriteSavesEntries(t *testing.T) {
 	require.Nil(t, err)
 	require.NotNil(t, result)
 	assert.Equal(t, 1, len(result.Entries))
-	assert.Equal(t, dataBytes, result.Entries[0].Data.Data())
+	assert.Equal(t, dataBytes, result.Entries[0].Data.Bytes())
 }
 
 func TestIndexTableSizeFor_ExistingSizes(t *testing.T) {
