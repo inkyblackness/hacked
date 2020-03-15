@@ -2,7 +2,6 @@ package movie
 
 import (
 	"bytes"
-	"encoding/binary"
 	"errors"
 	"io/ioutil"
 
@@ -11,7 +10,6 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/movie/internal/compression"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
-	"github.com/inkyblackness/hacked/ss1/serial"
 	"github.com/inkyblackness/hacked/ss1/serial/rle"
 )
 
@@ -40,8 +38,8 @@ func (cached *cachedMovie) audio() audio.L8 {
 	}
 	var samples []byte
 	for _, entry := range cached.container.Entries {
-		if entry.Type() == DataTypeAudio {
-			samples = append(samples, entry.Data()...)
+		if audioEntry, isAudio := entry.(AudioEntry); isAudio {
+			samples = append(samples, audioEntry.Samples...)
 		}
 	}
 	cached.sound = &audio.L8{
@@ -96,47 +94,24 @@ func (cached *cachedMovie) video() []Scene {
 		currentScene = nil
 	}
 	for _, entry := range cached.container.Entries {
-		switch entry.Type() {
-		case dataTypeEndOfMedia:
+		switch typedEntry := entry.(type) {
+		case PaletteEntry:
+			finishScene(typedEntry.Timestamp())
+			currentPalette = typedEntry.Colors
+		case ControlDictionaryEntry:
+			decoderBuilder.WithControlWords(typedEntry.Words)
+		case PaletteLookupEntry:
 			finishScene(entry.Timestamp())
-		case DataTypePalette:
-			finishScene(entry.Timestamp())
-			decoder := serial.NewDecoder(bytes.NewReader(entry.Data()))
-			decoder.Code(&currentPalette)
-		case DataTypeControlDictionary:
-			words, wordsErr := compression.UnpackControlWords(entry.Data())
-
-			if wordsErr == nil {
-				decoderBuilder.WithControlWords(words)
-			}
-		case DataTypePaletteLookupList:
-			finishScene(entry.Timestamp())
-			decoderBuilder.WithPaletteLookupList(entry.Data())
-		case DataTypeLowResVideo:
-			var videoHeader LowResVideoHeader
-			reader := bytes.NewReader(entry.Data())
-
-			err := binary.Read(reader, binary.LittleEndian, &videoHeader)
+			decoderBuilder.WithPaletteLookupList(typedEntry.List)
+		case LowResVideoEntry:
+			err := rle.Decompress(bytes.NewReader(typedEntry.Packed), frameBuffer)
 			if err != nil {
 				break
 			}
-			frameErr := rle.Decompress(reader, frameBuffer)
-			if frameErr == nil {
-				// TODO
-			}
-		case DataTypeHighResVideo:
-			var videoHeader HighResVideoHeader
-			reader := bytes.NewReader(entry.Data())
-
-			err := binary.Read(reader, binary.LittleEndian, &videoHeader)
-			if err != nil {
-				break
-			}
-			bitstreamData := entry.Data()[HighResVideoHeaderSize:videoHeader.PixelDataOffset]
-			maskstreamData := entry.Data()[videoHeader.PixelDataOffset:]
+		case HighResVideoEntry:
 			decoder := decoderBuilder.Build()
 
-			err = decoder.Decode(bitstreamData, maskstreamData)
+			err := decoder.Decode(typedEntry.Bitstream, typedEntry.Maskstream)
 			if err != nil {
 				break
 			}
@@ -161,7 +136,7 @@ func (cached *cachedMovie) video() []Scene {
 			})
 		}
 	}
-	finishScene(cached.container.EndTimestamp) // paranoia - there should have been an 'end' tag.
+	finishScene(cached.container.EndTimestamp)
 
 	cached.scenes = scenes
 
@@ -178,16 +153,12 @@ func (cached *cachedMovie) subtitles(language resource.Language) Subtitles {
 	expectedControl := SubtitleControlForLanguage(language)
 
 	for _, entry := range cached.container.Entries {
-		if entry.Type() != DataTypeSubtitle {
+		subtitleEntry, isSubtitle := entry.(SubtitleEntry)
+		if !isSubtitle {
 			continue
 		}
-		var subtitleHeader SubtitleHeader
-		err := binary.Read(bytes.NewReader(entry.Data()), binary.LittleEndian, &subtitleHeader)
-		if err != nil {
-			continue
-		}
-		if subtitleHeader.Control == expectedControl {
-			sub.add(entry.Timestamp(), cached.cp.Decode(entry.Data()[subtitleHeader.TextOffset:]))
+		if subtitleEntry.Control == expectedControl {
+			sub.add(entry.Timestamp(), cached.cp.Decode(subtitleEntry.Text))
 		}
 	}
 	if (len(sub.Entries) > 0) && (len(sub.Entries[len(sub.Entries)-1].Text) > 0) {

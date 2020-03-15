@@ -1,9 +1,6 @@
 package edit
 
 import (
-	"bytes"
-	"encoding/binary"
-
 	"github.com/inkyblackness/hacked/ss1/content/audio"
 	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/content/text"
@@ -133,19 +130,15 @@ func (service MovieService) SetSubtitles(setter media.MovieBlockSetter, key reso
 	areaIndex := -1
 
 	for _, entry := range baseContainer.Entries {
-		if entry.Type() != movie.DataTypeSubtitle {
+		subtitleEntry, isSubtitle := entry.(movie.SubtitleEntry)
+		if !isSubtitle {
 			filteredEntries = append(filteredEntries, entry)
 			continue
 		}
-		var subtitleHeader movie.SubtitleHeader
-		err := binary.Read(bytes.NewReader(entry.Data()), binary.LittleEndian, &subtitleHeader)
-		if err != nil {
+		if subtitleEntry.Control == subtitleControl {
 			continue
 		}
-		if subtitleHeader.Control == subtitleControl {
-			continue
-		}
-		if subtitleHeader.Control == movie.SubtitleArea {
+		if subtitleEntry.Control == movie.SubtitleArea {
 			areaIndex = len(filteredEntries)
 		}
 		filteredEntries = append(filteredEntries, entry)
