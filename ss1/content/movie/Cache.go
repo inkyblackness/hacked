@@ -27,26 +27,8 @@ type cachedMovie struct {
 
 	container Container
 
-	sound           *audio.L8
 	scenes          []Scene
 	subtitlesByLang map[resource.Language]*SubtitleList
-}
-
-func (cached *cachedMovie) audio() audio.L8 {
-	if cached.sound != nil {
-		return *cached.sound
-	}
-	var samples []byte
-	for _, entry := range cached.container.Entries {
-		if audioData, isAudio := entry.Data.(AudioEntryData); isAudio {
-			samples = append(samples, audioData.Samples...)
-		}
-	}
-	cached.sound = &audio.L8{
-		Samples:    samples,
-		SampleRate: cached.container.Audio.Sound.SampleRate,
-	}
-	return *cached.sound
 }
 
 func (cached *cachedMovie) video() []Scene {
@@ -241,7 +223,7 @@ func (cache *Cache) Audio(key resource.Key) (sound audio.L8, err error) {
 	if err != nil {
 		return
 	}
-	return cached.audio(), nil
+	return cached.container.Audio.Sound, nil
 }
 
 // Video retrieves and caches the underlying movie, and returns the complete list of decoded scenes.
