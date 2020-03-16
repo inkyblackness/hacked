@@ -6,11 +6,8 @@ import (
 	"io/ioutil"
 
 	"github.com/inkyblackness/hacked/ss1/content/audio"
-	"github.com/inkyblackness/hacked/ss1/content/bitmap"
-	"github.com/inkyblackness/hacked/ss1/content/movie/internal/compression"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
-	"github.com/inkyblackness/hacked/ss1/serial/rle"
 )
 
 // Cache retrieves movie container from a localizer and keeps them decoded until they are invalidated.
@@ -23,104 +20,15 @@ type Cache struct {
 }
 
 type cachedMovie struct {
-	cp text.Codepage
-
 	container Container
-
-	scenes []Scene
+	scenes    []Scene
 }
 
 func (cached *cachedMovie) video() []Scene {
 	if len(cached.scenes) > 0 {
 		return cached.scenes
 	}
-
-	var scenes []Scene
-	currentPalette := cached.container.StartPalette
-	width := int(cached.container.Video.Width)
-	height := int(cached.container.Video.Height)
-	frameBuffer := make([]byte, width*height)
-	decoderBuilder := compression.NewFrameDecoderBuilder(width, height)
-	decoderBuilder.ForStandardFrame(frameBuffer, width)
-
-	clonePalette := func() *bitmap.Palette {
-		paletteCopy := currentPalette
-		return &paletteCopy
-	}
-	cloneFramebuffer := func() []byte {
-		bufferCopy := make([]byte, len(frameBuffer))
-		copy(bufferCopy, frameBuffer)
-		return bufferCopy
-	}
-
-	var currentScene *Scene
-
-	setPreviousFrameEndTime := func(ts Timestamp) {
-		if currentScene != nil && len(currentScene.Frames) > 0 {
-			previousIndex := len(currentScene.Frames) - 1
-			previousFrame := currentScene.Frames[previousIndex]
-			if ts.IsAfter(previousFrame.DisplayTime) {
-				previousFrame.DisplayTime = previousFrame.DisplayTime.DeltaTo(ts)
-			} else {
-				previousFrame.DisplayTime = Timestamp{}
-			}
-			currentScene.Frames[previousIndex] = previousFrame
-		}
-	}
-	finishScene := func(now Timestamp) {
-		if currentScene != nil {
-			setPreviousFrameEndTime(now)
-			scenes = append(scenes, *currentScene)
-		}
-		currentScene = nil
-	}
-	for _, entry := range cached.container.Entries {
-		switch entryData := entry.Data.(type) {
-		case PaletteEntryData:
-			finishScene(entry.Timestamp)
-			currentPalette = entryData.Colors
-		case ControlDictionaryEntryData:
-			decoderBuilder.WithControlWords(entryData.Words)
-		case PaletteLookupEntryData:
-			finishScene(entry.Timestamp)
-			decoderBuilder.WithPaletteLookupList(entryData.List)
-		case LowResVideoEntryData:
-			err := rle.Decompress(bytes.NewReader(entryData.Packed), frameBuffer)
-			if err != nil {
-				break
-			}
-		case HighResVideoEntryData:
-			decoder := decoderBuilder.Build()
-
-			err := decoder.Decode(entryData.Bitstream, entryData.Maskstream)
-			if err != nil {
-				break
-			}
-			if currentScene == nil {
-				currentScene = &Scene{}
-			}
-
-			bmp := bitmap.Bitmap{
-				Header: bitmap.Header{
-					Type:   bitmap.TypeFlat8Bit,
-					Width:  int16(cached.container.Video.Width),
-					Height: int16(cached.container.Video.Height),
-					Stride: cached.container.Video.Width,
-				},
-				Palette: clonePalette(),
-				Pixels:  cloneFramebuffer(),
-			}
-			setPreviousFrameEndTime(entry.Timestamp)
-			currentScene.Frames = append(currentScene.Frames, Frame{
-				Bitmap:      bmp,
-				DisplayTime: entry.Timestamp,
-			})
-		}
-	}
-	finishScene(cached.container.EndTimestamp)
-
-	cached.scenes = scenes
-
+	cached.scenes, _ = cached.container.Video.Decompress()
 	return cached.scenes
 }
 
@@ -172,7 +80,6 @@ func (cache *Cache) cached(key resource.Key) (*cachedMovie, error) {
 		return nil, err
 	}
 	cached := &cachedMovie{
-		cp:        cache.cp,
 		container: container,
 	}
 	cache.movies[key] = cached
