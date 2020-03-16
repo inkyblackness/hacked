@@ -33,7 +33,7 @@ func ContainSoundData(soundData audio.L8) []byte {
 	}
 
 	container.EndTimestamp = TimestampFromSeconds(float32(len(soundData.Samples)) / soundData.SampleRate)
-	container.AudioSampleRate = uint16(soundData.SampleRate)
+	container.Audio.Sound.SampleRate = soundData.SampleRate
 
 	buffer := bytes.NewBuffer(nil)
 	_ = Write(buffer, container)

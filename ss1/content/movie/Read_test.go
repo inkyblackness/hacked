@@ -52,9 +52,9 @@ func TestReadReturnsContainerWithBasicPropertiesSet(t *testing.T) {
 	source := bytes.NewReader(emptyFile)
 	container, _ := movie.Read(source)
 
-	assert.Equal(t, uint16(640), container.VideoWidth)
-	assert.Equal(t, uint16(480), container.VideoHeight)
-	assert.Equal(t, uint16(22050), container.AudioSampleRate)
+	assert.Equal(t, uint16(640), container.Video.Width)
+	assert.Equal(t, uint16(480), container.Video.Height)
+	assert.Equal(t, uint16(22050), uint16(container.Audio.Sound.SampleRate))
 	assert.Equal(t, 0, len(container.Entries))
 }
 

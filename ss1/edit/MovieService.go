@@ -160,7 +160,7 @@ func (service MovieService) SetAudio(setter media.MovieBlockSetter, key resource
 		}
 		newEntries = append(newEntries, filteredEntry)
 	}
-	baseContainer.AudioSampleRate = uint16(soundData.SampleRate)
+	baseContainer.Audio.Sound.SampleRate = soundData.SampleRate
 	if endTimestamp.IsAfter(baseContainer.EndTimestamp) {
 		baseContainer.EndTimestamp = endTimestamp
 	}
@@ -244,9 +244,11 @@ func (service MovieService) getBaseContainer(key resource.Key) movie.Container {
 	container, err := service.movieViewer.Container(key)
 	if err != nil {
 		container = movie.Container{
-			VideoWidth:      600,
-			VideoHeight:     300,
-			AudioSampleRate: 22050,
+			Audio: movie.Audio{Sound: audio.L8{SampleRate: 22050}},
+			Video: movie.Video{
+				Width:  600,
+				Height: 300,
+			},
 		}
 	}
 	return container

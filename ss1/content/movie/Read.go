@@ -49,9 +49,9 @@ func verifyAndExtractHeader(container *Container, header *format.Header) error {
 	}
 
 	container.EndTimestamp = Timestamp{Second: header.DurationSeconds, Fraction: header.DurationFraction}
-	container.VideoHeight = header.VideoHeight
-	container.VideoWidth = header.VideoWidth
-	container.AudioSampleRate = header.SampleRate
+	container.Video.Height = header.VideoHeight
+	container.Video.Width = header.VideoWidth
+	container.Audio.Sound.SampleRate = float32(header.SampleRate)
 	return nil
 }
 

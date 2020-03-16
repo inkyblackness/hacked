@@ -44,7 +44,7 @@ func (cached *cachedMovie) audio() audio.L8 {
 	}
 	cached.sound = &audio.L8{
 		Samples:    samples,
-		SampleRate: float32(cached.container.AudioSampleRate),
+		SampleRate: cached.container.Audio.Sound.SampleRate,
 	}
 	return *cached.sound
 }
@@ -56,8 +56,8 @@ func (cached *cachedMovie) video() []Scene {
 
 	var scenes []Scene
 	currentPalette := cached.container.StartPalette
-	width := int(cached.container.VideoWidth)
-	height := int(cached.container.VideoHeight)
+	width := int(cached.container.Video.Width)
+	height := int(cached.container.Video.Height)
 	frameBuffer := make([]byte, width*height)
 	decoderBuilder := compression.NewFrameDecoderBuilder(width, height)
 	decoderBuilder.ForStandardFrame(frameBuffer, width)
@@ -122,9 +122,9 @@ func (cached *cachedMovie) video() []Scene {
 			bmp := bitmap.Bitmap{
 				Header: bitmap.Header{
 					Type:   bitmap.TypeFlat8Bit,
-					Width:  int16(cached.container.VideoWidth),
-					Height: int16(cached.container.VideoHeight),
-					Stride: cached.container.VideoWidth,
+					Width:  int16(cached.container.Video.Width),
+					Height: int16(cached.container.Video.Height),
+					Stride: cached.container.Video.Width,
 				},
 				Palette: clonePalette(),
 				Pixels:  cloneFramebuffer(),

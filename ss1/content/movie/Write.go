@@ -20,9 +20,9 @@ func Write(dest io.Writer, container Container) error {
 	copy(header.Tag[:], bytes.NewBufferString(format.Tag).Bytes())
 	header.DurationSeconds = container.EndTimestamp.Second
 	header.DurationFraction = container.EndTimestamp.Fraction
-	header.VideoWidth = container.VideoWidth
-	header.VideoHeight = container.VideoHeight
-	header.SampleRate = container.AudioSampleRate
+	header.VideoWidth = container.Video.Width
+	header.VideoHeight = container.Video.Height
+	header.SampleRate = uint16(container.Audio.Sound.SampleRate)
 
 	if header.VideoWidth != 0 {
 		header.Unknown001C = 0x0008
