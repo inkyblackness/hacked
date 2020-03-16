@@ -27,8 +27,7 @@ type cachedMovie struct {
 
 	container Container
 
-	scenes          []Scene
-	subtitlesByLang map[resource.Language]*SubtitleList
+	scenes []Scene
 }
 
 func (cached *cachedMovie) video() []Scene {
@@ -125,34 +124,6 @@ func (cached *cachedMovie) video() []Scene {
 	return cached.scenes
 }
 
-func (cached *cachedMovie) subtitles(language resource.Language) SubtitleList {
-	sub := cached.subtitlesByLang[language]
-	if sub != nil {
-		return *sub
-	}
-
-	sub = &SubtitleList{}
-	expectedControl := SubtitleControlForLanguage(language)
-
-	for _, entry := range cached.container.Entries {
-		subtitleData, isSubtitle := entry.Data.(SubtitleEntryData)
-		if !isSubtitle {
-			continue
-		}
-		if subtitleData.Control == expectedControl {
-			sub.add(entry.Timestamp, cached.cp.Decode(subtitleData.Text))
-		}
-	}
-	if (len(sub.Entries) > 0) && (len(sub.Entries[len(sub.Entries)-1].Text) > 0) {
-		sub.add(cached.container.EndTimestamp, "")
-	}
-	if cached.subtitlesByLang == nil {
-		cached.subtitlesByLang = make(map[resource.Language]*SubtitleList)
-	}
-	cached.subtitlesByLang[language] = sub
-	return *sub
-}
-
 // NewCache returns a new instance.
 func NewCache(cp text.Codepage, localizer resource.Localizer) *Cache {
 	cache := &Cache{
@@ -241,5 +212,5 @@ func (cache *Cache) Subtitles(key resource.Key, language resource.Language) (Sub
 	if err != nil {
 		return SubtitleList{}, err
 	}
-	return cached.subtitles(language), nil
+	return cached.container.Subtitles.PerLanguage[language], nil
 }
