@@ -39,10 +39,56 @@ func (video Video) Encode() []EntryBucket {
 	return buckets
 }
 
+func (video Video) Decompress() ([]Scene, error) {
+	var scenes []Scene
+	width := int(video.Width)
+	height := int(video.Height)
+	frameBuffer := make([]byte, width*height)
+	decoderBuilder := compression.NewFrameDecoderBuilder(width, height)
+	decoderBuilder.ForStandardFrame(frameBuffer, width)
+
+	cloneFramebuffer := func() []byte {
+		bufferCopy := make([]byte, len(frameBuffer))
+		copy(bufferCopy, frameBuffer)
+		return bufferCopy
+	}
+
+	for _, compressedScene := range video.Scenes {
+		scenePalette := compressedScene.palette
+		decoderBuilder.WithControlWords(compressedScene.controlWords)
+		decoderBuilder.WithPaletteLookupList(compressedScene.paletteLookup)
+		decoder := decoderBuilder.Build()
+		var scene Scene
+		for _, compressedFrame := range compressedScene.frames {
+			err := decoder.Decode(compressedFrame.bitstream, compressedFrame.maskstream)
+			if err != nil {
+				return nil, err
+			}
+
+			bmp := bitmap.Bitmap{
+				Header: bitmap.Header{
+					Type:   bitmap.TypeFlat8Bit,
+					Width:  int16(video.Width),
+					Height: int16(video.Height),
+					Stride: video.Width,
+				},
+				Palette: &scenePalette,
+				Pixels:  cloneFramebuffer(),
+			}
+			scene.Frames = append(scene.Frames, Frame{
+				Bitmap:      bmp,
+				DisplayTime: compressedFrame.displayTime,
+			})
+		}
+		scenes = append(scenes, scene)
+	}
+	return scenes, nil
+}
+
 type HighResScene struct {
 	palette       bitmap.Palette
-	controlWords  []compression.ControlWord
 	paletteLookup []byte
+	controlWords  []compression.ControlWord
 	frames        []HighResFrame
 }
 
