@@ -15,7 +15,6 @@ type Container struct {
 	// Entries are all the parts of the movie.
 	Entries []Entry
 
-	// TODO: fill by Read()
 	// TODO: merge by Write(), ordered by bucket priority
 	// TODO: remove other members, they should all no longer be necessary in the end.
 	Audio     Audio

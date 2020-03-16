@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/inkyblackness/hacked/ss1/content/text"
 )
 
 func TestWriteOfEmptyContainerCreatesMinimumSizeData(t *testing.T) {
@@ -24,7 +26,7 @@ func TestWriteCanSaveEmptyContainer(t *testing.T) {
 	err := Write(buffer, container)
 	require.Nil(t, err)
 
-	result, err := Read(bytes.NewReader(buffer.Bytes()))
+	result, err := Read(bytes.NewReader(buffer.Bytes()), text.DefaultCodepage())
 
 	require.Nil(t, err)
 	require.NotNil(t, result)
@@ -45,7 +47,7 @@ func TestWriteSavesEntries(t *testing.T) {
 	err := Write(buffer, container)
 	require.Nil(t, err)
 
-	result, err := Read(bytes.NewReader(buffer.Bytes()))
+	result, err := Read(bytes.NewReader(buffer.Bytes()), text.DefaultCodepage())
 
 	require.Nil(t, err)
 	require.NotNil(t, result)

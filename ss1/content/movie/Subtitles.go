@@ -9,6 +9,13 @@ type Subtitles struct {
 	PerLanguage [resource.LanguageCount]SubtitleList
 }
 
+func (sub *Subtitles) Add(lang resource.Language, timestamp Timestamp, text string) {
+	sub.PerLanguage[lang].Entries = append(sub.PerLanguage[lang].Entries, Subtitle{
+		Timestamp: timestamp,
+		Text:      text,
+	})
+}
+
 func (sub Subtitles) ArePresent() bool {
 	for _, lang := range sub.PerLanguage {
 		if len(lang.Entries) > 0 {

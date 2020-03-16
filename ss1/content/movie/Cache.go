@@ -214,7 +214,7 @@ func (cache *Cache) cached(key resource.Key) (*cachedMovie, error) {
 	if err != nil {
 		return nil, err
 	}
-	container, err := Read(bytes.NewReader(data))
+	container, err := Read(bytes.NewReader(data), cache.cp)
 	if err != nil {
 		return nil, err
 	}
