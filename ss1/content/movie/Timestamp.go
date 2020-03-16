@@ -29,6 +29,11 @@ func (ts Timestamp) IsAfter(other Timestamp) bool {
 	return (ts.Second > other.Second) || ((ts.Second == other.Second) && (ts.Fraction > other.Fraction))
 }
 
+// IsBefore returns true if this timestamp is before the given one.
+func (ts Timestamp) IsBefore(other Timestamp) bool {
+	return (ts.Second < other.Second) || ((ts.Second == other.Second) && (ts.Fraction < other.Fraction))
+}
+
 // DeltaTo returns the absolute difference between this and the given timestamp.
 func (ts Timestamp) DeltaTo(other Timestamp) Timestamp {
 	tsLinear := ts.toLinear()

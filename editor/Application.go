@@ -470,7 +470,7 @@ func (app *Application) initView() {
 	audioViewer := media.NewAudioViewerService(app.movieCache, app.mod)
 	audioSetter := media.NewAudioSetterService()
 	movieViewer := media.NewMovieViewerService(app.movieCache, app.mod)
-	movieSetter := media.NewMovieSetterService()
+	movieSetter := media.NewMovieSetterService(app.cp)
 	augmentedTextService := undoable.NewAugmentedTextService(edit.NewAugmentedTextService(textViewer, textSetter, audioViewer, audioSetter), app)
 	movieService := undoable.NewMovieService(edit.NewMovieService(app.cp, movieViewer, movieSetter), app)
 

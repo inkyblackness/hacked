@@ -21,8 +21,3 @@ type Container struct {
 	Video     Video
 	Subtitles Subtitles
 }
-
-// AddEntry adds the given entry to the existing list.
-func (container *Container) AddEntry(entry Entry) {
-	container.Entries = append(container.Entries, entry)
-}

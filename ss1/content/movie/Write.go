@@ -4,14 +4,16 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
+	"sort"
 
 	"github.com/inkyblackness/hacked/ss1/content/movie/internal/format"
+	"github.com/inkyblackness/hacked/ss1/content/text"
 )
 
 const indexHeaderSizeIncrement = 0x0400
 
 // Write encodes the provided container into the given writer.
-func Write(dest io.Writer, container Container) error {
+func Write(dest io.Writer, container Container, cp text.Codepage) error {
 	var indexEntries []format.IndexTableEntry
 	var header format.Header
 	palette := paletteDataFromContainer(container)
@@ -31,8 +33,34 @@ func Write(dest io.Writer, container Container) error {
 	header.Unknown0020 = 0x0001
 	header.Unknown0022 = 0x00000001
 
+	var buckets []EntryBucket
+	buckets = append(buckets, container.Audio.Encode()...)
+	buckets = append(buckets, container.Video.Encode()...)
+	subtitleBucketsList := container.Subtitles.Encode(cp)
+	for _, subtitleBuckets := range subtitleBucketsList {
+		buckets = append(buckets, subtitleBuckets...)
+	}
+	sort.Slice(buckets, func(a, b int) bool {
+		bucketA := buckets[a]
+		bucketB := buckets[b]
+		// TODO: subtitles appearing right before a scene change need to be placed afterwards, even if their
+		//  timestamp is a few milliseconds earlier.
+		if bucketA.Timestamp.IsBefore(bucketB.Timestamp) {
+			return true
+		}
+		if bucketB.Timestamp.IsBefore(bucketA.Timestamp) {
+			return false
+		}
+		return bucketA.Priority < bucketB.Priority
+	})
+
 	// create index
-	for _, dataEntry := range container.Entries {
+	var entries []Entry
+	for _, bucket := range buckets {
+		entries = append(entries, bucket.Entries...)
+	}
+
+	for _, dataEntry := range entries {
 		indexEntry := format.IndexTableEntry{
 			Type:              byte(dataEntry.Data.Type()),
 			DataOffset:        header.ContentSize,
@@ -76,7 +104,7 @@ func Write(dest io.Writer, container Container) error {
 	if err != nil {
 		return err
 	}
-	for _, dataEntry := range container.Entries {
+	for _, dataEntry := range entries {
 		_, err = dest.Write(dataEntry.Data.Bytes())
 		if err != nil {
 			return err

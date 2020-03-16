@@ -115,57 +115,61 @@ func (service MovieService) Audio(key resource.Key) audio.L8 {
 // SetAudio sets the audio component of identified movie.
 func (service MovieService) SetAudio(setter media.MovieBlockSetter, key resource.Key, soundData audio.L8) {
 	baseContainer := service.getBaseContainer(key)
-	var filteredEntries []movie.Entry
 
-	for _, entry := range baseContainer.Entries {
-		if entry.Data.Type() == movie.DataTypeAudio {
-			continue
-		}
-		filteredEntries = append(filteredEntries, entry)
-	}
+	baseContainer.Audio.Sound = soundData
+	/*
+		var filteredEntries []movie.Entry
 
-	var audioEntries []movie.Entry
-	startOffset := 0
-	for (startOffset + audioEntrySize) <= len(soundData.Samples) {
-		ts := movie.TimestampFromSeconds(float32(startOffset) / soundData.SampleRate)
-		endOffset := startOffset + audioEntrySize
-		audioEntries = append(audioEntries, movie.Entry{
-			Timestamp: ts,
-			Data: movie.AudioEntryData{
-				Samples: soundData.Samples[startOffset:endOffset],
-			},
-		})
-		startOffset = endOffset
-	}
-	if startOffset < len(soundData.Samples) {
-		ts := movie.TimestampFromSeconds(float32(startOffset) / soundData.SampleRate)
-		audioEntries = append(audioEntries, movie.Entry{
-			Timestamp: ts,
-			Data: movie.AudioEntryData{
-				Samples: soundData.Samples[startOffset:],
-			},
-		})
-	}
-	endTimestamp := movie.TimestampFromSeconds(float32(len(soundData.Samples)) / soundData.SampleRate)
-
-	var newEntries []movie.Entry
-	lastInsertIndex := -1
-	for _, filteredEntry := range filteredEntries {
-		for _, audioEntry := range audioEntries[lastInsertIndex+1:] {
-			if audioEntry.Timestamp.IsAfter(filteredEntry.Timestamp) {
-				break
+		for _, entry := range baseContainer.Entries {
+			if entry.Data.Type() == movie.DataTypeAudio {
+				continue
 			}
-			newEntries = append(newEntries, audioEntry)
-			lastInsertIndex++
+			filteredEntries = append(filteredEntries, entry)
 		}
-		newEntries = append(newEntries, filteredEntry)
-	}
-	baseContainer.Audio.Sound.SampleRate = soundData.SampleRate
-	if endTimestamp.IsAfter(baseContainer.EndTimestamp) {
-		baseContainer.EndTimestamp = endTimestamp
-	}
 
-	baseContainer.Entries = newEntries
+		var audioEntries []movie.Entry
+		startOffset := 0
+		for (startOffset + audioEntrySize) <= len(soundData.Samples) {
+			ts := movie.TimestampFromSeconds(float32(startOffset) / soundData.SampleRate)
+			endOffset := startOffset + audioEntrySize
+			audioEntries = append(audioEntries, movie.Entry{
+				Timestamp: ts,
+				Data: movie.AudioEntryData{
+					Samples: soundData.Samples[startOffset:endOffset],
+				},
+			})
+			startOffset = endOffset
+		}
+		if startOffset < len(soundData.Samples) {
+			ts := movie.TimestampFromSeconds(float32(startOffset) / soundData.SampleRate)
+			audioEntries = append(audioEntries, movie.Entry{
+				Timestamp: ts,
+				Data: movie.AudioEntryData{
+					Samples: soundData.Samples[startOffset:],
+				},
+			})
+		}
+		endTimestamp := movie.TimestampFromSeconds(float32(len(soundData.Samples)) / soundData.SampleRate)
+
+		var newEntries []movie.Entry
+		lastInsertIndex := -1
+		for _, filteredEntry := range filteredEntries {
+			for _, audioEntry := range audioEntries[lastInsertIndex+1:] {
+				if audioEntry.Timestamp.IsAfter(filteredEntry.Timestamp) {
+					break
+				}
+				newEntries = append(newEntries, audioEntry)
+				lastInsertIndex++
+			}
+			newEntries = append(newEntries, filteredEntry)
+		}
+		baseContainer.Audio.Sound.SampleRate = soundData.SampleRate
+		if endTimestamp.IsAfter(baseContainer.EndTimestamp) {
+			baseContainer.EndTimestamp = endTimestamp
+		}
+
+		baseContainer.Entries = newEntries
+	*/
 	service.movieSetter.Set(setter, key, baseContainer)
 }
 

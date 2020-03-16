@@ -14,7 +14,7 @@ func TestWriteOfEmptyContainerCreatesMinimumSizeData(t *testing.T) {
 	var container Container
 	buffer := bytes.NewBuffer(nil)
 
-	err := Write(buffer, container)
+	err := Write(buffer, container, text.DefaultCodepage())
 	require.Nil(t, err)
 	assert.Equal(t, 0x0800, len(buffer.Bytes()))
 }
@@ -23,36 +23,29 @@ func TestWriteCanSaveEmptyContainer(t *testing.T) {
 	var container Container
 	buffer := bytes.NewBuffer(nil)
 
-	err := Write(buffer, container)
+	err := Write(buffer, container, text.DefaultCodepage())
 	require.Nil(t, err)
 
-	result, err := Read(bytes.NewReader(buffer.Bytes()), text.DefaultCodepage())
+	_, err = Read(bytes.NewReader(buffer.Bytes()), text.DefaultCodepage())
 
 	require.Nil(t, err)
-	require.NotNil(t, result)
-	assert.Equal(t, 0, len(result.Entries))
 }
 
-func TestWriteSavesEntries(t *testing.T) {
+func TestWriteSavesAudio(t *testing.T) {
 	dataBytes := []byte{0x01, 0x02, 0x03}
 	var container Container
 	container.Audio.Sound.SampleRate = 22050.0
-	container.AddEntry(Entry{
-		Data: AudioEntryData{
-			Samples: dataBytes,
-		},
-	})
+	container.Audio.Sound.Samples = dataBytes
 	buffer := bytes.NewBuffer(nil)
 
-	err := Write(buffer, container)
+	err := Write(buffer, container, text.DefaultCodepage())
 	require.Nil(t, err)
 
 	result, err := Read(bytes.NewReader(buffer.Bytes()), text.DefaultCodepage())
 
 	require.Nil(t, err)
 	require.NotNil(t, result)
-	assert.Equal(t, 1, len(result.Entries))
-	assert.Equal(t, dataBytes, result.Entries[0].Data.Bytes())
+	assert.Equal(t, dataBytes, result.Audio.Sound.Samples)
 }
 
 func TestIndexTableSizeFor_ExistingSizes(t *testing.T) {
