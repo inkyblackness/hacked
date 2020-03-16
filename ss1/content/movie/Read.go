@@ -139,6 +139,13 @@ func parseEntries(entries []Entry, container *Container,
 	var paletteLookup []byte
 	var controlDictionary []compression.ControlWord
 	var highResScene *HighResScene
+	sceneChanging := true
+	finishScene := func() {
+		if highResScene != nil {
+			container.Video.Scenes = append(container.Video.Scenes, *highResScene)
+		}
+		highResScene = nil
+	}
 	var frame *HighResFrame
 	finishFrame := func(timestamp Timestamp) {
 		if frame != nil {
@@ -146,16 +153,6 @@ func parseEntries(entries []Entry, container *Container,
 			highResScene.frames = append(highResScene.frames, *frame)
 		}
 		frame = nil
-	}
-	pushFrame := func(nextFrame *HighResFrame) {
-		finishFrame(nextFrame.displayTime)
-		frame = nextFrame
-	}
-	finishScene := func() {
-		if highResScene != nil {
-			container.Video.Scenes = append(container.Video.Scenes, *highResScene)
-		}
-		highResScene = nil
 	}
 	for _, entry := range entries {
 		switch data := entry.Data.(type) {
@@ -177,31 +174,33 @@ func parseEntries(entries []Entry, container *Container,
 			// ignored for now
 			return fmt.Errorf("low-res video not supported")
 		case PaletteLookupEntryData:
-			finishScene()
+			sceneChanging = true
 			paletteLookup = data.List
 		case ControlDictionaryEntryData:
-			finishScene()
+			sceneChanging = true
 			controlDictionary = data.Words
 		case PaletteResetEntryData:
-			finishScene()
+			sceneChanging = true
 			palette = bitmap.Palette{}
 		case PaletteEntryData:
-			finishScene()
+			sceneChanging = true
 			palette = data.Colors
 		case HighResVideoEntryData:
-			if highResScene == nil {
+			finishFrame(entry.Timestamp)
+			if sceneChanging {
+				finishScene()
 				highResScene = &HighResScene{
 					palette:       palette,
 					paletteLookup: paletteLookup,
 					controlWords:  controlDictionary,
 				}
+				sceneChanging = false
 			}
-			nextFrame := HighResFrame{
+			frame = &HighResFrame{
 				bitstream:   data.Bitstream,
 				maskstream:  data.Maskstream,
 				displayTime: entry.Timestamp,
 			}
-			pushFrame(&nextFrame)
 		default:
 		}
 	}
