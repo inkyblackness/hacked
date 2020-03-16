@@ -22,9 +22,12 @@ type Container struct {
 	// Entries are all the parts of the movie.
 	Entries []Entry
 
-	Audio        Audio
-	HighResVideo *HighResVideo
-	Subtitles    AllSubtitles
+	// TODO: fill by Read()
+	// TODO: merge by Write(), ordered by bucket priority
+	// TODO: remove other members, they should all no longer be necessary in the end.
+	Audio     Audio
+	Video     Video
+	Subtitles Subtitles
 }
 
 // AddEntry adds the given entry to the existing list.

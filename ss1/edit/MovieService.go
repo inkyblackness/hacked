@@ -170,13 +170,13 @@ func (service MovieService) SetAudio(setter media.MovieBlockSetter, key resource
 }
 
 // Subtitles returns the subtitles associated with the given key.
-func (service MovieService) Subtitles(key resource.Key, language resource.Language) movie.Subtitles {
+func (service MovieService) Subtitles(key resource.Key, language resource.Language) movie.SubtitleList {
 	return service.movieViewer.Subtitles(key, language)
 }
 
 // SetSubtitles sets the subtitles of identified movie in given language.
 func (service MovieService) SetSubtitles(setter media.MovieBlockSetter, key resource.Key,
-	language resource.Language, subtitles movie.Subtitles) {
+	language resource.Language, subtitles movie.SubtitleList) {
 	baseContainer := service.getBaseContainer(key)
 	var filteredEntries []movie.Entry
 	subtitleControl := movie.SubtitleControlForLanguage(language)

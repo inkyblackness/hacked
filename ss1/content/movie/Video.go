@@ -5,7 +5,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/movie/internal/compression"
 )
 
-type HighResVideo struct {
+type Video struct {
 	// Width is the width of the video in pixel.
 	Width uint16
 	// Height is the height of the video in pixel.
@@ -14,7 +14,14 @@ type HighResVideo struct {
 	Scenes []HighResScene
 }
 
-func (video HighResVideo) Duration() Timestamp {
+func (video Video) StartPalette() bitmap.Palette {
+	if len(video.Scenes) == 0 {
+		return bitmap.Palette{}
+	}
+	return video.Scenes[0].palette
+}
+
+func (video Video) Duration() Timestamp {
 	var sum Timestamp
 	for _, scene := range video.Scenes {
 		sum = sum.Plus(scene.Duration())
@@ -22,7 +29,7 @@ func (video HighResVideo) Duration() Timestamp {
 	return sum
 }
 
-func (video HighResVideo) Encode() []EntryBucket {
+func (video Video) Encode() []EntryBucket {
 	var sceneTime Timestamp
 	var buckets []EntryBucket
 	for index, scene := range video.Scenes {

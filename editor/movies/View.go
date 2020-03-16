@@ -255,7 +255,7 @@ func (view *View) requestImportAudio() {
 	})
 }
 
-func (view *View) currentSubtitles() movie.Subtitles {
+func (view *View) currentSubtitles() movie.SubtitleList {
 	return view.movieService.Subtitles(view.model.currentKey, view.model.currentSubtitleLang)
 }
 
@@ -318,7 +318,7 @@ func (view *View) requestImportSubtitles() {
 			external.Import(view.modalStateMachine, "File not recognized as SRT.\n"+info, types, fileHandler, true)
 			return
 		}
-		var newSubtitles movie.Subtitles
+		var newSubtitles movie.SubtitleList
 		for _, item := range subtitles.Items {
 			var newEntry movie.Subtitle
 			newEntry.Timestamp = movie.TimestampFromSeconds(float32(item.StartAt) / float32(time.Second))

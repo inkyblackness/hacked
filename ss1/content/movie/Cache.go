@@ -29,7 +29,7 @@ type cachedMovie struct {
 
 	sound           *audio.L8
 	scenes          []Scene
-	subtitlesByLang map[resource.Language]*Subtitles
+	subtitlesByLang map[resource.Language]*SubtitleList
 }
 
 func (cached *cachedMovie) audio() audio.L8 {
@@ -143,13 +143,13 @@ func (cached *cachedMovie) video() []Scene {
 	return cached.scenes
 }
 
-func (cached *cachedMovie) subtitles(language resource.Language) Subtitles {
+func (cached *cachedMovie) subtitles(language resource.Language) SubtitleList {
 	sub := cached.subtitlesByLang[language]
 	if sub != nil {
 		return *sub
 	}
 
-	sub = &Subtitles{}
+	sub = &SubtitleList{}
 	expectedControl := SubtitleControlForLanguage(language)
 
 	for _, entry := range cached.container.Entries {
@@ -165,7 +165,7 @@ func (cached *cachedMovie) subtitles(language resource.Language) Subtitles {
 		sub.add(cached.container.EndTimestamp, "")
 	}
 	if cached.subtitlesByLang == nil {
-		cached.subtitlesByLang = make(map[resource.Language]*Subtitles)
+		cached.subtitlesByLang = make(map[resource.Language]*SubtitleList)
 	}
 	cached.subtitlesByLang[language] = sub
 	return *sub
@@ -254,10 +254,10 @@ func (cache *Cache) Video(key resource.Key) ([]Scene, error) {
 }
 
 // Subtitles retrieves and caches the underlying movie, and returns the subtitles for given language.
-func (cache *Cache) Subtitles(key resource.Key, language resource.Language) (Subtitles, error) {
+func (cache *Cache) Subtitles(key resource.Key, language resource.Language) (SubtitleList, error) {
 	cached, err := cache.cached(key)
 	if err != nil {
-		return Subtitles{}, err
+		return SubtitleList{}, err
 	}
 	return cached.subtitles(language), nil
 }
