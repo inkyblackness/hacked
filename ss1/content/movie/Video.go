@@ -5,15 +5,17 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/movie/internal/compression"
 )
 
+// Video describes the visual part of a movie.
 type Video struct {
 	// Width is the width of the video in pixel.
 	Width uint16
 	// Height is the height of the video in pixel.
 	Height uint16
-
+	// Scenes contain the frames of the video.
 	Scenes []HighResScene
 }
 
+// StartPalette returns the palette of the first scene. If no scene is present, a black palette is returned.
 func (video Video) StartPalette() bitmap.Palette {
 	if len(video.Scenes) == 0 {
 		return bitmap.Palette{}
@@ -21,6 +23,7 @@ func (video Video) StartPalette() bitmap.Palette {
 	return video.Scenes[0].palette
 }
 
+// Duration returns the sum of all scene durations.
 func (video Video) Duration() Timestamp {
 	var sum Timestamp
 	for _, scene := range video.Scenes {
@@ -29,6 +32,7 @@ func (video Video) Duration() Timestamp {
 	return sum
 }
 
+// Encode serializes the scenes into entry buckets.
 func (video Video) Encode() []EntryBucket {
 	var sceneTime Timestamp
 	var buckets []EntryBucket
@@ -39,6 +43,7 @@ func (video Video) Encode() []EntryBucket {
 	return buckets
 }
 
+// Decompress unpacks all the frames of all scenes.
 func (video Video) Decompress() ([]Scene, error) {
 	var scenes []Scene
 	width := int(video.Width)
@@ -85,6 +90,7 @@ func (video Video) Decompress() ([]Scene, error) {
 	return scenes, nil
 }
 
+// HighResScene is a set of frames with high-resolution compression.
 type HighResScene struct {
 	palette       bitmap.Palette
 	paletteLookup []byte
@@ -92,6 +98,7 @@ type HighResScene struct {
 	frames        []HighResFrame
 }
 
+// Duration returns the length of the scene, it is the sum of display times of all frames.
 func (scene HighResScene) Duration() Timestamp {
 	var sum Timestamp
 	for _, frame := range scene.frames {
@@ -100,6 +107,7 @@ func (scene HighResScene) Duration() Timestamp {
 	return sum
 }
 
+// Encode serializes the scene into entry buckets.
 func (scene HighResScene) Encode(start Timestamp, withPalette bool) []EntryBucket {
 	buckets := make([]EntryBucket, 0, len(scene.frames)+1)
 	controlEntries := []Entry{
@@ -126,16 +134,19 @@ func (scene HighResScene) Encode(start Timestamp, withPalette bool) []EntryBucke
 	return buckets
 }
 
+// HighResFrame contains the compressed information of a high-resolution picture in a scene.
 type HighResFrame struct {
 	bitstream   []byte
 	maskstream  []byte
 	displayTime Timestamp
 }
 
+// Duration returns the display time of the frame.
 func (frame HighResFrame) Duration() Timestamp {
 	return frame.displayTime
 }
 
+// Encode serializes the frame into an entry bucket.
 func (frame HighResFrame) Encode(start Timestamp) EntryBucket {
 	return EntryBucket{
 		Priority:  EntryBucketPriorityFrame,
