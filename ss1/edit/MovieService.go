@@ -1,8 +1,6 @@
 package edit
 
 import (
-	"fmt"
-
 	"github.com/inkyblackness/hacked/ss1/content/audio"
 	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/content/text"
@@ -56,52 +54,13 @@ func (service MovieService) Video(key resource.Key) []movie.Scene {
 // RemoveScene cuts out the given scene from the movie.
 func (service MovieService) RemoveScene(setter media.MovieBlockSetter, key resource.Key, scene int) {
 	baseContainer := service.getBaseContainer(key)
-	var newEntries []movie.Entry
-	var removedSceneStart movie.Timestamp
-	var removedSceneDuration movie.Timestamp
-	currentScene := -1
-
-	for _, entry := range baseContainer.Entries {
-		if entry.Data.Type() == movie.DataTypeAudio || entry.Data.Type() == movie.DataTypeSubtitle {
-			newEntries = append(newEntries, entry)
-			continue
-		}
-
-		switch entry.Data.Type() {
-		case movie.DataTypePaletteLookupList:
-			// comes first, has zero timestamp
-			currentScene++
-		case movie.DataTypeControlDictionary:
-			// comes second, has zero timestamp
-		case movie.DataTypePaletteReset:
-			// comes third, has timestamp set
-			if currentScene == scene {
-				removedSceneStart = entry.Timestamp
-			} else if currentScene == (scene + 1) {
-				removedSceneDuration = entry.Timestamp.DeltaTo(removedSceneStart)
-				fmt.Printf("removed scene duration: %v -- %v - %v\n",
-					removedSceneDuration.ToDuration(), entry.Timestamp.ToDuration(), removedSceneStart.ToDuration())
-			}
-		case movie.DataTypePalette:
-			// comes fourth, has timestamp set
-			if currentScene == scene && scene == 0 {
-				paletteData := entry.Data.(movie.PaletteEntryData)
-				baseContainer.StartPalette = paletteData.Colors
-			}
-		}
-
-		if currentScene < scene {
-			newEntries = append(newEntries, entry)
-		}
-		if currentScene <= scene {
-			continue
-		}
-
-		entry.Timestamp = entry.Timestamp.Minus(removedSceneDuration)
-		newEntries = append(newEntries, entry)
+	if (scene < 0) || (scene > len(baseContainer.Video.Scenes)) {
+		return
 	}
-
-	baseContainer.Entries = newEntries
+	scenes := make([]movie.HighResScene, len(baseContainer.Video.Scenes)-1)
+	copy(scenes[0:scene], baseContainer.Video.Scenes[0:scene])
+	copy(scenes[scene:], baseContainer.Video.Scenes[scene+1:])
+	baseContainer.Video.Scenes = scenes
 	service.movieSetter.Set(setter, key, baseContainer)
 }
 

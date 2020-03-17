@@ -131,11 +131,10 @@ func moveSubtitlesAfterSceneChange(entries []Entry) {
 			}
 		}
 	}
-
 }
 
 func paletteDataFromContainer(container Container) []byte {
-	palette := container.StartPalette
+	palette := container.Video.StartPalette()
 	buf := bytes.NewBuffer(nil)
 	_ = binary.Write(buf, binary.LittleEndian, &palette)
 	return buf.Bytes()
