@@ -10,8 +10,6 @@ import (
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
-const audioEntrySize = 0x2000
-
 // MovieService provides read/write functionality.
 type MovieService struct {
 	cp text.Codepage
@@ -115,61 +113,7 @@ func (service MovieService) Audio(key resource.Key) audio.L8 {
 // SetAudio sets the audio component of identified movie.
 func (service MovieService) SetAudio(setter media.MovieBlockSetter, key resource.Key, soundData audio.L8) {
 	baseContainer := service.getBaseContainer(key)
-
 	baseContainer.Audio.Sound = soundData
-	/*
-		var filteredEntries []movie.Entry
-
-		for _, entry := range baseContainer.Entries {
-			if entry.Data.Type() == movie.DataTypeAudio {
-				continue
-			}
-			filteredEntries = append(filteredEntries, entry)
-		}
-
-		var audioEntries []movie.Entry
-		startOffset := 0
-		for (startOffset + audioEntrySize) <= len(soundData.Samples) {
-			ts := movie.TimestampFromSeconds(float32(startOffset) / soundData.SampleRate)
-			endOffset := startOffset + audioEntrySize
-			audioEntries = append(audioEntries, movie.Entry{
-				Timestamp: ts,
-				Data: movie.AudioEntryData{
-					Samples: soundData.Samples[startOffset:endOffset],
-				},
-			})
-			startOffset = endOffset
-		}
-		if startOffset < len(soundData.Samples) {
-			ts := movie.TimestampFromSeconds(float32(startOffset) / soundData.SampleRate)
-			audioEntries = append(audioEntries, movie.Entry{
-				Timestamp: ts,
-				Data: movie.AudioEntryData{
-					Samples: soundData.Samples[startOffset:],
-				},
-			})
-		}
-		endTimestamp := movie.TimestampFromSeconds(float32(len(soundData.Samples)) / soundData.SampleRate)
-
-		var newEntries []movie.Entry
-		lastInsertIndex := -1
-		for _, filteredEntry := range filteredEntries {
-			for _, audioEntry := range audioEntries[lastInsertIndex+1:] {
-				if audioEntry.Timestamp.IsAfter(filteredEntry.Timestamp) {
-					break
-				}
-				newEntries = append(newEntries, audioEntry)
-				lastInsertIndex++
-			}
-			newEntries = append(newEntries, filteredEntry)
-		}
-		baseContainer.Audio.Sound.SampleRate = soundData.SampleRate
-		if endTimestamp.IsAfter(baseContainer.EndTimestamp) {
-			baseContainer.EndTimestamp = endTimestamp
-		}
-
-		baseContainer.Entries = newEntries
-	*/
 	service.movieSetter.Set(setter, key, baseContainer)
 }
 
@@ -182,65 +126,7 @@ func (service MovieService) Subtitles(key resource.Key, language resource.Langua
 func (service MovieService) SetSubtitles(setter media.MovieBlockSetter, key resource.Key,
 	language resource.Language, subtitles movie.SubtitleList) {
 	baseContainer := service.getBaseContainer(key)
-	var filteredEntries []movie.Entry
-	subtitleControl := movie.SubtitleControlForLanguage(language)
-	areaIndex := -1
-
-	for _, entry := range baseContainer.Entries {
-		subtitleData, isSubtitle := entry.Data.(movie.SubtitleEntryData)
-		if !isSubtitle {
-			filteredEntries = append(filteredEntries, entry)
-			continue
-		}
-		if subtitleData.Control == subtitleControl {
-			continue
-		}
-		if subtitleData.Control == movie.SubtitleArea {
-			areaIndex = len(filteredEntries)
-		}
-		filteredEntries = append(filteredEntries, entry)
-	}
-
-	var newEntries []movie.Entry
-	if areaIndex < 0 {
-		// Ensure a subtitle area is defined.
-		// The area is hardcoded. While the engine respects any area, placing the text in the
-		// frame area will have the pixels become overwritten. As such, there are many "wrong" options,
-		// and only a few right ones. There's no need to make them editable.
-		newEntries = append(newEntries,
-			movie.Entry{
-				Data: movie.SubtitleEntryData{
-					Control: movie.SubtitleArea,
-					Text:    service.cp.Encode("20 365 620 395 CLR"),
-				},
-			})
-	}
-	lastInsertIndex := -1
-	for filteredIndex, filteredEntry := range filteredEntries {
-		if filteredIndex > areaIndex &&
-			filteredEntry.Data.Type() != movie.DataTypePaletteReset &&
-			filteredEntry.Data.Type() != movie.DataTypePalette &&
-			filteredEntry.Data.Type() != movie.DataTypeAudio {
-			for _, subEntry := range subtitles.Entries[lastInsertIndex+1:] {
-				if subEntry.Timestamp.IsAfter(filteredEntry.Timestamp) {
-					break
-				}
-
-				newEntries = append(newEntries,
-					movie.Entry{
-						Timestamp: subEntry.Timestamp,
-						Data: movie.SubtitleEntryData{
-							Control: subtitleControl,
-							Text:    service.cp.Encode(subEntry.Text),
-						},
-					})
-				lastInsertIndex++
-			}
-		}
-		newEntries = append(newEntries, filteredEntry)
-	}
-
-	baseContainer.Entries = newEntries
+	baseContainer.Subtitles.PerLanguage[language] = subtitles
 	service.movieSetter.Set(setter, key, baseContainer)
 }
 
