@@ -1,6 +1,7 @@
 package movie
 
 import (
+	"github.com/inkyblackness/hacked/ss1/content/movie/internal/format"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
@@ -58,13 +59,13 @@ func (sub Subtitles) Encode(cp text.Codepage) [][]EntryBucket {
 		Entries: []Entry{{
 			Timestamp: Timestamp{},
 			Data: SubtitleEntryData{
-				Control: SubtitleArea,
+				Control: format.SubtitleArea,
 				Text:    cp.Encode("20 365 620 395 CLR"),
 			},
 		}},
 	}}
 	for index, lang := range sub.PerLanguage {
-		bucketsPerLanguage[index+1] = lang.Encode(SubtitleControlForLanguage(resource.Language(index)), cp)
+		bucketsPerLanguage[index+1] = lang.Encode(format.SubtitleControlForLanguage(resource.Language(index)), cp)
 	}
 	return bucketsPerLanguage
 }
@@ -75,7 +76,7 @@ type SubtitleList struct {
 }
 
 // Encode serializes the list of subtitles into buckets.
-func (sub SubtitleList) Encode(control SubtitleControl, cp text.Codepage) []EntryBucket {
+func (sub SubtitleList) Encode(control format.SubtitleControl, cp text.Codepage) []EntryBucket {
 	buckets := make([]EntryBucket, 0, len(sub.Entries))
 	for _, entry := range sub.Entries {
 		buckets = append(buckets, entry.Encode(control, cp))
@@ -97,7 +98,7 @@ type Subtitle struct {
 }
 
 // Encode serializes the subtitle into a bucket.
-func (sub Subtitle) Encode(control SubtitleControl, cp text.Codepage) EntryBucket {
+func (sub Subtitle) Encode(control format.SubtitleControl, cp text.Codepage) EntryBucket {
 	return EntryBucket{
 		Priority:  EntryBucketPrioritySubtitle,
 		Timestamp: sub.Timestamp,

@@ -1,4 +1,4 @@
-package movie
+package format
 
 // SubtitleDefaultTextOffset is the typical offset, in bytes, to text content.
 const SubtitleDefaultTextOffset = 16

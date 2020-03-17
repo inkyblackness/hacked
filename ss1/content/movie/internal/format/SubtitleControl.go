@@ -1,4 +1,4 @@
-package movie
+package format
 
 import "github.com/inkyblackness/hacked/ss1/resource"
 

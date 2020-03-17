@@ -1,11 +1,11 @@
-package movie
+package format
 
 // DataType identifies entries
 type DataType byte
 
 const (
-	// dataTypeEndOfMedia marks the last entry
-	dataTypeEndOfMedia = DataType(0)
+	// DataTypeEndOfMedia marks the last entry
+	DataTypeEndOfMedia = DataType(0)
 	// DataTypeLowResVideo for low resolution (low compression) video
 	DataTypeLowResVideo = DataType(0x21)
 	// DataTypeHighResVideo for high resolution (high compression) video

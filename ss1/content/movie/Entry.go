@@ -6,6 +6,7 @@ import (
 
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/content/movie/internal/compression"
+	"github.com/inkyblackness/hacked/ss1/content/movie/internal/format"
 	"github.com/inkyblackness/hacked/ss1/serial"
 )
 
@@ -45,19 +46,19 @@ type Entry struct {
 // EntryData describes one entry in a MOVI container.
 type EntryData interface {
 	// Type describes the content type of the data.
-	Type() DataType
+	Type() format.DataType
 	// Bytes returns the raw bytes of the entry.
 	Bytes() []byte
 }
 
 // UnknownEntryData is an entry that is not know to this codebase.
 type UnknownEntryData struct {
-	DataType DataType
+	DataType format.DataType
 	Raw      []byte
 }
 
 // UnknownEntryFrom decodes an entry from given data.
-func UnknownEntryFrom(dataType DataType, r io.Reader, dataSize int) (UnknownEntryData, error) {
+func UnknownEntryFrom(dataType format.DataType, r io.Reader, dataSize int) (UnknownEntryData, error) {
 	data := UnknownEntryData{
 		DataType: dataType,
 		Raw:      make([]byte, dataSize),
@@ -68,7 +69,7 @@ func UnknownEntryFrom(dataType DataType, r io.Reader, dataSize int) (UnknownEntr
 }
 
 // Type describes the entry.
-func (data UnknownEntryData) Type() DataType {
+func (data UnknownEntryData) Type() format.DataType {
 	return data.DataType
 }
 
@@ -94,8 +95,8 @@ func LowResVideoEntryFrom(r io.Reader, dataSize int) (LowResVideoEntryData, erro
 }
 
 // Type describes the entry.
-func (data LowResVideoEntryData) Type() DataType {
-	return DataTypeLowResVideo
+func (data LowResVideoEntryData) Type() format.DataType {
+	return format.DataTypeLowResVideo
 }
 
 // Bytes returns the raw bytes of the entry.
@@ -127,8 +128,8 @@ func HighResVideoEntryFrom(r io.Reader, dataSize int) (HighResVideoEntryData, er
 }
 
 // Type describes the entry.
-func (data HighResVideoEntryData) Type() DataType {
-	return DataTypeHighResVideo
+func (data HighResVideoEntryData) Type() format.DataType {
+	return format.DataTypeHighResVideo
 }
 
 // Bytes returns the raw bytes of the entry.
@@ -157,8 +158,8 @@ func AudioEntryFrom(r io.Reader, dataSize int) (AudioEntryData, error) {
 }
 
 // Type describes the entry.
-func (data AudioEntryData) Type() DataType {
-	return DataTypeAudio
+func (data AudioEntryData) Type() format.DataType {
+	return format.DataTypeAudio
 }
 
 // Bytes returns the raw bytes of the entry.
@@ -168,7 +169,7 @@ func (data AudioEntryData) Bytes() []byte {
 
 // SubtitleEntryData is an entry with Subtitle samples.
 type SubtitleEntryData struct {
-	Control SubtitleControl
+	Control format.SubtitleControl
 	Text    []byte
 }
 
@@ -176,7 +177,7 @@ type SubtitleEntryData struct {
 func SubtitleEntryFrom(r io.Reader, dataSize int) (SubtitleEntryData, error) {
 	var data SubtitleEntryData
 	coder := serial.NewDecoder(r)
-	var header SubtitleHeader
+	var header format.SubtitleHeader
 	coder.Code(&header)
 	data.Control = header.Control
 	if header.TextOffset > coder.CurPos() {
@@ -188,15 +189,15 @@ func SubtitleEntryFrom(r io.Reader, dataSize int) (SubtitleEntryData, error) {
 }
 
 // Type describes the entry.
-func (data SubtitleEntryData) Type() DataType {
-	return DataTypeSubtitle
+func (data SubtitleEntryData) Type() format.DataType {
+	return format.DataTypeSubtitle
 }
 
 // Bytes returns the raw bytes of the entry.
 func (data SubtitleEntryData) Bytes() []byte {
-	header := SubtitleHeader{
+	header := format.SubtitleHeader{
 		Control:    data.Control,
-		TextOffset: SubtitleDefaultTextOffset,
+		TextOffset: format.SubtitleDefaultTextOffset,
 	}
 	buf := bytes.NewBuffer(nil)
 	coder := serial.NewEncoder(buf)
@@ -220,8 +221,8 @@ func PaletteEntryFrom(r io.Reader) (PaletteEntryData, error) {
 }
 
 // Type describes the entry.
-func (data PaletteEntryData) Type() DataType {
-	return DataTypePalette
+func (data PaletteEntryData) Type() format.DataType {
+	return format.DataTypePalette
 }
 
 // Bytes returns the raw bytes of the entry.
@@ -242,8 +243,8 @@ func PaletteResetEntryFrom() (PaletteResetEntryData, error) {
 }
 
 // Type describes the entry.
-func (data PaletteResetEntryData) Type() DataType {
-	return DataTypePaletteReset
+func (data PaletteResetEntryData) Type() format.DataType {
+	return format.DataTypePaletteReset
 }
 
 // Code serializes the entry.
@@ -266,8 +267,8 @@ func PaletteLookupEntryFrom(r io.Reader, dataSize int) (PaletteLookupEntryData, 
 }
 
 // Type describes the entry.
-func (data PaletteLookupEntryData) Type() DataType {
-	return DataTypePaletteLookupList
+func (data PaletteLookupEntryData) Type() format.DataType {
+	return format.DataTypePaletteLookupList
 }
 
 // Code serializes the entry.
@@ -295,8 +296,8 @@ func ControlDictionaryEntryFrom(r io.Reader, dataSize int) (ControlDictionaryEnt
 }
 
 // Type describes the entry.
-func (data ControlDictionaryEntryData) Type() DataType {
-	return DataTypeControlDictionary
+func (data ControlDictionaryEntryData) Type() format.DataType {
+	return format.DataTypeControlDictionary
 }
 
 // Code serializes the entry.

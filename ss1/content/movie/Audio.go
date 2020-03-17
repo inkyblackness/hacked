@@ -1,6 +1,8 @@
 package movie
 
-import "github.com/inkyblackness/hacked/ss1/content/audio"
+import (
+	"github.com/inkyblackness/hacked/ss1/content/audio"
+)
 
 const audioEntrySize = 0x2000
 

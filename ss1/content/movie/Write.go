@@ -82,7 +82,7 @@ func Write(dest io.Writer, container Container, cp text.Codepage) error {
 	lastEntry := format.IndexTableEntry{
 		TimestampSecond:   header.DurationSeconds,
 		TimestampFraction: header.DurationFraction,
-		Type:              byte(dataTypeEndOfMedia),
+		Type:              byte(format.DataTypeEndOfMedia),
 		DataOffset:        dataStartOffset + header.ContentSize}
 	indexEntries = append(indexEntries, lastEntry)
 	header.IndexEntryCount = int32(len(indexEntries))
@@ -121,10 +121,10 @@ func moveSubtitlesAfterSceneChange(entries []Entry) {
 		entry := entries[i]
 
 		switch entry.Data.Type() {
-		case DataTypePalette:
+		case format.DataTypePalette:
 			nextSceneChangeIndex = i
 			nextSceneChangeTimestamp = entry.Timestamp
-		case DataTypeSubtitle:
+		case format.DataTypeSubtitle:
 			if (nextSceneChangeIndex > 0) && nextSceneChangeTimestamp.IsBefore(entry.Timestamp.Plus(delta)) {
 				copy(entries[i:nextSceneChangeIndex], entries[i+1:nextSceneChangeIndex+1])
 				entries[nextSceneChangeIndex] = entry

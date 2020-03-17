@@ -77,9 +77,9 @@ func readIndexAndEntries(source io.ReadSeeker, startPos int64, header *format.He
 		return nil, err
 	}
 	for index, indexEntry := range indexEntries {
-		entryType := DataType(indexEntry.Type)
+		entryType := format.DataType(indexEntry.Type)
 
-		if entryType != dataTypeEndOfMedia {
+		if entryType != format.DataTypeEndOfMedia {
 			timestamp := Timestamp{
 				Second:   indexEntry.TimestampSecond,
 				Fraction: indexEntry.TimestampFraction,
@@ -104,24 +104,24 @@ func readIndexAndEntries(source io.ReadSeeker, startPos int64, header *format.He
 	return entries, nil
 }
 
-func readEntry(entryType DataType, source io.Reader, dataSize int) (EntryData, error) {
+func readEntry(entryType format.DataType, source io.Reader, dataSize int) (EntryData, error) {
 	limited := io.LimitReader(source, int64(dataSize))
 	switch entryType {
-	case DataTypeLowResVideo:
+	case format.DataTypeLowResVideo:
 		return LowResVideoEntryFrom(limited, dataSize)
-	case DataTypeHighResVideo:
+	case format.DataTypeHighResVideo:
 		return HighResVideoEntryFrom(limited, dataSize)
-	case DataTypeAudio:
+	case format.DataTypeAudio:
 		return AudioEntryFrom(limited, dataSize)
-	case DataTypeSubtitle:
+	case format.DataTypeSubtitle:
 		return SubtitleEntryFrom(limited, dataSize)
-	case DataTypePalette:
+	case format.DataTypePalette:
 		return PaletteEntryFrom(limited)
-	case DataTypePaletteReset:
+	case format.DataTypePaletteReset:
 		return PaletteResetEntryFrom()
-	case DataTypePaletteLookupList:
+	case format.DataTypePaletteLookupList:
 		return PaletteLookupEntryFrom(limited, dataSize)
-	case DataTypeControlDictionary:
+	case format.DataTypeControlDictionary:
 		return ControlDictionaryEntryFrom(limited, dataSize)
 	default:
 		return UnknownEntryFrom(entryType, limited, dataSize)
@@ -156,13 +156,13 @@ func parseEntries(entries []Entry, container *Container,
 		case SubtitleEntryData:
 			subText := cp.Decode(data.Text)
 			switch data.Control {
-			case SubtitleTextStd:
+			case format.SubtitleTextStd:
 				container.Subtitles.Add(resource.LangDefault, entry.Timestamp, subText)
-			case SubtitleTextGer:
+			case format.SubtitleTextGer:
 				container.Subtitles.Add(resource.LangGerman, entry.Timestamp, subText)
-			case SubtitleTextFrn:
+			case format.SubtitleTextFrn:
 				container.Subtitles.Add(resource.LangFrench, entry.Timestamp, subText)
-			case SubtitleArea:
+			case format.SubtitleArea:
 			default:
 			}
 		case LowResVideoEntryData:
