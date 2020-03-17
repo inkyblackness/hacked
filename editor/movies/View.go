@@ -192,12 +192,18 @@ func (view *View) renderAudioProperties() {
 	imgui.Separator()
 	sound := view.currentSound()
 	imgui.LabelText("Audio", fmt.Sprintf("%.2f sec", sound.Duration()))
-	if imgui.Button("Export") {
-		view.requestExportAudio(sound)
-	}
-	imgui.SameLine()
 	if imgui.Button("Import") {
 		view.requestImportAudio()
+	}
+	if !sound.Empty() {
+		imgui.SameLine()
+		if imgui.Button("Export") {
+			view.requestExportAudio(sound)
+		}
+		imgui.SameLine()
+		if imgui.Button("Clear") {
+			view.requestClearAudio()
+		}
 	}
 	imgui.PopID()
 }
@@ -214,12 +220,20 @@ func (view *View) renderSubtitlesProperties() {
 		}
 		imgui.EndCombo()
 	}
-	if imgui.Button("Export") {
-		view.requestExportSubtitles()
-	}
-	imgui.SameLine()
+	sub := view.currentSubtitles()
+	imgui.Text(fmt.Sprintf("%d lines", len(sub.Entries)))
 	if imgui.Button("Import") {
 		view.requestImportSubtitles()
+	}
+	if len(sub.Entries) > 0 {
+		imgui.SameLine()
+		if imgui.Button("Export") {
+			view.requestExportSubtitles()
+		}
+		imgui.SameLine()
+		if imgui.Button("Clear") {
+			view.requestClearSubtitles()
+		}
 	}
 	imgui.PopID()
 }
@@ -253,6 +267,10 @@ func (view *View) requestImportAudio() {
 	external.ImportAudio(view.modalStateMachine, func(sound audio.L8) {
 		view.movieService.RequestSetAudio(view.model.currentKey, sound, view.restoreFunc())
 	})
+}
+
+func (view *View) requestClearAudio() {
+	view.movieService.RequestSetAudio(view.model.currentKey, audio.L8{}, view.restoreFunc())
 }
 
 func (view *View) currentSubtitles() movie.SubtitleList {
@@ -338,6 +356,11 @@ func (view *View) requestImportSubtitles() {
 	}
 
 	external.Import(view.modalStateMachine, info, types, fileHandler, false)
+}
+
+func (view *View) requestClearSubtitles() {
+	view.movieService.RequestSetSubtitles(view.model.currentKey, view.model.currentSubtitleLang,
+		movie.SubtitleList{}, view.restoreFunc())
 }
 
 func (view *View) requestExportVideo() {
