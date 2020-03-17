@@ -18,6 +18,19 @@ func (sub *Subtitles) Add(lang resource.Language, timestamp Timestamp, text stri
 	})
 }
 
+// Duration returns the highest timestamp of all the subtitles
+func (sub Subtitles) Duration() Timestamp {
+	var highest Timestamp
+	for _, list := range sub.PerLanguage {
+		for _, sub := range list.Entries {
+			if highest.IsBefore(sub.Timestamp) {
+				highest = sub.Timestamp
+			}
+		}
+	}
+	return highest
+}
+
 // ArePresent returns true if at least one language makes use of subtitles.
 func (sub Subtitles) ArePresent() bool {
 	for _, lang := range sub.PerLanguage {

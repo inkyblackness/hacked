@@ -2,11 +2,18 @@ package movie
 
 // Container wraps the information and data of a MOVI container.
 type Container struct {
-	// EndTimestamp is the time of the end of the movie.
-	EndTimestamp Timestamp
-
-	// TODO: remove other members, they should all no longer be necessary in the end.
 	Audio     Audio
 	Video     Video
 	Subtitles Subtitles
+}
+
+// Duration returns the length of the entire movie. It is the highest timestamp of all media streams.
+func (container Container) Duration() Timestamp {
+	var max Timestamp
+	for _, ts := range []Timestamp{container.Audio.Duration(), container.Video.Duration(), container.Subtitles.Duration()} {
+		if max.IsBefore(ts) {
+			max = ts
+		}
+	}
+	return max
 }

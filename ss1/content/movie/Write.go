@@ -20,8 +20,9 @@ func Write(dest io.Writer, container Container, cp text.Codepage) error {
 
 	// setup header
 	copy(header.Tag[:], bytes.NewBufferString(format.Tag).Bytes())
-	header.DurationSeconds = container.EndTimestamp.Second
-	header.DurationFraction = container.EndTimestamp.Fraction
+	endTimestamp := container.Duration()
+	header.DurationSeconds = endTimestamp.Second
+	header.DurationFraction = endTimestamp.Fraction
 	header.VideoWidth = container.Video.Width
 	header.VideoHeight = container.Video.Height
 	header.SampleRate = uint16(container.Audio.Sound.SampleRate)

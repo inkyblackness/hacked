@@ -49,9 +49,6 @@ func Read(source io.ReadSeeker, cp text.Codepage) (Container, error) {
 		return Container{}, err
 	}
 
-	// set legacy fields
-	container.EndTimestamp = Timestamp{Second: header.DurationSeconds, Fraction: header.DurationFraction}
-
 	return container, nil
 }
 
