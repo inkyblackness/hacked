@@ -5,10 +5,12 @@ import (
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
+// Subtitles contains all the subtitles in all languages.
 type Subtitles struct {
 	PerLanguage [resource.LanguageCount]SubtitleList
 }
 
+// Add appends the given text at given timestamp in given language.
 func (sub *Subtitles) Add(lang resource.Language, timestamp Timestamp, text string) {
 	sub.PerLanguage[lang].Entries = append(sub.PerLanguage[lang].Entries, Subtitle{
 		Timestamp: timestamp,
@@ -16,6 +18,7 @@ func (sub *Subtitles) Add(lang resource.Language, timestamp Timestamp, text stri
 	})
 }
 
+// ArePresent returns true if at least one language makes use of subtitles.
 func (sub Subtitles) ArePresent() bool {
 	for _, lang := range sub.PerLanguage {
 		if len(lang.Entries) > 0 {
@@ -25,6 +28,7 @@ func (sub Subtitles) ArePresent() bool {
 	return false
 }
 
+// Encode serializes all the subtitles of all languages into buckets.
 func (sub Subtitles) Encode(cp text.Codepage) [][]EntryBucket {
 	if !sub.ArePresent() {
 		return nil
@@ -57,6 +61,7 @@ type SubtitleList struct {
 	Entries []Subtitle
 }
 
+// Encode serializes the list of subtitles into buckets.
 func (sub SubtitleList) Encode(control SubtitleControl, cp text.Codepage) []EntryBucket {
 	buckets := make([]EntryBucket, 0, len(sub.Entries))
 	for _, entry := range sub.Entries {
@@ -78,6 +83,7 @@ type Subtitle struct {
 	Text      string
 }
 
+// Encode serializes the subtitle into a bucket.
 func (sub Subtitle) Encode(control SubtitleControl, cp text.Codepage) EntryBucket {
 	return EntryBucket{
 		Priority:  EntryBucketPrioritySubtitle,

@@ -23,7 +23,7 @@ const (
 )
 
 // EntryBucket is a set of entries that need to be together within the stream.
-// This exists mainly to cover special cases of entry within a stream that have no valid timestamp.
+// This exists mainly to cover special cases of entries within a stream that have no valid timestamp.
 type EntryBucket struct {
 	// Priority helps in merging content from multiple buckets.
 	Priority EntryBucketPriority
