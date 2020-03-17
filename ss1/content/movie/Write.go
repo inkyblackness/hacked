@@ -43,8 +43,6 @@ func Write(dest io.Writer, container Container, cp text.Codepage) error {
 	sort.Slice(buckets, func(a, b int) bool {
 		bucketA := buckets[a]
 		bucketB := buckets[b]
-		// TODO: subtitles appearing right before a scene change need to be placed afterwards, even if their
-		//  timestamp is a few milliseconds earlier.
 		if bucketA.Timestamp.IsBefore(bucketB.Timestamp) {
 			return true
 		}
@@ -59,6 +57,7 @@ func Write(dest io.Writer, container Container, cp text.Codepage) error {
 	for _, bucket := range buckets {
 		entries = append(entries, bucket.Entries...)
 	}
+	moveSubtitlesAfterSceneChange(entries)
 
 	for _, dataEntry := range entries {
 		indexEntry := format.IndexTableEntry{
@@ -111,6 +110,28 @@ func Write(dest io.Writer, container Container, cp text.Codepage) error {
 		}
 	}
 	return nil
+}
+
+func moveSubtitlesAfterSceneChange(entries []Entry) {
+	nextSceneChangeIndex := -1
+	var nextSceneChangeTimestamp Timestamp
+	delta := TimestampFromSeconds(0.5)
+	for i := len(entries) - 1; i >= 0; i-- {
+		entry := entries[i]
+
+		switch entry.Data.Type() {
+		case DataTypePalette:
+			nextSceneChangeIndex = i
+			nextSceneChangeTimestamp = entry.Timestamp
+		case DataTypeSubtitle:
+			if (nextSceneChangeIndex > 0) && nextSceneChangeTimestamp.IsBefore(entry.Timestamp.Plus(delta)) {
+				copy(entries[i:nextSceneChangeIndex], entries[i+1:nextSceneChangeIndex+1])
+				entries[nextSceneChangeIndex] = entry
+				nextSceneChangeIndex--
+			}
+		}
+	}
+
 }
 
 func paletteDataFromContainer(container Container) []byte {
