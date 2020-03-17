@@ -146,22 +146,22 @@ func (view *View) renderContent() {
 	}
 	imgui.EndChild()
 	if imgui.Button("Up") {
-
+		view.requestMoveSceneEarlier()
 	}
 	imgui.SameLine()
 	if imgui.Button("Down") {
-
+		view.requestMoveSceneLater()
 	}
 	imgui.SameLine()
 	if imgui.Button("Remove") {
-		view.requestRemoveCurrentScene()
+		view.requestRemoveScene()
 	}
-	if imgui.Button("Export") {
-		view.requestExportVideo()
-	}
-	imgui.SameLine()
 	if imgui.Button("Import") {
 
+	}
+	imgui.SameLine()
+	if imgui.Button("Export") {
+		view.requestExportScene()
 	}
 	imgui.EndGroup()
 	imgui.SameLine()
@@ -239,9 +239,12 @@ func (view *View) renderSubtitlesProperties() {
 }
 
 func (view *View) restoreFunc() func() {
+	return view.restoreFuncWithScene(view.model.currentScene)
+}
+
+func (view *View) restoreFuncWithScene(oldScene int) func() {
 	oldKey := view.model.currentKey
 	oldSubtitlesLang := view.model.currentSubtitleLang
-	oldScene := view.model.currentScene
 	oldFrame := view.model.currentFrame
 
 	return func() {
@@ -363,7 +366,7 @@ func (view *View) requestClearSubtitles() {
 		movie.SubtitleList{}, view.restoreFunc())
 }
 
-func (view *View) requestExportVideo() {
+func (view *View) requestExportScene() {
 	filename := fmt.Sprintf("%s_Scene%02d_%s.gif",
 		knownMovies[view.model.currentKey.ID].title,
 		view.model.currentScene,
@@ -418,7 +421,23 @@ func (view *View) requestExportVideo() {
 	external.Export(view.modalStateMachine, info, exportTo, false)
 }
 
-func (view *View) requestRemoveCurrentScene() {
+func (view *View) requestMoveSceneEarlier() {
+	scenes := view.movieService.Video(view.model.currentKey)
+	if (view.model.currentScene > 0) && (view.model.currentScene < len(scenes)) {
+		view.movieService.RequestMoveSceneEarlier(view.model.currentKey, view.model.currentScene,
+			view.restoreFuncWithScene(view.model.currentScene-1))
+	}
+}
+
+func (view *View) requestMoveSceneLater() {
+	scenes := view.movieService.Video(view.model.currentKey)
+	if (view.model.currentScene >= 0) && (view.model.currentScene < (len(scenes) - 1)) {
+		view.movieService.RequestMoveSceneLater(view.model.currentKey, view.model.currentScene,
+			view.restoreFuncWithScene(view.model.currentScene+1))
+	}
+}
+
+func (view *View) requestRemoveScene() {
 	scenes := view.movieService.Video(view.model.currentKey)
 	if (view.model.currentScene >= 0) && (view.model.currentScene < len(scenes)) {
 		view.movieService.RequestRemoveScene(view.model.currentKey, view.model.currentScene, view.restoreFunc())

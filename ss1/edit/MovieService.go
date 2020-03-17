@@ -51,10 +51,36 @@ func (service MovieService) Video(key resource.Key) []movie.Scene {
 	return service.movieViewer.Video(key)
 }
 
+// MoveSceneEarlier moves the given scene one step earlier.
+func (service MovieService) MoveSceneEarlier(setter media.MovieBlockSetter, key resource.Key, scene int) {
+	service.swapScenes(setter, key, scene, scene-1)
+}
+
+// MoveSceneLater moves the given scene one step later.
+func (service MovieService) MoveSceneLater(setter media.MovieBlockSetter, key resource.Key, scene int) {
+	service.swapScenes(setter, key, scene, scene+1)
+}
+
+func (service MovieService) swapScenes(setter media.MovieBlockSetter, key resource.Key, sceneA, sceneB int) {
+	baseContainer := service.getBaseContainer(key)
+	if (sceneA < 0) || (sceneA >= (len(baseContainer.Video.Scenes))) {
+		return
+	}
+	if (sceneB < 0) || (sceneB >= (len(baseContainer.Video.Scenes))) {
+		return
+	}
+	scenes := make([]movie.HighResScene, len(baseContainer.Video.Scenes))
+	copy(scenes, baseContainer.Video.Scenes)
+	scenes[sceneA] = baseContainer.Video.Scenes[sceneB]
+	scenes[sceneB] = baseContainer.Video.Scenes[sceneA]
+	baseContainer.Video.Scenes = scenes
+	service.movieSetter.Set(setter, key, baseContainer)
+}
+
 // RemoveScene cuts out the given scene from the movie.
 func (service MovieService) RemoveScene(setter media.MovieBlockSetter, key resource.Key, scene int) {
 	baseContainer := service.getBaseContainer(key)
-	if (scene < 0) || (scene > len(baseContainer.Video.Scenes)) {
+	if (scene < 0) || (scene >= len(baseContainer.Video.Scenes)) {
 		return
 	}
 	scenes := make([]movie.HighResScene, len(baseContainer.Video.Scenes)-1)

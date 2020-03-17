@@ -29,6 +29,26 @@ func (service MovieService) Video(key resource.Key) []movie.Scene {
 	return service.wrapped.Video(key)
 }
 
+// RequestMoveSceneEarlier queues to move the identified scene earlier.
+func (service MovieService) RequestMoveSceneEarlier(key resource.Key, scene int, restoreFunc func()) {
+	service.requestCommand(
+		func(setter media.MovieBlockSetter) {
+			service.wrapped.MoveSceneEarlier(setter, key, scene)
+		},
+		service.wrapped.RestoreFunc(key),
+		restoreFunc)
+}
+
+// RequestMoveSceneLater queues to move the identified scene later.
+func (service MovieService) RequestMoveSceneLater(key resource.Key, scene int, restoreFunc func()) {
+	service.requestCommand(
+		func(setter media.MovieBlockSetter) {
+			service.wrapped.MoveSceneLater(setter, key, scene)
+		},
+		service.wrapped.RestoreFunc(key),
+		restoreFunc)
+}
+
 // RequestRemoveScene queues to remove the identified scene.
 func (service MovieService) RequestRemoveScene(key resource.Key, scene int, restoreFunc func()) {
 	service.requestCommand(
