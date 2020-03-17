@@ -16,7 +16,7 @@ func (a Audio) Duration() Timestamp {
 	if a.Sound.SampleRate <= 0 {
 		return Timestamp{}
 	}
-	return TimestampFromSeconds(float32(len(a.Sound.Samples)) / a.Sound.SampleRate)
+	return TimestampFromSeconds(a.Sound.Duration())
 }
 
 // Encode creates a list of buckets for writing a stream.
