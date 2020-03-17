@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"image"
+	"image/color"
 	"image/gif"
 	"os"
 	"path/filepath"
@@ -394,15 +395,17 @@ func (view *View) requestImportScene() {
 		var scene movie.Scene
 		scene.Frames = make([]movie.Frame, len(data.Image))
 		var palette bitmap.Palette
+		if gifPalette, isPal := data.Config.ColorModel.(color.Palette); isPal {
+			for index, clr := range gifPalette {
+				r, g, b, _ := clr.RGBA()
+				palette[index].Red = byte(r >> 8)
+				palette[index].Green = byte(g >> 8)
+				palette[index].Blue = byte(b >> 8)
+			}
+		}
 		for index, img := range data.Image {
 			if (img.Bounds().Max.X == data.Config.Width) && (img.Bounds().Max.Y == data.Config.Height) {
-				for index, clr := range img.Palette {
-					r, g, b, _ := clr.RGBA()
-					palette[index].Red = byte(r >> 8)
-					palette[index].Green = byte(g >> 8)
-					palette[index].Blue = byte(b >> 8)
-				}
-				scene.Frames[index].DisplayTime = movie.TimestampFromSeconds(float32(float64(data.Delay[index]*10) / float64(time.Second)))
+				scene.Frames[index].DisplayTime = movie.TimestampFromSeconds(float32(data.Delay[index]) / 100.0)
 				// TODO: I'm sure we don't need all the bitmap header fields - why keep the fields at all here?
 				scene.Frames[index].Bitmap = bitmap.Bitmap{
 					Header: bitmap.Header{
@@ -410,7 +413,7 @@ func (view *View) requestImportScene() {
 						Flags:         0,
 						Width:         int16(data.Config.Width),
 						Height:        int16(data.Config.Height),
-						Stride:        uint16(data.Config.Width),
+						Stride:        uint16(img.Stride),
 						WidthFactor:   0,
 						HeightFactor:  0,
 						Area:          [4]int16{0, 0, int16(data.Config.Width), int16(data.Config.Height)},
@@ -419,21 +422,29 @@ func (view *View) requestImportScene() {
 					Pixels:  img.Pix,
 					Palette: &palette,
 				}
-			} else {
-				fmt.Printf("skipped an image %d\n", index)
 			}
 		}
 
-		highResScene, err := movie.HighResSceneFrom(context.TODO(), scene)
-		if err != nil {
-			external.Import(view.modalStateMachine, "Could not compress. Follow recommendations and retry.\n"+info, types, fileHandler, true)
-			return
-		}
-
-		view.requestAddScene(highResScene)
+		view.compressAndAddScene(scene)
 	}
 
 	external.Import(view.modalStateMachine, info, types, fileHandler, false)
+}
+
+func (view *View) compressAndAddScene(scene movie.Scene) {
+	/*
+		view.modalStateMachine.SetState(&compressingStartState{
+			machine: view.modalStateMachine,
+			view:    view,
+		})
+	*/
+
+	highResScene, err := movie.HighResSceneFrom(context.TODO(), scene)
+	if err != nil {
+		//external.Import(view.modalStateMachine, "Could not compress. Follow recommendations and retry.\n"+info, types, fileHandler, true)
+		return
+	}
+	view.requestAddScene(highResScene)
 }
 
 func (view *View) requestAddScene(scene movie.HighResScene) {
