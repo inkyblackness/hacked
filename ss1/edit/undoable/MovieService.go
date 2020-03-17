@@ -49,6 +49,16 @@ func (service MovieService) RequestMoveSceneLater(key resource.Key, scene int, r
 		restoreFunc)
 }
 
+// RequestAddScene queues to add the given scene at the end of the movie.
+func (service MovieService) RequestAddScene(key resource.Key, scene movie.HighResScene, restoreFunc func()) {
+	service.requestCommand(
+		func(setter media.MovieBlockSetter) {
+			service.wrapped.AddScene(setter, key, scene)
+		},
+		service.wrapped.RestoreFunc(key),
+		restoreFunc)
+}
+
 // RequestRemoveScene queues to remove the identified scene.
 func (service MovieService) RequestRemoveScene(key resource.Key, scene int, restoreFunc func()) {
 	service.requestCommand(

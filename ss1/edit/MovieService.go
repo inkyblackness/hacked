@@ -77,6 +77,13 @@ func (service MovieService) swapScenes(setter media.MovieBlockSetter, key resour
 	service.movieSetter.Set(setter, key, baseContainer)
 }
 
+// AddScene adds the given scene at the end of the movie.
+func (service MovieService) AddScene(setter media.MovieBlockSetter, key resource.Key, scene movie.HighResScene) {
+	baseContainer := service.getBaseContainer(key)
+	baseContainer.Video.Scenes = append(baseContainer.Video.Scenes, scene)
+	service.movieSetter.Set(setter, key, baseContainer)
+}
+
 // RemoveScene cuts out the given scene from the movie.
 func (service MovieService) RemoveScene(setter media.MovieBlockSetter, key resource.Key, scene int) {
 	baseContainer := service.getBaseContainer(key)

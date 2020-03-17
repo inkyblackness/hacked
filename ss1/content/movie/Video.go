@@ -1,6 +1,8 @@
 package movie
 
 import (
+	"context"
+
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/content/movie/internal/compression"
 )
@@ -96,6 +98,46 @@ type HighResScene struct {
 	paletteLookup []byte
 	controlWords  []compression.ControlWord
 	frames        []HighResFrame
+}
+
+// HighResSceneFrom compresses given scene and returns the compression result.
+func HighResSceneFrom(ctx context.Context, scene Scene) (HighResScene, error) {
+	// TODO: where to take the dimensions from?
+	width := 600
+	height := 300
+	encoder := compression.NewSceneEncoder(width, height)
+	var palette bitmap.Palette
+	for _, frame := range scene.Frames {
+		if frame.Bitmap.Palette != nil {
+			palette = *frame.Bitmap.Palette
+		}
+		err := encoder.AddFrame(frame.Bitmap.Pixels)
+		if err != nil {
+			return HighResScene{}, err
+		}
+		if ctx.Err() != nil {
+			return HighResScene{}, ctx.Err()
+		}
+	}
+	words, paletteLookup, frames, err := encoder.Encode()
+	if err != nil {
+		return HighResScene{}, err
+	}
+	compressedScene := HighResScene{
+		palette:       palette,
+		paletteLookup: paletteLookup,
+		controlWords:  words,
+		frames:        make([]HighResFrame, len(frames)),
+	}
+	for index, frame := range frames {
+		compressedScene.frames[index] = HighResFrame{
+			bitstream:   frame.Bitstream,
+			maskstream:  frame.Maskstream,
+			displayTime: scene.Frames[index].DisplayTime,
+		}
+	}
+
+	return compressedScene, nil
 }
 
 // Duration returns the length of the scene, it is the sum of display times of all frames.

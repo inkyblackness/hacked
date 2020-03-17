@@ -1,6 +1,7 @@
 package movies
 
 import (
+	"context"
 	"fmt"
 	"image"
 	"image/gif"
@@ -15,6 +16,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/ss1/content/audio"
+	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
@@ -157,7 +159,7 @@ func (view *View) renderContent() {
 		view.requestRemoveScene()
 	}
 	if imgui.Button("Import") {
-
+		view.requestImportScene()
 	}
 	imgui.SameLine()
 	if imgui.Button("Export") {
@@ -364,6 +366,78 @@ func (view *View) requestImportSubtitles() {
 func (view *View) requestClearSubtitles() {
 	view.movieService.RequestSetSubtitles(view.model.currentKey, view.model.currentSubtitleLang,
 		movie.SubtitleList{}, view.restoreFunc())
+}
+
+func (view *View) requestImportScene() {
+	info := "File must be an animated GIF file in size 600x300."
+	types := []external.TypeInfo{{Title: "Animation files (*.gif)", Extensions: []string{"gif"}}}
+	var fileHandler func(string)
+
+	fileHandler = func(filename string) {
+		reader, err := os.Open(filename)
+		if err != nil {
+			external.Import(view.modalStateMachine, "Could not open file.\n"+info, types, fileHandler, true)
+			return
+		}
+		defer func() { _ = reader.Close() }()
+		data, err := gif.DecodeAll(reader)
+		if err != nil {
+			external.Import(view.modalStateMachine, "File not recognized as GIF.\n"+info, types, fileHandler, true)
+			return
+		}
+
+		if data.Config.Width != 600 || data.Config.Height != 300 {
+			external.Import(view.modalStateMachine, info, types, fileHandler, true)
+			return
+		}
+
+		var scene movie.Scene
+		scene.Frames = make([]movie.Frame, len(data.Image))
+		var palette bitmap.Palette
+		for index, img := range data.Image {
+			if (img.Bounds().Max.X == data.Config.Width) && (img.Bounds().Max.Y == data.Config.Height) {
+				for index, clr := range img.Palette {
+					r, g, b, _ := clr.RGBA()
+					palette[index].Red = byte(r >> 8)
+					palette[index].Green = byte(g >> 8)
+					palette[index].Blue = byte(b >> 8)
+				}
+				scene.Frames[index].DisplayTime = movie.TimestampFromSeconds(float32(float64(data.Delay[index]*10) / float64(time.Second)))
+				// TODO: I'm sure we don't need all the bitmap header fields - why keep the fields at all here?
+				scene.Frames[index].Bitmap = bitmap.Bitmap{
+					Header: bitmap.Header{
+						Type:          bitmap.TypeFlat8Bit,
+						Flags:         0,
+						Width:         int16(data.Config.Width),
+						Height:        int16(data.Config.Height),
+						Stride:        uint16(data.Config.Width),
+						WidthFactor:   0,
+						HeightFactor:  0,
+						Area:          [4]int16{0, 0, int16(data.Config.Width), int16(data.Config.Height)},
+						PaletteOffset: 0,
+					},
+					Pixels:  img.Pix,
+					Palette: &palette,
+				}
+			} else {
+				fmt.Printf("skipped an image %d\n", index)
+			}
+		}
+
+		highResScene, err := movie.HighResSceneFrom(context.TODO(), scene)
+		if err != nil {
+			external.Import(view.modalStateMachine, "Could not compress. Follow recommendations and retry.\n"+info, types, fileHandler, true)
+			return
+		}
+
+		view.requestAddScene(highResScene)
+	}
+
+	external.Import(view.modalStateMachine, info, types, fileHandler, false)
+}
+
+func (view *View) requestAddScene(scene movie.HighResScene) {
+	view.movieService.RequestAddScene(view.model.currentKey, scene, view.restoreFunc())
 }
 
 func (view *View) requestExportScene() {
