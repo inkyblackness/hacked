@@ -177,7 +177,10 @@ func (view *View) renderContent() {
 			view.frameCache.SetTexture(view.frameCacheKey, frame.Bitmap) // TODO: only update if something changed
 
 			render.FrameImage("Frame", view.frameCache, view.frameCacheKey,
-				imgui.Vec2{X: float32(600) * view.guiScale, Y: float32(300) * view.guiScale})
+				imgui.Vec2{
+					X: float32(movie.HighResDefaultWidth) * view.guiScale,
+					Y: float32(movie.HighResDefaultHeight) * view.guiScale,
+				})
 		}
 		gui.StepSliderInt("Frame Index", &view.model.currentFrame, 0, len(frames)-1)
 	}
@@ -369,7 +372,8 @@ func (view *View) requestClearSubtitles() {
 }
 
 func (view *View) requestImportScene(returningInfo string) {
-	info := "File must be an animated GIF file in size 600x300."
+	info := fmt.Sprintf("File must be an animated GIF file in size %dx%d.",
+		movie.HighResDefaultWidth, movie.HighResDefaultHeight)
 	types := []external.TypeInfo{{Title: "Animation files (*.gif)", Extensions: []string{"gif"}}}
 	var fileHandler func(string)
 
@@ -386,7 +390,7 @@ func (view *View) requestImportScene(returningInfo string) {
 			return
 		}
 
-		if data.Config.Width != 600 || data.Config.Height != 300 {
+		if (data.Config.Width != movie.HighResDefaultWidth) || (data.Config.Height != movie.HighResDefaultHeight) {
 			external.Import(view.modalStateMachine, info, types, fileHandler, true)
 			return
 		}
@@ -434,16 +438,18 @@ func (view *View) requestImportScene(returningInfo string) {
 			}
 		}
 
-		view.compressAndAddScene(scene)
+		view.compressAndAddScene(scene, data.Config.Width, data.Config.Height)
 	}
 
 	external.Import(view.modalStateMachine, returningInfo+info, types, fileHandler, false)
 }
 
-func (view *View) compressAndAddScene(scene movie.Scene) {
+func (view *View) compressAndAddScene(scene movie.Scene, width, height int) {
 	view.modalStateMachine.SetState(&compressingStartState{
 		machine:  view.modalStateMachine,
 		view:     view,
+		width:    width,
+		height:   height,
 		input:    scene,
 		listener: view.onCompressionResult,
 	})

@@ -7,6 +7,12 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/movie/internal/compression"
 )
 
+// Constants for video.
+const (
+	HighResDefaultWidth  = 600
+	HighResDefaultHeight = 300
+)
+
 // Video describes the visual part of a movie.
 type Video struct {
 	// Width is the width of the video in pixel.
@@ -101,10 +107,7 @@ type HighResScene struct {
 }
 
 // HighResSceneFrom compresses given scene and returns the compression result.
-func HighResSceneFrom(ctx context.Context, scene Scene) (HighResScene, error) {
-	// TODO: where to take the dimensions from?
-	width := 600
-	height := 300
+func HighResSceneFrom(ctx context.Context, scene Scene, width, height int) (HighResScene, error) {
 	encoder := compression.NewSceneEncoder(width, height)
 	var palette bitmap.Palette
 	for _, frame := range scene.Frames {

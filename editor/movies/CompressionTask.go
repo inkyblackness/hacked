@@ -7,6 +7,8 @@ import (
 )
 
 type compressionTask struct {
+	width      int
+	height     int
 	input      movie.Scene
 	ctx        context.Context
 	ctxCancel  context.CancelFunc
@@ -21,8 +23,10 @@ type compressionFailed struct{ err error }
 
 type compressionFinished struct{ scene movie.HighResScene }
 
-func newCompressionTask(scene movie.Scene) *compressionTask {
+func newCompressionTask(scene movie.Scene, width, height int) *compressionTask {
 	task := &compressionTask{
+		width:      width,
+		height:     height,
 		input:      scene,
 		resultChan: make(chan compressionResult),
 	}
@@ -33,7 +37,7 @@ func newCompressionTask(scene movie.Scene) *compressionTask {
 
 func (task *compressionTask) run() {
 	defer close(task.resultChan)
-	highResScene, err := movie.HighResSceneFrom(task.ctx, task.input)
+	highResScene, err := movie.HighResSceneFrom(task.ctx, task.input, task.width, task.height)
 	switch {
 	case task.ctx.Err() != nil:
 		task.resultChan <- compressionAborted{}
