@@ -1,7 +1,6 @@
 package movies
 
 import (
-	"context"
 	"fmt"
 	"image"
 	"image/color"
@@ -160,7 +159,7 @@ func (view *View) renderContent() {
 		view.requestRemoveScene()
 	}
 	if imgui.Button("Import") {
-		view.requestImportScene()
+		view.requestImportScene("")
 	}
 	imgui.SameLine()
 	if imgui.Button("Export") {
@@ -369,7 +368,7 @@ func (view *View) requestClearSubtitles() {
 		movie.SubtitleList{}, view.restoreFunc())
 }
 
-func (view *View) requestImportScene() {
+func (view *View) requestImportScene(returningInfo string) {
 	info := "File must be an animated GIF file in size 600x300."
 	types := []external.TypeInfo{{Title: "Animation files (*.gif)", Extensions: []string{"gif"}}}
 	var fileHandler func(string)
@@ -428,23 +427,26 @@ func (view *View) requestImportScene() {
 		view.compressAndAddScene(scene)
 	}
 
-	external.Import(view.modalStateMachine, info, types, fileHandler, false)
+	external.Import(view.modalStateMachine, returningInfo+info, types, fileHandler, false)
 }
 
 func (view *View) compressAndAddScene(scene movie.Scene) {
-	/*
-		view.modalStateMachine.SetState(&compressingStartState{
-			machine: view.modalStateMachine,
-			view:    view,
-		})
-	*/
+	view.modalStateMachine.SetState(&compressingStartState{
+		machine:  view.modalStateMachine,
+		view:     view,
+		input:    scene,
+		listener: view.onCompressionResult,
+	})
+}
 
-	highResScene, err := movie.HighResSceneFrom(context.TODO(), scene)
-	if err != nil {
-		//external.Import(view.modalStateMachine, "Could not compress. Follow recommendations and retry.\n"+info, types, fileHandler, true)
-		return
+func (view *View) onCompressionResult(result compressionResult) {
+	switch typedResult := result.(type) {
+	case compressionAborted:
+	case compressionFinished:
+		view.requestAddScene(typedResult.scene)
+	case compressionFailed:
+		view.requestImportScene("Could not compress. Follow recommendations and retry.\n")
 	}
-	view.requestAddScene(highResScene)
 }
 
 func (view *View) requestAddScene(scene movie.HighResScene) {
