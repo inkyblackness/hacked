@@ -402,25 +402,35 @@ func (view *View) requestImportScene(returningInfo string) {
 				palette[index].Blue = byte(b >> 8)
 			}
 		}
+		framebuffer := make([]byte, data.Config.Width*data.Config.Height)
+		framebufferSnapshot := func() []byte {
+			buf := make([]byte, len(framebuffer))
+			copy(buf, framebuffer)
+			return buf
+		}
 		for index, img := range data.Image {
-			if (img.Bounds().Max.X == data.Config.Width) && (img.Bounds().Max.Y == data.Config.Height) {
-				scene.Frames[index].DisplayTime = movie.TimestampFromSeconds(float32(data.Delay[index]) / 100.0)
-				// TODO: I'm sure we don't need all the bitmap header fields - why keep the fields at all here?
-				scene.Frames[index].Bitmap = bitmap.Bitmap{
-					Header: bitmap.Header{
-						Type:          bitmap.TypeFlat8Bit,
-						Flags:         0,
-						Width:         int16(data.Config.Width),
-						Height:        int16(data.Config.Height),
-						Stride:        uint16(img.Stride),
-						WidthFactor:   0,
-						HeightFactor:  0,
-						Area:          [4]int16{0, 0, int16(data.Config.Width), int16(data.Config.Height)},
-						PaletteOffset: 0,
-					},
-					Pixels:  img.Pix,
-					Palette: &palette,
+			for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
+				for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
+					framebuffer[y*data.Config.Width+x] = img.ColorIndexAt(x, y)
 				}
+			}
+
+			scene.Frames[index].DisplayTime = movie.TimestampFromSeconds(float32(data.Delay[index]) / 100.0)
+			// TODO: I'm sure we don't need all the bitmap header fields - why keep the fields at all here?
+			scene.Frames[index].Bitmap = bitmap.Bitmap{
+				Header: bitmap.Header{
+					Type:          bitmap.TypeFlat8Bit,
+					Flags:         0,
+					Width:         int16(data.Config.Width),
+					Height:        int16(data.Config.Height),
+					Stride:        uint16(data.Config.Width),
+					WidthFactor:   0,
+					HeightFactor:  0,
+					Area:          [4]int16{0, 0, int16(data.Config.Width), int16(data.Config.Height)},
+					PaletteOffset: 0,
+				},
+				Pixels:  framebufferSnapshot(),
+				Palette: &palette,
 			}
 		}
 
@@ -445,7 +455,8 @@ func (view *View) onCompressionResult(result compressionResult) {
 	case compressionFinished:
 		view.requestAddScene(typedResult.scene)
 	case compressionFailed:
-		view.requestImportScene("Could not compress. Follow recommendations and retry.\n")
+		view.requestImportScene("Could not compress. Follow recommendations and retry.\n" +
+			"Technical details:\n" + typedResult.err.Error() + "\n\n")
 	}
 }
 
