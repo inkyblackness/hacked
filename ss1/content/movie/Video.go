@@ -119,7 +119,7 @@ func HighResSceneFrom(ctx context.Context, scene Scene) (HighResScene, error) {
 			return HighResScene{}, ctx.Err()
 		}
 	}
-	words, paletteLookup, frames, err := encoder.Encode()
+	words, paletteLookup, frames, err := encoder.Encode(ctx)
 	if err != nil {
 		return HighResScene{}, err
 	}

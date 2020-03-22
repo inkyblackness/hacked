@@ -1,7 +1,7 @@
 package compression
 
 import (
-	"fmt"
+	"context"
 	"math/bits"
 	"sort"
 )
@@ -50,7 +50,7 @@ type PaletteLookupGenerator struct {
 }
 
 // Generate creates a lookup based on all currently registered tile deltas.
-func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
+func (gen *PaletteLookupGenerator) Generate(ctx context.Context) (PaletteLookup, error) {
 	var lookup PaletteLookup
 	lookup.entries = make(map[tilePaletteKey]paletteLookupEntry)
 
@@ -125,7 +125,7 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 	}
 
 	sizeLimitForSize := map[int]int{3: 4, 4: 8, 5: 8, 6: 8, 7: 8, 8: 8, 9: 16, 10: 16, 11: 16, 12: 16, 13: 16, 14: 16, 15: 16, 16: 16}
-	for size := PixelPerTile; size > 2; size-- {
+	for size := PixelPerTile; (size > 2) && (ctx.Err() == nil); size-- {
 		keysInSize := make([]tilePaletteKey, 0, len(remainder))
 		for key := range remainder {
 			if key.size == size {
@@ -134,8 +134,12 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 		}
 		sort.Slice(keysInSize, func(a, b int) bool { return keysInSize[a].lessThan(&keysInSize[b]) })
 
-		fmt.Printf("Working on key size %v, have %v sized, %v total remaining\n", size, len(keysInSize), len(remainder))
+		// fmt.Printf("Working on key size %v, have %v sized, %v total remaining\n", size, len(keysInSize), len(remainder))
 		for _, sizedKey := range keysInSize {
+			if ctx.Err() != nil {
+				return PaletteLookup{}, ctx.Err()
+			}
+
 			{
 				var earlyRemoved []tilePaletteKey
 				for key := range remainder {
@@ -157,7 +161,7 @@ func (gen *PaletteLookupGenerator) Generate() PaletteLookup {
 		}
 	}
 
-	return lookup
+	return lookup, ctx.Err()
 }
 
 // Add registers a further delta to the generator.

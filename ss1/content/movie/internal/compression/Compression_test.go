@@ -1,6 +1,7 @@
 package compression_test
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -190,7 +191,7 @@ func verifyCompression(t testing.TB, width, height int, inFrames ...[]byte) {
 		err := encoder.AddFrame(frame)
 		require.Nil(t, err, fmt.Sprintf("no error expected adding frame %d: %v", frameIndex, err))
 	}
-	controlWords, paletteLookup, encodedFrames, err := encoder.Encode()
+	controlWords, paletteLookup, encodedFrames, err := encoder.Encode(context.Background())
 	require.Equal(t, len(inFrames), len(encodedFrames), "expected equal amount of encoded frames for input frames")
 	require.Nil(t, err, fmt.Sprintf("no error expected encoding: %v", err))
 
