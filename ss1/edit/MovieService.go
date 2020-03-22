@@ -128,8 +128,8 @@ func (service MovieService) getBaseContainer(key resource.Key) movie.Container {
 		container = movie.Container{
 			Audio: movie.Audio{Sound: audio.L8{SampleRate: 22050}},
 			Video: movie.Video{
-				Width:  600,
-				Height: 300,
+				Width:  movie.HighResDefaultWidth,
+				Height: movie.HighResDefaultHeight,
 			},
 		}
 	}
