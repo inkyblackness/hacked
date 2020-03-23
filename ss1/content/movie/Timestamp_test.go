@@ -33,3 +33,33 @@ func TestDurationConversion(t *testing.T) {
 		assert.Equal(t, ts, ts2, fmt.Sprintf("Mismatch for fraction %v", fraction))
 	}
 }
+
+func TestTimestampPlus(t *testing.T) {
+	tt := []struct {
+		a        movie.Timestamp
+		b        movie.Timestamp
+		expected movie.Timestamp
+	}{
+		{
+			a:        movie.Timestamp{Second: 0, Fraction: 0},
+			b:        movie.Timestamp{Second: 1, Fraction: 0x8000},
+			expected: movie.Timestamp{Second: 1, Fraction: 0x8000},
+		},
+		{
+			a:        movie.Timestamp{Second: 2, Fraction: 0x8000},
+			b:        movie.Timestamp{Second: 1, Fraction: 0x8000},
+			expected: movie.Timestamp{Second: 4, Fraction: 0x0000},
+		},
+		{
+			a:        movie.Timestamp{Second: 0xFF, Fraction: 0x0000},
+			b:        movie.Timestamp{Second: 2, Fraction: 0x8000},
+			expected: movie.Timestamp{Second: 0xFF, Fraction: 0xFFFF},
+		},
+	}
+	for index, tc := range tt {
+		t.Run(fmt.Sprintf("case %d", index), func(t *testing.T) {
+			result := tc.a.Plus(tc.b)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
