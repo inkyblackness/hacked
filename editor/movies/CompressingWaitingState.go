@@ -19,7 +19,6 @@ type compressingWaitingState struct {
 func (state *compressingWaitingState) Render() {
 	if imgui.BeginPopupModalV("Compressing...", nil,
 		imgui.WindowFlagsNoResize|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoSavedSettings|imgui.WindowFlagsAlwaysAutoResize) {
-
 		imgui.Text("This may take a while.\n" +
 			"Yes, your PC is probably capable of recoding HD movies way quicker;\n" +
 			"Sadly, this codec of '94 is quite tricky.")

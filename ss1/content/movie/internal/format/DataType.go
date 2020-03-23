@@ -14,7 +14,7 @@ const (
 	DataTypeAudio = DataType(2)
 	// DataTypeSubtitle control
 	DataTypeSubtitle = DataType(3)
-	// Palette data
+	// DataTypePalette describes a color palette
 	DataTypePalette = DataType(4)
 	// DataTypePaletteReset is a zero-byte entry immediately before a Palette entry.
 	DataTypePaletteReset = DataType(0x4C)

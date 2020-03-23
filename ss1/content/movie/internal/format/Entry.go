@@ -246,7 +246,7 @@ func (data PaletteResetEntryData) Type() DataType {
 	return DataTypePaletteReset
 }
 
-// Code serializes the entry.
+// Bytes serializes the entry.
 func (data PaletteResetEntryData) Bytes() []byte {
 	return nil
 }
@@ -270,7 +270,7 @@ func (data PaletteLookupEntryData) Type() DataType {
 	return DataTypePaletteLookupList
 }
 
-// Code serializes the entry.
+// Bytes serializes the entry.
 func (data PaletteLookupEntryData) Bytes() []byte {
 	return data.List
 }
@@ -299,7 +299,7 @@ func (data ControlDictionaryEntryData) Type() DataType {
 	return DataTypeControlDictionary
 }
 
-// Code serializes the entry.
+// Bytes serializes the entry.
 func (data ControlDictionaryEntryData) Bytes() []byte {
 	return compression.PackControlWords(data.Words)
 }

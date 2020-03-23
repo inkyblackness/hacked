@@ -53,9 +53,8 @@ func (task *compressionTask) update() compressionResult {
 	case result, ok := <-task.resultChan:
 		if ok {
 			return result
-		} else {
-			return compressionAborted{}
 		}
+		return compressionAborted{}
 	default:
 		return nil
 	}

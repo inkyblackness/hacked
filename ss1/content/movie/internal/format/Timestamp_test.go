@@ -57,6 +57,7 @@ func TestTimestampPlus(t *testing.T) {
 		},
 	}
 	for index, tc := range tt {
+		tc := tc
 		t.Run(fmt.Sprintf("case %d", index), func(t *testing.T) {
 			result := tc.a.Plus(tc.b)
 			assert.Equal(t, tc.expected, result)
