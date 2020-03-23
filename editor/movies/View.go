@@ -11,6 +11,7 @@ import (
 
 	"github.com/asticode/go-astisub"
 	"github.com/inkyblackness/imgui-go"
+	"github.com/lucasb-eyer/go-colorful"
 
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"
@@ -412,10 +413,35 @@ func (view *View) requestImportScene(returningInfo string) {
 			copy(buf, framebuffer)
 			return buf
 		}
+		zeroColor, _ := colorful.MakeColor(color.NRGBA{R: palette[0].Red, G: palette[0].Green, B: palette[0].Blue, A: 0xFF})
+		closestDist := float64(-1)
+		closestIndex := byte(0)
+		for index, other := range palette {
+			if index == 0 {
+				continue
+			}
+			otherColor, _ := colorful.MakeColor(color.NRGBA{R: other.Red, G: other.Green, B: other.Blue, A: 0xFF})
+			dist := zeroColor.DistanceLab(otherColor)
+			if closestDist < 0 || dist < closestDist {
+				closestDist = dist
+				closestIndex = byte(index)
+			}
+		}
+		mapIndex := func(value byte) byte {
+			if value > 0 {
+				return value
+			}
+			return closestIndex
+		}
 		for index, img := range data.Image {
+			if index == 0 || (index >= len(data.Disposal)) || data.Disposal[index] != gif.DisposalPrevious {
+				for i := range framebuffer {
+					framebuffer[i] = mapIndex(data.BackgroundIndex)
+				}
+			}
 			for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
 				for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
-					framebuffer[y*data.Config.Width+x] = img.ColorIndexAt(x, y)
+					framebuffer[y*data.Config.Width+x] = mapIndex(img.ColorIndexAt(x, y))
 				}
 			}
 
