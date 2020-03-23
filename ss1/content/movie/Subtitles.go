@@ -13,8 +13,7 @@ type Subtitles struct {
 	PerLanguage [resource.LanguageCount]SubtitleList
 }
 
-// Add appends the given text at given timestamp in given language.
-func (sub *Subtitles) Add(lang resource.Language, timestamp time.Duration, text string) {
+func (sub *Subtitles) add(lang resource.Language, timestamp time.Duration, text string) {
 	sub.PerLanguage[lang].Entries = append(sub.PerLanguage[lang].Entries, Subtitle{
 		Timestamp: timestamp,
 		Text:      text,
