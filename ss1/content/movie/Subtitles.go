@@ -22,7 +22,7 @@ func (sub *Subtitles) Add(lang resource.Language, timestamp time.Duration, text 
 }
 
 // Duration returns the highest timestamp of all the subtitles
-func (sub Subtitles) Duration() Timestamp {
+func (sub Subtitles) Duration() format.Timestamp {
 	var highest time.Duration
 	for _, list := range sub.PerLanguage {
 		for _, sub := range list.Entries {
@@ -31,7 +31,7 @@ func (sub Subtitles) Duration() Timestamp {
 			}
 		}
 	}
-	return TimestampFromDuration(highest)
+	return format.TimestampFromDuration(highest)
 }
 
 // ArePresent returns true if at least one language makes use of subtitles.
@@ -57,9 +57,9 @@ func (sub Subtitles) Encode(cp text.Codepage) [][]EntryBucket {
 	// and only a few right ones. There's no need to make them editable.
 	bucketsPerLanguage[0] = []EntryBucket{{
 		Priority:  EntryBucketPrioritySubtitleControl,
-		Timestamp: Timestamp{},
+		Timestamp: format.Timestamp{},
 		Entries: []Entry{{
-			Timestamp: Timestamp{},
+			Timestamp: format.Timestamp{},
 			Data: SubtitleEntryData{
 				Control: format.SubtitleArea,
 				Text:    cp.Encode("20 365 620 395 CLR"),
@@ -96,9 +96,9 @@ type Subtitle struct {
 func (sub Subtitle) Encode(control format.SubtitleControl, cp text.Codepage) EntryBucket {
 	return EntryBucket{
 		Priority:  EntryBucketPrioritySubtitle,
-		Timestamp: TimestampFromDuration(sub.Timestamp),
+		Timestamp: format.TimestampFromDuration(sub.Timestamp),
 		Entries: []Entry{{
-			Timestamp: TimestampFromDuration(sub.Timestamp),
+			Timestamp: format.TimestampFromDuration(sub.Timestamp),
 			Data: SubtitleEntryData{
 				Control: control,
 				Text:    cp.Encode(sub.Text),

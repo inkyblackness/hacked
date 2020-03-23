@@ -30,7 +30,7 @@ type EntryBucket struct {
 	Priority EntryBucketPriority
 	// Timestamp specifies at which time the bucket should be inserted into the stream.
 	// This is typically derived from one of the timestamps of the contained entries.
-	Timestamp Timestamp
+	Timestamp format.Timestamp
 	// Entries is the list of entries within this bucket.
 	Entries []Entry
 }
@@ -38,7 +38,7 @@ type EntryBucket struct {
 // Entry describes a timestamped block from a MOVI container.
 type Entry struct {
 	// Timestamp marks the beginning time of the entry.
-	Timestamp Timestamp
+	Timestamp format.Timestamp
 	// Data is a type specific information of a movie.
 	Data EntryData
 }

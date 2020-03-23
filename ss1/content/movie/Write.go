@@ -115,8 +115,8 @@ func Write(dest io.Writer, container Container, cp text.Codepage) error {
 
 func moveSubtitlesAfterSceneChange(entries []Entry) {
 	nextSceneChangeIndex := -1
-	var nextSceneChangeTimestamp Timestamp
-	delta := TimestampFromSeconds(0.5)
+	var nextSceneChangeTimestamp format.Timestamp
+	delta := format.TimestampFromSeconds(0.5)
 	for i := len(entries) - 1; i >= 0; i-- {
 		entry := entries[i]
 

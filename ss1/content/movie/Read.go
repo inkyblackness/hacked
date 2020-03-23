@@ -44,7 +44,7 @@ func Read(source io.ReadSeeker, cp text.Codepage) (Container, error) {
 		return Container{}, err
 	}
 	err = parseEntries(entries, &container,
-		cp, startPalette, Timestamp{Second: header.DurationSeconds, Fraction: header.DurationFraction})
+		cp, startPalette, format.Timestamp{Second: header.DurationSeconds, Fraction: header.DurationFraction})
 	if err != nil {
 		return Container{}, err
 	}
@@ -80,7 +80,7 @@ func readIndexAndEntries(source io.ReadSeeker, startPos int64, header *format.He
 		entryType := format.DataType(indexEntry.Type)
 
 		if entryType != format.DataTypeEndOfMedia {
-			timestamp := Timestamp{
+			timestamp := format.Timestamp{
 				Second:   indexEntry.TimestampSecond,
 				Fraction: indexEntry.TimestampFraction,
 			}
@@ -129,7 +129,7 @@ func readEntry(entryType format.DataType, source io.Reader, dataSize int) (Entry
 }
 
 func parseEntries(entries []Entry, container *Container,
-	cp text.Codepage, startPalette bitmap.Palette, endTimestamp Timestamp) error {
+	cp text.Codepage, startPalette bitmap.Palette, endTimestamp format.Timestamp) error {
 	palette := startPalette
 	var paletteLookup []byte
 	var controlDictionary []compression.ControlWord
@@ -142,7 +142,7 @@ func parseEntries(entries []Entry, container *Container,
 		highResScene = nil
 	}
 	var frame *HighResFrame
-	finishFrame := func(timestamp Timestamp) {
+	finishFrame := func(timestamp format.Timestamp) {
 		if frame != nil {
 			frame.displayTime = timestamp.Minus(frame.displayTime)
 			highResScene.frames = append(highResScene.frames, *frame)

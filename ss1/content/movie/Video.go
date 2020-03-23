@@ -5,6 +5,7 @@ import (
 
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/content/movie/internal/compression"
+	"github.com/inkyblackness/hacked/ss1/content/movie/internal/format"
 )
 
 // Constants for video.
@@ -32,8 +33,8 @@ func (video Video) StartPalette() bitmap.Palette {
 }
 
 // Duration returns the sum of all scene durations.
-func (video Video) Duration() Timestamp {
-	var sum Timestamp
+func (video Video) Duration() format.Timestamp {
+	var sum format.Timestamp
 	for _, scene := range video.Scenes {
 		sum = sum.Plus(scene.Duration())
 	}
@@ -42,7 +43,7 @@ func (video Video) Duration() Timestamp {
 
 // Encode serializes the scenes into entry buckets.
 func (video Video) Encode() []EntryBucket {
-	var sceneTime Timestamp
+	var sceneTime format.Timestamp
 	var buckets []EntryBucket
 	for index, scene := range video.Scenes {
 		buckets = append(buckets, scene.Encode(sceneTime, index != 0)...)
@@ -136,7 +137,7 @@ func HighResSceneFrom(ctx context.Context, scene Scene, width, height int) (High
 		compressedScene.frames[index] = HighResFrame{
 			bitstream:   frame.Bitstream,
 			maskstream:  frame.Maskstream,
-			displayTime: TimestampFromDuration(scene.Frames[index].DisplayTime),
+			displayTime: format.TimestampFromDuration(scene.Frames[index].DisplayTime),
 		}
 	}
 
@@ -144,8 +145,8 @@ func HighResSceneFrom(ctx context.Context, scene Scene, width, height int) (High
 }
 
 // Duration returns the length of the scene, it is the sum of display times of all frames.
-func (scene HighResScene) Duration() Timestamp {
-	var sum Timestamp
+func (scene HighResScene) Duration() format.Timestamp {
+	var sum format.Timestamp
 	for _, frame := range scene.frames {
 		sum = sum.Plus(frame.Duration())
 	}
@@ -153,11 +154,11 @@ func (scene HighResScene) Duration() Timestamp {
 }
 
 // Encode serializes the scene into entry buckets.
-func (scene HighResScene) Encode(start Timestamp, withPalette bool) []EntryBucket {
+func (scene HighResScene) Encode(start format.Timestamp, withPalette bool) []EntryBucket {
 	buckets := make([]EntryBucket, 0, len(scene.frames)+1)
 	controlEntries := []Entry{
-		{Timestamp: Timestamp{}, Data: PaletteLookupEntryData{List: scene.paletteLookup}},
-		{Timestamp: Timestamp{}, Data: ControlDictionaryEntryData{Words: scene.controlWords}},
+		{Timestamp: format.Timestamp{}, Data: PaletteLookupEntryData{List: scene.paletteLookup}},
+		{Timestamp: format.Timestamp{}, Data: ControlDictionaryEntryData{Words: scene.controlWords}},
 	}
 	if withPalette {
 		controlEntries = append(controlEntries,
@@ -183,16 +184,16 @@ func (scene HighResScene) Encode(start Timestamp, withPalette bool) []EntryBucke
 type HighResFrame struct {
 	bitstream   []byte
 	maskstream  []byte
-	displayTime Timestamp
+	displayTime format.Timestamp
 }
 
 // Duration returns the display time of the frame.
-func (frame HighResFrame) Duration() Timestamp {
+func (frame HighResFrame) Duration() format.Timestamp {
 	return frame.displayTime
 }
 
 // Encode serializes the frame into an entry bucket.
-func (frame HighResFrame) Encode(start Timestamp) EntryBucket {
+func (frame HighResFrame) Encode(start format.Timestamp) EntryBucket {
 	return EntryBucket{
 		Priority:  EntryBucketPriorityFrame,
 		Timestamp: start,

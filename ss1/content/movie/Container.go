@@ -1,5 +1,7 @@
 package movie
 
+import "github.com/inkyblackness/hacked/ss1/content/movie/internal/format"
+
 // Container wraps the information and data of a MOVI container.
 type Container struct {
 	Audio     Audio
@@ -8,9 +10,9 @@ type Container struct {
 }
 
 // Duration returns the length of the entire movie. It is the highest timestamp of all media streams.
-func (container Container) Duration() Timestamp {
-	var max Timestamp
-	for _, ts := range []Timestamp{container.Audio.Duration(), container.Video.Duration(), container.Subtitles.Duration()} {
+func (container Container) Duration() format.Timestamp {
+	var max format.Timestamp
+	for _, ts := range []format.Timestamp{container.Audio.Duration(), container.Video.Duration(), container.Subtitles.Duration()} {
 		if max.IsBefore(ts) {
 			max = ts
 		}
