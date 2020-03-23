@@ -419,7 +419,7 @@ func (view *View) requestImportScene(returningInfo string) {
 				}
 			}
 
-			scene.Frames[index].DisplayTime = movie.TimestampFromSeconds(float32(data.Delay[index]) / 100.0)
+			scene.Frames[index].DisplayTime = time.Duration(data.Delay[index]) * 10 * time.Millisecond
 			// TODO: I'm sure we don't need all the bitmap header fields - why keep the fields at all here?
 			scene.Frames[index].Bitmap = bitmap.Bitmap{
 				Header: bitmap.Header{
@@ -512,7 +512,7 @@ func (view *View) requestExportScene() {
 			frameImg := image.NewPaletted(imageRect, colorPalette)
 			frameImg.Pix = frame.Bitmap.Pixels
 			data.Image = append(data.Image, frameImg)
-			data.Delay = append(data.Delay, int(frame.DisplayTime.ToDuration()/time.Millisecond)/10)
+			data.Delay = append(data.Delay, int(frame.DisplayTime/time.Millisecond/10))
 		}
 
 		err = gif.EncodeAll(writer, &data)

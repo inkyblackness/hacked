@@ -90,7 +90,7 @@ func (video Video) Decompress() ([]Scene, error) {
 			}
 			scene.Frames = append(scene.Frames, Frame{
 				Bitmap:      bmp,
-				DisplayTime: compressedFrame.displayTime,
+				DisplayTime: compressedFrame.displayTime.ToDuration(),
 			})
 		}
 		scenes = append(scenes, scene)
@@ -136,7 +136,7 @@ func HighResSceneFrom(ctx context.Context, scene Scene, width, height int) (High
 		compressedScene.frames[index] = HighResFrame{
 			bitstream:   frame.Bitstream,
 			maskstream:  frame.Maskstream,
-			displayTime: scene.Frames[index].DisplayTime,
+			displayTime: TimestampFromDuration(scene.Frames[index].DisplayTime),
 		}
 	}
 
