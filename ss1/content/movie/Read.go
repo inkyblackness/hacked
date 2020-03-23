@@ -157,11 +157,11 @@ func parseEntries(entries []Entry, container *Container,
 			subText := cp.Decode(data.Text)
 			switch data.Control {
 			case format.SubtitleTextStd:
-				container.Subtitles.Add(resource.LangDefault, entry.Timestamp, subText)
+				container.Subtitles.Add(resource.LangDefault, entry.Timestamp.ToDuration(), subText)
 			case format.SubtitleTextGer:
-				container.Subtitles.Add(resource.LangGerman, entry.Timestamp, subText)
+				container.Subtitles.Add(resource.LangGerman, entry.Timestamp.ToDuration(), subText)
 			case format.SubtitleTextFrn:
-				container.Subtitles.Add(resource.LangFrench, entry.Timestamp, subText)
+				container.Subtitles.Add(resource.LangFrench, entry.Timestamp.ToDuration(), subText)
 			case format.SubtitleArea:
 			default:
 			}

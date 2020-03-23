@@ -1,6 +1,8 @@
 package movie
 
 import (
+	"time"
+
 	"github.com/inkyblackness/hacked/ss1/content/movie/internal/format"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -12,7 +14,7 @@ type Subtitles struct {
 }
 
 // Add appends the given text at given timestamp in given language.
-func (sub *Subtitles) Add(lang resource.Language, timestamp Timestamp, text string) {
+func (sub *Subtitles) Add(lang resource.Language, timestamp time.Duration, text string) {
 	sub.PerLanguage[lang].Entries = append(sub.PerLanguage[lang].Entries, Subtitle{
 		Timestamp: timestamp,
 		Text:      text,
@@ -21,15 +23,15 @@ func (sub *Subtitles) Add(lang resource.Language, timestamp Timestamp, text stri
 
 // Duration returns the highest timestamp of all the subtitles
 func (sub Subtitles) Duration() Timestamp {
-	var highest Timestamp
+	var highest time.Duration
 	for _, list := range sub.PerLanguage {
 		for _, sub := range list.Entries {
-			if highest.IsBefore(sub.Timestamp) {
+			if highest < sub.Timestamp {
 				highest = sub.Timestamp
 			}
 		}
 	}
-	return highest
+	return TimestampFromDuration(highest)
 }
 
 // ArePresent returns true if at least one language makes use of subtitles.
@@ -84,16 +86,9 @@ func (sub SubtitleList) Encode(control format.SubtitleControl, cp text.Codepage)
 	return buckets
 }
 
-func (sub *SubtitleList) add(ts Timestamp, text string) {
-	sub.Entries = append(sub.Entries, Subtitle{
-		Timestamp: ts,
-		Text:      text,
-	})
-}
-
 // Subtitle is a timestamped text for subtitles.
 type Subtitle struct {
-	Timestamp Timestamp
+	Timestamp time.Duration
 	Text      string
 }
 
@@ -101,9 +96,9 @@ type Subtitle struct {
 func (sub Subtitle) Encode(control format.SubtitleControl, cp text.Codepage) EntryBucket {
 	return EntryBucket{
 		Priority:  EntryBucketPrioritySubtitle,
-		Timestamp: sub.Timestamp,
+		Timestamp: TimestampFromDuration(sub.Timestamp),
 		Entries: []Entry{{
-			Timestamp: sub.Timestamp,
+			Timestamp: TimestampFromDuration(sub.Timestamp),
 			Data: SubtitleEntryData{
 				Control: control,
 				Text:    cp.Encode(sub.Text),

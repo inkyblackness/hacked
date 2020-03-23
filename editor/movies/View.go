@@ -307,7 +307,7 @@ func (view View) requestExportSubtitles() {
 			var line astisub.Line
 			line.Items = append(line.Items, astisub.LineItem{Text: entry.Text})
 			item.Lines = []astisub.Line{line}
-			item.StartAt = entry.Timestamp.ToDuration()
+			item.StartAt = entry.Timestamp
 			item.EndAt = item.StartAt
 			if lastItem != nil {
 				lastItem.EndAt = item.StartAt
@@ -347,7 +347,7 @@ func (view *View) requestImportSubtitles() {
 		var newSubtitles movie.SubtitleList
 		for _, item := range subtitles.Items {
 			var newEntry movie.Subtitle
-			newEntry.Timestamp = movie.TimestampFromSeconds(float32(item.StartAt) / float32(time.Second))
+			newEntry.Timestamp = item.StartAt
 			for _, line := range item.Lines {
 				for _, lineItem := range line.Items {
 					if len(newEntry.Text) > 0 {
