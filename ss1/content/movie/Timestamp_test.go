@@ -1,6 +1,8 @@
 package movie_test
 
 import (
+	"fmt"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,4 +22,14 @@ func TestTimeToRawB(t *testing.T) {
 
 	assert.Equal(t, byte(255), ts.Second)
 	assert.Equal(t, uint16(0xC000), ts.Fraction)
+}
+
+func TestDurationConversion(t *testing.T) {
+	for fraction := 0; fraction <= math.MaxUint16; fraction++ {
+		ts := movie.Timestamp{Second: 0, Fraction: uint16(fraction)}
+		dur := ts.ToDuration()
+		ts2 := movie.TimestampFromDuration(dur)
+
+		assert.Equal(t, ts, ts2, fmt.Sprintf("Mismatch for fraction %v", fraction))
+	}
 }

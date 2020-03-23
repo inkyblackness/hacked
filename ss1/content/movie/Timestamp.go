@@ -1,6 +1,9 @@
 package movie
 
-import "time"
+import (
+	"math"
+	"time"
+)
 
 const fractionDivisor = 0x10000
 
@@ -8,6 +11,14 @@ const fractionDivisor = 0x10000
 type Timestamp struct {
 	Second   uint8
 	Fraction uint16
+}
+
+// TimestampLimit returns the highest possible timestamp value.
+func TimestampLimit() Timestamp {
+	return Timestamp{
+		Second:   math.MaxUint8,
+		Fraction: math.MaxUint16,
+	}
 }
 
 // TimestampFromSeconds creates a timestamp instance from given floating point value.
@@ -19,9 +30,21 @@ func TimestampFromSeconds(value float32) Timestamp {
 	}
 }
 
+// TimestampFromDuration creates a timestamp instance from given duration value.
+func TimestampFromDuration(d time.Duration) Timestamp {
+	limit := TimestampLimit()
+	if d >= limit.ToDuration() {
+		return limit
+	}
+	return Timestamp{
+		Second:   uint8(d / time.Second),
+		Fraction: uint16(((d - time.Second) * fractionDivisor) / time.Second),
+	}
+}
+
 // ToDuration returns the equivalent duration for this timestamp.
 func (ts Timestamp) ToDuration() time.Duration {
-	return time.Duration((float64(ts.Second) + float64(ts.Fraction)/fractionDivisor) * float64(time.Second))
+	return (time.Duration(ts.Second) * time.Second) + (time.Duration(ts.Fraction)*time.Second)/fractionDivisor
 }
 
 // IsAfter returns true if this timestamp is later than the given one.
