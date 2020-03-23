@@ -9,10 +9,9 @@ type Container struct {
 	Subtitles Subtitles
 }
 
-// Duration returns the length of the entire movie. It is the highest timestamp of all media streams.
-func (container Container) Duration() format.Timestamp {
+func (container Container) duration() format.Timestamp {
 	var max format.Timestamp
-	for _, ts := range []format.Timestamp{container.Audio.Duration(), container.Video.Duration(), container.Subtitles.Duration()} {
+	for _, ts := range []format.Timestamp{container.Audio.duration(), container.Video.duration(), container.Subtitles.duration()} {
 		if max.IsBefore(ts) {
 			max = ts
 		}

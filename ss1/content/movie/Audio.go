@@ -12,16 +12,14 @@ type Audio struct {
 	Sound audio.L8
 }
 
-// Duration returns the length of the audio stream.
-func (a Audio) Duration() format.Timestamp {
+func (a Audio) duration() format.Timestamp {
 	if a.Sound.SampleRate <= 0 {
 		return format.Timestamp{}
 	}
 	return format.TimestampFromSeconds(a.Sound.Duration())
 }
 
-// Encode creates a list of buckets for writing a stream.
-func (a Audio) Encode() []format.EntryBucket {
+func (a Audio) encode() []format.EntryBucket {
 	buckets := make([]format.EntryBucket, 0, (len(a.Sound.Samples)/audioEntrySize)+1)
 	addBucket := func(ts format.Timestamp, samples []byte) {
 		buckets = append(buckets,

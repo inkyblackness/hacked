@@ -21,8 +21,17 @@ func (sub *Subtitles) Add(lang resource.Language, timestamp time.Duration, text 
 	})
 }
 
-// Duration returns the highest timestamp of all the subtitles
-func (sub Subtitles) Duration() format.Timestamp {
+// ArePresent returns true if at least one language makes use of subtitles.
+func (sub Subtitles) ArePresent() bool {
+	for _, lang := range sub.PerLanguage {
+		if len(lang.Entries) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func (sub Subtitles) duration() format.Timestamp {
 	var highest time.Duration
 	for _, list := range sub.PerLanguage {
 		for _, sub := range list.Entries {
@@ -34,18 +43,7 @@ func (sub Subtitles) Duration() format.Timestamp {
 	return format.TimestampFromDuration(highest)
 }
 
-// ArePresent returns true if at least one language makes use of subtitles.
-func (sub Subtitles) ArePresent() bool {
-	for _, lang := range sub.PerLanguage {
-		if len(lang.Entries) > 0 {
-			return true
-		}
-	}
-	return false
-}
-
-// Encode serializes all the subtitles of all languages into buckets.
-func (sub Subtitles) Encode(cp text.Codepage) [][]format.EntryBucket {
+func (sub Subtitles) encode(cp text.Codepage) [][]format.EntryBucket {
 	if !sub.ArePresent() {
 		return nil
 	}
@@ -67,7 +65,7 @@ func (sub Subtitles) Encode(cp text.Codepage) [][]format.EntryBucket {
 		}},
 	}}
 	for index, lang := range sub.PerLanguage {
-		bucketsPerLanguage[index+1] = lang.Encode(format.SubtitleControlForLanguage(resource.Language(index)), cp)
+		bucketsPerLanguage[index+1] = lang.encode(format.SubtitleControlForLanguage(resource.Language(index)), cp)
 	}
 	return bucketsPerLanguage
 }
@@ -77,11 +75,10 @@ type SubtitleList struct {
 	Entries []Subtitle
 }
 
-// Encode serializes the list of subtitles into buckets.
-func (sub SubtitleList) Encode(control format.SubtitleControl, cp text.Codepage) []format.EntryBucket {
+func (sub SubtitleList) encode(control format.SubtitleControl, cp text.Codepage) []format.EntryBucket {
 	buckets := make([]format.EntryBucket, 0, len(sub.Entries))
 	for _, entry := range sub.Entries {
-		buckets = append(buckets, entry.Encode(control, cp))
+		buckets = append(buckets, entry.encode(control, cp))
 	}
 	return buckets
 }
@@ -92,8 +89,7 @@ type Subtitle struct {
 	Text      string
 }
 
-// Encode serializes the subtitle into a bucket.
-func (sub Subtitle) Encode(control format.SubtitleControl, cp text.Codepage) format.EntryBucket {
+func (sub Subtitle) encode(control format.SubtitleControl, cp text.Codepage) format.EntryBucket {
 	return format.EntryBucket{
 		Priority:  format.EntryBucketPrioritySubtitle,
 		Timestamp: format.TimestampFromDuration(sub.Timestamp),

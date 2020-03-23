@@ -20,7 +20,7 @@ func Write(dest io.Writer, container Container, cp text.Codepage) error {
 
 	// setup header
 	copy(header.Tag[:], bytes.NewBufferString(format.Tag).Bytes())
-	endTimestamp := container.Duration()
+	endTimestamp := container.duration()
 	header.DurationSeconds = endTimestamp.Second
 	header.DurationFraction = endTimestamp.Fraction
 	header.VideoWidth = container.Video.Width
@@ -35,9 +35,9 @@ func Write(dest io.Writer, container Container, cp text.Codepage) error {
 	header.Unknown0022 = 0x00000001
 
 	var buckets []format.EntryBucket
-	buckets = append(buckets, container.Audio.Encode()...)
-	buckets = append(buckets, container.Video.Encode()...)
-	subtitleBucketsList := container.Subtitles.Encode(cp)
+	buckets = append(buckets, container.Audio.encode()...)
+	buckets = append(buckets, container.Video.encode()...)
+	subtitleBucketsList := container.Subtitles.encode(cp)
 	for _, subtitleBuckets := range subtitleBucketsList {
 		buckets = append(buckets, subtitleBuckets...)
 	}

@@ -32,22 +32,20 @@ func (video Video) StartPalette() bitmap.Palette {
 	return video.Scenes[0].palette
 }
 
-// Duration returns the sum of all scene durations.
-func (video Video) Duration() format.Timestamp {
+func (video Video) duration() format.Timestamp {
 	var sum format.Timestamp
 	for _, scene := range video.Scenes {
-		sum = sum.Plus(scene.Duration())
+		sum = sum.Plus(scene.duration())
 	}
 	return sum
 }
 
-// Encode serializes the scenes into entry buckets.
-func (video Video) Encode() []format.EntryBucket {
+func (video Video) encode() []format.EntryBucket {
 	var sceneTime format.Timestamp
 	var buckets []format.EntryBucket
 	for index, scene := range video.Scenes {
-		buckets = append(buckets, scene.Encode(sceneTime, index != 0)...)
-		sceneTime = sceneTime.Plus(scene.Duration())
+		buckets = append(buckets, scene.encode(sceneTime, index != 0)...)
+		sceneTime = sceneTime.Plus(scene.duration())
 	}
 	return buckets
 }
@@ -144,17 +142,15 @@ func HighResSceneFrom(ctx context.Context, scene Scene, width, height int) (High
 	return compressedScene, nil
 }
 
-// Duration returns the length of the scene, it is the sum of display times of all frames.
-func (scene HighResScene) Duration() format.Timestamp {
+func (scene HighResScene) duration() format.Timestamp {
 	var sum format.Timestamp
 	for _, frame := range scene.frames {
-		sum = sum.Plus(frame.Duration())
+		sum = sum.Plus(frame.duration())
 	}
 	return sum
 }
 
-// Encode serializes the scene into entry buckets.
-func (scene HighResScene) Encode(start format.Timestamp, withPalette bool) []format.EntryBucket {
+func (scene HighResScene) encode(start format.Timestamp, withPalette bool) []format.EntryBucket {
 	buckets := make([]format.EntryBucket, 0, len(scene.frames)+1)
 	controlEntries := []format.Entry{
 		{Timestamp: format.Timestamp{}, Data: format.PaletteLookupEntryData{List: scene.paletteLookup}},
@@ -173,7 +169,7 @@ func (scene HighResScene) Encode(start format.Timestamp, withPalette bool) []for
 		})
 	frameTime := start
 	for _, frame := range scene.frames {
-		buckets = append(buckets, frame.Encode(frameTime))
+		buckets = append(buckets, frame.encode(frameTime))
 		frameTime = frameTime.Plus(frame.displayTime)
 	}
 
@@ -187,13 +183,11 @@ type HighResFrame struct {
 	displayTime format.Timestamp
 }
 
-// Duration returns the display time of the frame.
-func (frame HighResFrame) Duration() format.Timestamp {
+func (frame HighResFrame) duration() format.Timestamp {
 	return frame.displayTime
 }
 
-// Encode serializes the frame into an entry bucket.
-func (frame HighResFrame) Encode(start format.Timestamp) format.EntryBucket {
+func (frame HighResFrame) encode(start format.Timestamp) format.EntryBucket {
 	return format.EntryBucket{
 		Priority:  format.EntryBucketPriorityFrame,
 		Timestamp: start,
