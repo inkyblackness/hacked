@@ -21,17 +21,17 @@ func (a Audio) Duration() format.Timestamp {
 }
 
 // Encode creates a list of buckets for writing a stream.
-func (a Audio) Encode() []EntryBucket {
-	buckets := make([]EntryBucket, 0, (len(a.Sound.Samples)/audioEntrySize)+1)
+func (a Audio) Encode() []format.EntryBucket {
+	buckets := make([]format.EntryBucket, 0, (len(a.Sound.Samples)/audioEntrySize)+1)
 	addBucket := func(ts format.Timestamp, samples []byte) {
 		buckets = append(buckets,
-			EntryBucket{
-				Priority:  EntryBucketPriorityAudio,
+			format.EntryBucket{
+				Priority:  format.EntryBucketPriorityAudio,
 				Timestamp: ts,
-				Entries: []Entry{
+				Entries: []format.Entry{
 					{
 						Timestamp: ts,
-						Data: AudioEntryData{
+						Data: format.AudioEntryData{
 							Samples: samples,
 						},
 					},

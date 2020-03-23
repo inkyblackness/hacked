@@ -69,8 +69,8 @@ func readPalette(source io.Reader, pal *bitmap.Palette) error {
 	return decoder.FirstError()
 }
 
-func readIndexAndEntries(source io.ReadSeeker, startPos int64, header *format.Header) ([]Entry, error) {
-	entries := make([]Entry, 0, header.IndexEntryCount)
+func readIndexAndEntries(source io.ReadSeeker, startPos int64, header *format.Header) ([]format.Entry, error) {
+	entries := make([]format.Entry, 0, header.IndexEntryCount)
 	indexEntries := make([]format.IndexTableEntry, header.IndexEntryCount)
 	err := binary.Read(source, binary.LittleEndian, indexEntries)
 	if err != nil {
@@ -95,7 +95,7 @@ func readIndexAndEntries(source io.ReadSeeker, startPos int64, header *format.He
 			if err != nil {
 				return nil, err
 			}
-			entries = append(entries, Entry{
+			entries = append(entries, format.Entry{
 				Timestamp: timestamp,
 				Data:      entryData,
 			})
@@ -104,31 +104,31 @@ func readIndexAndEntries(source io.ReadSeeker, startPos int64, header *format.He
 	return entries, nil
 }
 
-func readEntry(entryType format.DataType, source io.Reader, dataSize int) (EntryData, error) {
+func readEntry(entryType format.DataType, source io.Reader, dataSize int) (format.EntryData, error) {
 	limited := io.LimitReader(source, int64(dataSize))
 	switch entryType {
 	case format.DataTypeLowResVideo:
-		return LowResVideoEntryFrom(limited, dataSize)
+		return format.LowResVideoEntryFrom(limited, dataSize)
 	case format.DataTypeHighResVideo:
-		return HighResVideoEntryFrom(limited, dataSize)
+		return format.HighResVideoEntryFrom(limited, dataSize)
 	case format.DataTypeAudio:
-		return AudioEntryFrom(limited, dataSize)
+		return format.AudioEntryFrom(limited, dataSize)
 	case format.DataTypeSubtitle:
-		return SubtitleEntryFrom(limited, dataSize)
+		return format.SubtitleEntryFrom(limited, dataSize)
 	case format.DataTypePalette:
-		return PaletteEntryFrom(limited)
+		return format.PaletteEntryFrom(limited)
 	case format.DataTypePaletteReset:
-		return PaletteResetEntryFrom()
+		return format.PaletteResetEntryFrom()
 	case format.DataTypePaletteLookupList:
-		return PaletteLookupEntryFrom(limited, dataSize)
+		return format.PaletteLookupEntryFrom(limited, dataSize)
 	case format.DataTypeControlDictionary:
-		return ControlDictionaryEntryFrom(limited, dataSize)
+		return format.ControlDictionaryEntryFrom(limited, dataSize)
 	default:
-		return UnknownEntryFrom(entryType, limited, dataSize)
+		return format.UnknownEntryFrom(entryType, limited, dataSize)
 	}
 }
 
-func parseEntries(entries []Entry, container *Container,
+func parseEntries(entries []format.Entry, container *Container,
 	cp text.Codepage, startPalette bitmap.Palette, endTimestamp format.Timestamp) error {
 	palette := startPalette
 	var paletteLookup []byte
@@ -151,9 +151,9 @@ func parseEntries(entries []Entry, container *Container,
 	}
 	for _, entry := range entries {
 		switch data := entry.Data.(type) {
-		case AudioEntryData:
+		case format.AudioEntryData:
 			container.Audio.Sound.Samples = append(container.Audio.Sound.Samples, data.Samples...)
-		case SubtitleEntryData:
+		case format.SubtitleEntryData:
 			subText := cp.Decode(data.Text)
 			switch data.Control {
 			case format.SubtitleTextStd:
@@ -165,22 +165,22 @@ func parseEntries(entries []Entry, container *Container,
 			case format.SubtitleArea:
 			default:
 			}
-		case LowResVideoEntryData:
+		case format.LowResVideoEntryData:
 			// ignored for now
 			return fmt.Errorf("low-res video not supported")
-		case PaletteLookupEntryData:
+		case format.PaletteLookupEntryData:
 			sceneChanging = true
 			paletteLookup = data.List
-		case ControlDictionaryEntryData:
+		case format.ControlDictionaryEntryData:
 			sceneChanging = true
 			controlDictionary = data.Words
-		case PaletteResetEntryData:
+		case format.PaletteResetEntryData:
 			sceneChanging = true
 			palette = bitmap.Palette{}
-		case PaletteEntryData:
+		case format.PaletteEntryData:
 			sceneChanging = true
 			palette = data.Colors
-		case HighResVideoEntryData:
+		case format.HighResVideoEntryData:
 			finishFrame(entry.Timestamp)
 			if sceneChanging {
 				finishScene()

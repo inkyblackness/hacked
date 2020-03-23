@@ -45,22 +45,22 @@ func (sub Subtitles) ArePresent() bool {
 }
 
 // Encode serializes all the subtitles of all languages into buckets.
-func (sub Subtitles) Encode(cp text.Codepage) [][]EntryBucket {
+func (sub Subtitles) Encode(cp text.Codepage) [][]format.EntryBucket {
 	if !sub.ArePresent() {
 		return nil
 	}
-	bucketsPerLanguage := make([][]EntryBucket, len(sub.PerLanguage)+1)
+	bucketsPerLanguage := make([][]format.EntryBucket, len(sub.PerLanguage)+1)
 
 	// Ensure a subtitle area is defined.
 	// The area is hardcoded. While the engine respects any area, placing the text in the
 	// frame area will have the pixels become overwritten. As such, there are many "wrong" options,
 	// and only a few right ones. There's no need to make them editable.
-	bucketsPerLanguage[0] = []EntryBucket{{
-		Priority:  EntryBucketPrioritySubtitleControl,
+	bucketsPerLanguage[0] = []format.EntryBucket{{
+		Priority:  format.EntryBucketPrioritySubtitleControl,
 		Timestamp: format.Timestamp{},
-		Entries: []Entry{{
+		Entries: []format.Entry{{
 			Timestamp: format.Timestamp{},
-			Data: SubtitleEntryData{
+			Data: format.SubtitleEntryData{
 				Control: format.SubtitleArea,
 				Text:    cp.Encode("20 365 620 395 CLR"),
 			},
@@ -78,8 +78,8 @@ type SubtitleList struct {
 }
 
 // Encode serializes the list of subtitles into buckets.
-func (sub SubtitleList) Encode(control format.SubtitleControl, cp text.Codepage) []EntryBucket {
-	buckets := make([]EntryBucket, 0, len(sub.Entries))
+func (sub SubtitleList) Encode(control format.SubtitleControl, cp text.Codepage) []format.EntryBucket {
+	buckets := make([]format.EntryBucket, 0, len(sub.Entries))
 	for _, entry := range sub.Entries {
 		buckets = append(buckets, entry.Encode(control, cp))
 	}
@@ -93,13 +93,13 @@ type Subtitle struct {
 }
 
 // Encode serializes the subtitle into a bucket.
-func (sub Subtitle) Encode(control format.SubtitleControl, cp text.Codepage) EntryBucket {
-	return EntryBucket{
-		Priority:  EntryBucketPrioritySubtitle,
+func (sub Subtitle) Encode(control format.SubtitleControl, cp text.Codepage) format.EntryBucket {
+	return format.EntryBucket{
+		Priority:  format.EntryBucketPrioritySubtitle,
 		Timestamp: format.TimestampFromDuration(sub.Timestamp),
-		Entries: []Entry{{
+		Entries: []format.Entry{{
 			Timestamp: format.TimestampFromDuration(sub.Timestamp),
-			Data: SubtitleEntryData{
+			Data: format.SubtitleEntryData{
 				Control: control,
 				Text:    cp.Encode(sub.Text),
 			},

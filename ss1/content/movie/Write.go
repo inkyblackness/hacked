@@ -34,7 +34,7 @@ func Write(dest io.Writer, container Container, cp text.Codepage) error {
 	header.Unknown0020 = 0x0001
 	header.Unknown0022 = 0x00000001
 
-	var buckets []EntryBucket
+	var buckets []format.EntryBucket
 	buckets = append(buckets, container.Audio.Encode()...)
 	buckets = append(buckets, container.Video.Encode()...)
 	subtitleBucketsList := container.Subtitles.Encode(cp)
@@ -54,7 +54,7 @@ func Write(dest io.Writer, container Container, cp text.Codepage) error {
 	})
 
 	// create index
-	var entries []Entry
+	var entries []format.Entry
 	for _, bucket := range buckets {
 		entries = append(entries, bucket.Entries...)
 	}
@@ -113,7 +113,7 @@ func Write(dest io.Writer, container Container, cp text.Codepage) error {
 	return nil
 }
 
-func moveSubtitlesAfterSceneChange(entries []Entry) {
+func moveSubtitlesAfterSceneChange(entries []format.Entry) {
 	nextSceneChangeIndex := -1
 	var nextSceneChangeTimestamp format.Timestamp
 	delta := format.TimestampFromSeconds(0.5)

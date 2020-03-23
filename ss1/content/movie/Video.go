@@ -42,9 +42,9 @@ func (video Video) Duration() format.Timestamp {
 }
 
 // Encode serializes the scenes into entry buckets.
-func (video Video) Encode() []EntryBucket {
+func (video Video) Encode() []format.EntryBucket {
 	var sceneTime format.Timestamp
-	var buckets []EntryBucket
+	var buckets []format.EntryBucket
 	for index, scene := range video.Scenes {
 		buckets = append(buckets, scene.Encode(sceneTime, index != 0)...)
 		sceneTime = sceneTime.Plus(scene.Duration())
@@ -154,20 +154,20 @@ func (scene HighResScene) Duration() format.Timestamp {
 }
 
 // Encode serializes the scene into entry buckets.
-func (scene HighResScene) Encode(start format.Timestamp, withPalette bool) []EntryBucket {
-	buckets := make([]EntryBucket, 0, len(scene.frames)+1)
-	controlEntries := []Entry{
-		{Timestamp: format.Timestamp{}, Data: PaletteLookupEntryData{List: scene.paletteLookup}},
-		{Timestamp: format.Timestamp{}, Data: ControlDictionaryEntryData{Words: scene.controlWords}},
+func (scene HighResScene) Encode(start format.Timestamp, withPalette bool) []format.EntryBucket {
+	buckets := make([]format.EntryBucket, 0, len(scene.frames)+1)
+	controlEntries := []format.Entry{
+		{Timestamp: format.Timestamp{}, Data: format.PaletteLookupEntryData{List: scene.paletteLookup}},
+		{Timestamp: format.Timestamp{}, Data: format.ControlDictionaryEntryData{Words: scene.controlWords}},
 	}
 	if withPalette {
 		controlEntries = append(controlEntries,
-			Entry{Timestamp: start, Data: PaletteResetEntryData{}},
-			Entry{Timestamp: start, Data: PaletteEntryData{Colors: scene.palette}})
+			format.Entry{Timestamp: start, Data: format.PaletteResetEntryData{}},
+			format.Entry{Timestamp: start, Data: format.PaletteEntryData{Colors: scene.palette}})
 	}
 	buckets = append(buckets,
-		EntryBucket{
-			Priority:  EntryBucketPriorityVideoControl,
+		format.EntryBucket{
+			Priority:  format.EntryBucketPriorityVideoControl,
 			Timestamp: start,
 			Entries:   controlEntries,
 		})
@@ -193,14 +193,14 @@ func (frame HighResFrame) Duration() format.Timestamp {
 }
 
 // Encode serializes the frame into an entry bucket.
-func (frame HighResFrame) Encode(start format.Timestamp) EntryBucket {
-	return EntryBucket{
-		Priority:  EntryBucketPriorityFrame,
+func (frame HighResFrame) Encode(start format.Timestamp) format.EntryBucket {
+	return format.EntryBucket{
+		Priority:  format.EntryBucketPriorityFrame,
 		Timestamp: start,
-		Entries: []Entry{
+		Entries: []format.Entry{
 			{
 				Timestamp: start,
-				Data: HighResVideoEntryData{
+				Data: format.HighResVideoEntryData{
 					Bitstream:  frame.bitstream,
 					Maskstream: frame.maskstream,
 				},
