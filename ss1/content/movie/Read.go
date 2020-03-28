@@ -44,7 +44,7 @@ func Read(source io.ReadSeeker, cp text.Codepage) (Container, error) {
 		return Container{}, err
 	}
 	err = parseEntries(entries, &container,
-		cp, startPalette, format.Timestamp{Second: header.DurationSeconds, Fraction: header.DurationFraction})
+		cp, startPalette, format.Timestamp{Second: byte(header.Duration.Number), Fraction: header.Duration.Fraction})
 	if err != nil {
 		return Container{}, err
 	}
@@ -59,7 +59,7 @@ func verifyAndExtractHeader(header *format.Header, container *Container) error {
 
 	container.Video.Height = header.VideoHeight
 	container.Video.Width = header.VideoWidth
-	container.Audio.Sound.SampleRate = float32(header.SampleRate)
+	container.Audio.Sound.SampleRate = header.AudioSampleRate.ToFloat()
 	return nil
 }
 

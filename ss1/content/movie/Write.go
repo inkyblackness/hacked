@@ -21,18 +21,21 @@ func Write(dest io.Writer, container Container, cp text.Codepage) error {
 	// setup header
 	copy(header.Tag[:], bytes.NewBufferString(format.Tag).Bytes())
 	endTimestamp := container.duration()
-	header.DurationSeconds = endTimestamp.Second
-	header.DurationFraction = endTimestamp.Fraction
+	header.Duration.Number = int16(endTimestamp.Second)
+	header.Duration.Fraction = endTimestamp.Fraction
 	header.VideoWidth = container.Video.Width
 	header.VideoHeight = container.Video.Height
-	header.SampleRate = uint16(container.Audio.Sound.SampleRate)
 
 	if header.VideoWidth != 0 {
-		header.Unknown001C = 0x0008
-		header.Unknown001E = 0x0001
+		header.VideoBitsPerPixel = 8
+		header.VideoPalettePresent = 1
+		header.VideoFrameRate = format.FixFromFloat(12.5) // take a good guess on what a typical framerate would be.
 	}
-	header.Unknown0020 = 0x0001
-	header.Unknown0022 = 0x00000001
+	if !container.Audio.Sound.Empty() {
+		header.AudioChannelCount = 1
+		header.AudioBytesPerSample = 1
+		header.AudioSampleRate = format.FixFromFloat(container.Audio.Sound.SampleRate)
+	}
 
 	var buckets []format.EntryBucket
 	buckets = append(buckets, container.Audio.encode()...)
@@ -80,8 +83,8 @@ func Write(dest io.Writer, container Container, cp text.Codepage) error {
 
 	// determine end
 	lastEntry := format.IndexTableEntry{
-		TimestampSecond:   header.DurationSeconds,
-		TimestampFraction: header.DurationFraction,
+		TimestampSecond:   byte(header.Duration.Number),
+		TimestampFraction: header.Duration.Fraction,
 		Type:              byte(format.DataTypeEndOfMedia),
 		DataOffset:        dataStartOffset + header.ContentSize}
 	indexEntries = append(indexEntries, lastEntry)
