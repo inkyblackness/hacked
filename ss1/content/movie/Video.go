@@ -66,29 +66,18 @@ func (video Video) Decompress() ([]Scene, error) {
 	}
 
 	for _, compressedScene := range video.Scenes {
-		scenePalette := compressedScene.palette
 		decoderBuilder.WithControlWords(compressedScene.controlWords)
 		decoderBuilder.WithPaletteLookupList(compressedScene.paletteLookup)
 		decoder := decoderBuilder.Build()
 		var scene Scene
+		scene.Palette = compressedScene.palette
 		for _, compressedFrame := range compressedScene.frames {
 			err := decoder.Decode(compressedFrame.bitstream, compressedFrame.maskstream)
 			if err != nil {
 				return nil, err
 			}
-
-			bmp := bitmap.Bitmap{
-				Header: bitmap.Header{
-					Type:   bitmap.TypeFlat8Bit,
-					Width:  int16(video.Width),
-					Height: int16(video.Height),
-					Stride: video.Width,
-				},
-				Palette: &scenePalette,
-				Pixels:  cloneFramebuffer(),
-			}
 			scene.Frames = append(scene.Frames, Frame{
-				Bitmap:      bmp,
+				Pixels:      cloneFramebuffer(),
 				DisplayTime: compressedFrame.displayTime.ToDuration(),
 			})
 		}
@@ -108,12 +97,8 @@ type HighResScene struct {
 // HighResSceneFrom compresses given scene and returns the compression result.
 func HighResSceneFrom(ctx context.Context, scene Scene, width, height int) (HighResScene, error) {
 	encoder := compression.NewSceneEncoder(width, height)
-	var palette bitmap.Palette
 	for _, frame := range scene.Frames {
-		if frame.Bitmap.Palette != nil {
-			palette = *frame.Bitmap.Palette
-		}
-		err := encoder.AddFrame(frame.Bitmap.Pixels)
+		err := encoder.AddFrame(frame.Pixels)
 		if err != nil {
 			return HighResScene{}, err
 		}
@@ -126,7 +111,7 @@ func HighResSceneFrom(ctx context.Context, scene Scene, width, height int) (High
 		return HighResScene{}, err
 	}
 	compressedScene := HighResScene{
-		palette:       palette,
+		palette:       scene.Palette,
 		paletteLookup: paletteLookup,
 		controlWords:  words,
 		frames:        make([]HighResFrame, len(frames)),

@@ -36,14 +36,14 @@ func (cache *FrameCache) AllocateKey() FrameCacheKey {
 
 // SetTexture registers a texture based on given bitmap under given key.
 // The bitmap should contain a palette, otherwise it will most likely not be displayed.
-func (cache *FrameCache) SetTexture(key FrameCacheKey, bmp bitmap.Bitmap) {
+func (cache *FrameCache) SetTexture(key FrameCacheKey, width, height uint16, pixels []byte, palette *bitmap.Palette) {
 	cache.DropTextureForKey(key)
-	tex := NewBitmapTexture(cache.gl, int(bmp.Header.Width), int(bmp.Header.Height), bmp.Pixels)
+	tex := NewBitmapTexture(cache.gl, int(width), int(height), pixels)
 	cache.textures[key] = tex
-	if bmp.Palette == nil {
+	if palette == nil {
 		return
 	}
-	pal := NewPaletteTexture(cache.gl, bmp.Palette)
+	pal := NewPaletteTexture(cache.gl, palette)
 	cache.palettes[key] = pal
 }
 

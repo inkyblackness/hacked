@@ -9,11 +9,12 @@ import (
 // Scene describes a series of frames that share a common palette.
 // Ideally, they also share the same framerate.
 type Scene struct {
-	Frames []Frame
+	Palette bitmap.Palette
+	Frames  []Frame
 }
 
 // Frame describes a bitmap and how long it shall be displayed.
 type Frame struct {
-	Bitmap      bitmap.Bitmap
+	Pixels      []byte
 	DisplayTime time.Duration
 }

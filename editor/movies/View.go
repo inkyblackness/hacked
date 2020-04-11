@@ -168,21 +168,24 @@ func (view *View) renderContent() {
 	imgui.EndGroup()
 	imgui.SameLine()
 	if imgui.BeginChildV("Frames", imgui.Vec2{X: -1, Y: 0}, false, 0) {
-		var frames []movie.Frame
+		var scene *movie.Scene
 		if (view.model.currentScene >= 0) && (view.model.currentScene < len(scenes)) {
-			frames = scenes[view.model.currentScene].Frames
+			scene = &scenes[view.model.currentScene]
 		}
-		if (view.model.currentFrame >= 0) && (view.model.currentFrame < len(frames)) {
-			frame := frames[view.model.currentFrame]
-			view.frameCache.SetTexture(view.frameCacheKey, frame.Bitmap) // TODO: only update if something changed
+		if scene != nil {
+			if (view.model.currentFrame >= 0) && (view.model.currentFrame < len(scene.Frames)) {
+				frame := scene.Frames[view.model.currentFrame]
+				// TODO: only update if something changed
+				view.frameCache.SetTexture(view.frameCacheKey, 600, 300, frame.Pixels, &scene.Palette)
 
-			render.FrameImage("Frame", view.frameCache, view.frameCacheKey,
-				imgui.Vec2{
-					X: float32(movie.HighResDefaultWidth) * view.guiScale,
-					Y: float32(movie.HighResDefaultHeight) * view.guiScale,
-				})
+				render.FrameImage("Frame", view.frameCache, view.frameCacheKey,
+					imgui.Vec2{
+						X: float32(movie.HighResDefaultWidth) * view.guiScale,
+						Y: float32(movie.HighResDefaultHeight) * view.guiScale,
+					})
+			}
+			gui.StepSliderInt("Frame Index", &view.model.currentFrame, 0, len(scene.Frames)-1)
 		}
-		gui.StepSliderInt("Frame Index", &view.model.currentFrame, 0, len(frames)-1)
 	}
 	imgui.EndChild()
 }
@@ -445,6 +448,7 @@ func (view *View) requestImportScene(returningInfo string) {
 		}
 		palette[255] = bitmap.RGB{Red: 0x9A, Green: 0x35, Blue: 0x35} // default color in intro
 
+		scene.Palette = palette
 		for index, img := range data.Image {
 
 			for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
@@ -457,22 +461,7 @@ func (view *View) requestImportScene(returningInfo string) {
 			}
 
 			scene.Frames[index].DisplayTime = time.Duration(data.Delay[index]) * 10 * time.Millisecond
-			// TODO: I'm sure we don't need all the bitmap header fields - why keep the fields at all here?
-			scene.Frames[index].Bitmap = bitmap.Bitmap{
-				Header: bitmap.Header{
-					Type:          bitmap.TypeFlat8Bit,
-					Flags:         0,
-					Width:         int16(data.Config.Width),
-					Height:        int16(data.Config.Height),
-					Stride:        uint16(data.Config.Width),
-					WidthFactor:   0,
-					HeightFactor:  0,
-					Area:          [4]int16{0, 0, int16(data.Config.Width), int16(data.Config.Height)},
-					PaletteOffset: 0,
-				},
-				Pixels:  framebufferSnapshot(),
-				Palette: &palette,
-			}
+			scene.Frames[index].Pixels = framebufferSnapshot()
 		}
 
 		view.compressAndAddScene(scene, data.Config.Width, data.Config.Height)
@@ -516,12 +505,12 @@ func (view *View) requestExportScene() {
 	var exportTo func(string)
 
 	scenes := view.movieService.Video(view.model.currentKey)
-	var frames []movie.Frame
+	var scene *movie.Scene
 	if view.model.currentScene >= 0 && view.model.currentScene < len(scenes) {
-		frames = scenes[view.model.currentScene].Frames
+		scene = &scenes[view.model.currentScene]
 	}
 
-	if len(frames) == 0 {
+	if (scene == nil) || len(scene.Frames) == 0 {
 		return
 	}
 
@@ -533,21 +522,21 @@ func (view *View) requestExportScene() {
 		}
 		defer func() { _ = writer.Close() }()
 
-		refBitmap := frames[0].Bitmap
-		colorPalette := refBitmap.Palette.ColorPalette(false)
+		colorPalette := scene.Palette.ColorPalette(false)
 		data := gif.GIF{
 			Config: image.Config{
-				Width:      int(refBitmap.Header.Width),
-				Height:     int(refBitmap.Header.Height),
+				Width:      600,
+				Height:     300,
 				ColorModel: colorPalette,
 			},
 			LoopCount: -1,
 		}
 
 		imageRect := image.Rect(0, 0, data.Config.Width, data.Config.Height)
-		for _, frame := range frames {
+		for _, frame := range scene.Frames {
 			frameImg := image.NewPaletted(imageRect, colorPalette)
-			frameImg.Pix = frame.Bitmap.Pixels
+			frameImg.Pix = frame.Pixels
+			frameImg.Stride = data.Config.Width
 			data.Image = append(data.Image, frameImg)
 			data.Delay = append(data.Delay, int(frame.DisplayTime/time.Millisecond/10))
 		}
