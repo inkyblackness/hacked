@@ -11,7 +11,6 @@ import (
 
 	"github.com/asticode/go-astisub"
 	"github.com/inkyblackness/imgui-go"
-	"github.com/lucasb-eyer/go-colorful"
 
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"
@@ -413,35 +412,47 @@ func (view *View) requestImportScene(returningInfo string) {
 			copy(buf, framebuffer)
 			return buf
 		}
-		zeroColor, _ := colorful.MakeColor(color.NRGBA{R: palette[0].Red, G: palette[0].Green, B: palette[0].Blue, A: 0xFF})
-		closestDist := float64(-1)
-		closestIndex := byte(0)
-		for index, other := range palette {
-			if index == 0 {
-				continue
-			}
-			otherColor, _ := colorful.MakeColor(color.NRGBA{R: other.Red, G: other.Green, B: other.Blue, A: 0xFF})
-			dist := zeroColor.DistanceLab(otherColor)
-			if closestDist < 0 || dist < closestDist {
-				closestDist = dist
-				closestIndex = byte(index)
-			}
-		}
-		mapIndex := func(value byte) byte {
-			if value > 0 {
-				return value
-			}
-			return closestIndex
-		}
-		for index, img := range data.Image {
-			if index == 0 || (index >= len(data.Disposal)) || data.Disposal[index] != gif.DisposalPrevious {
-				for i := range framebuffer {
-					framebuffer[i] = mapIndex(data.BackgroundIndex)
-				}
-			}
+
+		var usedColors [256]bool
+		for _, img := range data.Image {
 			for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
 				for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
-					framebuffer[y*data.Config.Width+x] = mapIndex(img.ColorIndexAt(x, y))
+					colorIndex := img.ColorIndexAt(x, y)
+					usedColors[colorIndex] = true
+				}
+			}
+		}
+		var indexMap [256]byte
+		for i := 0; i < 256; i++ {
+			indexMap[byte(i)] = byte(i)
+		}
+		// Ensure color index 0 is not used.
+		if usedColors[0] && (data.BackgroundIndex != 0) {
+			if data.BackgroundIndex == 255 {
+				indexMap[0] = palette.IndexClosestTo(palette[0], []byte{0, 255})
+			} else {
+				temp := palette[0]
+				palette[0] = palette[data.BackgroundIndex]
+				palette[data.BackgroundIndex] = temp
+				indexMap[0] = data.BackgroundIndex
+				indexMap[data.BackgroundIndex] = 0
+			}
+		}
+		palette[0] = bitmap.RGB{Red: 0x00, Green: 0x00, Blue: 0x00} // default color for background
+		// In case the last index is in use by the animation, use a similar color as this entry is reserved for subtitles.
+		if usedColors[255] && (data.BackgroundIndex != 255) {
+			indexMap[255] = palette.IndexClosestTo(palette[255], []byte{0, 255})
+		}
+		palette[255] = bitmap.RGB{Red: 0x9A, Green: 0x35, Blue: 0x35} // default color in intro
+
+		for index, img := range data.Image {
+
+			for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
+				for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
+					colorIndex := img.ColorIndexAt(x, y)
+					if colorIndex != data.BackgroundIndex {
+						framebuffer[y*data.Config.Width+x] = indexMap[colorIndex]
+					}
 				}
 			}
 
