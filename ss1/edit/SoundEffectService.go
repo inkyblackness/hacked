@@ -35,9 +35,19 @@ func (service SoundEffectService) RestoreFunc(key resource.Key) func(setter medi
 	}
 }
 
+// Modified returns true if the identified sound resource is marked as modified.
+func (service SoundEffectService) Modified(key resource.Key) bool {
+	return service.viewer.Modified(key)
+}
+
 // Remove erases the sound from the resources.
 func (service SoundEffectService) Remove(setter media.SoundEffectBlockSetter, key resource.Key) {
 	service.setter.Remove(setter, key)
+}
+
+// Clear resets the identified audio resource to a silent one-sample audio.
+func (service SoundEffectService) Clear(setter media.SoundEffectBlockSetter, key resource.Key) {
+	service.setter.Clear(setter, key)
 }
 
 // Audio returns the audio component of identified sound effect.

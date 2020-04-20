@@ -17,12 +17,14 @@ import (
 	"github.com/inkyblackness/hacked/editor/objects"
 	"github.com/inkyblackness/hacked/editor/project"
 	"github.com/inkyblackness/hacked/editor/render"
+	"github.com/inkyblackness/hacked/editor/sounds"
 	"github.com/inkyblackness/hacked/editor/texts"
 	"github.com/inkyblackness/hacked/editor/textures"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/content/movie"
+	"github.com/inkyblackness/hacked/ss1/content/sound"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/edit"
 	"github.com/inkyblackness/hacked/ss1/edit/media"
@@ -61,17 +63,18 @@ type Application struct {
 	eventQueue      event.Queue
 	eventDispatcher *event.Dispatcher
 
-	cmdStack       *cmd.Stack
-	mod            *world.Mod
-	cp             text.Codepage
-	textLineCache  *text.Cache
-	textPageCache  *text.Cache
-	messagesCache  *text.ElectronicMessageCache
-	paletteCache   *graphics.PaletteCache
-	textureCache   *graphics.TextureCache
-	frameCache     *graphics.FrameCache
-	animationCache *bitmap.AnimationCache
-	movieCache     *movie.Cache
+	cmdStack         *cmd.Stack
+	mod              *world.Mod
+	cp               text.Codepage
+	textLineCache    *text.Cache
+	textPageCache    *text.Cache
+	messagesCache    *text.ElectronicMessageCache
+	paletteCache     *graphics.PaletteCache
+	textureCache     *graphics.TextureCache
+	frameCache       *graphics.FrameCache
+	animationCache   *bitmap.AnimationCache
+	movieCache       *movie.Cache
+	soundEffectCache *sound.SoundEffectCache
 
 	mapDisplay *levels.MapDisplay
 
@@ -88,6 +91,7 @@ type Application struct {
 	texturesView     *textures.View
 	animationsView   *animations.View
 	moviesView       *movies.View
+	soundEffectsView *sounds.View
 	objectsView      *objects.View
 	aboutView        *about.View
 	licensesView     *about.LicensesView
@@ -166,6 +170,7 @@ func (app *Application) render() {
 	app.texturesView.Render()
 	app.animationsView.Render()
 	app.moviesView.Render()
+	app.soundEffectsView.Render()
 	app.objectsView.Render()
 
 	paletteTexture, _ := app.paletteCache.Palette(0)
@@ -435,6 +440,7 @@ func (app *Application) initModel() {
 	app.textPageCache = text.NewPageCache(app.cp, app.mod)
 	app.messagesCache = text.NewElectronicMessageCache(app.cp, app.mod)
 	app.movieCache = movie.NewCache(app.cp, app.mod)
+	app.soundEffectCache = sound.NewSoundCache(app.mod)
 
 	for i := 0; i < archive.MaxLevels; i++ {
 		app.levels[i] = level.NewLevel(ids.LevelResourcesStart, i, app.mod)
@@ -451,6 +457,7 @@ func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []
 	app.textPageCache.InvalidateResources(modifiedIDs)
 	app.messagesCache.InvalidateResources(modifiedIDs)
 	app.movieCache.InvalidateResources(modifiedIDs)
+	app.soundEffectCache.InvalidateResources(modifiedIDs)
 	for _, lvl := range app.levels {
 		lvl.InvalidateResources(modifiedIDs)
 	}
@@ -471,6 +478,9 @@ func (app *Application) initView() {
 	audioSetter := media.NewAudioSetterService()
 	movieViewer := media.NewMovieViewerService(app.movieCache, app.mod)
 	movieSetter := media.NewMovieSetterService(app.cp)
+	soundEffectViewer := media.NewSoundViewerService(app.soundEffectCache, app.mod)
+	soundEffectSetter := media.NewSoundSetterService()
+	soundEffectService := undoable.NewSoundEffectService(edit.NewSoundEffectService(soundEffectViewer, soundEffectSetter), app)
 	augmentedTextService := undoable.NewAugmentedTextService(edit.NewAugmentedTextService(textViewer, textSetter, audioViewer, audioSetter), app)
 	movieService := undoable.NewMovieService(edit.NewMovieService(app.cp, movieViewer, movieSetter), app)
 
@@ -485,6 +495,7 @@ func (app *Application) initView() {
 	app.texturesView = textures.NewTexturesView(app.mod, app.textLineCache, app.cp, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.animationsView = animations.NewAnimationsView(app.mod, app.textureCache, app.paletteCache, app.animationCache, &app.modalState, app.GuiScale, app)
 	app.moviesView = movies.NewMoviesView(app.mod, app.frameCache, movieService, &app.modalState, app.GuiScale, app)
+	app.soundEffectsView = sounds.NewSoundEffectsView(soundEffectService, &app.modalState, app.GuiScale)
 	app.objectsView = objects.NewView(app.mod, app.textLineCache, app.cp, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 	app.licensesView = about.NewLicensesView(app.GuiScale)
@@ -554,6 +565,7 @@ func (app *Application) renderMainMenu() {
 			windowEntry("Textures", "", app.texturesView.WindowOpen())
 			windowEntry("Animations", "", app.animationsView.WindowOpen())
 			windowEntry("Movies", "", app.moviesView.WindowOpen())
+			windowEntry("Sound Effects", "", app.soundEffectsView.WindowOpen())
 			windowEntry("Game Objects", "", app.objectsView.WindowOpen())
 			imgui.EndMenu()
 		}

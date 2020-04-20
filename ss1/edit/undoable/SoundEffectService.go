@@ -23,6 +23,31 @@ func NewSoundEffectService(wrapped edit.SoundEffectService, commander cmd.Comman
 	}
 }
 
+// Modified returns true if the identified sound resource is marked as modified.
+func (service SoundEffectService) Modified(key resource.Key) bool {
+	return service.wrapped.Modified(key)
+}
+
+// RequestRemove queues to erase the sound from the resources.
+func (service SoundEffectService) RequestRemove(key resource.Key, restoreFunc func()) {
+	service.requestCommand(
+		func(setter media.SoundEffectBlockSetter) {
+			service.wrapped.Remove(setter, key)
+		},
+		service.wrapped.RestoreFunc(key),
+		restoreFunc)
+}
+
+// RequestClear queues to reset the identified audio resource to a silent one-sample audio.
+func (service SoundEffectService) RequestClear(key resource.Key, restoreFunc func()) {
+	service.requestCommand(
+		func(setter media.SoundEffectBlockSetter) {
+			service.wrapped.Clear(setter, key)
+		},
+		service.wrapped.RestoreFunc(key),
+		restoreFunc)
+}
+
 // Audio returns the audio component of identified sound effect.
 func (service SoundEffectService) Audio(key resource.Key) audio.L8 {
 	return service.wrapped.Audio(key)
@@ -36,6 +61,10 @@ func (service SoundEffectService) RequestSetAudio(key resource.Key, data audio.L
 		},
 		service.wrapped.RestoreFunc(key),
 		restoreFunc)
+}
+
+func (service SoundEffectService) RequestClearAudio() {
+
 }
 
 func (service SoundEffectService) requestCommand(
