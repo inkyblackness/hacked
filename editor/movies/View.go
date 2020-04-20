@@ -107,6 +107,7 @@ func (view *View) renderContent() {
 					view.model.currentKey.Index = 0
 					view.model.currentScene = 0
 					view.model.currentFrame = 0
+					view.model.frameTimeFraction = -1
 				}
 			}
 			imgui.EndCombo()
@@ -144,6 +145,7 @@ func (view *View) renderContent() {
 		if imgui.SelectableV(sceneInfo, view.model.currentScene == index, 0, imgui.Vec2{}) {
 			view.model.currentScene = index
 			view.model.currentFrame = 0
+			view.model.frameTimeFraction = -1
 		}
 	}
 	imgui.EndChild()
@@ -187,7 +189,23 @@ func (view *View) renderContent() {
 						Y: float32(movie.HighResDefaultHeight) * view.guiScale,
 					})
 			}
+
+			imgui.PushItemWidth(-150 * view.guiScale)
 			gui.StepSliderInt("Frame Index", &view.model.currentFrame, 0, len(scene.Frames)-1)
+			imgui.PopItemWidth()
+			if (frame != nil) && (frame.DisplayTime < (time.Second / 4)) {
+				imgui.Separator()
+				if view.model.frameTimeFraction < 0 {
+					view.model.frameTimeFraction = int((frame.DisplayTime * 0x10000) / time.Second)
+				}
+				imgui.PushItemWidth(-150 * view.guiScale)
+				gui.StepSliderInt("Frame time fraction", &view.model.frameTimeFraction, 0, 0x3FFF)
+				imgui.PopItemWidth()
+				if imgui.Button("Set for scene") {
+					displayTime := (time.Duration(view.model.frameTimeFraction) * time.Second) / 0x10000
+					view.requestSetFramesDisplayTime(displayTime)
+				}
+			}
 		}
 	}
 	imgui.EndChild()
@@ -281,6 +299,7 @@ func (view *View) restoreFuncWithScene(oldScene int) func() {
 		view.model.currentSubtitleLang = oldSubtitlesLang
 		view.model.currentScene = oldScene
 		view.model.currentFrame = oldFrame
+		view.model.frameTimeFraction = -1
 	}
 }
 
@@ -592,4 +611,8 @@ func (view *View) requestRemoveScene() {
 	if (view.model.currentScene >= 0) && (view.model.currentScene < len(scenes)) {
 		view.movieService.RequestRemoveScene(view.model.currentKey, view.model.currentScene, view.restoreFunc())
 	}
+}
+
+func (view *View) requestSetFramesDisplayTime(displayTime time.Duration) {
+	view.movieService.RequestSetSceneFramesDisplayTime(view.model.currentKey, view.model.currentScene, displayTime, view.restoreFunc())
 }

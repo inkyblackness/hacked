@@ -1,6 +1,8 @@
 package edit
 
 import (
+	"time"
+
 	"github.com/inkyblackness/hacked/ss1/content/audio"
 	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/content/text"
@@ -99,6 +101,17 @@ func (service MovieService) RemoveScene(setter media.MovieBlockSetter, key resou
 	copy(scenes[0:scene], baseContainer.Video.Scenes[0:scene])
 	copy(scenes[scene:], baseContainer.Video.Scenes[scene+1:])
 	baseContainer.Video.Scenes = scenes
+	service.movieSetter.Set(setter, key, baseContainer)
+}
+
+// SetSceneFramesDisplayTime sets the display time for each frame.
+func (service MovieService) SetSceneFramesDisplayTime(setter media.MovieBlockSetter, key resource.Key,
+	scene int, displayTime time.Duration) {
+	baseContainer := service.getBaseContainer(key)
+	if (scene < 0) || (scene >= len(baseContainer.Video.Scenes)) {
+		return
+	}
+	baseContainer.Video.Scenes[scene] = baseContainer.Video.Scenes[scene].WithFrameDisplayTime(displayTime)
 	service.movieSetter.Set(setter, key, baseContainer)
 }
 

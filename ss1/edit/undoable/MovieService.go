@@ -1,6 +1,8 @@
 package undoable
 
 import (
+	"time"
+
 	"github.com/inkyblackness/hacked/ss1/content/audio"
 	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/edit"
@@ -69,6 +71,17 @@ func (service MovieService) RequestRemoveScene(key resource.Key, scene int, rest
 	service.requestCommand(
 		func(setter media.MovieBlockSetter) {
 			service.wrapped.RemoveScene(setter, key, scene)
+		},
+		service.wrapped.RestoreFunc(key),
+		restoreFunc)
+}
+
+// RequestSetSceneFramesDisplayTime requests to set the display time for each frame.
+func (service MovieService) RequestSetSceneFramesDisplayTime(key resource.Key,
+	scene int, displayTime time.Duration, restoreFunc func()) {
+	service.requestCommand(
+		func(setter media.MovieBlockSetter) {
+			service.wrapped.SetSceneFramesDisplayTime(setter, key, scene, displayTime)
 		},
 		service.wrapped.RestoreFunc(key),
 		restoreFunc)

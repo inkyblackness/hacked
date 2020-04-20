@@ -2,6 +2,7 @@ package movie
 
 import (
 	"context"
+	"time"
 
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/content/movie/internal/compression"
@@ -127,6 +128,17 @@ func HighResSceneFrom(ctx context.Context, scene Scene, width, height int) (High
 	return compressedScene, nil
 }
 
+// WithFrameDisplayTime returns a new scene instance with the given display time set for all frames.
+func (scene HighResScene) WithFrameDisplayTime(displayTime time.Duration) HighResScene {
+	newScene := scene
+	newFrames := make([]HighResFrame, len(scene.frames))
+	for index, frame := range scene.frames {
+		newFrames[index] = frame.WithDisplayTime(displayTime)
+	}
+	newScene.frames = newFrames
+	return newScene
+}
+
 func (scene HighResScene) duration() format.Timestamp {
 	var sum format.Timestamp
 	for _, frame := range scene.frames {
@@ -166,6 +178,13 @@ type HighResFrame struct {
 	bitstream   []byte
 	maskstream  []byte
 	displayTime format.Timestamp
+}
+
+// WithDisplayTime returns a new instance with the given display time set.
+func (frame HighResFrame) WithDisplayTime(displayTime time.Duration) HighResFrame {
+	newFrame := frame
+	newFrame.displayTime = format.TimestampFromDuration(displayTime)
+	return newFrame
 }
 
 func (frame HighResFrame) duration() format.Timestamp {

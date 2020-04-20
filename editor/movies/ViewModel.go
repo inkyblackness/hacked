@@ -13,11 +13,14 @@ type viewModel struct {
 	currentSubtitleLang resource.Language
 	currentScene        int
 	currentFrame        int
+
+	frameTimeFraction int
 }
 
 func freshViewModel() viewModel {
 	return viewModel{
 		currentKey:          resource.KeyOf(ids.MovieIntro, resource.LangDefault, 0),
 		currentSubtitleLang: resource.LangDefault,
+		frameTimeFraction:   -1,
 	}
 }
