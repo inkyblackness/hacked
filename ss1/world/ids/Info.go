@@ -135,6 +135,8 @@ var infoList = []ResourceInfo{
 	{TrapMessageTexts, TrapMessageTexts.Plus(1), resource.Text, true, false, true, 256, CybStrng},
 	{TrapMessagesAudioStart, TrapMessagesAudioStart.Plus(256), resource.Movie, false, false, false, 256, CitBark},
 
+	{SoundEffectsAudioStart, SoundEffectsAudioStart.Plus(114), resource.Sound, false, false, false, 114, DigiFX},
+
 	{WordTexts, WordTexts.Plus(1), resource.Text, true, false, true, 512, CybStrng},
 	{PanelNameTexts, PanelNameTexts.Plus(1), resource.Text, true, false, true, 256, CybStrng},
 	{LogCategoryTexts, LogCategoryTexts.Plus(1), resource.Text, true, false, true, 16, CybStrng},

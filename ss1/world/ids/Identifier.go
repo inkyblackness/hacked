@@ -73,6 +73,8 @@ const (
 // Sounds
 const (
 	TrapMessagesAudioStart resource.ID = 0x0C1C
+
+	SoundEffectsAudioStart resource.ID = 0x00C9
 )
 
 // Archives
