@@ -63,7 +63,19 @@ func (view *View) renderContent() {
 
 	imgui.BeginChildV("SoundEffects", imgui.Vec2{X: -1, Y: -60 * view.guiScale}, true, 0)
 	for i := 0; i < info.MaxCount; i++ {
-		text := fmt.Sprintf("%3d", i) // TODO: add known names
+		effects := ids.SoundEffectsForAudio(i)
+		text := fmt.Sprintf("%3d", i)
+		if len(effects) > 0 {
+			text += " - "
+			for effectIndex, effect := range effects {
+				if effectIndex > 0 {
+					text += ", "
+				}
+				text += effect.Name
+			}
+		} else {
+			text += " (unidentified)"
+		}
 		if imgui.SelectableV(text, view.model.currentKey.Index == i, 0, imgui.Vec2{}) {
 			view.model.currentKey.Index = i
 		}
