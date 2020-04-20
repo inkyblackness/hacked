@@ -245,7 +245,6 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			func(newValue int) {
 				view.requestGameOfLightState(lvl, view.model.selectedTiles.list, newValue)
 			})
-
 	} else {
 		atlas := lvl.TextureAtlas()
 

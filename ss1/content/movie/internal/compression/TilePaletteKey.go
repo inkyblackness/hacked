@@ -25,21 +25,6 @@ func (key *tilePaletteKey) buffer() []byte {
 	return result
 }
 
-func (key *tilePaletteKey) joinedBuffer(source []byte) []byte {
-	result := make([]byte, 0, key.size)
-	var addedColors tilePaletteKey
-	for _, color := range source {
-		addedColors.useColor(color)
-		result = append(result, color)
-	}
-	for color := 0; color < 256; color++ {
-		if key.hasColor(byte(color)) && !addedColors.hasColor(byte(color)) {
-			result = append(result, byte(color))
-		}
-	}
-	return result
-}
-
 func (key *tilePaletteKey) useColor(index byte) {
 	if !key.hasColor(index) {
 		key.usedColors[index/64] |= 1 << uint(index%64)

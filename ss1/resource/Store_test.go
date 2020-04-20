@@ -1,7 +1,6 @@
 package resource_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -11,32 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
-
-type IdentifiedResource struct {
-	id  resource.ID
-	res *resource.Resource
-}
-type ResourceList []IdentifiedResource
-
-func (list ResourceList) IDs() []resource.ID {
-	ids := make([]resource.ID, 0, len(list))
-	for _, entry := range list {
-		ids = append(ids, entry.id)
-	}
-	return ids
-}
-
-func (list ResourceList) Resource(id resource.ID) (res resource.View, err error) {
-	for _, entry := range list {
-		if entry.id.Value() == id.Value() {
-			res = entry.res
-		}
-	}
-	if res == nil {
-		err = fmt.Errorf("unknown id %v", id)
-	}
-	return res, err
-}
 
 type StoreSuite struct {
 	suite.Suite

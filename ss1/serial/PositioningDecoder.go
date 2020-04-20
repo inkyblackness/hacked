@@ -9,14 +9,9 @@ type PositioningDecoder struct {
 	seeker io.Seeker
 }
 
-// NewPositioningDecoder creates a new PositiongingDecoder from given reader.
+// NewPositioningDecoder creates a new PositioningDecoder from given reader.
 func NewPositioningDecoder(source io.ReadSeeker) *PositioningDecoder {
 	return &PositioningDecoder{Decoder: Decoder{source: source, offset: 0}, seeker: source}
-}
-
-// CurPos returns the current decoding position, in bytes.
-func (coder *PositioningDecoder) CurPos() uint32 {
-	return coder.offset
 }
 
 // SetCurPos changes the encoding position to the specified absolute offset.

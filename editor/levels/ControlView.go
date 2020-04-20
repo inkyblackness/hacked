@@ -121,15 +121,13 @@ func (view *ControlView) renderLevelHeight(lvl *level.Level, readOnly bool) {
 	_, _, currentShift := lvl.Size()
 	if readOnly {
 		imgui.LabelText("Level Height", levelHeights[currentShift])
-	} else {
-		if imgui.BeginCombo("Level Height", levelHeights[currentShift]) {
-			for shift, height := range levelHeights {
-				if imgui.SelectableV(height, shift == int(currentShift), 0, imgui.Vec2{}) {
-					view.requestSetZShift(lvl, shift)
-				}
+	} else if imgui.BeginCombo("Level Height", levelHeights[currentShift]) {
+		for shift, height := range levelHeights {
+			if imgui.SelectableV(height, shift == int(currentShift), 0, imgui.Vec2{}) {
+				view.requestSetZShift(lvl, shift)
 			}
-			imgui.EndCombo()
 		}
+		imgui.EndCombo()
 	}
 }
 
@@ -309,15 +307,12 @@ func (view *ControlView) editingAllowed(id int) bool {
 
 func (view *ControlView) renderSliderInt(readOnly bool, label string, selectedValue int,
 	formatter func(int) string, min, max int, changeHandler func(int)) {
-
 	selectedString := formatter(selectedValue)
 	labelValue := fmt.Sprintf(selectedString, selectedValue)
 	if readOnly {
 		imgui.LabelText(label, labelValue)
-	} else {
-		if gui.StepSliderIntV(label, &selectedValue, min, max, selectedString) {
-			changeHandler(selectedValue)
-		}
+	} else if gui.StepSliderIntV(label, &selectedValue, min, max, selectedString) {
+		changeHandler(selectedValue)
 	}
 }
 
@@ -400,7 +395,6 @@ func (view *ControlView) requestSetTextureAnimationType(lvl *level.Level, index 
 }
 
 func (view *ControlView) patchLevelResources(lvl *level.Level, extraRestoreState func()) {
-
 	command := patchLevelDataCommand{
 		restoreState: func(bool) {
 			view.model.restoreFocus = true

@@ -21,7 +21,6 @@ type exportWaitingState struct {
 func (state *exportWaitingState) Render() {
 	if imgui.BeginPopupModalV("Export", nil,
 		imgui.WindowFlagsNoResize|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoSavedSettings|imgui.WindowFlagsAlwaysAutoResize) {
-
 		imgui.Text("Waiting for folder.")
 		if !state.failureTime.IsZero() {
 			imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 0, Z: 0, W: 1})

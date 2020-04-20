@@ -6,8 +6,6 @@ import (
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 )
 
-// TODO: type for byte arrays? -> ss1/resource
-
 // TextBlockGetter provides raw data of blocks.
 type TextBlockGetter interface {
 	ModifiedBlock(lang resource.Language, id resource.ID, index int) []byte

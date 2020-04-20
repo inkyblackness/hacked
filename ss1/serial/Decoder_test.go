@@ -71,7 +71,8 @@ func (suite *DecoderSuite) TestCodeByteSlice() {
 func (suite *DecoderSuite) TestFirstErrorReturnsFirstError() {
 	suite.whenDecodingWithErrors()
 
-	suite.coder.Code(uint32(0))
+	data := uint32(0)
+	suite.coder.Code(&data)
 	suite.errorBuf.errorOnNextCall = true
 	suite.coder.Code(uint16(0))
 

@@ -22,7 +22,6 @@ type importWaitingState struct {
 func (state *importWaitingState) Render() {
 	if imgui.BeginPopupModalV("Import", nil,
 		imgui.WindowFlagsNoResize|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoSavedSettings|imgui.WindowFlagsAlwaysAutoResize) {
-
 		imgui.Text("Waiting for file.")
 		if !state.failureTime.IsZero() {
 			imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 0, Z: 0, W: 1})

@@ -57,7 +57,6 @@ var musicVoodoo = baseTraps.
 	With("MusicFlavour", 6, 1).As(interpreters.RangedValue(0, 4))
 
 func initTraps() interpreterRetriever {
-
 	gameVariableTriggers := newInterpreterLeaf(gameVariableTrigger)
 
 	trigger := newInterpreterEntry(baseTraps)

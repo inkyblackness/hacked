@@ -31,7 +31,6 @@ var extraSurfaces = interpreters.New().
 	With("Index", 1, 1)
 
 func init() {
-
 	software := initSoftware()
 	traps := initTraps()
 	critters := initCritters()

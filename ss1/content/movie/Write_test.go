@@ -6,50 +6,46 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/inkyblackness/hacked/ss1/content/text"
 )
 
 func TestWriteOfEmptyContainerCreatesMinimumSizeData(t *testing.T) {
-	builder := NewContainerBuilder()
-	container := builder.Build()
+	var container Container
 	buffer := bytes.NewBuffer(nil)
 
-	err := Write(buffer, container)
+	err := Write(buffer, container, text.DefaultCodepage())
 	require.Nil(t, err)
 	assert.Equal(t, 0x0800, len(buffer.Bytes()))
 }
 
 func TestWriteCanSaveEmptyContainer(t *testing.T) {
-	builder := NewContainerBuilder()
-	container := builder.Build()
+	var container Container
 	buffer := bytes.NewBuffer(nil)
 
-	err := Write(buffer, container)
+	err := Write(buffer, container, text.DefaultCodepage())
 	require.Nil(t, err)
 
-	result, err := Read(bytes.NewReader(buffer.Bytes()))
+	_, err = Read(bytes.NewReader(buffer.Bytes()), text.DefaultCodepage())
 
 	require.Nil(t, err)
-	require.NotNil(t, result)
-	assert.Equal(t, 0, result.EntryCount())
 }
 
-func TestWriteSavesEntries(t *testing.T) {
+func TestWriteSavesAudio(t *testing.T) {
 	dataBytes := []byte{0x01, 0x02, 0x03}
-	builder := NewContainerBuilder()
-	builder.AudioSampleRate(22050.0)
-	builder.AddEntry(NewMemoryEntry(0.0, Audio, dataBytes))
-	container := builder.Build()
+	var container Container
+	container.Audio.Sound.SampleRate = 22050.0
+	container.Audio.Sound.Samples = dataBytes
 	buffer := bytes.NewBuffer(nil)
 
-	err := Write(buffer, container)
+	err := Write(buffer, container, text.DefaultCodepage())
 	require.Nil(t, err)
 
-	result, err := Read(bytes.NewReader(buffer.Bytes()))
+	result, err := Read(bytes.NewReader(buffer.Bytes()), text.DefaultCodepage())
 
 	require.Nil(t, err)
 	require.NotNil(t, result)
-	assert.Equal(t, 1, result.EntryCount())
-	assert.Equal(t, dataBytes, result.Entry(0).Data())
+	assert.Equal(t, dataBytes, result.Audio.Sound.Samples)
 }
 
 func TestIndexTableSizeFor_ExistingSizes(t *testing.T) {

@@ -17,7 +17,6 @@ const (
 // RenderUnifiedSliderInt renders a control for an unified integer value.
 func RenderUnifiedSliderInt(readOnly, multiple bool, label string, unifier Unifier,
 	intConverter func(Unifier) int, formatter func(int) string, min, max int, changeHandler func(int)) {
-
 	var labelValue string
 	var selectedString string
 	selectedValue := -1
@@ -31,10 +30,8 @@ func RenderUnifiedSliderInt(readOnly, multiple bool, label string, unifier Unifi
 	}
 	if readOnly {
 		imgui.LabelText(label, labelValue)
-	} else {
-		if gui.StepSliderIntV(label, &selectedValue, min, max, selectedString) {
-			changeHandler(selectedValue)
-		}
+	} else if gui.StepSliderIntV(label, &selectedValue, min, max, selectedString) {
+		changeHandler(selectedValue)
 	}
 }
 
@@ -51,17 +48,15 @@ func RenderUnifiedCombo(readOnly, multiple bool, label string, unifier Unifier,
 	}
 	if readOnly {
 		imgui.LabelText(label, selectedString)
-	} else {
-		if imgui.BeginCombo(label, selectedString) {
-			for i := 0; i < count; i++ {
-				entryString := formatter(i)
+	} else if imgui.BeginCombo(label, selectedString) {
+		for i := 0; i < count; i++ {
+			entryString := formatter(i)
 
-				if imgui.SelectableV(entryString, i == selectedIndex, 0, imgui.Vec2{}) {
-					changeHandler(i)
-				}
+			if imgui.SelectableV(entryString, i == selectedIndex, 0, imgui.Vec2{}) {
+				changeHandler(i)
 			}
-			imgui.EndCombo()
 		}
+		imgui.EndCombo()
 	}
 }
 
@@ -80,14 +75,12 @@ func RenderUnifiedCheckboxCombo(readOnly, multiple bool, label string, unifier U
 	}
 	if readOnly {
 		imgui.LabelText(label, selectedString)
-	} else {
-		if imgui.BeginCombo(label, selectedString) {
-			for i, text := range []string{hintNo, hintYes} {
-				if imgui.SelectableV(text, text == selectedString, 0, imgui.Vec2{}) {
-					changeHandler(i != 0)
-				}
+	} else if imgui.BeginCombo(label, selectedString) {
+		for i, text := range []string{hintNo, hintYes} {
+			if imgui.SelectableV(text, text == selectedString, 0, imgui.Vec2{}) {
+				changeHandler(i != 0)
 			}
-			imgui.EndCombo()
 		}
+		imgui.EndCombo()
 	}
 }

@@ -85,7 +85,6 @@ var cyberBarricade = baseItem.
 	With("Color", 6, 1)
 
 func initSmallStuff() interpreterRetriever {
-
 	junk := newInterpreterEntry(baseItem)
 	junk.set(2, newInterpreterLeaf(paperItem))
 	junk.set(7, newInterpreterLeaf(briefcaseItem))

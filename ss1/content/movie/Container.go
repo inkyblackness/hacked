@@ -1,26 +1,20 @@
 package movie
 
-import (
-	"github.com/inkyblackness/hacked/ss1/content/bitmap"
-)
+import "github.com/inkyblackness/hacked/ss1/content/movie/internal/format"
 
 // Container wraps the information and data of a MOVI container.
-type Container interface {
-	// MediaDuration returns the duration of the media in seconds.
-	MediaDuration() float32
+type Container struct {
+	Audio     Audio
+	Video     Video
+	Subtitles Subtitles
+}
 
-	// VideoWidth returns the width of a video in pixel.
-	VideoWidth() uint16
-	// VideoHeight returns the height of a video in pixel.
-	VideoHeight() uint16
-	// StartPalette returns the initial palette of a video.
-	StartPalette() bitmap.Palette
-
-	// AudioSampleRate returns the sample frequency used for audio entries.
-	AudioSampleRate() uint16
-
-	// EntryCount returns the number of available entries.
-	EntryCount() int
-	// Entry returns the entry for given index.
-	Entry(index int) Entry
+func (container Container) duration() format.Timestamp {
+	var max format.Timestamp
+	for _, ts := range []format.Timestamp{container.Audio.duration(), container.Video.duration(), container.Subtitles.duration()} {
+		if max.IsBefore(ts) {
+			max = ts
+		}
+	}
+	return max
 }

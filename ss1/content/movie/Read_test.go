@@ -8,10 +8,11 @@ import (
 
 	"github.com/inkyblackness/hacked/ss1/content/movie"
 	"github.com/inkyblackness/hacked/ss1/content/movie/internal/format"
+	"github.com/inkyblackness/hacked/ss1/content/text"
 )
 
 func TestReadReturnsErrorOnNil(t *testing.T) {
-	_, err := movie.Read(nil)
+	_, err := movie.Read(nil, text.DefaultCodepage())
 
 	assert.Errorf(t, err, "source is nil")
 }
@@ -21,7 +22,7 @@ func TestReadReturnsContainerOnEmptyFile(t *testing.T) {
 	buffer.Write(make([]byte, 0x100+0x300-len(format.Tag)))
 	emptyFile := buffer.Bytes()
 	source := bytes.NewReader(emptyFile)
-	container, _ := movie.Read(source)
+	container, _ := movie.Read(source, text.DefaultCodepage())
 
 	assert.NotNil(t, container)
 }
@@ -29,7 +30,7 @@ func TestReadReturnsContainerOnEmptyFile(t *testing.T) {
 func TestReadReturnsErrorOnMissingTag(t *testing.T) {
 	emptyFile := make([]byte, 0x100+0x300)
 	source := bytes.NewReader(emptyFile)
-	_, err := movie.Read(source)
+	_, err := movie.Read(source, text.DefaultCodepage())
 
 	assert.Errorf(t, err, "Not a MOVI format")
 }
@@ -50,15 +51,14 @@ func TestReadReturnsContainerWithBasicPropertiesSet(t *testing.T) {
 	emptyFile[0x27] = 0x56
 
 	source := bytes.NewReader(emptyFile)
-	container, _ := movie.Read(source)
+	container, _ := movie.Read(source, text.DefaultCodepage())
 
-	assert.Equal(t, uint16(640), container.VideoWidth())
-	assert.Equal(t, uint16(480), container.VideoHeight())
-	assert.Equal(t, uint16(22050), container.AudioSampleRate())
-	assert.Equal(t, 0, container.EntryCount())
+	assert.Equal(t, uint16(640), container.Video.Width)
+	assert.Equal(t, uint16(480), container.Video.Height)
+	assert.Equal(t, uint16(22050), uint16(container.Audio.Sound.SampleRate))
 }
 
-func TestReadReturnsContainerWithDataEntriesExceptTerminator(t *testing.T) {
+func TestReadReturnsContainerWithAudioData(t *testing.T) {
 	testData := []byte{0x01, 0x02, 0x03, 0x04, 0x05}
 	buffer := bytes.NewBufferString(format.Tag)
 	buffer.Write(make([]byte, 0x100+0x300-len(format.Tag)))
@@ -81,9 +81,7 @@ func TestReadReturnsContainerWithDataEntriesExceptTerminator(t *testing.T) {
 	raw[0x0408+5] = 0x10
 
 	source := bytes.NewReader(raw)
-	container, _ := movie.Read(source)
+	container, _ := movie.Read(source, text.DefaultCodepage())
 
-	assert.Equal(t, 1, container.EntryCount())
-	assert.Equal(t, movie.Audio, container.Entry(0).Type())
-	assert.Equal(t, testData, container.Entry(0).Data())
+	assert.Equal(t, testData, container.Audio.Sound.Samples)
 }

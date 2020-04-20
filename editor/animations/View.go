@@ -119,13 +119,11 @@ func (view *View) renderContent() {
 	imgui.SameLine()
 
 	if imgui.BeginChildV("Frames", imgui.Vec2{X: -1, Y: 0}, false, 0) {
-
 		anim, hasAnim, _ := view.currentAnimation()
 
 		if hasAnim {
 			frameKey := resource.KeyOf(anim.ResourceID, resource.LangAny, view.model.currentFrame)
 			if view.cacheFrame(frameKey) {
-
 				render.TextureImage("Frame", view.imageCache, frameKey,
 					imgui.Vec2{X: float32(anim.Width) * view.guiScale, Y: float32(anim.Height) * view.guiScale})
 				if imgui.Button("Export") {

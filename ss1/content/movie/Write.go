@@ -4,41 +4,74 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
+	"sort"
 
 	"github.com/inkyblackness/hacked/ss1/content/movie/internal/format"
+	"github.com/inkyblackness/hacked/ss1/content/text"
 )
 
 const indexHeaderSizeIncrement = 0x0400
 
 // Write encodes the provided container into the given writer.
-func Write(dest io.Writer, container Container) error {
+func Write(dest io.Writer, container Container, cp text.Codepage) error {
 	var indexEntries []format.IndexTableEntry
 	var header format.Header
 	palette := paletteDataFromContainer(container)
 
 	// setup header
 	copy(header.Tag[:], bytes.NewBufferString(format.Tag).Bytes())
-	header.DurationSeconds, header.DurationFraction = timeToRaw(container.MediaDuration())
-	header.VideoWidth = container.VideoWidth()
-	header.VideoHeight = container.VideoHeight()
-	header.SampleRate = container.AudioSampleRate()
+	endTimestamp := container.duration()
+	header.Duration.Number = int16(endTimestamp.Second)
+	header.Duration.Fraction = endTimestamp.Fraction
+	header.VideoWidth = container.Video.Width
+	header.VideoHeight = container.Video.Height
 
 	if header.VideoWidth != 0 {
-		header.Unknown001C = 0x0008
-		header.Unknown001E = 0x0001
+		header.VideoBitsPerPixel = 8
+		header.VideoPalettePresent = 1
+		header.VideoFrameRate = format.FixFromFloat(12.5) // take a good guess on what a typical framerate would be.
 	}
-	header.Unknown0020 = 0x0001
-	header.Unknown0022 = 0x00000001
+	if !container.Audio.Sound.Empty() {
+		header.AudioChannelCount = 1
+		header.AudioBytesPerSample = 1
+		header.AudioSampleRate = format.FixFromFloat(container.Audio.Sound.SampleRate)
+	}
+
+	var buckets []format.EntryBucket
+	buckets = append(buckets, container.Audio.encode()...)
+	buckets = append(buckets, container.Video.encode()...)
+	subtitleBucketsList := container.Subtitles.encode(cp)
+	for _, subtitleBuckets := range subtitleBucketsList {
+		buckets = append(buckets, subtitleBuckets...)
+	}
+	sort.Slice(buckets, func(a, b int) bool {
+		bucketA := buckets[a]
+		bucketB := buckets[b]
+		if bucketA.Timestamp.IsBefore(bucketB.Timestamp) {
+			return true
+		}
+		if bucketB.Timestamp.IsBefore(bucketA.Timestamp) {
+			return false
+		}
+		return bucketA.Priority < bucketB.Priority
+	})
 
 	// create index
-	for i := 0; i < container.EntryCount(); i++ {
-		dataEntry := container.Entry(i)
-		indexEntry := format.IndexTableEntry{
-			Type:       byte(dataEntry.Type()),
-			DataOffset: header.ContentSize}
+	var entries []format.Entry
+	for _, bucket := range buckets {
+		entries = append(entries, bucket.Entries...)
+	}
+	moveSubtitlesAfterSceneChange(entries)
 
-		header.ContentSize += int32(len(dataEntry.Data()))
-		indexEntry.TimestampSecond, indexEntry.TimestampFraction = timeToRaw(dataEntry.Timestamp())
+	for _, dataEntry := range entries {
+		indexEntry := format.IndexTableEntry{
+			Type:              byte(dataEntry.Data.Type()),
+			DataOffset:        header.ContentSize,
+			TimestampSecond:   dataEntry.Timestamp.Second,
+			TimestampFraction: dataEntry.Timestamp.Fraction,
+		}
+
+		header.ContentSize += int32(len(dataEntry.Data.Bytes()))
 		indexEntries = append(indexEntries, indexEntry)
 	}
 	// calculate size fields
@@ -50,9 +83,9 @@ func Write(dest io.Writer, container Container) error {
 
 	// determine end
 	lastEntry := format.IndexTableEntry{
-		TimestampSecond:   header.DurationSeconds,
-		TimestampFraction: header.DurationFraction,
-		Type:              byte(endOfMedia),
+		TimestampSecond:   byte(header.Duration.Number),
+		TimestampFraction: header.Duration.Fraction,
+		Type:              byte(format.DataTypeEndOfMedia),
 		DataOffset:        dataStartOffset + header.ContentSize}
 	indexEntries = append(indexEntries, lastEntry)
 	header.IndexEntryCount = int32(len(indexEntries))
@@ -74,9 +107,8 @@ func Write(dest io.Writer, container Container) error {
 	if err != nil {
 		return err
 	}
-	for i := 0; i < container.EntryCount(); i++ {
-		dataEntry := container.Entry(i)
-		_, err = dest.Write(dataEntry.Data())
+	for _, dataEntry := range entries {
+		_, err = dest.Write(dataEntry.Data.Bytes())
 		if err != nil {
 			return err
 		}
@@ -84,8 +116,29 @@ func Write(dest io.Writer, container Container) error {
 	return nil
 }
 
+func moveSubtitlesAfterSceneChange(entries []format.Entry) {
+	nextSceneChangeIndex := -1
+	var nextSceneChangeTimestamp format.Timestamp
+	delta := format.TimestampFromSeconds(0.5)
+	for i := len(entries) - 1; i >= 0; i-- {
+		entry := entries[i]
+
+		switch entry.Data.Type() {
+		case format.DataTypePalette:
+			nextSceneChangeIndex = i
+			nextSceneChangeTimestamp = entry.Timestamp
+		case format.DataTypeSubtitle:
+			if (nextSceneChangeIndex > 0) && nextSceneChangeTimestamp.IsBefore(entry.Timestamp.Plus(delta)) {
+				copy(entries[i:nextSceneChangeIndex], entries[i+1:nextSceneChangeIndex+1])
+				entries[nextSceneChangeIndex] = entry
+				nextSceneChangeIndex--
+			}
+		}
+	}
+}
+
 func paletteDataFromContainer(container Container) []byte {
-	palette := container.StartPalette()
+	palette := container.Video.StartPalette()
 	buf := bytes.NewBuffer(nil)
 	_ = binary.Write(buf, binary.LittleEndian, &palette)
 	return buf.Bytes()

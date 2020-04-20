@@ -6,22 +6,42 @@ import (
 	"io/ioutil"
 
 	"github.com/inkyblackness/hacked/ss1/content/audio"
+	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
+const sizeLimit = 0xFFFFFF
+
 // Cache retrieves movie container from a localizer and keeps them decoded until they are invalidated.
 type Cache struct {
+	cp text.Codepage
+
 	localizer resource.Localizer
 
-	movies map[resource.Key]Container
+	movies map[resource.Key]*cachedMovie
+}
+
+type cachedMovie struct {
+	sizeWarning bool
+	container   Container
+	scenes      []Scene
+}
+
+func (cached *cachedMovie) video() []Scene {
+	if len(cached.scenes) > 0 {
+		return cached.scenes
+	}
+	cached.scenes, _ = cached.container.Video.Decompress()
+	return cached.scenes
 }
 
 // NewCache returns a new instance.
-func NewCache(localizer resource.Localizer) *Cache {
+func NewCache(cp text.Codepage, localizer resource.Localizer) *Cache {
 	cache := &Cache{
+		cp:        cp,
 		localizer: localizer,
 
-		movies: make(map[resource.Key]Container),
+		movies: make(map[resource.Key]*cachedMovie),
 	}
 	return cache
 }
@@ -37,8 +57,7 @@ func (cache *Cache) InvalidateResources(ids []resource.ID) {
 	}
 }
 
-// Movie retrieves and caches the message of given key.
-func (cache *Cache) Movie(key resource.Key) (Container, error) {
+func (cache *Cache) cached(key resource.Key) (*cachedMovie, error) {
 	value, existing := cache.movies[key]
 	if existing {
 		return value, nil
@@ -59,29 +78,56 @@ func (cache *Cache) Movie(key resource.Key) (Container, error) {
 	if err != nil {
 		return nil, err
 	}
-	value, err = Read(bytes.NewReader(data))
+	container, err := Read(bytes.NewReader(data), cache.cp)
 	if err != nil {
 		return nil, err
 	}
-	cache.movies[key] = value
-	return value, nil
+	cached := &cachedMovie{
+		sizeWarning: len(data) > sizeLimit,
+		container:   container,
+	}
+	cache.movies[key] = cached
+	return cached, nil
+}
+
+// SizeWarning returns true if the given movie is cached and is larger than the underlying archive would support.
+func (cache *Cache) SizeWarning(key resource.Key) bool {
+	cached, existing := cache.movies[key]
+	return existing && cached.sizeWarning
+}
+
+// Container retrieves and caches the underlying movie, and returns the complete container.
+func (cache *Cache) Container(key resource.Key) (Container, error) {
+	cached, err := cache.cached(key)
+	if err != nil {
+		return Container{}, err
+	}
+	return cached.container, nil
 }
 
 // Audio retrieves and caches the underlying movie, and returns the audio only.
 func (cache *Cache) Audio(key resource.Key) (sound audio.L8, err error) {
-	container, err := cache.Movie(key)
+	cached, err := cache.cached(key)
 	if err != nil {
 		return
 	}
-	var samples []byte
-	for index := 0; index < container.EntryCount(); index++ {
-		entry := container.Entry(index)
-		if entry.Type() == Audio {
-			samples = append(samples, entry.Data()...)
-		}
+	return cached.container.Audio.Sound, nil
+}
+
+// Video retrieves and caches the underlying movie, and returns the complete list of decoded scenes.
+func (cache *Cache) Video(key resource.Key) ([]Scene, error) {
+	cached, err := cache.cached(key)
+	if err != nil {
+		return nil, err
 	}
-	return audio.L8{
-		Samples:    samples,
-		SampleRate: float32(container.AudioSampleRate()),
-	}, nil
+	return cached.video(), nil
+}
+
+// Subtitles retrieves and caches the underlying movie, and returns the subtitles for given language.
+func (cache *Cache) Subtitles(key resource.Key, language resource.Language) (SubtitleList, error) {
+	cached, err := cache.cached(key)
+	if err != nil {
+		return SubtitleList{}, err
+	}
+	return cached.container.Subtitles.PerLanguage[language], nil
 }

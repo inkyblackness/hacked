@@ -103,7 +103,7 @@ func NewBackgroundGrid(context *render.Context) *BackgroundGrid {
 		projectionMatrixUniform: opengl.Matrix4Uniform(gl.GetUniformLocation(program, "projectionMatrix"))}
 
 	{
-		tilesPerMapSide := float32(64.0) // TODO
+		tilesPerMapSide := float32(64.0)
 
 		gl.BindBuffer(opengl.ARRAY_BUFFER, grid.vertexPositionBuffer)
 		half := fineCoordinatesPerTileSide / float32(2.0)

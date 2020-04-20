@@ -13,8 +13,10 @@ import (
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/levels"
 	"github.com/inkyblackness/hacked/editor/messages"
+	"github.com/inkyblackness/hacked/editor/movies"
 	"github.com/inkyblackness/hacked/editor/objects"
 	"github.com/inkyblackness/hacked/editor/project"
+	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/texts"
 	"github.com/inkyblackness/hacked/editor/textures"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
@@ -67,6 +69,7 @@ type Application struct {
 	messagesCache  *text.ElectronicMessageCache
 	paletteCache   *graphics.PaletteCache
 	textureCache   *graphics.TextureCache
+	frameCache     *graphics.FrameCache
 	animationCache *bitmap.AnimationCache
 	movieCache     *movie.Cache
 
@@ -84,6 +87,7 @@ type Application struct {
 	bitmapsView      *bitmaps.View
 	texturesView     *textures.View
 	animationsView   *animations.View
+	moviesView       *movies.View
 	objectsView      *objects.View
 	aboutView        *about.View
 	licensesView     *about.LicensesView
@@ -161,6 +165,7 @@ func (app *Application) render() {
 	app.bitmapsView.Render()
 	app.texturesView.Render()
 	app.animationsView.Render()
+	app.moviesView.Render()
 	app.objectsView.Render()
 
 	paletteTexture, _ := app.paletteCache.Palette(0)
@@ -209,21 +214,28 @@ func (app *Application) gameTexture(index int) (*graphics.BitmapTexture, error) 
 }
 
 func (app *Application) bitmapTextureForUI(textureID imgui.TextureID) (palette uint32, texture uint32) {
-	paletteTexture, _ := app.paletteCache.Palette(0)
-	if paletteTexture == nil {
-		return 0, 0
-	}
+	idType := byte(textureID >> 48)
+	switch idType {
+	case render.BitmapTextureTypeResource:
+		paletteTexture, _ := app.paletteCache.Palette(0)
+		if paletteTexture == nil {
+			return 0, 0
+		}
 
-	lang := resource.Language((textureID >> 32) & 0xFF)
-	resourceID := resource.ID((textureID >> 16) & 0xFFFF)
-	blockIndex := int(textureID & 0xFFFF)
-	key := resource.KeyOf(resourceID, lang, blockIndex)
-	tex, err := app.textureCache.Texture(key)
-	if err != nil {
-		return 0, 0
+		lang := resource.Language((textureID >> 32) & 0xFF)
+		resourceID := resource.ID((textureID >> 16) & 0xFFFF)
+		blockIndex := int(textureID & 0xFFFF)
+		key := resource.KeyOf(resourceID, lang, blockIndex)
+		tex, err := app.textureCache.Texture(key)
+		if err != nil {
+			return 0, 0
+		}
+		return paletteTexture.Handle(), tex.Handle()
+	case render.BitmapTextureTypeFrame:
+		key := graphics.FrameCacheKey(textureID & 0xFFFF)
+		return app.frameCache.HandlesForKey(key)
 	}
-
-	return paletteTexture.Handle(), tex.Handle()
+	return 0, 0
 }
 
 func (app *Application) onWindowClosing() {
@@ -422,7 +434,7 @@ func (app *Application) initModel() {
 	app.textLineCache = text.NewLineCache(app.cp, app.mod)
 	app.textPageCache = text.NewPageCache(app.cp, app.mod)
 	app.messagesCache = text.NewElectronicMessageCache(app.cp, app.mod)
-	app.movieCache = movie.NewCache(app.mod)
+	app.movieCache = movie.NewCache(app.cp, app.mod)
 
 	for i := 0; i < archive.MaxLevels; i++ {
 		app.levels[i] = level.NewLevel(ids.LevelResourcesStart, i, app.mod)
@@ -430,6 +442,7 @@ func (app *Application) initModel() {
 
 	app.paletteCache = graphics.NewPaletteCache(app.gl, app.mod)
 	app.textureCache = graphics.NewTextureCache(app.gl, app.mod)
+	app.frameCache = graphics.NewFrameCache(app.gl)
 	app.animationCache = bitmap.NewAnimationCache(app.mod)
 }
 
@@ -456,7 +469,10 @@ func (app *Application) initView() {
 	textSetter := media.NewTextSetterService(app.cp)
 	audioViewer := media.NewAudioViewerService(app.movieCache, app.mod)
 	audioSetter := media.NewAudioSetterService()
+	movieViewer := media.NewMovieViewerService(app.movieCache, app.mod)
+	movieSetter := media.NewMovieSetterService(app.cp)
 	augmentedTextService := undoable.NewAugmentedTextService(edit.NewAugmentedTextService(textViewer, textSetter, audioViewer, audioSetter), app)
+	movieService := undoable.NewMovieService(edit.NewMovieService(app.cp, movieViewer, movieSetter), app)
 
 	app.projectView = project.NewView(app.mod, &app.modalState, app.GuiScale, app)
 	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)
@@ -468,6 +484,7 @@ func (app *Application) initView() {
 	app.bitmapsView = bitmaps.NewBitmapsView(app.mod, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.texturesView = textures.NewTexturesView(app.mod, app.textLineCache, app.cp, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.animationsView = animations.NewAnimationsView(app.mod, app.textureCache, app.paletteCache, app.animationCache, &app.modalState, app.GuiScale, app)
+	app.moviesView = movies.NewMoviesView(app.mod, app.frameCache, movieService, &app.modalState, app.GuiScale, app)
 	app.objectsView = objects.NewView(app.mod, app.textLineCache, app.cp, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 	app.licensesView = about.NewLicensesView(app.GuiScale)
@@ -536,6 +553,7 @@ func (app *Application) renderMainMenu() {
 			windowEntry("Bitmaps", "", app.bitmapsView.WindowOpen())
 			windowEntry("Textures", "", app.texturesView.WindowOpen())
 			windowEntry("Animations", "", app.animationsView.WindowOpen())
+			windowEntry("Movies", "", app.moviesView.WindowOpen())
 			windowEntry("Game Objects", "", app.objectsView.WindowOpen())
 			imgui.EndMenu()
 		}

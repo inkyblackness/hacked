@@ -18,11 +18,6 @@ func NewPositioningEncoder(target io.WriteSeeker) *PositioningEncoder {
 	return &PositioningEncoder{Encoder: Encoder{target: target}, seeker: target}
 }
 
-// CurPos returns the current encoding position, in bytes.
-func (coder *PositioningEncoder) CurPos() uint32 {
-	return coder.offset
-}
-
 // SetCurPos changes the encoding position to the specified absolute offset.
 func (coder *PositioningEncoder) SetCurPos(offset uint32) {
 	if coder.firstError != nil {

@@ -1,6 +1,7 @@
 package compression
 
 import (
+	"context"
 	"errors"
 	"fmt"
 )
@@ -76,10 +77,14 @@ func (e *SceneEncoder) deltaTile(isFirstFrame bool, offset int, frame []byte) ti
 }
 
 // Encode processes all the previously registered frames and creates the necessary components for decoding.
-func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookupBuffer []byte, frames []EncodedFrame, err error) {
+func (e *SceneEncoder) Encode(ctx context.Context) (
+	words []ControlWord, paletteLookupBuffer []byte, frames []EncodedFrame, err error) {
 	var wordSequencer ControlWordSequencer
 	tileColorOpsPerFrame := make([][]TileColorOp, len(e.deltas))
-	paletteLookup := e.createPaletteLookup()
+	paletteLookup, err := e.createPaletteLookup(ctx)
+	if err != nil {
+		return
+	}
 
 	paletteLookupBuffer = paletteLookup.Buffer()
 	if len(paletteLookupBuffer) > 0x1FFFF {
@@ -166,12 +171,12 @@ func (e *SceneEncoder) Encode() (words []ControlWord, paletteLookupBuffer []byte
 	return
 }
 
-func (e *SceneEncoder) createPaletteLookup() PaletteLookup {
+func (e *SceneEncoder) createPaletteLookup(ctx context.Context) (PaletteLookup, error) {
 	var paletteLookupGenerator PaletteLookupGenerator
 	for _, delta := range e.deltas {
 		for _, tile := range delta.tiles {
 			paletteLookupGenerator.Add(tile)
 		}
 	}
-	return paletteLookupGenerator.Generate()
+	return paletteLookupGenerator.Generate(ctx)
 }

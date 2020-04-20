@@ -304,7 +304,6 @@ func (display *MapDisplay) renderPositionOverlay(lvl *level.Level) {
 	imgui.SetNextWindowBgAlpha(0.3)
 	if imgui.BeginV("Position", nil, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoResize|imgui.WindowFlagsAlwaysAutoResize|
 		imgui.WindowFlagsNoSavedSettings|imgui.WindowFlagsNoFocusOnAppearing|imgui.WindowFlagsNoNav) {
-
 		typeString := "---"
 		hasPos := false
 		var pos MapPosition
@@ -375,7 +374,6 @@ func (display *MapDisplay) renderPositionOverlay(lvl *level.Level) {
 		}
 		imgui.End()
 	}
-
 }
 
 // WindowResized must be called to notify of a change in window geometry.

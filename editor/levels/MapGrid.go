@@ -172,7 +172,7 @@ func (grid *MapGrid) Render(mapper TileMapper) {
 		grid.projectionMatrixUniform.Set(gl, &grid.context.ProjectionMatrix)
 		gl.BindBuffer(opengl.ARRAY_BUFFER, grid.vertexPositionBuffer)
 
-		// TODO: consider this table per height shift of the level
+		// This table does not consider height shift of the level.
 		heightFactor := [32*2 + 1]float32{
 			0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
 			0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
