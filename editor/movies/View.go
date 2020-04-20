@@ -173,8 +173,11 @@ func (view *View) renderContent() {
 			scene = &scenes[view.model.currentScene]
 		}
 		if scene != nil {
+			var frame *movie.Frame
 			if (view.model.currentFrame >= 0) && (view.model.currentFrame < len(scene.Frames)) {
-				frame := scene.Frames[view.model.currentFrame]
+				frame = &scene.Frames[view.model.currentFrame]
+			}
+			if frame != nil {
 				// TODO: only update if something changed
 				view.frameCache.SetTexture(view.frameCacheKey, 600, 300, frame.Pixels, &scene.Palette)
 
@@ -538,7 +541,7 @@ func (view *View) requestExportScene() {
 			frameImg.Pix = frame.Pixels
 			frameImg.Stride = data.Config.Width
 			data.Image = append(data.Image, frameImg)
-			data.Delay = append(data.Delay, int(frame.DisplayTime/time.Millisecond/10))
+			data.Delay = append(data.Delay, int(((frame.DisplayTime/time.Millisecond)+5)/10))
 		}
 
 		err = gif.EncodeAll(writer, &data)
