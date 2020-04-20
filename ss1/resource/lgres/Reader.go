@@ -18,6 +18,7 @@ import (
 type Reader struct {
 	source              io.ReaderAt
 	firstResourceOffset uint32
+	directoryOffset     uint32
 	directory           []resourceDirectoryEntry
 
 	cache map[uint16]resource.View
@@ -48,6 +49,7 @@ func ReaderFrom(source io.ReaderAt) (reader *Reader, err error) {
 	reader = &Reader{
 		source:              source,
 		firstResourceOffset: firstResourceOffset,
+		directoryOffset:     dirOffset,
 		directory:           directory,
 		cache:               make(map[uint16]resource.View)}
 
@@ -218,7 +220,17 @@ func (reader *Reader) newSingleBlockResourceReader(entry *resourceDirectoryEntry
 			return nil, fmt.Errorf("block index wrong: %v/%v", index, 1)
 		}
 		resourceSize := entry.packedLength()
-		var resourceSource io.Reader = io.NewSectionReader(reader.source, int64(resourceStartOffset), int64(entry.packedLength()))
+		// The following check is a hack to re-create the behaviour of the engine.
+		// While in truth the resource should only cover what its entry needs, Movie resources
+		// can get larger than the 24bit size-field would allow (16MiB).
+		// Interestingly, the engine does not limit this and simply reads beyond the limit.
+		// In order to support such "broken" files, the behaviour is re-created here. This is mainly to
+		// still allow creating such files and also give the editor a chance to work (and display such a case)
+		// without completely having to rework the whole architecture here.
+		if (resource.ContentType(entry.contentType()) == resource.Movie) && (resourceStartOffset < reader.directoryOffset) {
+			resourceSize = reader.directoryOffset - resourceStartOffset
+		}
+		var resourceSource io.Reader = io.NewSectionReader(reader.source, int64(resourceStartOffset), int64(resourceSize))
 		if compressed {
 			resourceSize = entry.unpackedLength()
 			resourceSource = compression.NewDecompressor(resourceSource)

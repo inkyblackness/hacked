@@ -24,6 +24,11 @@ func NewMovieService(wrapped edit.MovieService, commander cmd.Commander) MovieSe
 	}
 }
 
+// SizeWarning returns true if the given movie is larger than the underlying archive would support.
+func (service MovieService) SizeWarning(key resource.Key) bool {
+	return service.wrapped.SizeWarning(key)
+}
+
 // Video returns the video component of identified movie.
 func (service MovieService) Video(key resource.Key) []movie.Scene {
 	return service.wrapped.Video(key)

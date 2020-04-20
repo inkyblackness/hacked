@@ -196,6 +196,10 @@ func (view *View) renderContent() {
 func (view *View) renderProperties() {
 	view.renderAudioProperties()
 	view.renderSubtitlesProperties()
+
+	if view.movieService.SizeWarning(view.model.currentKey) {
+		view.renderSizeWarning()
+	}
 }
 
 func (view *View) renderAudioProperties() {
@@ -247,6 +251,19 @@ func (view *View) renderSubtitlesProperties() {
 		}
 	}
 	imgui.PopID()
+}
+
+func (view *View) renderSizeWarning() {
+	imgui.Separator()
+	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 0, Z: 0, W: 1})
+	imgui.Text("Size warning - reduce content!")
+	imgui.PopStyleColor()
+	if imgui.IsItemHovered() {
+		imgui.BeginTooltip()
+		imgui.SetTooltip("The movie has reached a size larger than officially supported.\n" +
+			"While the game might still show the movie, a future update may stop supporting it.")
+		imgui.EndTooltip()
+	}
 }
 
 func (view *View) restoreFunc() func() {

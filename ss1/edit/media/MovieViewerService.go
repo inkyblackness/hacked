@@ -30,6 +30,11 @@ func (service MovieViewerService) Modified(key resource.Key) bool {
 	return len(service.getter.ModifiedBlock(key.Lang, key.ID, key.Index)) > 0
 }
 
+// SizeWarning returns true if the given movie is larger than the underlying archive would support.
+func (service MovieViewerService) SizeWarning(key resource.Key) bool {
+	return service.movieCache.SizeWarning(key)
+}
+
 // Container returns the base container of the movie.
 func (service MovieViewerService) Container(key resource.Key) (movie.Container, error) {
 	return service.movieCache.Container(key)

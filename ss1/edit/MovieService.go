@@ -46,6 +46,11 @@ func (service MovieService) Remove(setter media.MovieBlockSetter, key resource.K
 	service.movieSetter.Remove(setter, key)
 }
 
+// SizeWarning returns true if the given movie is larger than the underlying archive would support.
+func (service MovieService) SizeWarning(key resource.Key) bool {
+	return service.movieViewer.SizeWarning(key)
+}
+
 // Video returns the video component of identified movie.
 func (service MovieService) Video(key resource.Key) []movie.Scene {
 	return service.movieViewer.Video(key)

@@ -10,6 +10,8 @@ import (
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
+const sizeLimit = 0xFFFFFF
+
 // Cache retrieves movie container from a localizer and keeps them decoded until they are invalidated.
 type Cache struct {
 	cp text.Codepage
@@ -20,8 +22,9 @@ type Cache struct {
 }
 
 type cachedMovie struct {
-	container Container
-	scenes    []Scene
+	sizeWarning bool
+	container   Container
+	scenes      []Scene
 }
 
 func (cached *cachedMovie) video() []Scene {
@@ -80,10 +83,17 @@ func (cache *Cache) cached(key resource.Key) (*cachedMovie, error) {
 		return nil, err
 	}
 	cached := &cachedMovie{
-		container: container,
+		sizeWarning: len(data) > sizeLimit,
+		container:   container,
 	}
 	cache.movies[key] = cached
 	return cached, nil
+}
+
+// SizeWarning returns true if the given movie is cached and is larger than the underlying archive would support.
+func (cache *Cache) SizeWarning(key resource.Key) bool {
+	cached, existing := cache.movies[key]
+	return existing && cached.sizeWarning
 }
 
 // Container retrieves and caches the underlying movie, and returns the complete container.
