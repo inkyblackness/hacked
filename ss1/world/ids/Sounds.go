@@ -183,4 +183,15 @@ var soundEffects = []SoundEffectInfo{
 
 	// Plot
 	{Name: "GroveJett", AudioIndex: 66},
+
+	// Extra
+	{Name: "PanelConfirm", AudioIndex: 13},
+	{Name: "Death12", AudioIndex: 104},
+	{Name: "Death13", AudioIndex: 105},
+	{Name: "Death14", AudioIndex: 108},
+	{Name: "Attack10", AudioIndex: 91},
+	{Name: "Attack11", AudioIndex: 110},
+	{Name: "Near5", AudioIndex: 111},
+	{Name: "Death15", AudioIndex: 112},
+	{Name: "FunPackAttackingUs", AudioIndex: 113},
 }
