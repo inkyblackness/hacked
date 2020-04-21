@@ -169,18 +169,18 @@ func (view *View) renderContent() {
 			}
 			imgui.EndCombo()
 		}
-		view.renderText(readOnly, "Title", message.Title, func(newValue string) {
+		view.renderText(false, "Title", message.Title, func(newValue string) {
 			view.requestTextChange(func(msg *text.ElectronicMessage) { msg.Title = text.Blocked(newValue)[0] })
 		})
-		view.renderText(readOnly, "Sender", message.Sender, func(newValue string) {
+		view.renderText(false, "Sender", message.Sender, func(newValue string) {
 			view.requestTextChange(func(msg *text.ElectronicMessage) { msg.Sender = text.Blocked(newValue)[0] })
 		})
-		view.renderText(readOnly, "Subject", message.Subject, func(newValue string) {
+		view.renderText(false, "Subject", message.Subject, func(newValue string) {
 			view.requestTextChange(func(msg *text.ElectronicMessage) { msg.Subject = text.Blocked(newValue)[0] })
 		})
 		nextMessageIndex := values.NewUnifier()
 		nextMessageIndex.Add(message.NextMessage)
-		values.RenderUnifiedSliderInt(readOnly, false, "Next Message Index", nextMessageIndex,
+		values.RenderUnifiedSliderInt(false, false, "Next Message Index", nextMessageIndex,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(int) string { return "%d" },
 			-1, 255,
@@ -190,14 +190,14 @@ func (view *View) renderContent() {
 
 		isInterrupt := values.NewUnifier()
 		isInterrupt.Add(message.IsInterrupt)
-		values.RenderUnifiedCheckboxCombo(readOnly, false, "Is Interrupt", isInterrupt,
+		values.RenderUnifiedCheckboxCombo(false, false, "Is Interrupt", isInterrupt,
 			func(newValue bool) {
 				view.requestPropertyChange(func(msg *text.ElectronicMessage) { msg.IsInterrupt = newValue })
 			})
 
 		colorIndex := values.NewUnifier()
 		colorIndex.Add(message.ColorIndex)
-		values.RenderUnifiedSliderInt(readOnly, false, "Color Index", colorIndex,
+		values.RenderUnifiedSliderInt(false, false, "Color Index", colorIndex,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(int) string { return "%d" },
 			-1, 255,
@@ -230,11 +230,11 @@ func (view *View) renderContent() {
 			}
 		}
 		if message.LeftDisplay < videoMailDisplayBase {
-			view.renderDisplayGallery(readOnly, "Left Display", message.LeftDisplay, availableDisplays,
+			view.renderDisplayGallery(false, "Left Display", message.LeftDisplay, availableDisplays,
 				func(newValue int) {
 					view.requestPropertyChange(func(msg *text.ElectronicMessage) { msg.LeftDisplay = newValue })
 				})
-			view.renderDisplayGallery(readOnly, "Right Display", message.RightDisplay, availableDisplays,
+			view.renderDisplayGallery(false, "Right Display", message.RightDisplay, availableDisplays,
 				func(newValue int) {
 					view.requestPropertyChange(func(msg *text.ElectronicMessage) { msg.RightDisplay = newValue })
 				})
@@ -248,7 +248,7 @@ func (view *View) renderContent() {
 }
 
 func (view *View) renderMFDs() {
-	message, readOnly := view.currentMessage()
+	message, _ := view.currentMessage()
 
 	view.renderSideImage("LeftMFD", message.LeftDisplay)
 	imgui.SameLineV(0, 0)
@@ -269,7 +269,7 @@ func (view *View) renderMFDs() {
 		imgui.PopTextWrapPos()
 	}
 	imgui.EndChild()
-	view.clipboardPopup(readOnly, "Text", textToDisplay, func(newValue string) {
+	view.clipboardPopup(false, "Text", textToDisplay, func(newValue string) {
 		view.requestTextChange(func(msg *text.ElectronicMessage) {
 			if view.model.showVerboseText {
 				msg.VerboseText = newValue
