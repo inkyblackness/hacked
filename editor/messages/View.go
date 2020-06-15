@@ -128,27 +128,34 @@ func (view *View) renderContent() {
 			imgui.EndCombo()
 		}
 
-		message, readOnly := view.currentMessage()
+		message, msgReadOnly := view.currentMessage()
 		availableDisplays := view.availableDisplays()
 
-		if imgui.ButtonV("Clear", imgui.Vec2{}) {
-			view.requestClear()
+		if imgui.ButtonV("Clear All", imgui.Vec2{}) {
+			view.requestClearAll()
 		}
 		imgui.SameLine()
-		if !readOnly {
-			if imgui.ButtonV("Remove", imgui.Vec2{}) {
-				view.requestRemove()
+		if !msgReadOnly {
+			if imgui.ButtonV("Remove All", imgui.Vec2{}) {
+				view.requestRemoveAll()
 			}
 		} else {
 			imgui.Text("(read-only)")
 		}
 		if view.hasAudio() {
+			imgui.PushID("audio")
 			imgui.Separator()
-			sound := view.currentSound()
+			sound, soundReadOnly := view.currentSound()
 			if !sound.Empty() {
 				imgui.LabelText("Audio", fmt.Sprintf("%.2f sec", sound.Duration()))
 				if imgui.Button("Export") {
 					view.requestExportAudio(sound)
+				}
+				if !soundReadOnly {
+					imgui.SameLine()
+					if imgui.Button("Remove") {
+						view.requestRemoveAudio()
+					}
 				}
 				imgui.SameLine()
 			} else {
@@ -157,6 +164,11 @@ func (view *View) renderContent() {
 			if imgui.Button("Import") {
 				view.requestImportAudio()
 			}
+			imgui.SameLine()
+			if imgui.Button("Clear") {
+				view.requestClearAudio()
+			}
+			imgui.PopID()
 		}
 		imgui.Separator()
 
@@ -214,7 +226,7 @@ func (view *View) renderContent() {
 			if mailType < len(knownMailTypes) {
 				selectedType = knownMailTypes[mailType]
 			}
-			if readOnly {
+			if msgReadOnly {
 				imgui.LabelText("Mail Type", selectedType)
 			} else if imgui.BeginCombo("Mail Type", selectedType) {
 				for typeIndex, typeString := range knownMailTypes {
@@ -292,13 +304,15 @@ func (view View) hasAudio() bool {
 	return (view.model.currentKey.ID == ids.MailsStart) || (view.model.currentKey.ID == ids.LogsStart)
 }
 
-func (view *View) currentSound() (sound audio.L8) {
+func (view *View) currentSound() (audio.L8, bool) {
 	if view.hasAudio() {
 		key := view.model.currentKey
 		key.ID = key.ID.Plus(300)
-		sound, _ = view.movieCache.Audio(key)
+		sound, _ := view.movieCache.Audio(key)
+		readOnly := len(view.mod.ModifiedBlocks(key.Lang, key.ID.Plus(view.model.currentKey.Index))) == 0
+		return sound, readOnly
 	}
-	return
+	return audio.L8{}, true
 }
 
 func (view View) messageOf(key resource.Key) text.ElectronicMessage {
@@ -377,6 +391,10 @@ func (view *View) requestExportAudio(sound audio.L8) {
 	external.ExportAudio(view.modalStateMachine, filename, sound)
 }
 
+func (view *View) requestRemoveAudio() {
+	view.requestAudioChange(nil)
+}
+
 func (view *View) requestImportAudio() {
 	external.ImportAudio(view.modalStateMachine, func(sound audio.L8) {
 		movieData := movie.ContainSoundData(sound)
@@ -384,15 +402,24 @@ func (view *View) requestImportAudio() {
 	})
 }
 
-func (view *View) requestClear() {
-	view.requestWipe(text.EmptyElectronicMessage().Encode(view.cp))
+func (view *View) requestClearAudio() {
+	view.requestAudioChange(view.silence())
 }
 
-func (view *View) requestRemove() {
-	view.requestWipe(nil)
+func (view View) silence() []byte {
+	silence := audio.L8{SampleRate: 22050, Samples: []byte{0x80}}
+	return movie.ContainSoundData(silence)
 }
 
-func (view *View) requestWipe(newTextData [][]byte) {
+func (view *View) requestClearAll() {
+	view.requestWipe(text.EmptyElectronicMessage().Encode(view.cp), view.silence())
+}
+
+func (view *View) requestRemoveAll() {
+	view.requestWipe(nil, nil)
+}
+
+func (view *View) requestWipe(newTextData [][]byte, newAudioData []byte) {
 	textEntries := make(map[resource.Language]messageDataEntry)
 	audioEntries := make(map[resource.Language]messageDataEntry)
 	textID := view.model.currentKey.ID.Plus(view.model.currentKey.Index)
@@ -404,7 +431,7 @@ func (view *View) requestWipe(newTextData [][]byte) {
 		if view.hasAudio() {
 			audioEntries[lang] = messageDataEntry{
 				oldData: view.mod.ModifiedBlocks(lang, textID.Plus(300)),
-				newData: nil,
+				newData: [][]byte{newAudioData},
 			}
 		}
 	}
