@@ -227,7 +227,10 @@ func (reader *Reader) newSingleBlockResourceReader(entry *resourceDirectoryEntry
 		// In order to support such "broken" files, the behaviour is re-created here. This is mainly to
 		// still allow creating such files and also give the editor a chance to work (and display such a case)
 		// without completely having to rework the whole architecture here.
-		if (resource.ContentType(entry.contentType()) == resource.Movie) && (resourceStartOffset < reader.directoryOffset) {
+		// As audio of logs is also stored with this content type, limit to only single-resource files
+		// to avoid a sudden increase of other resources in the file.
+		isCutscene := (resource.ContentType(entry.contentType()) == resource.Movie) && (len(reader.directory) == 1)
+		if isCutscene && (resourceStartOffset < reader.directoryOffset) {
 			resourceSize = reader.directoryOffset - resourceStartOffset
 		}
 		var resourceSource io.Reader = io.NewSectionReader(reader.source, int64(resourceStartOffset), int64(resourceSize))
