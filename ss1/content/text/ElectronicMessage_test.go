@@ -151,7 +151,7 @@ func (suite *ElectronicMessageSuite) TestDecodeMessage() {
 	assert.Equal(suite.T(), "terse", message.TerseText)
 }
 
-func (suite *ElectronicMessageSuite) TestDecodeMessageIsPossibleForVanillaDummyMails() {
+func (suite *ElectronicMessageSuite) TestDecodeMessageIsPossibleForVanillaStubMails() {
 	message, err := text.DecodeElectronicMessage(suite.cp, suite.vanillaStubMail())
 
 	require.Nil(suite.T(), err)

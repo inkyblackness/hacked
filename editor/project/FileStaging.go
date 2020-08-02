@@ -82,7 +82,7 @@ func (staging *fileStaging) stage(name string, isOnlyStagedFile bool) {
 
 		reader, err := lgres.ReaderFrom(bytes.NewReader(fileData))
 		filename := filepath.Base(name)
-		if (err == nil) && (isOnlyStagedFile || fileWhitelist.Matches(filename)) {
+		if (err == nil) && (isOnlyStagedFile || fileAllowlist.Matches(filename)) {
 			staging.modify(func() {
 				if world.IsSavegame(reader) {
 					staging.savegames[filename] = reader

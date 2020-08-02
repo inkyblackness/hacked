@@ -5,7 +5,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 )
 
-var fileWhitelist = resource.FilenameList{
+var fileAllowlist = resource.FilenameList{
 	ids.Archive,
 	ids.CybStrng,
 	ids.CitALog,

@@ -109,9 +109,9 @@ func (suite *DispatcherSuite) TestRegistrationOfHandlerDuringDispatchIsIgnored()
 	var received *testedEvent
 	handler := func(e testedEvent) { received = &e }
 	registeringHandler := func(e testedEvent) { suite.dispatcher.RegisterHandler(handler) }
-	dummyHandler := func(e testedEvent) {}
-	suite.givenRegisteredHandler(registeringHandler, dummyHandler)
-	suite.givenHandlerWasUnregistered(dummyHandler) // in case same array was reused through cap
+	nullHandler := func(e testedEvent) {}
+	suite.givenRegisteredHandler(registeringHandler, nullHandler)
+	suite.givenHandlerWasUnregistered(nullHandler) // in case same array was reused through cap
 	suite.whenEventIsDispatched(eventA)
 	require.Nil(suite.T(), received, "No call expected")
 }

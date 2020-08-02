@@ -75,7 +75,7 @@ func (suite *InstanceSuite) TestSetStoresValue() {
 	assert.Equal(suite.T(), []byte{0xDD, 0xCC, 0xBB, 0xAA}, suite.data[4:8])
 }
 
-func (suite *InstanceSuite) TestRefinedForUnknownKeyReturnsDummyInstance() {
+func (suite *InstanceSuite) TestRefinedForUnknownKeyReturnsNullObject() {
 	refined := suite.inst.Refined("unknown")
 
 	require.NotNil(suite.T(), refined)
