@@ -3,8 +3,8 @@ package level
 import "github.com/inkyblackness/hacked/ss1/content/object"
 
 const (
-	// ObjectMasterEntrySize describes the size, in bytes, of a ObjectMasterEntry.
-	ObjectMasterEntrySize = 27
+	// ObjectMainEntrySize describes the size, in bytes, of a ObjectMasterEntry.
+	ObjectMainEntrySize = 27
 
 	defaultObjectMasterEntryCount = 872
 )

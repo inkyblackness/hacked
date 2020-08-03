@@ -449,7 +449,7 @@ func (lvl *Level) reloadObjectMainTable() {
 		lvl.objectMainTable = nil
 		return
 	}
-	lvl.objectMainTable = make([]ObjectMasterEntry, len(data)/ObjectMasterEntrySize)
+	lvl.objectMainTable = make([]ObjectMasterEntry, len(data)/ObjectMainEntrySize)
 	err = binary.Read(bytes.NewReader(data), binary.LittleEndian, lvl.objectMainTable)
 	if err != nil {
 		lvl.objectMainTable = nil

@@ -15,7 +15,7 @@ import (
 func TestObjectMainEntrySerializedSize(t *testing.T) {
 	var entry level.ObjectMasterEntry
 	size := binary.Size(&entry)
-	assert.Equal(t, level.ObjectMasterEntrySize, size)
+	assert.Equal(t, level.ObjectMainEntrySize, size)
 }
 
 func TestObjectMainTableCanBeSerializedWithCoder(t *testing.T) {
@@ -24,7 +24,7 @@ func TestObjectMainTableCanBeSerializedWithCoder(t *testing.T) {
 	encoder := serial.NewEncoder(buf)
 	encoder.Code(table)
 	data := buf.Bytes()
-	assert.Equal(t, level.ObjectMasterEntrySize*2, len(data))
+	assert.Equal(t, level.ObjectMainEntrySize*2, len(data))
 }
 
 func TestObjectMainTableResetClearsInUseFlags(t *testing.T) {
