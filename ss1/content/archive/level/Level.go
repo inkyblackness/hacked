@@ -52,7 +52,7 @@ func NewLevel(resourceBase resource.ID, id int, localizer resource.Localizer) *L
 	lvl.reloadBaseInfo()
 	lvl.reloadTileMap()
 	lvl.reloadTextureAtlas()
-	lvl.reloadObjectMasterTable()
+	lvl.reloadObjectMainTable()
 	lvl.reloadObjectCrossRefTable()
 	lvl.reloadObjectClassTables()
 	lvl.reloadTextureAnimations()
@@ -320,7 +320,7 @@ func (lvl *Level) removeCrossReferences(start int, next func(ObjectCrossReferenc
 	}
 }
 
-// Object returns the master entry for the identified object.
+// Object returns the main entry for the identified object.
 func (lvl *Level) Object(id ObjectID) *ObjectMasterEntry {
 	var entry *ObjectMasterEntry
 	if (id > 0) && (int(id) < len(lvl.objectMainTable)) {
@@ -378,7 +378,7 @@ func (lvl *Level) onLevelResourceDataChanged(id int) {
 	case lvlids.TileMap:
 		lvl.reloadTileMap()
 	case lvlids.ObjectMainTable:
-		lvl.reloadObjectMasterTable()
+		lvl.reloadObjectMainTable()
 	case lvlids.ObjectCrossRefTable:
 		lvl.reloadObjectCrossRefTable()
 	case lvlids.TextureAnimations:
@@ -438,7 +438,7 @@ func (lvl *Level) reloadTileMap() {
 	lvl.wallHeightsMap.CalculateFrom(lvl.tileMap)
 }
 
-func (lvl *Level) reloadObjectMasterTable() {
+func (lvl *Level) reloadObjectMainTable() {
 	reader, err := lvl.reader(lvlids.ObjectMainTable)
 	if err != nil {
 		lvl.objectMainTable = nil
