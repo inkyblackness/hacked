@@ -26,7 +26,7 @@ type Level struct {
 	wallHeightsMap WallHeightsMap
 	textureAtlas   TextureAtlas
 
-	objectMasterTable   ObjectMasterTable
+	objectMainTable     ObjectMasterTable
 	objectCrossRefTable ObjectCrossReferenceTable
 	objectClassTables   [object.ClassCount]ObjectClassTable
 
@@ -154,7 +154,7 @@ func (lvl *Level) MapGridInfo(x, y int) (TileType, TileSlopeControl, WallHeights
 
 // ObjectLimit returns the highest object ID that can be stored in this level.
 func (lvl *Level) ObjectLimit() ObjectID {
-	size := len(lvl.objectMasterTable)
+	size := len(lvl.objectMainTable)
 	if size == 0 {
 		return 0
 	}
@@ -181,11 +181,11 @@ func (lvl *Level) ObjectClassStats(class object.Class) (active, limit int) {
 
 // ForEachObject iterates over all active objects and calls the given handler.
 func (lvl *Level) ForEachObject(handler func(ObjectID, ObjectMasterEntry)) {
-	tableSize := len(lvl.objectMasterTable)
+	tableSize := len(lvl.objectMainTable)
 	if tableSize > 0 {
-		id := ObjectID(lvl.objectMasterTable[0].CrossReferenceTableIndex)
+		id := ObjectID(lvl.objectMainTable[0].CrossReferenceTableIndex)
 		for (id > 0) && (int(id) < tableSize) {
-			entry := lvl.objectMasterTable[id]
+			entry := lvl.objectMainTable[id]
 			handler(id, entry)
 			id = entry.Next
 		}
@@ -204,12 +204,12 @@ func (lvl *Level) NewObject(class object.Class) (ObjectID, error) {
 	if classIndex == 0 {
 		return 0, errors.New("no more room for class")
 	}
-	id := lvl.objectMasterTable.Allocate()
+	id := lvl.objectMainTable.Allocate()
 	if id == 0 {
 		classTable.Release(classIndex)
 		return 0, errors.New("no more room for objects")
 	}
-	obj := &lvl.objectMasterTable[id]
+	obj := &lvl.objectMainTable[id]
 	classEntry := &classTable[classIndex]
 	classEntry.ObjectID = id
 	obj.ClassTableIndex = int16(classIndex)
@@ -240,7 +240,7 @@ func (lvl *Level) DelObject(id ObjectID) {
 	if int(obj.Class) < len(lvl.objectClassTables) {
 		lvl.objectClassTables[obj.Class].Release(int(obj.ClassTableIndex))
 	}
-	lvl.objectMasterTable.Release(id)
+	lvl.objectMainTable.Release(id)
 }
 
 func (lvl *Level) addCrossReferenceTo(id ObjectID, obj *ObjectMasterEntry, x, y int16) {
@@ -323,8 +323,8 @@ func (lvl *Level) removeCrossReferences(start int, next func(ObjectCrossReferenc
 // Object returns the master entry for the identified object.
 func (lvl *Level) Object(id ObjectID) *ObjectMasterEntry {
 	var entry *ObjectMasterEntry
-	if (id > 0) && (int(id) < len(lvl.objectMasterTable)) {
-		entry = &lvl.objectMasterTable[id]
+	if (id > 0) && (int(id) < len(lvl.objectMainTable)) {
+		entry = &lvl.objectMainTable[id]
 	}
 	return entry
 }
@@ -355,7 +355,7 @@ func (lvl *Level) EncodeState() [lvlids.PerLevel][]byte {
 
 	levelData[lvlids.TextureAtlas] = encode(lvl.textureAtlas)
 	levelData[lvlids.TileMap] = encode(lvl.tileMap)
-	levelData[lvlids.ObjectMasterTable] = encode(lvl.objectMasterTable)
+	levelData[lvlids.ObjectMasterTable] = encode(lvl.objectMainTable)
 	levelData[lvlids.ObjectCrossRefTable] = encode(lvl.objectCrossRefTable)
 	for class := 0; class < len(lvl.objectClassTables); class++ {
 		levelData[lvlids.ObjectClassTablesStart+class] = encode(lvl.objectClassTables[class])
@@ -441,18 +441,18 @@ func (lvl *Level) reloadTileMap() {
 func (lvl *Level) reloadObjectMasterTable() {
 	reader, err := lvl.reader(lvlids.ObjectMasterTable)
 	if err != nil {
-		lvl.objectMasterTable = nil
+		lvl.objectMainTable = nil
 		return
 	}
 	data, err := ioutil.ReadAll(reader)
 	if err != nil {
-		lvl.objectMasterTable = nil
+		lvl.objectMainTable = nil
 		return
 	}
-	lvl.objectMasterTable = make([]ObjectMasterEntry, len(data)/ObjectMasterEntrySize)
-	err = binary.Read(bytes.NewReader(data), binary.LittleEndian, lvl.objectMasterTable)
+	lvl.objectMainTable = make([]ObjectMasterEntry, len(data)/ObjectMasterEntrySize)
+	err = binary.Read(bytes.NewReader(data), binary.LittleEndian, lvl.objectMainTable)
 	if err != nil {
-		lvl.objectMasterTable = nil
+		lvl.objectMainTable = nil
 	}
 }
 
