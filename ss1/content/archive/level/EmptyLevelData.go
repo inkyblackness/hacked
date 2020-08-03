@@ -32,7 +32,7 @@ func EmptyLevelData(param EmptyLevelParameters) [lvlids.PerLevel][]byte {
 
 	levelData[lvlids.Schedules] = encode(make([]byte, baseInfo.Scheduler.ElementSize*1))
 	levelData[lvlids.TextureAtlas] = encode(make(TextureAtlas, DefaultTextureAtlasSize))
-	levelData[lvlids.ObjectMainTable] = encode(DefaultObjectMasterTable())
+	levelData[lvlids.ObjectMainTable] = encode(DefaultObjectMainTable())
 	levelData[lvlids.ObjectCrossRefTable] = encode(DefaultObjectCrossReferenceTable())
 	for class := object.Class(0); class < object.ClassCount; class++ {
 		levelData[lvlids.ObjectClassTablesStart+int(class)] = encode(DefaultObjectClassTable(class))

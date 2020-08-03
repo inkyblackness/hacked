@@ -3,14 +3,14 @@ package level
 import "github.com/inkyblackness/hacked/ss1/content/object"
 
 const (
-	// ObjectMainEntrySize describes the size, in bytes, of a ObjectMasterEntry.
+	// ObjectMainEntrySize describes the size, in bytes, of a ObjectMainEntry.
 	ObjectMainEntrySize = 27
 
 	defaultObjectMasterEntryCount = 872
 )
 
-// ObjectMasterEntry describes an object in the level.
-type ObjectMasterEntry struct {
+// ObjectMainEntry describes an object in the level.
+type ObjectMainEntry struct {
 	InUse byte
 
 	Class    object.Class
@@ -38,30 +38,30 @@ type ObjectMasterEntry struct {
 }
 
 // Triple returns the unique identifier of the entry.
-func (entry ObjectMasterEntry) Triple() object.Triple {
+func (entry ObjectMainEntry) Triple() object.Triple {
 	return object.TripleFrom(int(entry.Class), int(entry.Subclass), int(entry.Type))
 }
 
 // Reset clears the entry and resets all members.
-func (entry *ObjectMasterEntry) Reset() {
-	*entry = ObjectMasterEntry{}
+func (entry *ObjectMainEntry) Reset() {
+	*entry = ObjectMainEntry{}
 }
 
-// ObjectMasterTable is a list of entries.
+// ObjectMainTable is a list of entries.
 // The first entry is reserved for internal use. For the reserved entry,
 // the Next field refers to the head of the single-linked free chain,
 // and the CrossReferenceTableIndex refers to the head of the double-linked used chain.
-type ObjectMasterTable []ObjectMasterEntry
+type ObjectMainTable []ObjectMainEntry
 
-// DefaultObjectMasterTable returns an initialized table with a default size.
-func DefaultObjectMasterTable() ObjectMasterTable {
-	table := make(ObjectMasterTable, defaultObjectMasterEntryCount)
+// DefaultObjectMainTable returns an initialized table with a default size.
+func DefaultObjectMainTable() ObjectMainTable {
+	table := make(ObjectMainTable, defaultObjectMasterEntryCount)
 	table.Reset()
 	return table
 }
 
 // Reset wipes the entire table and initializes all links.
-func (table ObjectMasterTable) Reset() {
+func (table ObjectMainTable) Reset() {
 	tableLen := len(table)
 	for i := 0; i < tableLen; i++ {
 		entry := &table[i]
@@ -75,7 +75,7 @@ func (table ObjectMasterTable) Reset() {
 
 // Allocate attempts to find an available entry in the table and activates it.
 // Returns 0 if not possible (exhausted).
-func (table ObjectMasterTable) Allocate() ObjectID {
+func (table ObjectMainTable) Allocate() ObjectID {
 	if len(table) < 2 {
 		return 0
 	}
@@ -99,7 +99,7 @@ func (table ObjectMasterTable) Allocate() ObjectID {
 }
 
 // Release deactivates the entry with given ID.
-func (table ObjectMasterTable) Release(id ObjectID) {
+func (table ObjectMainTable) Release(id ObjectID) {
 	if (id < 1) || (int(id) >= len(table)) {
 		return
 	}

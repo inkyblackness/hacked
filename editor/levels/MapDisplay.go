@@ -192,7 +192,7 @@ func (display *MapDisplay) Render(properties object.PropertiesTable, lvl *level.
 	display.highlighter.Render(display.selectedTiles.list, fineCoordinatesPerTileSide, [4]float32{0.0, 0.8, 0.2, 0.5})
 	{
 		var objects []MapPosition
-		lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMasterEntry) {
+		lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMainEntry) {
 			objects = append(objects, MapPosition{X: entry.X, Y: entry.Y})
 		})
 		display.highlighter.Render(objects, fineCoordinatesPerTileSide/4, [4]float32{1.0, 1.0, 1.0, 0.3})
@@ -224,7 +224,7 @@ func (display *MapDisplay) Render(properties object.PropertiesTable, lvl *level.
 				highlightID = objectItem.id
 			}
 		}
-		lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMasterEntry) {
+		lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMainEntry) {
 			triple := entry.Triple()
 			index, cached := tripleOffsets[triple]
 			if cached {
@@ -269,7 +269,7 @@ func (display *MapDisplay) nearestHoverItems(lvl *level.Level, ref MapPosition) 
 
 	refVec := mgl.Vec2{float32(ref.X), float32(ref.Y)}
 
-	lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMasterEntry) {
+	lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMainEntry) {
 		entryVec := mgl.Vec2{float32(entry.X), float32(entry.Y)}
 		distance := refVec.Sub(entryVec).Len()
 		if distance < fineCoordinatesPerTileSide/4 {
@@ -523,7 +523,7 @@ func (display *MapDisplay) objectsInTiles(tiles []MapPosition) []level.ObjectID 
 
 	var objects []level.ObjectID
 	if display.activeLevel != nil {
-		display.activeLevel.ForEachObject(func(id level.ObjectID, entry level.ObjectMasterEntry) {
+		display.activeLevel.ForEachObject(func(id level.ObjectID, entry level.ObjectMainEntry) {
 			tilePos := MapPosition{X: level.CoordinateAt(entry.X.Tile(), 128), Y: level.CoordinateAt(entry.Y.Tile(), 128)}
 			if tilesContain(tilePos) {
 				objects = append(objects, id)

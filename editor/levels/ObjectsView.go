@@ -177,7 +177,7 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 	objTypeRenderer.Render(readOnly, multiple, "Object Type", classUnifier, typeUnifier,
 		func(u values.Unifier) object.Triple { return u.Unified().(object.Triple) },
 		func(newValue object.Triple) {
-			view.requestBaseChange(lvl, func(entry *level.ObjectMasterEntry) {
+			view.requestBaseChange(lvl, func(entry *level.ObjectMainEntry) {
 				entry.Subclass = newValue.Subclass
 				entry.Type = newValue.Type
 			})
@@ -189,56 +189,56 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 			objectHeightFormatter,
 			0, 0xFF,
 			func(newValue int) {
-				view.requestBaseChange(lvl, func(entry *level.ObjectMasterEntry) { entry.Z = level.HeightUnit(newValue) })
+				view.requestBaseChange(lvl, func(entry *level.ObjectMainEntry) { entry.Z = level.HeightUnit(newValue) })
 			})
 		values.RenderUnifiedSliderInt(readOnly, multiple, "Tile X", tileXUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(byte)) },
 			func(value int) string { return "%d" },
 			0, columns-1,
 			func(newValue int) {
-				view.requestBaseChange(lvl, func(entry *level.ObjectMasterEntry) { entry.X = level.CoordinateAt(byte(newValue), entry.X.Fine()) })
+				view.requestBaseChange(lvl, func(entry *level.ObjectMainEntry) { entry.X = level.CoordinateAt(byte(newValue), entry.X.Fine()) })
 			})
 		values.RenderUnifiedSliderInt(readOnly, multiple, "Fine X", fineXUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(byte)) },
 			func(value int) string { return "%d" },
 			0, 0xFF,
 			func(newValue int) {
-				view.requestBaseChange(lvl, func(entry *level.ObjectMasterEntry) { entry.X = level.CoordinateAt(entry.X.Tile(), byte(newValue)) })
+				view.requestBaseChange(lvl, func(entry *level.ObjectMainEntry) { entry.X = level.CoordinateAt(entry.X.Tile(), byte(newValue)) })
 			})
 		values.RenderUnifiedSliderInt(readOnly, multiple, "Tile Y", tileYUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(byte)) },
 			func(value int) string { return "%d" },
 			0, rows-1,
 			func(newValue int) {
-				view.requestBaseChange(lvl, func(entry *level.ObjectMasterEntry) { entry.Y = level.CoordinateAt(byte(newValue), entry.Y.Fine()) })
+				view.requestBaseChange(lvl, func(entry *level.ObjectMainEntry) { entry.Y = level.CoordinateAt(byte(newValue), entry.Y.Fine()) })
 			})
 		values.RenderUnifiedSliderInt(readOnly, multiple, "Fine Y", fineYUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(byte)) },
 			func(value int) string { return "%d" },
 			0, 0xFF,
 			func(newValue int) {
-				view.requestBaseChange(lvl, func(entry *level.ObjectMasterEntry) { entry.Y = level.CoordinateAt(entry.Y.Tile(), byte(newValue)) })
+				view.requestBaseChange(lvl, func(entry *level.ObjectMainEntry) { entry.Y = level.CoordinateAt(entry.Y.Tile(), byte(newValue)) })
 			})
 		values.RenderUnifiedSliderInt(readOnly, multiple, "Rotation X", rotationXUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(level.RotationUnit)) },
 			rotationFormatter,
 			0, 0xFF,
 			func(newValue int) {
-				view.requestBaseChange(lvl, func(entry *level.ObjectMasterEntry) { entry.XRotation = level.RotationUnit(newValue) })
+				view.requestBaseChange(lvl, func(entry *level.ObjectMainEntry) { entry.XRotation = level.RotationUnit(newValue) })
 			})
 		values.RenderUnifiedSliderInt(readOnly, multiple, "Rotation Y", rotationYUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(level.RotationUnit)) },
 			rotationFormatter,
 			0, 0xFF,
 			func(newValue int) {
-				view.requestBaseChange(lvl, func(entry *level.ObjectMasterEntry) { entry.YRotation = level.RotationUnit(newValue) })
+				view.requestBaseChange(lvl, func(entry *level.ObjectMainEntry) { entry.YRotation = level.RotationUnit(newValue) })
 			})
 		values.RenderUnifiedSliderInt(readOnly, multiple, "Rotation Z", rotationZUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(level.RotationUnit)) },
 			rotationFormatter,
 			0, 0xFF,
 			func(newValue int) {
-				view.requestBaseChange(lvl, func(entry *level.ObjectMasterEntry) { entry.ZRotation = level.RotationUnit(newValue) })
+				view.requestBaseChange(lvl, func(entry *level.ObjectMainEntry) { entry.ZRotation = level.RotationUnit(newValue) })
 			})
 
 		values.RenderUnifiedSliderInt(readOnly, multiple, "Hitpoints", hitpointsUnifier,
@@ -246,20 +246,20 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 			func(value int) string { return "%d" },
 			0, 10000,
 			func(newValue int) {
-				view.requestBaseChange(lvl, func(entry *level.ObjectMasterEntry) { entry.Hitpoints = int16(newValue) })
+				view.requestBaseChange(lvl, func(entry *level.ObjectMainEntry) { entry.Hitpoints = int16(newValue) })
 			})
 
 		imgui.TreePop()
 	}
 	if imgui.TreeNodeV("Extra Properties", imgui.TreeNodeFlagsFramed) {
 		view.renderProperties(lvl, readOnly,
-			func(id level.ObjectID, entry *level.ObjectMasterEntry) []byte { return entry.Extra[:] },
+			func(id level.ObjectID, entry *level.ObjectMainEntry) []byte { return entry.Extra[:] },
 			view.extraInterpreterFactory(lvl))
 		imgui.TreePop()
 	}
 	if imgui.TreeNodeV("Class Properties", imgui.TreeNodeFlagsFramed) {
 		view.renderProperties(lvl, readOnly,
-			func(id level.ObjectID, entry *level.ObjectMasterEntry) []byte { return lvl.ObjectClassData(id) },
+			func(id level.ObjectID, entry *level.ObjectMainEntry) []byte { return lvl.ObjectClassData(id) },
 			view.classInterpreterFactory(lvl))
 		view.renderBlockPuzzleControl(lvl, readOnly)
 		imgui.TreePop()
@@ -269,7 +269,7 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 }
 
 func (view *ObjectsView) renderProperties(lvl *level.Level, readOnly bool,
-	dataRetriever func(level.ObjectID, *level.ObjectMasterEntry) []byte,
+	dataRetriever func(level.ObjectID, *level.ObjectMainEntry) []byte,
 	interpreterFactory lvlobj.InterpreterFactory) {
 	propertyUnifier := make(map[string]*values.Unifier)
 	propertyDescribers := make(map[string]func(*interpreters.Simplifier))
@@ -677,7 +677,7 @@ func (view *ObjectsView) editingAllowed(id int) bool {
 	return moddedLevel && !isSavegame
 }
 
-func (view *ObjectsView) requestBaseChange(lvl *level.Level, modifier func(*level.ObjectMasterEntry)) {
+func (view *ObjectsView) requestBaseChange(lvl *level.Level, modifier func(*level.ObjectMainEntry)) {
 	objectIDs := view.model.selectedObjects.list
 	for _, id := range objectIDs {
 		obj := lvl.Object(id)
@@ -710,7 +710,7 @@ func (view *ObjectsView) classInterpreterFactory(lvl *level.Level) lvlobj.Interp
 }
 
 func (view *ObjectsView) requestPropertiesChange(lvl *level.Level,
-	dataRetriever func(level.ObjectID, *level.ObjectMasterEntry) []byte,
+	dataRetriever func(level.ObjectID, *level.ObjectMainEntry) []byte,
 	interpreterFactory lvlobj.InterpreterFactory,
 	key string, modifier func(uint32) uint32) {
 	objectIDs := view.model.selectedObjects.list
@@ -942,7 +942,7 @@ func (view *ObjectsView) PlaceSelectedObjectsOnCeiling(lvl *level.Level) {
 
 func (view *ObjectsView) placeSelectedObjects(lvl *level.Level,
 	atHeight func(tile *level.TileMapEntry, pos MapPosition, objPivot float32) level.HeightUnit) {
-	view.requestBaseChange(lvl, func(obj *level.ObjectMasterEntry) {
+	view.requestBaseChange(lvl, func(obj *level.ObjectMainEntry) {
 		var objPivot float32
 		prop, err := view.mod.ObjectProperties().ForObject(obj.Triple())
 		if err == nil {

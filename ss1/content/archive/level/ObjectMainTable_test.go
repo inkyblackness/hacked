@@ -13,13 +13,13 @@ import (
 )
 
 func TestObjectMainEntrySerializedSize(t *testing.T) {
-	var entry level.ObjectMasterEntry
+	var entry level.ObjectMainEntry
 	size := binary.Size(&entry)
 	assert.Equal(t, level.ObjectMainEntrySize, size)
 }
 
 func TestObjectMainTableCanBeSerializedWithCoder(t *testing.T) {
-	table := level.ObjectMasterTable([]level.ObjectMasterEntry{{}, {}})
+	table := level.ObjectMainTable([]level.ObjectMainEntry{{}, {}})
 	buf := bytes.NewBuffer(nil)
 	encoder := serial.NewEncoder(buf)
 	encoder.Code(table)
@@ -28,7 +28,7 @@ func TestObjectMainTableCanBeSerializedWithCoder(t *testing.T) {
 }
 
 func TestObjectMainTableResetClearsInUseFlags(t *testing.T) {
-	table := level.ObjectMasterTable([]level.ObjectMasterEntry{{InUse: 1}, {InUse: 1}})
+	table := level.ObjectMainTable([]level.ObjectMainEntry{{InUse: 1}, {InUse: 1}})
 	table.Reset()
 
 	assert.Equal(t, byte(0), table[0].InUse, "table[0].InUse should be zero.")
@@ -36,7 +36,7 @@ func TestObjectMainTableResetClearsInUseFlags(t *testing.T) {
 }
 
 func TestObjectMainTableInitializesLists(t *testing.T) {
-	table := level.ObjectMasterTable([]level.ObjectMasterEntry{{Next: 20, CrossReferenceTableIndex: 10}, {Next: 30}, {Next: 40}})
+	table := level.ObjectMainTable([]level.ObjectMainEntry{{Next: 20, CrossReferenceTableIndex: 10}, {Next: 30}, {Next: 40}})
 	table.Reset()
 
 	assert.Equal(t, level.ObjectID(1), table[0].Next, "table[0].Next should be 1, the first free entry.")
@@ -46,7 +46,7 @@ func TestObjectMainTableInitializesLists(t *testing.T) {
 }
 
 func TestDefaultObjectMainTable(t *testing.T) {
-	table := level.DefaultObjectMasterTable()
+	table := level.DefaultObjectMainTable()
 
 	assert.Equal(t, 872, len(table), "Table length mismatch")
 	assert.Equal(t, level.ObjectID(1), table[0].Next, "table[0].Next should be 1, the first free entry.")
@@ -56,7 +56,7 @@ func TestObjectMainTableAllocate(t *testing.T) {
 	tt := []int{0, 1, 2, 3, 100}
 
 	for _, tc := range tt {
-		table := make(level.ObjectMasterTable, tc)
+		table := make(level.ObjectMainTable, tc)
 		table.Reset()
 		possible := tc - 1
 
@@ -70,7 +70,7 @@ func TestObjectMainTableAllocate(t *testing.T) {
 }
 
 func TestObjectMainTableRelease(t *testing.T) {
-	stats := func(table level.ObjectMasterTable) (used, free int) {
+	stats := func(table level.ObjectMainTable) (used, free int) {
 		for i := 1; i < len(table); i++ {
 			entry := &table[i]
 			if entry.InUse != 0 {
@@ -82,7 +82,7 @@ func TestObjectMainTableRelease(t *testing.T) {
 		return
 	}
 
-	table := make(level.ObjectMasterTable, 10)
+	table := make(level.ObjectMainTable, 10)
 	table.Reset()
 	var allocated []level.ObjectID
 	for i := 0; i < 4; i++ {

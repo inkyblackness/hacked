@@ -26,7 +26,7 @@ type Level struct {
 	wallHeightsMap WallHeightsMap
 	textureAtlas   TextureAtlas
 
-	objectMainTable     ObjectMasterTable
+	objectMainTable     ObjectMainTable
 	objectCrossRefTable ObjectCrossReferenceTable
 	objectClassTables   [object.ClassCount]ObjectClassTable
 
@@ -180,7 +180,7 @@ func (lvl *Level) ObjectClassStats(class object.Class) (active, limit int) {
 }
 
 // ForEachObject iterates over all active objects and calls the given handler.
-func (lvl *Level) ForEachObject(handler func(ObjectID, ObjectMasterEntry)) {
+func (lvl *Level) ForEachObject(handler func(ObjectID, ObjectMainEntry)) {
 	tableSize := len(lvl.objectMainTable)
 	if tableSize > 0 {
 		id := ObjectID(lvl.objectMainTable[0].CrossReferenceTableIndex)
@@ -243,7 +243,7 @@ func (lvl *Level) DelObject(id ObjectID) {
 	lvl.objectMainTable.Release(id)
 }
 
-func (lvl *Level) addCrossReferenceTo(id ObjectID, obj *ObjectMasterEntry, x, y int16) {
+func (lvl *Level) addCrossReferenceTo(id ObjectID, obj *ObjectMainEntry, x, y int16) {
 	newIndex := lvl.objectCrossRefTable.Allocate()
 	if newIndex == 0 {
 		return
@@ -321,8 +321,8 @@ func (lvl *Level) removeCrossReferences(start int, next func(ObjectCrossReferenc
 }
 
 // Object returns the main entry for the identified object.
-func (lvl *Level) Object(id ObjectID) *ObjectMasterEntry {
-	var entry *ObjectMasterEntry
+func (lvl *Level) Object(id ObjectID) *ObjectMainEntry {
+	var entry *ObjectMainEntry
 	if (id > 0) && (int(id) < len(lvl.objectMainTable)) {
 		entry = &lvl.objectMainTable[id]
 	}
@@ -449,7 +449,7 @@ func (lvl *Level) reloadObjectMainTable() {
 		lvl.objectMainTable = nil
 		return
 	}
-	lvl.objectMainTable = make([]ObjectMasterEntry, len(data)/ObjectMainEntrySize)
+	lvl.objectMainTable = make([]ObjectMainEntry, len(data)/ObjectMainEntrySize)
 	err = binary.Read(bytes.NewReader(data), binary.LittleEndian, lvl.objectMainTable)
 	if err != nil {
 		lvl.objectMainTable = nil
