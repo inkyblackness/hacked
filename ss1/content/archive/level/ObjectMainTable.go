@@ -6,7 +6,7 @@ const (
 	// ObjectMainEntrySize describes the size, in bytes, of a ObjectMainEntry.
 	ObjectMainEntrySize = 27
 
-	defaultObjectMasterEntryCount = 872
+	defaultObjectMainEntryCount = 872
 )
 
 // ObjectMainEntry describes an object in the level.
@@ -55,7 +55,7 @@ type ObjectMainTable []ObjectMainEntry
 
 // DefaultObjectMainTable returns an initialized table with a default size.
 func DefaultObjectMainTable() ObjectMainTable {
-	table := make(ObjectMainTable, defaultObjectMasterEntryCount)
+	table := make(ObjectMainTable, defaultObjectMainEntryCount)
 	table.Reset()
 	return table
 }
