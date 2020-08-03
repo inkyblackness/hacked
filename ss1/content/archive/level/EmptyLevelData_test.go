@@ -26,7 +26,7 @@ func TestEmptyLevelDataSizesForDefault(t *testing.T) {
 	assert.Equal(t, 64*64*16, len(levelData[lvlids.TileMap]), "TileMap")
 	assert.Equal(t, 8*1, len(levelData[lvlids.Schedules]), "Schedules")
 	assert.Equal(t, 2*54, len(levelData[lvlids.TextureAtlas]), "TextureAtlas")
-	assert.Equal(t, 27*872, len(levelData[lvlids.ObjectMasterTable]), "ObjectMasterTable")
+	assert.Equal(t, 27*872, len(levelData[lvlids.ObjectMainTable]), "ObjectMainTable")
 	assert.Equal(t, 10*1600, len(levelData[lvlids.ObjectCrossRefTable]), "ObjectCrossRefTable")
 
 	// leaving the object class tables

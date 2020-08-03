@@ -19,7 +19,7 @@ const (
 	TileMap                  = 5
 	Schedules                = 6
 	TextureAtlas             = 7
-	ObjectMasterTable        = 8
+	ObjectMainTable          = 8
 	ObjectCrossRefTable      = 9
 	ObjectClassTablesStart   = 10
 	ObjectDefaultTablesStart = 25

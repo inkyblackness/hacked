@@ -73,7 +73,7 @@ func init() {
 		register(levelInfo(lvl, lvlids.TileMap, true))
 		register(levelInfo(lvl, lvlids.Schedules, false))
 		register(levelInfo(lvl, lvlids.TextureAtlas, false))
-		register(levelInfo(lvl, lvlids.ObjectMasterTable, true))
+		register(levelInfo(lvl, lvlids.ObjectMainTable, true))
 		register(levelInfo(lvl, lvlids.ObjectCrossRefTable, true))
 		for class := 0; class < object.ClassCount; class++ {
 			register(levelInfo(lvl, lvlids.ObjectClassTablesStart+class, true))

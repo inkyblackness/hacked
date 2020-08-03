@@ -355,7 +355,7 @@ func (lvl *Level) EncodeState() [lvlids.PerLevel][]byte {
 
 	levelData[lvlids.TextureAtlas] = encode(lvl.textureAtlas)
 	levelData[lvlids.TileMap] = encode(lvl.tileMap)
-	levelData[lvlids.ObjectMasterTable] = encode(lvl.objectMainTable)
+	levelData[lvlids.ObjectMainTable] = encode(lvl.objectMainTable)
 	levelData[lvlids.ObjectCrossRefTable] = encode(lvl.objectCrossRefTable)
 	for class := 0; class < len(lvl.objectClassTables); class++ {
 		levelData[lvlids.ObjectClassTablesStart+class] = encode(lvl.objectClassTables[class])
@@ -377,7 +377,7 @@ func (lvl *Level) onLevelResourceDataChanged(id int) {
 		lvl.reloadTextureAtlas()
 	case lvlids.TileMap:
 		lvl.reloadTileMap()
-	case lvlids.ObjectMasterTable:
+	case lvlids.ObjectMainTable:
 		lvl.reloadObjectMasterTable()
 	case lvlids.ObjectCrossRefTable:
 		lvl.reloadObjectCrossRefTable()
@@ -439,7 +439,7 @@ func (lvl *Level) reloadTileMap() {
 }
 
 func (lvl *Level) reloadObjectMasterTable() {
-	reader, err := lvl.reader(lvlids.ObjectMasterTable)
+	reader, err := lvl.reader(lvlids.ObjectMainTable)
 	if err != nil {
 		lvl.objectMainTable = nil
 		return
