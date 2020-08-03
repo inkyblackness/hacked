@@ -12,13 +12,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestObjectMasterEntrySerializedSize(t *testing.T) {
+func TestObjectMainEntrySerializedSize(t *testing.T) {
 	var entry level.ObjectMasterEntry
 	size := binary.Size(&entry)
 	assert.Equal(t, level.ObjectMasterEntrySize, size)
 }
 
-func TestObjectMasterTableCanBeSerializedWithCoder(t *testing.T) {
+func TestObjectMainTableCanBeSerializedWithCoder(t *testing.T) {
 	table := level.ObjectMasterTable([]level.ObjectMasterEntry{{}, {}})
 	buf := bytes.NewBuffer(nil)
 	encoder := serial.NewEncoder(buf)
@@ -27,7 +27,7 @@ func TestObjectMasterTableCanBeSerializedWithCoder(t *testing.T) {
 	assert.Equal(t, level.ObjectMasterEntrySize*2, len(data))
 }
 
-func TestObjectMasterTableResetClearsInUseFlags(t *testing.T) {
+func TestObjectMainTableResetClearsInUseFlags(t *testing.T) {
 	table := level.ObjectMasterTable([]level.ObjectMasterEntry{{InUse: 1}, {InUse: 1}})
 	table.Reset()
 
@@ -35,7 +35,7 @@ func TestObjectMasterTableResetClearsInUseFlags(t *testing.T) {
 	assert.Equal(t, byte(0), table[1].InUse, "table[1].InUse should be zero.")
 }
 
-func TestObjectMasterTableInitializesLists(t *testing.T) {
+func TestObjectMainTableInitializesLists(t *testing.T) {
 	table := level.ObjectMasterTable([]level.ObjectMasterEntry{{Next: 20, CrossReferenceTableIndex: 10}, {Next: 30}, {Next: 40}})
 	table.Reset()
 
@@ -45,14 +45,14 @@ func TestObjectMasterTableInitializesLists(t *testing.T) {
 	assert.Equal(t, level.ObjectID(0), table[2].Next, "table[2].Next should be 0, the start entry.")
 }
 
-func TestDefaultObjectMasterTable(t *testing.T) {
+func TestDefaultObjectMainTable(t *testing.T) {
 	table := level.DefaultObjectMasterTable()
 
 	assert.Equal(t, 872, len(table), "Table length mismatch")
 	assert.Equal(t, level.ObjectID(1), table[0].Next, "table[0].Next should be 1, the first free entry.")
 }
 
-func TestObjectMasterTableAllocate(t *testing.T) {
+func TestObjectMainTableAllocate(t *testing.T) {
 	tt := []int{0, 1, 2, 3, 100}
 
 	for _, tc := range tt {
@@ -69,7 +69,7 @@ func TestObjectMasterTableAllocate(t *testing.T) {
 	}
 }
 
-func TestObjectMasterTableRelease(t *testing.T) {
+func TestObjectMainTableRelease(t *testing.T) {
 	stats := func(table level.ObjectMasterTable) (used, free int) {
 		for i := 1; i < len(table); i++ {
 			entry := &table[i]
