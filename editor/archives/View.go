@@ -5,9 +5,11 @@ import (
 
 	"github.com/inkyblackness/imgui-go/v2"
 
+	"github.com/inkyblackness/hacked/editor/values"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
+	"github.com/inkyblackness/hacked/ss1/content/interpreters"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -17,7 +19,9 @@ import (
 
 // View provides edit controls for the archive.
 type View struct {
-	mod *world.Mod
+	mod       *world.Mod
+	textCache *text.Cache
+	cp        text.Codepage
 
 	guiScale  float32
 	commander cmd.Commander
@@ -26,9 +30,11 @@ type View struct {
 }
 
 // NewArchiveView returns a new instance.
-func NewArchiveView(mod *world.Mod, guiScale float32, commander cmd.Commander) *View {
+func NewArchiveView(mod *world.Mod, textCache *text.Cache, cp text.Codepage, guiScale float32, commander cmd.Commander) *View {
 	view := &View{
-		mod: mod,
+		mod:       mod,
+		textCache: textCache,
+		cp:        cp,
 
 		guiScale:  guiScale,
 		commander: commander,
@@ -60,7 +66,21 @@ func (view *View) Render() {
 }
 
 func (view *View) renderContent() {
-	imgui.Text("Levels")
+	imgui.BeginTabBar("archive-tab")
+
+	if imgui.BeginTabItem("Levels") {
+		view.renderLevelsContent()
+		imgui.EndTabItem()
+	}
+	if imgui.BeginTabItem("Game State") {
+		view.renderGameStateContent()
+		imgui.EndTabItem()
+	}
+
+	imgui.EndTabBar()
+}
+
+func (view *View) renderLevelsContent() {
 	imgui.BeginChildV("Levels", imgui.Vec2{X: -100 * view.guiScale, Y: 0}, true, 0)
 	for id := 0; id < archive.MaxLevels; id++ {
 		inMod := view.hasLevelInMod(id)
@@ -93,6 +113,20 @@ func (view *View) renderContent() {
 		}
 	}
 	imgui.EndGroup()
+}
+
+func (view *View) renderGameStateContent() {
+	imgui.PushItemWidth(-260 * view.guiScale)
+	rawGameState := view.mod.ModifiedBlock(resource.LangAny, ids.GameState, 0)
+	if len(rawGameState) > 0 {
+		state := archive.NewGameState(rawGameState)
+
+		readOnly := true
+		view.createPropertyControls(readOnly, state.Instance, func(key string, modifier func(uint32) uint32) {
+
+		})
+	}
+	imgui.PopItemWidth()
 }
 
 func (view *View) hasGameStateInMod() bool {
@@ -164,4 +198,37 @@ func (view *View) requestRemoveLevel(id int) {
 
 		view.commander.Queue(command)
 	}
+}
+
+func (view *View) createPropertyControls(readOnly bool, rootInterpreter *interpreters.Instance,
+	updater func(string, func(uint32) uint32)) {
+	objTypeRenderer := values.ObjectTypeControlRenderer{
+		Meta:      view.mod.ObjectProperties(),
+		TextCache: view.textCache,
+	}
+
+	var processInterpreter func(string, *interpreters.Instance)
+	processInterpreter = func(path string, interpreter *interpreters.Instance) {
+		for _, key := range interpreter.Keys() {
+			fullKey := path + key
+			unifier := values.NewUnifier()
+			unifier.Add(int32(interpreter.Get(key)))
+			simplifier := values.StandardSimplifier(readOnly, false, fullKey, unifier,
+				func(modifier func(uint32) uint32) {
+					updater(fullKey, modifier)
+				}, objTypeRenderer)
+
+			interpreter.Describe(key, simplifier)
+		}
+
+		for _, key := range interpreter.ActiveRefinements() {
+			fullKey := path + key
+			if len(fullKey) > 0 {
+				imgui.Separator()
+				imgui.Text(fullKey + ":")
+			}
+			processInterpreter(fullKey+".", interpreter.Refined(key))
+		}
+	}
+	processInterpreter("", rootInterpreter)
 }

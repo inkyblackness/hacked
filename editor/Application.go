@@ -485,7 +485,7 @@ func (app *Application) initView() {
 	movieService := undoable.NewMovieService(edit.NewMovieService(app.cp, movieViewer, movieSetter), app)
 
 	app.projectView = project.NewView(app.mod, &app.modalState, app.GuiScale, app)
-	app.archiveView = archives.NewArchiveView(app.mod, app.GuiScale, app)
+	app.archiveView = archives.NewArchiveView(app.mod, app.textLineCache, app.cp, app.GuiScale, app)
 	app.levelControlView = levels.NewControlView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.levelTilesView = levels.NewTilesView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.levelObjectsView = levels.NewObjectsView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
