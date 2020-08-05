@@ -9,7 +9,6 @@ import (
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
-	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
 	"github.com/inkyblackness/hacked/ss1/content/text"
@@ -413,11 +412,8 @@ func (view *TilesView) textureName(index int) string {
 }
 
 func (view *TilesView) editingAllowed(id int) bool {
-	gameStateData := view.mod.ModifiedBlocks(resource.LangAny, ids.GameState)
-	isSavegame := (len(gameStateData) == 1) && (len(gameStateData[0]) == archive.GameStateSize) && (gameStateData[0][0x009C] > 0)
 	moddedLevel := len(view.mod.ModifiedBlocks(resource.LangAny, ids.LevelResourcesStart.Plus(lvlids.PerLevel*id+lvlids.FirstUsed))) > 0
-
-	return moddedLevel && !isSavegame
+	return moddedLevel
 }
 
 func (view *TilesView) requestSetTileType(lvl *level.Level, positions []MapPosition, tileType level.TileType) {

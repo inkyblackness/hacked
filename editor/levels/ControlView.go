@@ -298,11 +298,8 @@ func (view *ControlView) renderTextureAnimations(lvl *level.Level, readOnly bool
 }
 
 func (view *ControlView) editingAllowed(id int) bool {
-	gameStateData := view.mod.ModifiedBlocks(resource.LangAny, ids.GameState)
-	isSavegame := (len(gameStateData) == 1) && (len(gameStateData[0]) == archive.GameStateSize) && (gameStateData[0][0x009C] > 0)
 	moddedLevel := len(view.mod.ModifiedBlocks(resource.LangAny, ids.LevelResourcesStart.Plus(lvlids.PerLevel*id+lvlids.FirstUsed))) > 0
-
-	return moddedLevel && !isSavegame
+	return moddedLevel
 }
 
 func (view *ControlView) renderSliderInt(readOnly bool, label string, selectedValue int,
