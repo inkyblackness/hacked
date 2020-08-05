@@ -3,7 +3,7 @@ package project
 import (
 	"time"
 
-	"github.com/inkyblackness/imgui-go"
+	"github.com/inkyblackness/imgui-go/v2"
 	"github.com/sqweek/dialog"
 
 	"github.com/inkyblackness/hacked/ss1/resource"

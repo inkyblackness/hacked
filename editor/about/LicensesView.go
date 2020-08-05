@@ -1,7 +1,7 @@
 package about
 
 import (
-	"github.com/inkyblackness/imgui-go"
+	"github.com/inkyblackness/imgui-go/v2"
 )
 
 // LicensesView handles the about display.

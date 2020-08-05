@@ -1,7 +1,7 @@
 package project
 
 import (
-	"github.com/inkyblackness/imgui-go"
+	"github.com/inkyblackness/imgui-go/v2"
 
 	"github.com/inkyblackness/hacked/ui/gui"
 )

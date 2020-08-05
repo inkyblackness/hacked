@@ -1,7 +1,7 @@
 package gui
 
 import (
-	"github.com/inkyblackness/imgui-go"
+	"github.com/inkyblackness/imgui-go/v2"
 )
 
 // StepSliderIntV creates a SliderInt with additional buttons to make single digit steps.

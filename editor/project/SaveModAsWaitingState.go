@@ -4,7 +4,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/inkyblackness/imgui-go"
+	"github.com/inkyblackness/imgui-go/v2"
 	"github.com/sqweek/dialog"
 
 	"github.com/inkyblackness/hacked/ui/gui"

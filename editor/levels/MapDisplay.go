@@ -5,7 +5,7 @@ import (
 	"sort"
 
 	mgl "github.com/go-gl/mathgl/mgl32"
-	"github.com/inkyblackness/imgui-go"
+	"github.com/inkyblackness/imgui-go/v2"
 
 	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/graphics"

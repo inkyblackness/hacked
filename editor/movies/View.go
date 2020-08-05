@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/asticode/go-astisub"
-	"github.com/inkyblackness/imgui-go"
+	"github.com/inkyblackness/imgui-go/v2"
 
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"
