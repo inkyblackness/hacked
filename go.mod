@@ -12,5 +12,5 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.0.3
 	github.com/sqweek/dialog v0.0.0-20190209060818-302ed2f52949
 	github.com/stretchr/testify v1.4.0
-	golang.org/x/image v0.0.0-20190227222117-0694c2d4d067 // indirect
+	golang.org/x/image v0.0.0-20190227222117-0694c2d4d067
 )

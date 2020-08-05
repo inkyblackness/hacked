@@ -3,12 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
+	_ "image/gif"
+	_ "image/png"
 	"os"
 	"runtime/pprof"
 	"time"
 
-	_ "image/gif"
-	_ "image/png"
+	_ "golang.org/x/image/bmp"
 
 	"github.com/inkyblackness/hacked/crash"
 	"github.com/inkyblackness/hacked/editor"

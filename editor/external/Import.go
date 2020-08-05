@@ -49,8 +49,8 @@ func ImportAudio(machine gui.ModalStateMachine, callback func(l8 audio.L8)) {
 
 // ImportImage is a helper to handle image file import. The callback is called with the loaded image.
 func ImportImage(machine gui.ModalStateMachine, paletteRetriever func() (bitmap.Palette, error), callback func(bitmap.Bitmap)) {
-	info := "File should be either a PNG or a GIF file.\nPaletted images matching game palette are taken 1:1,\nothers are mapped closest fitting."
-	types := []TypeInfo{{Title: "Image files (*.gif, *.png)", Extensions: []string{"png", "gif"}}}
+	info := "File should be either a BMP, GIF, or a PNG file.\nPaletted images matching game palette are taken 1:1,\nothers are mapped closest fitting."
+	types := []TypeInfo{{Title: "Image files (*.bmp, *.gif, *.png)", Extensions: []string{"bmp", "gif", "png"}}}
 	var fileHandler func(string)
 
 	fileHandler = func(filename string) {
