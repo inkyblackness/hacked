@@ -59,10 +59,14 @@ func (state *loadModWaitingState) HandleFiles(names []string) {
 
 	staging.stageAll(names)
 
-	if len(staging.resources) > 0 {
+	resourcesToTake := staging.resources
+	if (len(resourcesToTake) == 0) && (len(staging.savegames) == 1) {
+		resourcesToTake = staging.savegames
+	}
+	if len(resourcesToTake) > 0 {
 		var locs []*world.LocalizedResources
 
-		for filename, viewer := range staging.resources {
+		for filename, viewer := range resourcesToTake {
 			lang := ids.LocalizeFilename(filename)
 			loc := &world.LocalizedResources{
 				Filename: filename,
