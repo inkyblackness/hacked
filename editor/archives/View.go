@@ -2,6 +2,7 @@ package archives
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/inkyblackness/imgui-go/v2"
 
@@ -117,16 +118,35 @@ func (view *View) renderLevelsContent() {
 
 func (view *View) renderGameStateContent() {
 	imgui.PushItemWidth(-260 * view.guiScale)
-	rawGameState := view.mod.ModifiedBlock(resource.LangAny, ids.GameState, 0)
+	if imgui.Button("Remove") {
+		view.requestSetGameState(archive.ZeroGameStateData())
+	}
+	imgui.SameLine()
+	if imgui.Button("Reset") {
+		view.requestSetGameState(archive.DefaultGameStateData())
+	}
+
+	rawGameState := view.gameStateData()
 	if len(rawGameState) > 0 {
 		state := archive.NewGameState(rawGameState)
 
-		readOnly := true
+		readOnly := false
 		view.createPropertyControls(readOnly, state.Instance, func(key string, modifier func(uint32) uint32) {
-
+			view.setInterpreterValueKeyed(state.Instance, key, modifier)
+			view.requestSetGameState(state.Raw())
 		})
 	}
 	imgui.PopItemWidth()
+}
+
+func (view *View) gameStateData() []byte {
+	raw := view.mod.ModifiedBlock(resource.LangAny, ids.GameState, 0)
+	if len(raw) == 0 {
+		return nil
+	}
+	copied := make([]byte, len(raw))
+	copy(copied, raw)
+	return copied
 }
 
 func (view *View) hasGameStateInMod() bool {
@@ -148,7 +168,7 @@ func (view *View) requestClearLevel(id int) {
 
 		if !view.hasGameStateInMod() {
 			command.newData[ids.ArchiveName] = text.DefaultCodepage().Encode("Starting Game | by InkyBlackness HackEd")
-			command.newData[ids.GameState] = make([]byte, archive.GameStateSize)
+			command.newData[ids.GameState] = archive.ZeroGameStateData()
 		}
 
 		param := level.EmptyLevelParameters{
@@ -200,6 +220,20 @@ func (view *View) requestRemoveLevel(id int) {
 	}
 }
 
+func (view *View) requestSetGameState(newData []byte) {
+	command := setArchiveDataCommand{
+		model:         &view.model,
+		selectedLevel: view.model.selectedLevel,
+		newData:       make(map[resource.ID][]byte),
+		oldData:       make(map[resource.ID][]byte),
+	}
+
+	command.oldData[ids.GameState] = view.gameStateData()
+	command.newData[ids.GameState] = newData
+
+	view.commander.Queue(command)
+}
+
 func (view *View) createPropertyControls(readOnly bool, rootInterpreter *interpreters.Instance,
 	updater func(string, func(uint32) uint32)) {
 	objTypeRenderer := values.ObjectTypeControlRenderer{
@@ -231,4 +265,16 @@ func (view *View) createPropertyControls(readOnly bool, rootInterpreter *interpr
 		}
 	}
 	processInterpreter("", rootInterpreter)
+}
+
+func (view *View) setInterpreterValueKeyed(instance *interpreters.Instance, key string, modifier func(uint32) uint32) {
+	resolvedInterpreter := instance
+	keys := strings.Split(key, ".")
+	keyCount := len(keys)
+	if len(keys) > 1 {
+		for _, subKey := range keys[:keyCount-1] {
+			resolvedInterpreter = resolvedInterpreter.Refined(subKey)
+		}
+	}
+	resolvedInterpreter.Set(keys[keyCount-1], modifier(resolvedInterpreter.Get(keys[keyCount-1])))
 }
