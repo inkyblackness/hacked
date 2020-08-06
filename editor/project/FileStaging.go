@@ -8,12 +8,14 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/resource/lgres"
 	"github.com/inkyblackness/hacked/ss1/serial"
 	"github.com/inkyblackness/hacked/ss1/world"
+	"github.com/inkyblackness/hacked/ss1/world/ids"
 )
 
 type fileStaging struct {
@@ -84,7 +86,7 @@ func (staging *fileStaging) stage(name string, isOnlyStagedFile bool) {
 		filename := filepath.Base(name)
 		if (err == nil) && (isOnlyStagedFile || fileAllowlist.Matches(filename)) {
 			staging.modify(func() {
-				if world.IsSavegame(reader) {
+				if stateView, stateErr := reader.View(ids.GameState); (stateErr != nil) && archive.IsSavegame(stateView) {
 					staging.savegames[filename] = reader
 				} else {
 					staging.resources[filename] = reader

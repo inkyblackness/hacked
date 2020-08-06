@@ -37,6 +37,7 @@ var gameStateDesc = interpreters.New().
 	With("Difficulty: Mission", 0x0016, 1).As(interpreters.RangedValue(0, 3)).
 	With("Difficulty: Puzzle", 0x0017, 1).As(interpreters.RangedValue(0, 3)).
 	With("Difficulty: Cyber", 0x0018, 1).As(interpreters.RangedValue(0, 3)).
+	With("Game time", 0x001C, 4).As(interpreters.SpecialValue("Internal")).
 	With("Current Level", 0x0039, 1).As(interpreters.RangedValue(0, 15)).
 	With("Health", 0x009C, 1).As(interpreters.FormattedRangedValue(0, 255,
 	func(value int) string {
@@ -83,6 +84,11 @@ var gameStateDesc = interpreters.New().
 // NewGameState() returns a GameState instance for given raw data.
 func NewGameState(raw []byte) GameState {
 	return GameState{Instance: gameStateDesc.For(raw)}
+}
+
+// IsSavegame returns true if the state describes one during a running game.
+func (state *GameState) IsSavegame() bool {
+	return state.Get("Game time") > 0
 }
 
 // HackerName returns the name interpreted with given codepage.
