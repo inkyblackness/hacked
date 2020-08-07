@@ -2,8 +2,12 @@ package values
 
 import (
 	"fmt"
+	"image/color"
+	"math"
 	"sort"
 	"strings"
+
+	"github.com/inkyblackness/imgui-go/v2"
 
 	"github.com/inkyblackness/hacked/ss1/content/interpreters"
 	"github.com/inkyblackness/hacked/ss1/content/object"
@@ -119,6 +123,51 @@ func StandardSimplifier(readOnly bool, multiple bool, fullKey string, unifier Un
 		}
 	})
 
+	simplifier.SetRotationHandler(func(minValue, maxValue int64) {
+		calcValuePercent := func(value int) float64 {
+			valueRange := (maxValue - minValue) + 1
+			return float64(value) / float64(valueRange)
+		}
+		RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
+			func(u Unifier) int {
+				unifiedValue := u.Unified().(int32)
+				return int(unifiedValue)
+			},
+			func(value int) string {
+				valuePercent := calcValuePercent(value)
+				result := fmt.Sprintf("%3.02f°  - raw: %%d", valuePercent*360.0)
+				return result
+			},
+			int(minValue), int(maxValue),
+			func(newValue int) {
+				updater(func(oldValue uint32) uint32 { return uint32(newValue) })
+			})
+
+		if (imgui.IsItemFocused() || imgui.IsItemActive() || imgui.IsItemHovered()) && unifier.IsUnique() {
+			valuePercent := calcValuePercent(int(unifier.Unified().(int32)))
+			valueRadian := valuePercent * (math.Pi * 2)
+
+			lineColor := imgui.Packed(color.RGBA{R: 0x21, G: 0xFF, B: 0x43, A: 0xFF}) // color copied from style.
+			lineThickness := float32(4.0)
+			imgui.BeginTooltip()
+			imgui.Dummy(imgui.Vec2{X: imgui.TextLineHeightWithSpacing() * 2, Y: imgui.TextLineHeightWithSpacing() * 2})
+			dl := imgui.WindowDrawList()
+			winTopLeft := imgui.WindowPos()
+			winSize := imgui.WindowSize()
+			center := winTopLeft.Plus(winSize.Times(0.5))
+			circleRadius := ((winSize.X / 2) * 5) / 6
+			dl.AddCircleV(center, circleRadius, lineColor, 100, lineThickness)
+			// TODO: This code needs to be generalized to allow for any rotation, not just specialized for Hacker-Yaw.
+			targetX := 1.0
+			targetY := 0.0
+			dl.AddLineV(center, imgui.Vec2{
+				X: center.X + float32((float64(circleRadius)*targetX)*math.Cos(valueRadian)-(float64(circleRadius)*targetY)*math.Sin(valueRadian)),
+				Y: center.Y - float32((float64(circleRadius)*targetY)*math.Cos(valueRadian)+(float64(circleRadius)*targetX)*math.Sin(valueRadian)),
+			}, lineColor, lineThickness)
+			imgui.EndTooltip()
+		}
+	})
+
 	simplifier.SetSpecialHandler("ObjectTriple", func() {
 		var classNames [object.ClassCount]string
 		for index, class := range object.Classes() {
@@ -147,6 +196,7 @@ func StandardSimplifier(readOnly bool, multiple bool, fullKey string, unifier Un
 	simplifier.SetSpecialHandler("Mistake", func() {})
 	simplifier.SetSpecialHandler("Ignored", func() {})
 	simplifier.SetSpecialHandler("Unknown", func() {})
+	simplifier.SetSpecialHandler("Internal", func() {})
 
 	return simplifier
 }

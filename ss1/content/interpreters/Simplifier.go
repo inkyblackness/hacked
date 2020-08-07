@@ -24,6 +24,9 @@ type ObjectIDHandler func()
 // SpecialHandler is for rare occasions.
 type SpecialHandler func()
 
+// RotationHandler is for circular values.
+type RotationHandler func(minValue, maxValue int64)
+
 func basicToString(value int) string {
 	return ""
 }
@@ -61,6 +64,13 @@ func ObjectID() FieldRange {
 	}
 }
 
+// RotationValue creates a field range for a rotational property.
+func RotationValue(minValue, maxValue int64) FieldRange {
+	return func(simpl *Simplifier) bool {
+		return simpl.rotation(minValue, maxValue)
+	}
+}
+
 // SpecialValue creates a field range for special fields.
 // Currently known special values:
 // * BinaryCodedDecimal - for keypads storing their number as BCD
@@ -76,6 +86,7 @@ func ObjectID() FieldRange {
 // * Unknown - It is unclear whether this field would have any effect, none identified so far
 // * Ignored - Although values have been found in this field, they don't appear to have any effect
 // * Mistake - It is assumed that these values should have been placed somewhere else. Typical example: Container content
+// * Internal - Fields that are handled mainly by the engine and shouldn't be modified
 func SpecialValue(specialType string) FieldRange {
 	return func(simpl *Simplifier) bool {
 		return simpl.specialValue(specialType)
@@ -88,6 +99,7 @@ type Simplifier struct {
 	enumValueHandler EnumValueHandler
 	bitfieldHandler  BitfieldHandler
 	objectIDHandler  ObjectIDHandler
+	rotationHandler  RotationHandler
 	specialHandler   map[string]SpecialHandler
 }
 
@@ -162,6 +174,18 @@ func (simpl *Simplifier) specialValue(specialType string) (result bool) {
 	handler, existing := simpl.specialHandler[specialType]
 	if existing && (handler != nil) {
 		handler()
+		result = true
+	}
+	return
+}
+
+func (simpl *Simplifier) SetRotationHandler(handler RotationHandler) {
+	simpl.rotationHandler = handler
+}
+
+func (simpl *Simplifier) rotation(minValue, maxValue int64) (result bool) {
+	if simpl.rotationHandler != nil {
+		simpl.rotationHandler(minValue, maxValue)
 		result = true
 	}
 	return
