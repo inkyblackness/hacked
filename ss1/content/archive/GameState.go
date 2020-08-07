@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/interpreters"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 )
@@ -132,6 +133,18 @@ func (state *GameState) SetHackerName(name string, cp text.Codepage) {
 	copy(raw[:stateHackerNameSize], zeroName[:])
 	copy(raw[:stateHackerNameSize], cp.Encode(name))
 	raw[stateHackerNameSize-1] = 0
+}
+
+// CurrentLevel returns the number of the level hacker is currently in.
+func (state GameState) CurrentLevel() int {
+	return int(state.Get("Current Level"))
+}
+
+// HackerPosition returns the rough X/Y location on the map.
+func (state GameState) HackerMapPosition() (level.Coordinate, level.Coordinate) {
+	x := state.Get("Hacker Position X")
+	y := state.Get("Hacker Position Y")
+	return level.CoordinateAt(byte(x>>16), byte(x>>8)), level.CoordinateAt(byte(y>>16), byte(y>>8))
 }
 
 // BooleanVar returns the state of the boolean variable at given index. Unsupported indices return 0.

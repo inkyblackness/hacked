@@ -87,8 +87,8 @@ func (view *View) renderLevelsContent() {
 		inMod := view.hasLevelInMod(id)
 		info := fmt.Sprintf("%d", id)
 		if !inMod {
-			if (id == world.StartingLevel) && view.hasGameStateInMod() {
-				// Starting level should really be in a new archive.
+			if view.hasGameStateInMod() && (id == view.effectiveGameState().CurrentLevel()) {
+				// current level should really be in the archive.
 				imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1.0, Y: 0.0, Z: 0.0, W: 1.0})
 			} else {
 				imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1.0, Y: 1.0, Z: 1.0, W: 0.8})
@@ -108,10 +108,8 @@ func (view *View) renderLevelsContent() {
 	if imgui.ButtonV("Clear", imgui.Vec2{X: -1, Y: 0}) {
 		view.requestClearLevel(view.model.selectedLevel)
 	}
-	if view.model.selectedLevel != world.StartingLevel {
-		if imgui.ButtonV("Remove", imgui.Vec2{X: -1, Y: 0}) {
-			view.requestRemoveLevel(view.model.selectedLevel)
-		}
+	if imgui.ButtonV("Remove", imgui.Vec2{X: -1, Y: 0}) {
+		view.requestRemoveLevel(view.model.selectedLevel)
 	}
 	imgui.EndGroup()
 }
@@ -125,13 +123,15 @@ func (view *View) renderGameStateContent() {
 
 	imgui.PushItemWidth(-260 * view.guiScale)
 	if (state != nil) && !state.IsSavegame() {
+		resetText := "Override"
 		if !state.IsDefaulting() {
 			if imgui.Button("Remove") {
 				view.requestSetGameState(archive.ZeroGameStateData())
 			}
 			imgui.SameLine()
+			resetText = "Reset"
 		}
-		if imgui.Button("Reset") {
+		if imgui.Button(resetText) {
 			view.requestSetGameState(archive.DefaultGameStateData())
 		}
 		if imgui.IsItemHovered() {
@@ -164,6 +164,18 @@ func (view *View) gameStateData() []byte {
 	return copied
 }
 
+func (view *View) effectiveGameState() *archive.GameState {
+	raw := view.gameStateData()
+	if raw == nil {
+		return archive.NewGameState(archive.DefaultGameStateData())
+	}
+	state := archive.NewGameState(raw)
+	if state.IsDefaulting() {
+		return archive.NewGameState(archive.DefaultGameStateData())
+	}
+	return state
+}
+
 func (view *View) hasGameStateInMod() bool {
 	return len(view.mod.ModifiedBlocks(resource.LangAny, ids.GameState)) > 0
 }
@@ -190,15 +202,20 @@ func (view *View) requestClearLevel(id int) {
 			Cyberspace:  world.IsConsideredCyberspaceByDefault(id),
 			MapModifier: func(level.TileMap) {},
 		}
-		if id == world.StartingLevel {
+		effectiveGameState := view.effectiveGameState()
+		if id == effectiveGameState.CurrentLevel() {
+			posX, posY := effectiveGameState.HackerMapPosition()
 			param.MapModifier = func(m level.TileMap) {
-				m.Tile(world.StartingTileX, world.StartingTileY).Type = level.TileTypeOpen
+				m.Tile(int(posX.Tile()), int(posY.Tile())).Type = level.TileTypeOpen
 			}
 		}
 
 		levelData := level.EmptyLevelData(param)
 		levelIDBegin := ids.LevelResourcesStart.Plus(lvlids.PerLevel * id)
 		for offset, newData := range &levelData {
+			if (offset < lvlids.FirstUsed) || (offset >= lvlids.FirstUnused) {
+				continue
+			}
 			resourceID := levelIDBegin.Plus(offset)
 			oldData := view.mod.ModifiedBlock(resource.LangAny, resourceID, 0)
 			if len(oldData) > 0 {
