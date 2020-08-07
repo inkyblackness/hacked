@@ -117,25 +117,40 @@ func (view *View) renderLevelsContent() {
 }
 
 func (view *View) renderGameStateContent() {
-	imgui.PushItemWidth(-260 * view.guiScale)
-	if imgui.Button("Remove") {
-		view.requestSetGameState(archive.ZeroGameStateData())
-	}
-	imgui.SameLine()
-	if imgui.Button("Reset") {
-		view.requestSetGameState(archive.DefaultGameStateData())
-	}
-
 	rawGameState := view.gameStateData()
+	var state *archive.GameState
 	if len(rawGameState) > 0 {
-		state := archive.NewGameState(rawGameState)
-
-		readOnly := false
-		view.createPropertyControls(readOnly, state.Instance, func(key string, modifier func(uint32) uint32) {
-			view.setInterpreterValueKeyed(state.Instance, key, modifier)
-			view.requestSetGameState(state.Raw())
-		})
+		state = archive.NewGameState(rawGameState)
 	}
+
+	imgui.PushItemWidth(-260 * view.guiScale)
+	if (state != nil) && !state.IsSavegame() {
+		if !state.IsDefaulting() {
+			if imgui.Button("Remove") {
+				view.requestSetGameState(archive.ZeroGameStateData())
+			}
+			imgui.SameLine()
+		}
+		if imgui.Button("Reset") {
+			view.requestSetGameState(archive.DefaultGameStateData())
+		}
+		if imgui.IsItemHovered() {
+			imgui.BeginTooltip()
+			imgui.SetTooltip("Values of new game archives are only considered by special engines.")
+			imgui.EndTooltip()
+		}
+	}
+
+	readOnly := false
+	if (state == nil) || state.IsDefaulting() {
+		state = archive.NewGameState(archive.DefaultGameStateData())
+		readOnly = true
+	}
+	view.createPropertyControls(readOnly, state.Instance, func(key string, modifier func(uint32) uint32) {
+		view.setInterpreterValueKeyed(state.Instance, key, modifier)
+		view.requestSetGameState(state.Raw())
+	})
+
 	imgui.PopItemWidth()
 }
 
