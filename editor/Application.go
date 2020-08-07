@@ -421,6 +421,10 @@ func (app *Application) initGuiStyle() {
 	style.SetColor(imgui.StyleColorResizeGripActive, colorTripleDark(0.95))
 	style.SetColor(imgui.StyleColorTextSelectedBg, colorTripleDark(0.35))
 
+	style.SetColor(imgui.StyleColorTab, colorTripleLight(0.54))
+	style.SetColor(imgui.StyleColorTabHovered, colorTripleLight(0.75))
+	style.SetColor(imgui.StyleColorTabActive, colorTripleLight(1.0))
+
 	style.SetColor(imgui.StyleColorSliderGrab, colorDoubleFull(1.0))
 	style.SetColor(imgui.StyleColorButtonActive, colorDoubleFull(1.0))
 	style.SetColor(imgui.StyleColorSeparatorHovered, colorDoubleFull(0.78))
