@@ -2,6 +2,7 @@ package archive
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/inkyblackness/hacked/ss1/content/interpreters"
 	"github.com/inkyblackness/hacked/ss1/content/text"
@@ -23,8 +24,9 @@ const (
 	messageStatusReceived = 0x80
 	messageStatusRead     = 0x40
 
-	// BooleanVarCount is the number of avaiable boolean variables.
+	// BooleanVarCount is the number of available boolean variables.
 	BooleanVarCount = 512
+	// IntegerVarCount is the number of available integer variables.
 	IntegerVarCount = 64
 )
 
@@ -79,16 +81,43 @@ var gameStateDesc = interpreters.New().
 	With("Hardware: Enviro suit", 0x2F4, 1).As(interpreters.RangedValue(0, 4)).
 	With("Hardware: Booster", 0x2F5, 1).As(interpreters.RangedValue(0, 4)).
 	With("Hardware: Jump jet", 0x2F6, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: System status", 0x2F7, 1).As(interpreters.RangedValue(0, 4))
+	With("Hardware: System status", 0x2F7, 1).As(interpreters.RangedValue(0, 4)).
+	With("Hacker Position X", 0x051F, 4).As(interpreters.FormattedRangedValue(0x10000, 0x3FFFFF,
+	func(value int) string {
+		return fmt.Sprintf("%2.03f", float32(value)/0x10000)
+	})).
+	With("Hacker Position Y", 0x0523, 4).As(interpreters.FormattedRangedValue(0x10000, 0x3FFFFF,
+	func(value int) string {
+		return fmt.Sprintf("%2.03f", float32(value)/0x10000)
+	})).
+	With("Hacker Yaw", 0x052B, 4).As(interpreters.RotationValue(0, edmsFullCircle()))
+
+func edmsFullCircle() int64 {
+	full := math.Pi * 2 * float64(0x10000)
+	return int64(full) - 1
+}
 
 // NewGameState() returns a GameState instance for given raw data.
-func NewGameState(raw []byte) GameState {
-	return GameState{Instance: gameStateDesc.For(raw)}
+func NewGameState(raw []byte) *GameState {
+	return &GameState{Instance: gameStateDesc.For(raw)}
 }
 
 // IsSavegame returns true if the state describes one during a running game.
 func (state *GameState) IsSavegame() bool {
+	// Picking the right property is tricky. Most properties could be pre-initialized
+	// by an archive as well.
+	// For now, assume the "game time" will not be touched by initial archives.
+	// A possible other approach would be to take the "version" field, which
+	// is always set when a savegame is created, but is zero in the original. Yet,
+	// it is not clear whether or not a (pedantic) engine would respect this field and
+	// ignore data when it's zero.
 	return state.Get("Game time") > 0
+}
+
+// IsDefaulting returns true if the state describes an archive from which the engine
+// should initialize the state for a new game.
+func (state *GameState) IsDefaulting() bool {
+	return state.Get("Hacker Position X") == 0
 }
 
 // HackerName returns the name interpreted with given codepage.
@@ -171,8 +200,8 @@ func DefaultGameStateData() []byte {
 		data[0x04DF+(i*2)+1] = 70
 	}
 
-	setInitialCitadelHackerState(&state)
-	setInitialCitadelVariables(&state)
+	setInitialCitadelHackerState(state)
+	setInitialCitadelVariables(state)
 
 	return data
 }
