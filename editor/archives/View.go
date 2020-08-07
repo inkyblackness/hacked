@@ -115,61 +115,78 @@ func (view *View) renderLevelsContent() {
 }
 
 func (view *View) renderGameStateContent() {
-	rawGameState := view.gameStateData()
-	var state *archive.GameState
-	if len(rawGameState) > 0 {
-		state = archive.NewGameState(rawGameState)
-	}
+	data := view.gameStateData()
+	modStateIsDefaulting := false
 
 	imgui.PushItemWidth(-260 * view.guiScale)
-	if (state != nil) && !state.IsSavegame() {
-		resetText := "Override"
-		if !state.IsDefaulting() {
-			if imgui.Button("Remove") {
-				view.requestSetGameState(archive.ZeroGameStateData())
+	if data.isPresent() {
+		modState := data.toInstance()
+		if !modState.IsSavegame() {
+			modStateIsDefaulting = modState.IsDefaulting()
+			resetText := "Override"
+			if !modStateIsDefaulting {
+				if imgui.Button("Remove") {
+					view.requestSetGameState(archive.ZeroGameStateData())
+				}
+				imgui.SameLine()
+				resetText = "Reset"
 			}
-			imgui.SameLine()
-			resetText = "Reset"
-		}
-		if imgui.Button(resetText) {
-			view.requestSetGameState(archive.DefaultGameStateData())
-		}
-		if imgui.IsItemHovered() {
-			imgui.BeginTooltip()
-			imgui.SetTooltip("Values of new game archives are only considered by special engines.")
-			imgui.EndTooltip()
+			if imgui.Button(resetText) {
+				view.requestSetGameState(archive.DefaultGameStateData())
+			}
+			if imgui.IsItemHovered() {
+				imgui.BeginTooltip()
+				imgui.SetTooltip("Values of new game archives are only considered by special engines.")
+				imgui.EndTooltip()
+			}
 		}
 	}
 
 	readOnly := false
-	if (state == nil) || state.IsDefaulting() {
-		state = archive.NewGameState(archive.DefaultGameStateData())
+	var editState *archive.GameState
+	if !data.isPresent() || modStateIsDefaulting {
+		editState = archive.NewGameState(archive.DefaultGameStateData())
 		readOnly = true
+	} else {
+		editState = data.imported().toInstance()
 	}
-	view.createPropertyControls(readOnly, state.Instance, func(key string, modifier func(uint32) uint32) {
-		view.setInterpreterValueKeyed(state.Instance, key, modifier)
-		view.requestSetGameState(state.Raw())
+	view.createPropertyControls(readOnly, editState.Instance, func(key string, modifier func(uint32) uint32) {
+		view.setInterpreterValueKeyed(editState.Instance, key, modifier)
+		view.requestSetGameState(editState.Raw())
 	})
 
 	imgui.PopItemWidth()
 }
 
-func (view *View) gameStateData() []byte {
+type gameStateData struct{ raw []byte }
+
+func (data gameStateData) isPresent() bool {
+	return len(data.raw) > 0
+}
+
+func (data gameStateData) toInstance() *archive.GameState {
+	return archive.NewGameState(data.raw)
+}
+
+func (data gameStateData) snapshot() gameStateData {
+	copied := make([]byte, len(data.raw))
+	copy(copied, data.raw)
+	return gameStateData{raw: copied}
+}
+
+func (data gameStateData) imported() gameStateData {
+	copied := archive.ZeroGameStateData()
+	copy(copied, data.raw)
+	return gameStateData{raw: copied}
+}
+
+func (view *View) gameStateData() gameStateData {
 	raw := view.mod.ModifiedBlock(resource.LangAny, ids.GameState, 0)
-	if len(raw) == 0 {
-		return nil
-	}
-	copied := make([]byte, len(raw))
-	copy(copied, raw)
-	return copied
+	return gameStateData{raw: raw}
 }
 
 func (view *View) effectiveGameState() *archive.GameState {
-	raw := view.gameStateData()
-	if raw == nil {
-		return archive.NewGameState(archive.DefaultGameStateData())
-	}
-	state := archive.NewGameState(raw)
+	state := view.gameStateData().toInstance()
 	if state.IsDefaulting() {
 		return archive.NewGameState(archive.DefaultGameStateData())
 	}
@@ -260,7 +277,7 @@ func (view *View) requestSetGameState(newData []byte) {
 		oldData:       make(map[resource.ID][]byte),
 	}
 
-	command.oldData[ids.GameState] = view.gameStateData()
+	command.oldData[ids.GameState] = view.gameStateData().snapshot().raw
 	command.newData[ids.GameState] = newData
 
 	view.commander.Queue(command)
