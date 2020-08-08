@@ -64,7 +64,9 @@ func (staging *fileStaging) stage(name string, isOnlyStagedFile bool) {
 		staging.markFailedFile()
 		return
 	}
-	defer func() { _ = file.Close() }()
+	defer func() {
+		_ = file.Close() // nolint: gas
+	}()
 
 	if fileInfo.IsDir() {
 		if isOnlyStagedFile {
@@ -87,7 +89,7 @@ func (staging *fileStaging) stage(name string, isOnlyStagedFile bool) {
 		if (err == nil) && (isOnlyStagedFile || fileAllowlist.Matches(filename)) {
 			location := world.FileLocation{DirPath: filepath.Dir(name), Name: filename}
 			staging.modify(func() {
-				if stateView, stateErr := reader.View(ids.GameState); (stateErr != nil) && archive.IsSavegame(stateView) {
+				if stateView, stateErr := reader.View(ids.GameState); (stateErr == nil) && archive.IsSavegame(stateView) {
 					staging.savegames[location] = reader
 				} else {
 					staging.resources[location] = reader
