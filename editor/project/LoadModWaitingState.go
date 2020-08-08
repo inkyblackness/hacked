@@ -65,11 +65,18 @@ func (state *loadModWaitingState) HandleFiles(names []string) {
 	}
 	if len(resourcesToTake) > 0 {
 		var locs []*world.LocalizedResources
+		modPath := ""
 
-		for filename, viewer := range resourcesToTake {
-			lang := ids.LocalizeFilename(filename)
+		for location := range resourcesToTake {
+			if (len(modPath) == 0) || (len(location.DirPath) < len(modPath)) {
+				modPath = location.DirPath
+			}
+		}
+
+		for location, viewer := range resourcesToTake {
+			lang := ids.LocalizeFilename(location.Name)
 			loc := &world.LocalizedResources{
-				Filename: filename,
+				File:     location,
 				Language: lang,
 			}
 			for _, id := range viewer.IDs() {
@@ -83,7 +90,7 @@ func (state *loadModWaitingState) HandleFiles(names []string) {
 		}
 
 		state.machine.SetState(nil)
-		state.view.requestLoadMod(names[0], locs, staging.objectProperties, staging.textureProperties)
+		state.view.requestLoadMod(modPath, locs, staging.objectProperties, staging.textureProperties)
 	} else {
 		state.failureTime = time.Now()
 	}

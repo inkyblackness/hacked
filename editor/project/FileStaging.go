@@ -22,8 +22,8 @@ type fileStaging struct {
 	resultMutex sync.Mutex
 
 	failedFiles int
-	savegames   map[string]resource.Viewer
-	resources   map[string]resource.Viewer
+	savegames   map[world.FileLocation]resource.Viewer
+	resources   map[world.FileLocation]resource.Viewer
 
 	objectProperties  object.PropertiesTable
 	textureProperties texture.PropertiesList
@@ -31,8 +31,8 @@ type fileStaging struct {
 
 func newFileStaging() *fileStaging {
 	return &fileStaging{
-		resources: make(map[string]resource.Viewer),
-		savegames: make(map[string]resource.Viewer),
+		resources: make(map[world.FileLocation]resource.Viewer),
+		savegames: make(map[world.FileLocation]resource.Viewer),
 	}
 }
 
@@ -64,7 +64,7 @@ func (staging *fileStaging) stage(name string, isOnlyStagedFile bool) {
 		staging.markFailedFile()
 		return
 	}
-	defer file.Close() // nolint: errcheck
+	defer func() { _ = file.Close() }()
 
 	if fileInfo.IsDir() {
 		if isOnlyStagedFile {
@@ -85,11 +85,12 @@ func (staging *fileStaging) stage(name string, isOnlyStagedFile bool) {
 		reader, err := lgres.ReaderFrom(bytes.NewReader(fileData))
 		filename := filepath.Base(name)
 		if (err == nil) && (isOnlyStagedFile || fileAllowlist.Matches(filename)) {
+			location := world.FileLocation{DirPath: filepath.Dir(name), Name: filename}
 			staging.modify(func() {
 				if stateView, stateErr := reader.View(ids.GameState); (stateErr != nil) && archive.IsSavegame(stateView) {
-					staging.savegames[filename] = reader
+					staging.savegames[location] = reader
 				} else {
-					staging.resources[filename] = reader
+					staging.resources[location] = reader
 				}
 			})
 		}

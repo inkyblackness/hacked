@@ -12,7 +12,7 @@ import (
 
 // LocalizedResources associates a language with a resource store under a specific filename.
 type LocalizedResources struct {
-	Filename string
+	File     FileLocation
 	Language resource.Language
 	Store    resource.Store
 }
@@ -36,7 +36,7 @@ type ModData struct {
 func (data *ModData) SetResourceBlock(lang resource.Language, id resource.ID, index int, blockData []byte) {
 	loc, res := data.ensureResource(lang, id)
 	res.SetBlock(index, blockData)
-	data.notifyFileChanged(loc.Filename)
+	data.notifyFileChanged(loc.File.Name)
 }
 
 // PatchResourceBlock modifies an existing block.
@@ -47,7 +47,7 @@ func (data *ModData) PatchResourceBlock(lang resource.Language, id resource.ID, 
 	raw, err := res.BlockRaw(index)
 	if (err == nil) && (len(raw) == expectedLength) {
 		_ = rle.Decompress(bytes.NewReader(patch), raw)
-		data.notifyFileChanged(loc.Filename)
+		data.notifyFileChanged(loc.File.Name)
 	}
 }
 
@@ -56,14 +56,14 @@ func (data *ModData) PatchResourceBlock(lang resource.Language, id resource.ID, 
 func (data *ModData) SetResourceBlocks(lang resource.Language, id resource.ID, blocks [][]byte) {
 	loc, res := data.ensureResource(lang, id)
 	res.Set(blocks)
-	data.notifyFileChanged(loc.Filename)
+	data.notifyFileChanged(loc.File.Name)
 }
 
 // DelResource removes a resource from the mod in the given language.
 func (data *ModData) DelResource(lang resource.Language, id resource.ID) {
 	for _, loc := range data.LocalizedResources {
 		if (loc.Language == lang) && loc.Store.Del(id) {
-			data.notifyFileChanged(loc.Filename)
+			data.notifyFileChanged(loc.File.Name)
 		}
 	}
 }
@@ -126,12 +126,12 @@ func (data *ModData) newResource(lang resource.Language, id resource.ID) (*Local
 
 func (data *ModData) ensureStore(lang resource.Language, filename string) *LocalizedResources {
 	for _, loc := range data.LocalizedResources {
-		if loc.Language == lang && loc.Filename == filename {
+		if loc.Language == lang && loc.File.Name == filename {
 			return loc
 		}
 	}
 	loc := &LocalizedResources{
-		Filename: filename,
+		File:     FileLocation{DirPath: ".", Name: filename},
 		Language: lang,
 	}
 	data.LocalizedResources = append(data.LocalizedResources, loc)

@@ -27,8 +27,8 @@ func saveModResourcesTo(mod *world.Mod, modPath string) error {
 	}
 
 	for _, loc := range localized {
-		if shallBeSaved(loc.Filename) {
-			err := saveResourcesTo(loc.Store, filepath.Join(modPath, loc.Filename))
+		if shallBeSaved(loc.File.Name) {
+			err := saveResourcesTo(loc.Store, loc.File.AbsolutePathFrom(modPath))
 			if err != nil {
 				return err
 			}
