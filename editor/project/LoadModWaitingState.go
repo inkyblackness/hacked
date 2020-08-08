@@ -60,8 +60,10 @@ func (state *loadModWaitingState) HandleFiles(names []string) {
 	staging.stageAll(names)
 
 	resourcesToTake := staging.resources
+	isSavegame := false
 	if (len(resourcesToTake) == 0) && (len(staging.savegames) == 1) {
 		resourcesToTake = staging.savegames
+		isSavegame = true
 	}
 	if len(resourcesToTake) > 0 {
 		var locs []*world.LocalizedResources
@@ -75,8 +77,13 @@ func (state *loadModWaitingState) HandleFiles(names []string) {
 
 		for location, viewer := range resourcesToTake {
 			lang := ids.LocalizeFilename(location.Name)
+			template := location.Name
+			if isSavegame {
+				template = string(ids.Archive)
+			}
 			loc := &world.LocalizedResources{
 				File:     location,
+				Template: template,
 				Language: lang,
 			}
 			for _, id := range viewer.IDs() {

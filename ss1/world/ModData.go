@@ -12,9 +12,17 @@ import (
 
 // LocalizedResources associates a language with a resource store under a specific filename.
 type LocalizedResources struct {
-	File     FileLocation
+	// File describes from which file the data was possibly loaded from, and where it should be stored in.
+	File FileLocation
+	// Template specifies the "original" filename the data would be stored in.
+	// For example, savegames have "archive.dat" as their template.
+	// Note: This could be expanded to be a list. The loader could check which IDs are all stored in the loaded file,
+	// and match all corresponding templates. Though, this works only for "Any" language resources.
+	Template string
+	// Language identifies the language this package of resources is for.
 	Language resource.Language
-	Store    resource.Store
+	// Store contains all the resources.
+	Store resource.Store
 }
 
 // ModData contains the core information about a mod.
@@ -126,12 +134,13 @@ func (data *ModData) newResource(lang resource.Language, id resource.ID) (*Local
 
 func (data *ModData) ensureStore(lang resource.Language, filename string) *LocalizedResources {
 	for _, loc := range data.LocalizedResources {
-		if loc.Language == lang && loc.File.Name == filename {
+		if (loc.Language == lang) && (loc.Template == filename) {
 			return loc
 		}
 	}
 	loc := &LocalizedResources{
 		File:     FileLocation{DirPath: ".", Name: filename},
+		Template: filename,
 		Language: lang,
 	}
 	data.LocalizedResources = append(data.LocalizedResources, loc)
