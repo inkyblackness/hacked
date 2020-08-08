@@ -9,6 +9,9 @@ import (
 // IsSavegame returns true for resources that most likely identify a savegame.
 // This function must be called with a resource from ID 0x0FA1.
 func IsSavegame(res resource.View) bool {
+	if res == nil {
+		return false
+	}
 	if res.BlockCount() < 1 {
 		return false
 	}
