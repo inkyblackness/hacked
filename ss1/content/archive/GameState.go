@@ -83,13 +83,17 @@ var gameStateDesc = interpreters.New().
 	With("Hardware: Booster", 0x2F5, 1).As(interpreters.RangedValue(0, 4)).
 	With("Hardware: Jump jet", 0x2F6, 1).As(interpreters.RangedValue(0, 4)).
 	With("Hardware: System status", 0x2F7, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hacker Position X", 0x051F, 4).As(interpreters.FormattedRangedValue(0x10000, 0x3FFFFF,
+	With("Hacker Position X", 0x051F, 4).As(interpreters.FormattedRangedValue(0x010000, 0x3FFFFF,
 	func(value int) string {
-		return fmt.Sprintf("%2.03f", float32(value)/0x10000)
+		return fmt.Sprintf("%2.03f", float32(value)/0x010000)
 	})).
-	With("Hacker Position Y", 0x0523, 4).As(interpreters.FormattedRangedValue(0x10000, 0x3FFFFF,
+	With("Hacker Position Y", 0x0523, 4).As(interpreters.FormattedRangedValue(0x010000, 0x3FFFFF,
 	func(value int) string {
-		return fmt.Sprintf("%2.03f", float32(value)/0x10000)
+		return fmt.Sprintf("%2.03f", float32(value)/0x010000)
+	})).
+	With("Hacker Position Z", 0x0527, 4).As(interpreters.FormattedRangedValue(0x010000, 0x1FFFFF,
+	func(value int) string {
+		return fmt.Sprintf("%2.03f tile(s)", float32(value)/0x010000)
 	})).
 	With("Hacker Yaw", 0x052B, 4).As(interpreters.RotationValue(0, edmsFullCircle()))
 
