@@ -45,6 +45,16 @@ func (suite *StoreSuite) TestDelWillHaveStoreIgnorePreviousEntry() {
 	suite.thenViewShouldReturnErrorFor(resource.ID(2))
 }
 
+func (suite *StoreSuite) TestDelWillHaveStoreReportFewerIDs() {
+	suite.givenAnInstance()
+	suite.givenStoredResource(resource.ID(1), suite.aResource())
+	suite.givenStoredResource(resource.ID(2), suite.aResource())
+	suite.givenStoredResource(resource.ID(3), suite.aResource())
+	suite.givenStoredResource(resource.ID(4), suite.aResource())
+	suite.whenResourceIsDeleted(resource.ID(2))
+	suite.thenIDsShouldBe([]resource.ID{resource.ID(1), resource.ID(3), resource.ID(4)})
+}
+
 func (suite *StoreSuite) TestPutOverridesPreviousResources() {
 	suite.givenAnInstance()
 	suite.givenStoredResource(resource.ID(2), suite.aResource())

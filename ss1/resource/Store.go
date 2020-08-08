@@ -10,9 +10,11 @@ type Store struct {
 
 // IDs returns a list of available IDs this store currently contains.
 func (store Store) IDs() []ID {
-	ids := make([]ID, len(store.resources))
-	for id := range store.resources {
-		ids[store.findIDIndex(id)] = id
+	ids := make([]ID, 0, len(store.resources))
+	for _, id := range store.ids {
+		if _, existing := store.resources[id]; existing {
+			ids = append(ids, id)
+		}
 	}
 	return ids
 }
