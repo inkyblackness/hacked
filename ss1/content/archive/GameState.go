@@ -9,8 +9,11 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/text"
 )
 
-// GameStateSize specifies the byte count of a serialized GameState.
-const GameStateSize = 0x054D
+// GameStateSize specifies the byte count of a the GameState in an archive.
+// Note that in the original archive.dat file, the resource only has 0x054D bytes.
+// This does not matter much, as in the original engine the resource was ignored.
+const GameStateSize = 0x0595
+
 const (
 	stateHackerNameSize  = 20
 	inventoryWeaponSlots = 7
@@ -26,9 +29,11 @@ const (
 	messageStatusRead     = 0x40
 
 	// BooleanVarCount is the number of available boolean variables.
-	BooleanVarCount = 512
+	BooleanVarCount       = 512
+	booleanVarStartOffset = 0x00B6
 	// IntegerVarCount is the number of available integer variables.
-	IntegerVarCount = 64
+	IntegerVarCount       = 64
+	integerVarStartOffset = 0x00F6
 )
 
 type GameState struct {
@@ -70,32 +75,32 @@ var gameStateDesc = interpreters.New().
 	With("Fatigue regeneration max", 0x0185, 2).As(interpreters.RangedValue(0, 400)).
 	With("Accuracy", 0x0187, 1).As(interpreters.RangedValue(0, 255)).
 	With("Shield absorb rate", 0x0188, 1).As(interpreters.RangedValue(0, 255)).
-	With("Hardware: Infrared", 0x2E9, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Targeting", 0x2EA, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Sensaround", 0x2EB, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Aim enhancement", 0x2EC, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Bioscan", 0x2EE, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Navigation unit", 0x2EF, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Shield", 0x2F0, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Data reader", 0x2F1, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Lantern", 0x2F2, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Enviro suit", 0x2F4, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Booster", 0x2F5, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Jump jet", 0x2F6, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: System status", 0x2F7, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hacker Position X", 0x051F, 4).As(interpreters.FormattedRangedValue(0x010000, 0x3FFFFF,
+	With("Hardware: Infrared", 0x0309, 1).As(interpreters.RangedValue(0, 4)).
+	With("Hardware: Targeting", 0x030A, 1).As(interpreters.RangedValue(0, 4)).
+	With("Hardware: Sensaround", 0x030B, 1).As(interpreters.RangedValue(0, 4)).
+	With("Hardware: Aim enhancement", 0x030C, 1).As(interpreters.RangedValue(0, 4)).
+	With("Hardware: Bioscan", 0x030E, 1).As(interpreters.RangedValue(0, 4)).
+	With("Hardware: Navigation unit", 0x030F, 1).As(interpreters.RangedValue(0, 4)).
+	With("Hardware: Shield", 0x0310, 1).As(interpreters.RangedValue(0, 4)).
+	With("Hardware: Data reader", 0x0311, 1).As(interpreters.RangedValue(0, 4)).
+	With("Hardware: Lantern", 0x0312, 1).As(interpreters.RangedValue(0, 4)).
+	With("Hardware: Enviro suit", 0x0314, 1).As(interpreters.RangedValue(0, 4)).
+	With("Hardware: Booster", 0x0315, 1).As(interpreters.RangedValue(0, 4)).
+	With("Hardware: Jump jet", 0x0316, 1).As(interpreters.RangedValue(0, 4)).
+	With("Hardware: System status", 0x0317, 1).As(interpreters.RangedValue(0, 4)).
+	With("Hacker Position X", 0x053F, 4).As(interpreters.FormattedRangedValue(0x010000, 0x3FFFFF,
 	func(value int) string {
 		return fmt.Sprintf("%2.03f", float32(value)/0x010000)
 	})).
-	With("Hacker Position Y", 0x0523, 4).As(interpreters.FormattedRangedValue(0x010000, 0x3FFFFF,
+	With("Hacker Position Y", 0x0543, 4).As(interpreters.FormattedRangedValue(0x010000, 0x3FFFFF,
 	func(value int) string {
 		return fmt.Sprintf("%2.03f", float32(value)/0x010000)
 	})).
-	With("Hacker Position Z", 0x0527, 4).As(interpreters.FormattedRangedValue(0x010000, 0x1FFFFF,
+	With("Hacker Position Z", 0x0547, 4).As(interpreters.FormattedRangedValue(0x010000, 0x1FFFFF,
 	func(value int) string {
 		return fmt.Sprintf("%2.03f tile(s)", float32(value)/0x010000)
 	})).
-	With("Hacker Yaw", 0x052B, 4).As(interpreters.RotationValue(0, edmsFullCircle()))
+	With("Hacker Yaw", 0x054B, 4).As(interpreters.RotationValue(0, edmsFullCircle()))
 
 func edmsFullCircle() int64 {
 	full := math.Pi * 2 * float64(0x10000)
@@ -156,7 +161,7 @@ func (state GameState) BooleanVar(index int) bool {
 	if (index < 0) || (index >= BooleanVarCount) {
 		return false
 	}
-	return state.Raw()[0x00B6+(index/8)]&(0x01<<(uint(index%8))) != 0
+	return state.Raw()[booleanVarStartOffset+(index/8)]&(0x01<<(uint(index%8))) != 0
 }
 
 // SetBooleanVar sets the state of the boolean variable at given index. Unsupported indices are ignored.
@@ -164,7 +169,7 @@ func (state *GameState) SetBooleanVar(index int, set bool) {
 	if (index < 0) || (index >= BooleanVarCount) {
 		return
 	}
-	byteIndex := 0x00B6 + (index / 8)
+	byteIndex := booleanVarStartOffset + (index / 8)
 	bitMask := byte(0x01 << uint(index%8))
 	temp := state.Raw()[byteIndex]
 	temp &= ^bitMask
@@ -179,7 +184,7 @@ func (state *GameState) IntegerVar(index int) int16 {
 	if (index < 0) || (index >= IntegerVarCount) {
 		return 0
 	}
-	startOffset := 0x00F6 + (2 * index)
+	startOffset := integerVarStartOffset + (2 * index)
 	val := uint16(state.Raw()[startOffset+1])<<8 | uint16(state.Raw()[startOffset+0])
 	return int16(val)
 }
@@ -189,7 +194,7 @@ func (state *GameState) SetIntegerVar(index int, value int16) {
 	if (index < 0) || (index >= IntegerVarCount) {
 		return
 	}
-	startOffset := 0x00F6 + (2 * index)
+	startOffset := integerVarStartOffset + (2 * index)
 	state.Raw()[startOffset+0] = byte((value >> 0) & 0xFF)
 	state.Raw()[startOffset+1] = byte((value >> 8) & 0xFF)
 }
@@ -211,10 +216,10 @@ func DefaultGameStateData() []byte {
 	state.Set("Accuracy", 100)
 
 	for i := 0; i < inventoryWeaponSlots; i++ {
-		data[0x046B+(5*i)+0] = 0xFF
+		data[0x048B+(5*i)+0] = 0xFF
 	}
 	for i := 0; i < grenadeTypeCount; i++ {
-		data[0x04DF+(i*2)+1] = 70
+		data[0x04FF+(i*2)+1] = 70
 	}
 
 	setInitialCitadelHackerState(state)
@@ -233,21 +238,15 @@ func setInitialCitadelHackerState(state *GameState) {
 
 	state.Set("Current Level", 1)
 
-	// location: in the neurosurgery chamber, looking East
-	data[0x051F+0+1] = 0x80
-	data[0x051F+0+2] = 0x1E
-	data[0x051F+4+1] = 0x80
-	data[0x051F+4+2] = 0x16
-	data[0x051F+8+1] = 0xBD
-	data[0x051F+8+2] = 0x01 // TODO: this height is level shift dependent!
-	// rotation:
-	data[0x051F+12+0] = 0x3E
-	data[0x051F+12+1] = 0x24
-	data[0x051F+12+2] = 0x03
+	// location: in the neurosurgery chamber, looking West
+	state.Set("Hacker Position X", (30<<16)+0x8000)
+	state.Set("Hacker Position Y", (22<<16)+0x8000)
+	state.Set("Hacker Position Z", 0x01BD00)
+	state.Set("Hacker Yaw", 0x03243E)
 
 	// set first message
-	data[0x0337+26] = messageStatusReceived // Rebecca Lansing's first message
-	data[0x04F9+9] = 0xFF                   // HUD active email -- set for similarity, has no effect.
+	data[0x0357+26] = messageStatusReceived // Rebecca Lansing's first message
+	data[0x0519+9] = 0xFF                   // HUD active email -- set for similarity, has no effect.
 }
 
 func setInitialCitadelVariables(state *GameState) {
