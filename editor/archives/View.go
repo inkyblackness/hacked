@@ -58,7 +58,7 @@ func (view *View) Render() {
 		view.model.windowOpen = true
 	}
 	if view.model.windowOpen {
-		imgui.SetNextWindowSizeV(imgui.Vec2{X: 350 * view.guiScale, Y: 400 * view.guiScale}, imgui.ConditionOnce)
+		imgui.SetNextWindowSizeV(imgui.Vec2{X: 650 * view.guiScale, Y: 400 * view.guiScale}, imgui.ConditionOnce)
 		if imgui.BeginV("Archive", view.WindowOpen(), imgui.WindowFlagsNoCollapse) {
 			view.renderContent()
 		}
@@ -150,6 +150,7 @@ func (view *View) renderGameStateContent() {
 	} else {
 		editState = data.imported().toInstance()
 	}
+	imgui.LabelText("Hacker Name", "\""+editState.HackerName(view.cp)+"\"")
 	view.createPropertyControls(readOnly, editState.Instance, func(key string, modifier func(uint32) uint32) {
 		view.setInterpreterValueKeyed(editState.Instance, key, modifier)
 		view.requestSetGameState(editState.Raw())
@@ -175,6 +176,10 @@ func (data gameStateData) snapshot() gameStateData {
 }
 
 func (data gameStateData) imported() gameStateData {
+	// Avoid truncating data when working with savegames.
+	if len(data.raw) >= archive.GameStateSize {
+		return data.snapshot()
+	}
 	copied := archive.ZeroGameStateData()
 	copy(copied, data.raw)
 	return gameStateData{raw: copied}
