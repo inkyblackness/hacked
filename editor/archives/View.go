@@ -361,99 +361,135 @@ func (view *View) createInventoryControls(readOnly bool, gameState *archive.Game
 	for i := 0; i < archive.InventoryWeaponSlots; i++ {
 		imgui.Separator()
 		imgui.PushID(fmt.Sprintf("weapon%d", i))
-		slot := gameState.InventoryWeaponSlot(i)
-		isInUse := slot.IsInUse()
-		inUseName := fmt.Sprintf("Weapon %d In Use", i+1)
+		view.createInventoryWeaponSlotControls(readOnly, gameState.InventoryWeaponSlot(i), onChange)
+		imgui.PopID()
+	}
+	for i := 0; i < archive.GrenadeTypeCount; i++ {
+		imgui.Separator()
+		imgui.PushID(fmt.Sprintf("grenade%d", i))
+		view.createInventoryGrenadeControls(readOnly, gameState.InventoryGrenade(i), onChange)
+		imgui.PopID()
+	}
+}
 
-		values.RenderUnifiedCheckboxCombo(readOnly, false, inUseName, values.UnifierFor(isInUse), func(newUse bool) {
-			if newUse {
-				slot.SetInUse(0, 0)
+func (view *View) createInventoryGrenadeControls(readOnly bool, grenade archive.InventoryGrenade, onChange func()) {
+	values.RenderUnifiedSliderInt(readOnly, false,
+		fmt.Sprintf("Grenade Count (%s)", view.grenadeName(grenade.Index)),
+		values.UnifierFor(grenade.Count()),
+		func(u values.Unifier) int {
+			return u.Unified().(int)
+		}, func(value int) string {
+			return "%d"
+		}, 0, 0xFF,
+		func(newValue int) {
+			grenade.SetCount(newValue)
+			onChange()
+		})
+
+	values.RenderUnifiedSliderInt(readOnly, false, "Timer", values.UnifierFor(grenade.TimerSetting()),
+		func(u values.Unifier) int {
+			return int(u.Unified().(archive.GrenadeTimerSetting))
+		}, func(value int) string {
+			setting := archive.GrenadeTimerSetting(value)
+			return fmt.Sprintf("%.01fs  -- raw: %%d", setting.InSeconds())
+		}, 0, archive.GrenadeTimerMaximum,
+		func(newValue int) {
+			grenade.SetTimerSetting(archive.GrenadeTimerSetting(newValue))
+			onChange()
+		})
+}
+
+func (view *View) createInventoryWeaponSlotControls(readOnly bool, slot archive.InventoryWeaponSlot, onChange func()) {
+	isInUse := slot.IsInUse()
+	inUseName := fmt.Sprintf("Weapon %d In Use", slot.Index+1)
+
+	values.RenderUnifiedCheckboxCombo(readOnly, false, inUseName, values.UnifierFor(isInUse), func(newUse bool) {
+		if newUse {
+			slot.SetInUse(0, 0)
+		} else {
+			slot.SetFree()
+		}
+		onChange()
+	})
+	if !isInUse {
+		return
+	}
+
+	currentWeaponTriple := slot.Triple()
+	if imgui.BeginCombo("Type", view.tripleName(currentWeaponTriple)) {
+		allTypes := view.mod.ObjectProperties().TriplesInClass(currentWeaponTriple.Class)
+		for _, triple := range allTypes {
+			if imgui.SelectableV(view.tripleName(triple), triple == currentWeaponTriple, 0, imgui.Vec2{}) {
+				slot.SetInUse(triple.Subclass, triple.Type)
+				onChange()
+			}
+		}
+		imgui.EndCombo()
+	}
+	isEnergyWeapon := currentWeaponTriple.Subclass >= 4
+	if isEnergyWeapon {
+		temperature, chargeAndOverload := slot.WeaponState()
+		values.RenderUnifiedSliderInt(readOnly, false, "Temperature", values.UnifierFor(int(temperature)),
+			func(u values.Unifier) int {
+				return u.Unified().(int)
+			}, func(value int) string {
+				return fmt.Sprintf("%.02f%%%%  -- raw: %%d", (float32(value)/float32(lvlobj.EnergyWeaponMaxTemperature))*100)
+			}, 0x00, lvlobj.EnergyWeaponMaxTemperature,
+			func(newValue int) {
+				slot.SetWeaponState(byte(newValue), chargeAndOverload)
+				onChange()
+			})
+
+		overloadState := chargeAndOverload & 0x80
+		charge := chargeAndOverload & 0x7F
+		values.RenderUnifiedCheckboxCombo(readOnly, false, "Overload", values.UnifierFor(overloadState != 0), func(newOverload bool) {
+			if newOverload {
+				slot.SetWeaponState(temperature, 0x80|charge)
 			} else {
-				slot.SetFree()
+				slot.SetWeaponState(temperature, charge)
 			}
 			onChange()
 		})
-		if !isInUse {
-			continue
-		}
-
-		currentWeaponTriple := slot.Triple()
-		if imgui.BeginCombo("Type", view.tripleName(currentWeaponTriple)) {
-			allTypes := view.mod.ObjectProperties().TriplesInClass(currentWeaponTriple.Class)
-			for _, triple := range allTypes {
-				if imgui.SelectableV(view.tripleName(triple), triple == currentWeaponTriple, 0, imgui.Vec2{}) {
-					slot.SetInUse(triple.Subclass, triple.Type)
-					onChange()
-				}
-			}
-			imgui.EndCombo()
-		}
-		isEnergyWeapon := currentWeaponTriple.Subclass >= 4
-		if isEnergyWeapon {
-			temperature, chargeAndOverload := slot.WeaponState()
-			values.RenderUnifiedSliderInt(readOnly, false, "Temperature", values.UnifierFor(int(temperature)),
-				func(u values.Unifier) int {
-					return u.Unified().(int)
-				}, func(value int) string {
-					return fmt.Sprintf("%.02f%%%%  -- raw: %%d", (float32(value)/float32(lvlobj.EnergyWeaponMaxTemperature))*100)
-				}, 0x00, lvlobj.EnergyWeaponMaxTemperature,
-				func(newValue int) {
-					slot.SetWeaponState(byte(newValue), chargeAndOverload)
-					onChange()
-				})
-
-			overloadState := chargeAndOverload & 0x80
-			charge := chargeAndOverload & 0x7F
-			values.RenderUnifiedCheckboxCombo(readOnly, false, "Overload", values.UnifierFor(overloadState != 0), func(newOverload bool) {
-				if newOverload {
-					slot.SetWeaponState(temperature, 0x80|charge)
-				} else {
-					slot.SetWeaponState(temperature, charge)
-				}
+		values.RenderUnifiedSliderInt(readOnly, false, "Charge", values.UnifierFor(int(charge)),
+			func(u values.Unifier) int {
+				return u.Unified().(int)
+			}, func(value int) string {
+				return fmt.Sprintf("%.02f%%%%  -- raw: %%d", (float32(value)/float32(lvlobj.EnergyWeaponMaxEnergy))*100)
+			}, 0x00, 0x7F,
+			func(newValue int) {
+				slot.SetWeaponState(temperature, overloadState|byte(newValue))
 				onChange()
 			})
-			values.RenderUnifiedSliderInt(readOnly, false, "Charge", values.UnifierFor(int(charge)),
-				func(u values.Unifier) int {
-					return u.Unified().(int)
-				}, func(value int) string {
-					return fmt.Sprintf("%.02f%%%%  -- raw: %%d", (float32(value)/float32(lvlobj.EnergyWeaponMaxEnergy))*100)
-				}, 0x00, 0x7F,
-				func(newValue int) {
-					slot.SetWeaponState(temperature, overloadState|byte(newValue))
-					onChange()
-				})
-		} else {
-			rounds, ammoType := slot.WeaponState()
-			values.RenderUnifiedSliderInt(readOnly, false, "Rounds", values.UnifierFor(int(rounds)),
-				func(u values.Unifier) int {
-					return u.Unified().(int)
-				}, func(value int) string {
-					return fmt.Sprintf("%d", value)
-				}, 0x00, 0xFF,
-				func(newValue int) {
-					slot.SetWeaponState(byte(newValue), ammoType)
-					onChange()
-				})
-			values.RenderUnifiedCombo(readOnly, false, "Ammo Type", values.UnifierFor(int(ammoType)),
-				func(u values.Unifier) int {
-					return u.Unified().(int)
-				},
-				func(value int) string {
-					switch value {
-					case 0:
-						return "Standard"
-					case 1:
-						return "Special"
-					default:
-						return fmt.Sprintf("Unknown %d", ammoType)
-					}
-				}, 2,
-				func(newValue int) {
-					slot.SetWeaponState(rounds, byte(newValue))
-					onChange()
-				})
-		}
-		imgui.PopID()
+	} else {
+		rounds, ammoType := slot.WeaponState()
+		values.RenderUnifiedSliderInt(readOnly, false, "Rounds", values.UnifierFor(int(rounds)),
+			func(u values.Unifier) int {
+				return u.Unified().(int)
+			}, func(value int) string {
+				return fmt.Sprintf("%d", value)
+			}, 0x00, 0xFF,
+			func(newValue int) {
+				slot.SetWeaponState(byte(newValue), ammoType)
+				onChange()
+			})
+		values.RenderUnifiedCombo(readOnly, false, "Ammo Type", values.UnifierFor(int(ammoType)),
+			func(u values.Unifier) int {
+				return u.Unified().(int)
+			},
+			func(value int) string {
+				switch value {
+				case 0:
+					return "Standard"
+				case 1:
+					return "Special"
+				default:
+					return fmt.Sprintf("Unknown %d", ammoType)
+				}
+			}, 2,
+			func(newValue int) {
+				slot.SetWeaponState(rounds, byte(newValue))
+				onChange()
+			})
 	}
 }
 
@@ -468,4 +504,16 @@ func (view *View) tripleName(triple object.Triple) string {
 		}
 	}
 	return triple.String() + ": " + suffix
+}
+
+func (view *View) grenadeName(index int) string {
+	startIndex := view.mod.ObjectProperties().TripleIndex(object.TripleFrom(int(object.ClassGrenade), 0, 0))
+	if startIndex >= 0 {
+		key := resource.KeyOf(ids.ObjectLongNames, resource.LangDefault, startIndex+index)
+		objName, err := view.textCache.Text(key)
+		if err == nil {
+			return objName
+		}
+	}
+	return hintUnknown
 }

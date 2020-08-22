@@ -23,7 +23,12 @@ const (
 	weaponSlotSize         = 5
 
 	// GrenadeTypeCount is the number of grenades (explosives) available to the character.
-	GrenadeTypeCount = 7
+	GrenadeTypeCount        = 7
+	grenadeCountStartOffset = 0x0350
+	grenadeTimerStartOffset = 0x04FF
+	grenadeTimerDefault     = 70
+	// GrenadeTimerMaximum is the maximum time that can be set for a grenade in game.
+	GrenadeTimerMaximum = 571
 
 	engineTicksPerSecond = 280
 	secondsPerMinute     = 60
@@ -102,6 +107,68 @@ func (slot InventoryWeaponSlot) SetWeaponState(a, b byte) {
 	rawData := slot.rawData()
 	rawData[2] = a
 	rawData[3] = b
+}
+
+// InventoryGrenade describes properties of grenades by type
+type InventoryGrenade struct {
+	Index int
+	State *GameState
+}
+
+func (grenade InventoryGrenade) isValid() bool {
+	return (grenade.Index >= 0) && (grenade.Index < GrenadeTypeCount) && (grenade.State != nil)
+}
+
+// Count returns how many explosives the character is carrying.
+func (grenade InventoryGrenade) Count() int {
+	if !grenade.isValid() {
+		return 0
+	}
+	return int(grenade.State.Raw()[grenadeCountStartOffset+grenade.Index])
+}
+
+// SetCount updates the amount of explosives the character is carrying. Invalid values are clamped.
+func (grenade InventoryGrenade) SetCount(value int) {
+	if !grenade.isValid() {
+		return
+	}
+	count := byte(value)
+	if value < 0 {
+		count = 0
+	} else if value > math.MaxUint8 {
+		count = math.MaxUint8
+	}
+
+	grenade.State.Raw()[grenadeCountStartOffset+grenade.Index] = count
+}
+
+// GrenadeTimerSetting is the value for explosive timers.
+type GrenadeTimerSetting uint16
+
+// InSeconds returns the amount in unit of seconds.
+func (setting GrenadeTimerSetting) InSeconds() float32 {
+	return float32(setting) / 10.0
+}
+
+func (grenade InventoryGrenade) rawTimer() []byte {
+	if !grenade.isValid() {
+		return []byte{0x00, 0x00}
+	}
+	startIndex := grenadeTimerStartOffset + (2 * grenade.Index)
+	return grenade.State.Raw()[startIndex : startIndex+2]
+}
+
+// TimerSetting returns the generic timer used for this type of grenade.
+func (grenade InventoryGrenade) TimerSetting() GrenadeTimerSetting {
+	raw := grenade.rawTimer()
+	return GrenadeTimerSetting((uint16(raw[1]) << 8) | (uint16(raw[0]) << 0))
+}
+
+// SetTimerSetting updates the generic timer used for this type of grenade.
+func (grenade InventoryGrenade) SetTimerSetting(value GrenadeTimerSetting) {
+	raw := grenade.rawTimer()
+	raw[0] = byte(value >> 0)
+	raw[1] = byte(value >> 8)
 }
 
 var gameStateDesc = interpreters.New().
@@ -272,6 +339,15 @@ func (state *GameState) InventoryWeaponSlot(index int) InventoryWeaponSlot {
 	}
 }
 
+// InventoryGrenade returns an accessor for the identified grenade type index.
+// Index should be within the range of [0..GrenadeTypeCount[
+func (state *GameState) InventoryGrenade(index int) InventoryGrenade {
+	return InventoryGrenade{
+		Index: index,
+		State: state,
+	}
+}
+
 // DefaultGameStateData returns the state block initialized as if the engine started a new default game.
 func DefaultGameStateData() []byte {
 	data := ZeroGameStateData()
@@ -289,10 +365,10 @@ func DefaultGameStateData() []byte {
 	state.Set("Accuracy", 100)
 
 	for i := 0; i < InventoryWeaponSlots; i++ {
-		data[weaponSlotsStartOffset+(5*i)+0] = 0xFF
+		state.InventoryWeaponSlot(i).SetFree()
 	}
 	for i := 0; i < GrenadeTypeCount; i++ {
-		data[0x04FF+(i*2)+1] = 70
+		state.InventoryGrenade(i).SetTimerSetting(grenadeTimerDefault)
 	}
 
 	setInitialCitadelHackerState(state)
