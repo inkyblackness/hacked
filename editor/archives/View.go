@@ -2,6 +2,7 @@ package archives
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/inkyblackness/imgui-go/v2"
@@ -157,28 +158,27 @@ func (view *View) renderGameStateContent() {
 		editState = data.imported().toInstance()
 	}
 
+	onChange := func() {
+		view.requestSetGameState(editState.Raw())
+	}
 	if imgui.TreeNodeV("Game State: General", imgui.TreeNodeFlagsDefaultOpen|imgui.TreeNodeFlagsFramed) {
 		imgui.LabelText("Hacker Name", "\""+editState.HackerName(view.cp)+"\"")
 		view.createPropertyControls(readOnly, editState.Instance, func(key string, modifier func(uint32) uint32) {
 			view.setInterpreterValueKeyed(editState.Instance, key, modifier)
-			view.requestSetGameState(editState.Raw())
+			onChange()
 		})
 		imgui.TreePop()
 	}
 	if imgui.TreeNodeV("Inventory", imgui.TreeNodeFlagsFramed) {
-		view.createInventoryControls(readOnly, editState, func() {
-			view.requestSetGameState(editState.Raw())
-		})
+		view.createInventoryControls(readOnly, editState, onChange)
 		imgui.TreePop()
 	}
 	if imgui.TreeNodeV("Hard-/Software", imgui.TreeNodeFlagsFramed) {
-		view.createWareControls(readOnly, editState, func() {
-			view.requestSetGameState(editState.Raw())
-		})
+		view.createWareControls(readOnly, editState, onChange)
 		imgui.TreePop()
 	}
 	if imgui.TreeNodeV("Game State: Variables", imgui.TreeNodeFlagsFramed) {
-
+		view.createVariableControls(readOnly, editState, onChange)
 		imgui.TreePop()
 	}
 	if imgui.TreeNodeV("Game State: Messages", imgui.TreeNodeFlagsFramed) {
@@ -421,6 +421,7 @@ func (view *View) createWareControls(readOnly bool, gameState *archive.GameState
 		imgui.TreePop()
 	}
 
+	// TODO: Software
 }
 
 func (view *View) createHardwareControls(readOnly bool, state archive.HardwareState, onChange func()) {
@@ -618,6 +619,39 @@ func (view *View) createInventoryWeaponSlotControls(readOnly bool, slot archive.
 				slot.SetWeaponState(rounds, byte(newValue))
 				onChange()
 			})
+	}
+}
+
+func (view *View) createVariableControls(readOnly bool, gameState *archive.GameState, onChange func()) {
+	if imgui.TreeNodeV("Boolean Variables", imgui.TreeNodeFlagsFramed) {
+		for i := 0; i < archive.BooleanVarCount; i++ {
+			booleanIndex := i
+			values.RenderUnifiedCheckboxCombo(readOnly, false,
+				fmt.Sprintf("Var%03d", i),
+				values.UnifierFor(gameState.BooleanVar(booleanIndex)), func(newValue bool) {
+					gameState.SetBooleanVar(booleanIndex, newValue)
+					onChange()
+				})
+		}
+		imgui.TreePop()
+	}
+	if imgui.TreeNodeV("Integer Variables", imgui.TreeNodeFlagsFramed) {
+		for i := 0; i < archive.IntegerVarCount; i++ {
+			integerIndex := i
+			values.RenderUnifiedSliderInt(readOnly, false,
+				fmt.Sprintf("Var%02d", i),
+				values.UnifierFor(gameState.IntegerVar(integerIndex)),
+				func(u values.Unifier) int {
+					return int(u.Unified().(int16))
+				}, func(value int) string {
+					return "%d"
+				}, math.MinInt16, math.MaxInt16,
+				func(newValue int) {
+					gameState.SetIntegerVar(integerIndex, int16(newValue))
+					onChange()
+				})
+		}
+		imgui.TreePop()
 	}
 }
 
