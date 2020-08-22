@@ -171,6 +171,12 @@ func (view *View) renderGameStateContent() {
 		})
 		imgui.TreePop()
 	}
+	if imgui.TreeNodeV("Hard-/Software", imgui.TreeNodeFlagsFramed) {
+		view.createWareControls(readOnly, editState, func() {
+			view.requestSetGameState(editState.Raw())
+		})
+		imgui.TreePop()
+	}
 	if imgui.TreeNodeV("Game State: Variables", imgui.TreeNodeFlagsFramed) {
 
 		imgui.TreePop()
@@ -403,6 +409,38 @@ func (view *View) createInventoryControls(readOnly bool, gameState *archive.Game
 		}
 		imgui.TreePop()
 	}
+}
+
+func (view *View) createWareControls(readOnly bool, gameState *archive.GameState, onChange func()) {
+	if imgui.TreeNodeV("Hardware", imgui.TreeNodeFlagsFramed) {
+		for i := 0; i < archive.HardwareTypeCount; i++ {
+			imgui.PushID(fmt.Sprintf("hw%d", i))
+			view.createHardwareControls(readOnly, gameState.HardwareState(i), onChange)
+			imgui.PopID()
+		}
+		imgui.TreePop()
+	}
+
+}
+
+func (view *View) createHardwareControls(readOnly bool, state archive.HardwareState, onChange func()) {
+	values.RenderUnifiedSliderInt(readOnly, false,
+		fmt.Sprintf("Version (%s)", view.indexedName(object.ClassHardware, state.Index)),
+		values.UnifierFor(state.Version()),
+		func(u values.Unifier) int {
+			return u.Unified().(int)
+		}, func(value int) string {
+			return "%d"
+		}, 0, 4,
+		func(newValue int) {
+			state.SetVersion(newValue)
+			onChange()
+		})
+
+	values.RenderUnifiedCheckboxCombo(readOnly, false, "Is Active", values.UnifierFor(state.IsActive()), func(newActive bool) {
+		state.SetActive(newActive)
+		onChange()
+	})
 }
 
 func (view *View) createGeneralInventoryControls(readOnly bool, slot archive.GeneralInventorySlot, onChange func()) {

@@ -43,6 +43,11 @@ const (
 	GeneralInventorySlotCount       = 14
 	generalInventorySlotStartOffset = 0x007A
 
+	// HardwareTypeCount is the number of available hardware.
+	HardwareTypeCount          = 15
+	hardwareVersionStartOffset = 0x0309
+	hardwareStatusStartOffset  = 0x04AE
+
 	engineTicksPerSecond = 280
 	secondsPerMinute     = 60
 	engineTicksPerMinute = secondsPerMinute * engineTicksPerSecond
@@ -191,7 +196,7 @@ type PatchState struct {
 }
 
 func (patch PatchState) isValid() bool {
-	return (patch.Index >= 0) && (patch.Index < GrenadeTypeCount) && (patch.State != nil)
+	return (patch.Index >= 0) && (patch.Index < PatchTypeCount) && (patch.State != nil)
 }
 
 // Count returns how many patches the character is carrying.
@@ -304,6 +309,60 @@ func (slot GeneralInventorySlot) SetObjectId(id level.ObjectID) {
 	raw[1] = byte(id >> 8)
 }
 
+// HardwareState describes properties of hardware by type.
+type HardwareState struct {
+	Index int
+	State *GameState
+}
+
+func (hardware HardwareState) isValid() bool {
+	return (hardware.Index >= 0) && (hardware.Index < HardwareTypeCount) && (hardware.State != nil)
+}
+
+// Version returns which version of the hardware is installed. Zero means not installed.
+func (hardware HardwareState) Version() int {
+	if !hardware.isValid() {
+		return 0
+	}
+	return int(hardware.State.Raw()[hardwareVersionStartOffset+hardware.Index])
+}
+
+// SetVersion updates the version the character has installed.
+func (hardware HardwareState) SetVersion(value int) {
+	if !hardware.isValid() {
+		return
+	}
+	count := byte(value)
+	if value < 0 {
+		count = 0
+	} else if value > math.MaxUint8 {
+		count = math.MaxUint8
+	}
+
+	hardware.State.Raw()[hardwareVersionStartOffset+hardware.Index] = count
+}
+
+// IsActive returns whether the hardware is currently active.
+func (hardware HardwareState) IsActive() bool {
+	if !hardware.isValid() {
+		return false
+	}
+	return hardware.State.Raw()[hardwareStatusStartOffset+hardware.Index] != 0
+}
+
+// SetActive updates the active state of a hardware.
+func (hardware HardwareState) SetActive(on bool) {
+	if !hardware.isValid() {
+		return
+	}
+	var newValue byte
+	if on {
+		newValue = 1
+	}
+
+	hardware.State.Raw()[hardwareStatusStartOffset+hardware.Index] = newValue
+}
+
 var gameStateDesc = interpreters.New().
 	With("Difficulty: Combat", 0x0015, 1).As(interpreters.RangedValue(0, 3)).
 	With("Difficulty: Mission", 0x0016, 1).As(interpreters.RangedValue(0, 3)).
@@ -324,6 +383,7 @@ var gameStateDesc = interpreters.New().
 	func(value int) string {
 		return fmt.Sprintf("%.2f%%%%", float64(value*100)/255.0)
 	})).
+	With("Power Usage", 0x00AD, 1).As(interpreters.RangedValue(0, 0xFF)).
 	With("Out-of-power flag", 0x00AF, 1).As(interpreters.EnumValue(
 	map[uint32]string{
 		0: "Powered",
@@ -339,19 +399,6 @@ var gameStateDesc = interpreters.New().
 	With("Fatigue regeneration max", 0x0185, 2).As(interpreters.RangedValue(0, 400)).
 	With("Accuracy", 0x0187, 1).As(interpreters.RangedValue(0, 255)).
 	With("Shield absorb rate", 0x0188, 1).As(interpreters.RangedValue(0, 255)).
-	With("Hardware: Infrared", 0x0309, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Targeting", 0x030A, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Sensaround", 0x030B, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Aim enhancement", 0x030C, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Bioscan", 0x030E, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Navigation unit", 0x030F, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Shield", 0x0310, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Data reader", 0x0311, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Lantern", 0x0312, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Enviro suit", 0x0314, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Booster", 0x0315, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: Jump jet", 0x0316, 1).As(interpreters.RangedValue(0, 4)).
-	With("Hardware: System status", 0x0317, 1).As(interpreters.RangedValue(0, 4)).
 	With("Hacker Position X", 0x053F, 4).As(interpreters.FormattedRangedValue(0x010000, 0x3FFFFF,
 	func(value int) string {
 		return fmt.Sprintf("%2.03f", float32(value)/0x010000)
@@ -503,6 +550,15 @@ func (state *GameState) InventoryAmmo(index int) InventoryAmmo {
 // Index should be within the range of [0..GeneralInventorySlotCount[.
 func (state *GameState) GeneralInventorySlot(index int) GeneralInventorySlot {
 	return GeneralInventorySlot{
+		Index: index,
+		State: state,
+	}
+}
+
+// HardwareState returns an accessor for the identified hardware type index.
+// Index should be within the range of [0..HardwareTypeCount[
+func (state *GameState) HardwareState(index int) HardwareState {
+	return HardwareState{
 		Index: index,
 		State: state,
 	}
