@@ -6,6 +6,7 @@ import (
 
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/interpreters"
+	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 )
 
@@ -15,9 +16,14 @@ import (
 const GameStateSize = 0x0595
 
 const (
-	stateHackerNameSize  = 20
-	inventoryWeaponSlots = 7
-	grenadeTypeCount     = 7
+	stateHackerNameSize = 20
+	// InventoryWeaponSlots is the number of weapons available to the character.
+	InventoryWeaponSlots   = 7
+	weaponSlotsStartOffset = 0x048B
+	weaponSlotSize         = 5
+
+	// GrenadeTypeCount is the number of grenades (explosives) available to the character.
+	GrenadeTypeCount = 7
 
 	engineTicksPerSecond = 280
 	secondsPerMinute     = 60
@@ -36,8 +42,66 @@ const (
 	integerVarStartOffset = 0x00F6
 )
 
+// GameState contains all the necessary information for the current progress of the game.
+// It is a combination of world information, character information, and configuration values.
 type GameState struct {
 	*interpreters.Instance
+}
+
+// InventoryWeaponSlot describes one entry for weapons in the inventory.
+type InventoryWeaponSlot struct {
+	Index int
+	State *GameState
+}
+
+func freeWeaponSlot() []byte {
+	return []byte{0xFF, 0x00, 0x00, 0x00, 0x00}
+}
+
+func (slot InventoryWeaponSlot) rawData() []byte {
+	if (slot.Index < 0) || (slot.Index >= InventoryWeaponSlots) {
+		return freeWeaponSlot()
+	}
+	startIndex := weaponSlotsStartOffset + (weaponSlotSize * slot.Index)
+	return slot.State.Raw()[startIndex : startIndex+weaponSlotSize]
+}
+
+// IsInUse returns true if the slot is currently holding a weapon.
+func (slot InventoryWeaponSlot) IsInUse() bool {
+	return slot.rawData()[0] != 0xFF
+}
+
+// SetFree clears the weapon slot.
+func (slot InventoryWeaponSlot) SetFree() {
+	rawData := slot.rawData()
+	copy(rawData, freeWeaponSlot())
+}
+
+// SetInUse inserts the given weapon in this slot. Other fields are reset to zero.
+func (slot InventoryWeaponSlot) SetInUse(subclass object.Subclass, objType object.Type) {
+	rawData := slot.rawData()
+	copy(rawData, freeWeaponSlot())
+	rawData[0] = byte(subclass)
+	rawData[1] = byte(objType)
+}
+
+// Triple returns the type information of the weapon in this slot.
+func (slot InventoryWeaponSlot) Triple() object.Triple {
+	rawData := slot.rawData()
+	return object.TripleFrom(int(object.ClassGun), int(rawData[0]), int(rawData[1]))
+}
+
+// WeaponState returns the two state values. Their interpretation is subclass specific.
+func (slot InventoryWeaponSlot) WeaponState() (byte, byte) {
+	rawData := slot.rawData()
+	return rawData[2], rawData[3]
+}
+
+// SetWeaponState updates the two state values.
+func (slot InventoryWeaponSlot) SetWeaponState(a, b byte) {
+	rawData := slot.rawData()
+	rawData[2] = a
+	rawData[3] = b
 }
 
 var gameStateDesc = interpreters.New().
@@ -199,6 +263,15 @@ func (state *GameState) SetIntegerVar(index int, value int16) {
 	state.Raw()[startOffset+1] = byte((value >> 8) & 0xFF)
 }
 
+// InventoryWeaponSlot returns an accessor for the identified weapon slot.
+// Index should be within the range of [0..InventoryWeaponSlots[.
+func (state *GameState) InventoryWeaponSlot(index int) InventoryWeaponSlot {
+	return InventoryWeaponSlot{
+		Index: index,
+		State: state,
+	}
+}
+
 // DefaultGameStateData returns the state block initialized as if the engine started a new default game.
 func DefaultGameStateData() []byte {
 	data := ZeroGameStateData()
@@ -215,10 +288,10 @@ func DefaultGameStateData() []byte {
 	state.Set("Fatigue regeneration max", 400)
 	state.Set("Accuracy", 100)
 
-	for i := 0; i < inventoryWeaponSlots; i++ {
-		data[0x048B+(5*i)+0] = 0xFF
+	for i := 0; i < InventoryWeaponSlots; i++ {
+		data[weaponSlotsStartOffset+(5*i)+0] = 0xFF
 	}
-	for i := 0; i < grenadeTypeCount; i++ {
+	for i := 0; i < GrenadeTypeCount; i++ {
 		data[0x04FF+(i*2)+1] = 70
 	}
 
