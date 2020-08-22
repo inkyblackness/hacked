@@ -10,12 +10,18 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
+	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlobj"
 	"github.com/inkyblackness/hacked/ss1/content/interpreters"
+	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
+)
+
+const (
+	hintUnknown = "???"
 )
 
 // View provides edit controls for the archive.
@@ -150,11 +156,29 @@ func (view *View) renderGameStateContent() {
 	} else {
 		editState = data.imported().toInstance()
 	}
-	imgui.LabelText("Hacker Name", "\""+editState.HackerName(view.cp)+"\"")
-	view.createPropertyControls(readOnly, editState.Instance, func(key string, modifier func(uint32) uint32) {
-		view.setInterpreterValueKeyed(editState.Instance, key, modifier)
-		view.requestSetGameState(editState.Raw())
-	})
+
+	if imgui.TreeNodeV("Game State: General", imgui.TreeNodeFlagsDefaultOpen|imgui.TreeNodeFlagsFramed) {
+		imgui.LabelText("Hacker Name", "\""+editState.HackerName(view.cp)+"\"")
+		view.createPropertyControls(readOnly, editState.Instance, func(key string, modifier func(uint32) uint32) {
+			view.setInterpreterValueKeyed(editState.Instance, key, modifier)
+			view.requestSetGameState(editState.Raw())
+		})
+		imgui.TreePop()
+	}
+	if imgui.TreeNodeV("Inventory", imgui.TreeNodeFlagsFramed) {
+		view.createInventoryControls(readOnly, editState, func() {
+			view.requestSetGameState(editState.Raw())
+		})
+		imgui.TreePop()
+	}
+	if imgui.TreeNodeV("Game State: Variables", imgui.TreeNodeFlagsFramed) {
+
+		imgui.TreePop()
+	}
+	if imgui.TreeNodeV("Game State: Messages", imgui.TreeNodeFlagsFramed) {
+
+		imgui.TreePop()
+	}
 
 	imgui.PopItemWidth()
 }
@@ -331,4 +355,117 @@ func (view *View) setInterpreterValueKeyed(instance *interpreters.Instance, key 
 		}
 	}
 	resolvedInterpreter.Set(keys[keyCount-1], modifier(resolvedInterpreter.Get(keys[keyCount-1])))
+}
+
+func (view *View) createInventoryControls(readOnly bool, gameState *archive.GameState, onChange func()) {
+	for i := 0; i < archive.InventoryWeaponSlots; i++ {
+		imgui.Separator()
+		imgui.PushID(fmt.Sprintf("weapon%d", i))
+		slot := gameState.InventoryWeaponSlot(i)
+		isInUse := slot.IsInUse()
+		inUseName := fmt.Sprintf("Weapon %d In Use", i+1)
+
+		values.RenderUnifiedCheckboxCombo(readOnly, false, inUseName, values.UnifierFor(isInUse), func(newUse bool) {
+			if newUse {
+				slot.SetInUse(0, 0)
+			} else {
+				slot.SetFree()
+			}
+			onChange()
+		})
+		if !isInUse {
+			continue
+		}
+
+		currentWeaponTriple := slot.Triple()
+		if imgui.BeginCombo("Type", view.tripleName(currentWeaponTriple)) {
+			allTypes := view.mod.ObjectProperties().TriplesInClass(currentWeaponTriple.Class)
+			for _, triple := range allTypes {
+				if imgui.SelectableV(view.tripleName(triple), triple == currentWeaponTriple, 0, imgui.Vec2{}) {
+					slot.SetInUse(triple.Subclass, triple.Type)
+					onChange()
+				}
+			}
+			imgui.EndCombo()
+		}
+		isEnergyWeapon := currentWeaponTriple.Subclass >= 4
+		if isEnergyWeapon {
+			temperature, chargeAndOverload := slot.WeaponState()
+			values.RenderUnifiedSliderInt(readOnly, false, "Temperature", values.UnifierFor(int(temperature)),
+				func(u values.Unifier) int {
+					return u.Unified().(int)
+				}, func(value int) string {
+					return fmt.Sprintf("%.02f%%%%  -- raw: %%d", (float32(value)/float32(lvlobj.EnergyWeaponMaxTemperature))*100)
+				}, 0x00, lvlobj.EnergyWeaponMaxTemperature,
+				func(newValue int) {
+					slot.SetWeaponState(byte(newValue), chargeAndOverload)
+					onChange()
+				})
+
+			overloadState := chargeAndOverload & 0x80
+			charge := chargeAndOverload & 0x7F
+			values.RenderUnifiedCheckboxCombo(readOnly, false, "Overload", values.UnifierFor(overloadState != 0), func(newOverload bool) {
+				if newOverload {
+					slot.SetWeaponState(temperature, 0x80|charge)
+				} else {
+					slot.SetWeaponState(temperature, charge)
+				}
+				onChange()
+			})
+			values.RenderUnifiedSliderInt(readOnly, false, "Charge", values.UnifierFor(int(charge)),
+				func(u values.Unifier) int {
+					return u.Unified().(int)
+				}, func(value int) string {
+					return fmt.Sprintf("%.02f%%%%  -- raw: %%d", (float32(value)/float32(lvlobj.EnergyWeaponMaxEnergy))*100)
+				}, 0x00, 0x7F,
+				func(newValue int) {
+					slot.SetWeaponState(temperature, overloadState|byte(newValue))
+					onChange()
+				})
+		} else {
+			rounds, ammoType := slot.WeaponState()
+			values.RenderUnifiedSliderInt(readOnly, false, "Rounds", values.UnifierFor(int(rounds)),
+				func(u values.Unifier) int {
+					return u.Unified().(int)
+				}, func(value int) string {
+					return fmt.Sprintf("%d", value)
+				}, 0x00, 0xFF,
+				func(newValue int) {
+					slot.SetWeaponState(byte(newValue), ammoType)
+					onChange()
+				})
+			values.RenderUnifiedCombo(readOnly, false, "Ammo Type", values.UnifierFor(int(ammoType)),
+				func(u values.Unifier) int {
+					return u.Unified().(int)
+				},
+				func(value int) string {
+					switch value {
+					case 0:
+						return "Standard"
+					case 1:
+						return "Special"
+					default:
+						return fmt.Sprintf("Unknown %d", ammoType)
+					}
+				}, 2,
+				func(newValue int) {
+					slot.SetWeaponState(rounds, byte(newValue))
+					onChange()
+				})
+		}
+		imgui.PopID()
+	}
+}
+
+func (view *View) tripleName(triple object.Triple) string {
+	suffix := hintUnknown
+	linearIndex := view.mod.ObjectProperties().TripleIndex(triple)
+	if linearIndex >= 0 {
+		key := resource.KeyOf(ids.ObjectLongNames, resource.LangDefault, linearIndex)
+		objName, err := view.textCache.Text(key)
+		if err == nil {
+			suffix = objName
+		}
+	}
+	return triple.String() + ": " + suffix
 }
