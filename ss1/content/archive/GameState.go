@@ -34,6 +34,11 @@ const (
 	PatchTypeCount        = 7
 	patchCountStartOffset = 0x0349
 
+	// AmmoTypeCount is the number of types of ammo available to the character.
+	AmmoTypeCount                   = 15
+	ammoFullClipCountStartOffset    = 0x032B
+	ammoExtraRoundsCountStartOffset = 0x033A
+
 	engineTicksPerSecond = 280
 	secondsPerMinute     = 60
 	engineTicksPerMinute = secondsPerMinute * engineTicksPerSecond
@@ -206,6 +211,62 @@ func (patch PatchState) SetCount(value int) {
 	}
 
 	patch.State.Raw()[patchCountStartOffset+patch.Index] = count
+}
+
+// InventoryAmmo describes properties of ammo by type
+type InventoryAmmo struct {
+	Index int
+	State *GameState
+}
+
+func (ammo InventoryAmmo) isValid() bool {
+	return (ammo.Index >= 0) && (ammo.Index < AmmoTypeCount) && (ammo.State != nil)
+}
+
+// FullClipCount returns how many full clips the character is carrying.
+func (ammo InventoryAmmo) FullClipCount() int {
+	if !ammo.isValid() {
+		return 0
+	}
+	return int(ammo.State.Raw()[ammoFullClipCountStartOffset+ammo.Index])
+}
+
+// SetFullClipCount updates the amount of full clips the character is carrying. Invalid values are clamped.
+func (ammo InventoryAmmo) SetFullClipCount(value int) {
+	if !ammo.isValid() {
+		return
+	}
+	count := byte(value)
+	if value < 0 {
+		count = 0
+	} else if value > math.MaxUint8 {
+		count = math.MaxUint8
+	}
+
+	ammo.State.Raw()[ammoFullClipCountStartOffset+ammo.Index] = count
+}
+
+// ExtraRoundsCount returns how many extra rounds the character is carrying.
+func (ammo InventoryAmmo) ExtraRoundsCount() int {
+	if !ammo.isValid() {
+		return 0
+	}
+	return int(ammo.State.Raw()[ammoExtraRoundsCountStartOffset+ammo.Index])
+}
+
+// SetExtraRoundsCount updates the amount of extra rounds the character is carrying. Invalid values are clamped.
+func (ammo InventoryAmmo) SetExtraRoundsCount(value int) {
+	if !ammo.isValid() {
+		return
+	}
+	count := byte(value)
+	if value < 0 {
+		count = 0
+	} else if value > math.MaxUint8 {
+		count = math.MaxUint8
+	}
+
+	ammo.State.Raw()[ammoExtraRoundsCountStartOffset+ammo.Index] = count
 }
 
 var gameStateDesc = interpreters.New().
@@ -389,6 +450,15 @@ func (state *GameState) InventoryGrenade(index int) InventoryGrenade {
 // Index should be within the range of [0..PatchTypeCount[
 func (state *GameState) PatchState(index int) PatchState {
 	return PatchState{
+		Index: index,
+		State: state,
+	}
+}
+
+// InventoryAmmo returns an accessor for the identified ammo type index.
+// Index should be within the range of [0..AmmoTypeCount[
+func (state *GameState) InventoryAmmo(index int) InventoryAmmo {
+	return InventoryAmmo{
 		Index: index,
 		State: state,
 	}

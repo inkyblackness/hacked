@@ -369,6 +369,15 @@ func (view *View) createInventoryControls(readOnly bool, gameState *archive.Game
 		}
 		imgui.TreePop()
 	}
+	if imgui.TreeNodeV("Ammo", imgui.TreeNodeFlagsFramed) {
+		for i := 0; i < archive.AmmoTypeCount; i++ {
+			imgui.Separator()
+			imgui.PushID(fmt.Sprintf("ammo%d", i))
+			view.createInventoryAmmoControls(readOnly, gameState.InventoryAmmo(i), onChange)
+			imgui.PopID()
+		}
+		imgui.TreePop()
+	}
 	if imgui.TreeNodeV("Grenades", imgui.TreeNodeFlagsFramed) {
 		for i := 0; i < archive.GrenadeTypeCount; i++ {
 			imgui.Separator()
@@ -426,6 +435,33 @@ func (view *View) createInventoryGrenadeControls(readOnly bool, grenade archive.
 		}, 0, archive.GrenadeTimerMaximum,
 		func(newValue int) {
 			grenade.SetTimerSetting(archive.GrenadeTimerSetting(newValue))
+			onChange()
+		})
+}
+
+func (view *View) createInventoryAmmoControls(readOnly bool, ammo archive.InventoryAmmo, onChange func()) {
+	values.RenderUnifiedSliderInt(readOnly, false,
+		fmt.Sprintf("Clip Count (%s)", view.indexedName(object.ClassAmmo, ammo.Index)),
+		values.UnifierFor(ammo.FullClipCount()),
+		func(u values.Unifier) int {
+			return u.Unified().(int)
+		}, func(value int) string {
+			return "%d"
+		}, 0, 0xFF,
+		func(newValue int) {
+			ammo.SetFullClipCount(newValue)
+			onChange()
+		})
+	values.RenderUnifiedSliderInt(readOnly, false,
+		"Extra rounds",
+		values.UnifierFor(ammo.ExtraRoundsCount()),
+		func(u values.Unifier) int {
+			return u.Unified().(int)
+		}, func(value int) string {
+			return "%d"
+		}, 0, 0xFF,
+		func(newValue int) {
+			ammo.SetExtraRoundsCount(newValue)
 			onChange()
 		})
 }
