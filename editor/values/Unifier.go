@@ -10,6 +10,13 @@ func NewUnifier() Unifier {
 	return Unifier{state: unifierInitState{}}
 }
 
+// UnifierFor returns a unifier for a single value.
+func UnifierFor(value interface{}) Unifier {
+	unifier := NewUnifier()
+	unifier.Add(value)
+	return unifier
+}
+
 // Add unifies the given value to the current state.
 // The given value must be comparable.
 func (u *Unifier) Add(value interface{}) {
