@@ -395,6 +395,29 @@ func (view *View) createInventoryControls(readOnly bool, gameState *archive.Game
 		}
 		imgui.TreePop()
 	}
+	if imgui.TreeNodeV("General", imgui.TreeNodeFlagsFramed) {
+		for i := 0; i < archive.GeneralInventorySlotCount; i++ {
+			imgui.PushID(fmt.Sprintf("general%d", i))
+			view.createGeneralInventoryControls(readOnly, gameState.GeneralInventorySlot(i), onChange)
+			imgui.PopID()
+		}
+		imgui.TreePop()
+	}
+}
+
+func (view *View) createGeneralInventoryControls(readOnly bool, slot archive.GeneralInventorySlot, onChange func()) {
+	values.RenderUnifiedSliderInt(readOnly, false,
+		fmt.Sprintf("ObjectIndex (Slot %d)", slot.Index+1),
+		values.UnifierFor(slot.ObjectID()),
+		func(u values.Unifier) int {
+			return int(u.Unified().(level.ObjectID))
+		}, func(value int) string {
+			return "%d"
+		}, 0, 871, // TODO: get ID limit of current level
+		func(newValue int) {
+			slot.SetObjectId(level.ObjectID(newValue))
+			onChange()
+		})
 }
 
 func (view *View) createPatchStateControls(readOnly bool, patch archive.PatchState, onChange func()) {

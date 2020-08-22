@@ -39,6 +39,10 @@ const (
 	ammoFullClipCountStartOffset    = 0x032B
 	ammoExtraRoundsCountStartOffset = 0x033A
 
+	// GeneralInventorySlotCount is the number of general inventory slots available.
+	GeneralInventorySlotCount       = 14
+	generalInventorySlotStartOffset = 0x007A
+
 	engineTicksPerSecond = 280
 	secondsPerMinute     = 60
 	engineTicksPerMinute = secondsPerMinute * engineTicksPerSecond
@@ -269,6 +273,37 @@ func (ammo InventoryAmmo) SetExtraRoundsCount(value int) {
 	ammo.State.Raw()[ammoExtraRoundsCountStartOffset+ammo.Index] = count
 }
 
+// GeneralInventorySlot describes properties of a general inventory slot.
+type GeneralInventorySlot struct {
+	Index int
+	State *GameState
+}
+
+func (slot GeneralInventorySlot) isValid() bool {
+	return (slot.Index >= 0) && (slot.Index < GeneralInventorySlotCount) && (slot.State != nil)
+}
+
+func (slot GeneralInventorySlot) rawID() []byte {
+	if !slot.isValid() {
+		return []byte{0x00, 0x00}
+	}
+	startIndex := generalInventorySlotStartOffset + (2 * slot.Index)
+	return slot.State.Raw()[startIndex : startIndex+2]
+}
+
+// ObjectID returns the ID of the object in this inventory slot.
+func (slot GeneralInventorySlot) ObjectID() level.ObjectID {
+	raw := slot.rawID()
+	return level.ObjectID((uint16(raw[1]) << 8) | (uint16(raw[0]) << 0))
+}
+
+// SetObjectID updates the ID in this inventory slot.
+func (slot GeneralInventorySlot) SetObjectId(id level.ObjectID) {
+	raw := slot.rawID()
+	raw[0] = byte(id >> 0)
+	raw[1] = byte(id >> 8)
+}
+
 var gameStateDesc = interpreters.New().
 	With("Difficulty: Combat", 0x0015, 1).As(interpreters.RangedValue(0, 3)).
 	With("Difficulty: Mission", 0x0016, 1).As(interpreters.RangedValue(0, 3)).
@@ -459,6 +494,15 @@ func (state *GameState) PatchState(index int) PatchState {
 // Index should be within the range of [0..AmmoTypeCount[
 func (state *GameState) InventoryAmmo(index int) InventoryAmmo {
 	return InventoryAmmo{
+		Index: index,
+		State: state,
+	}
+}
+
+// GeneralInventorySlot returns an accessor for the identified general slot.
+// Index should be within the range of [0..GeneralInventorySlotCount[.
+func (state *GameState) GeneralInventorySlot(index int) GeneralInventorySlot {
+	return GeneralInventorySlot{
 		Index: index,
 		State: state,
 	}
