@@ -358,23 +358,54 @@ func (view *View) setInterpreterValueKeyed(instance *interpreters.Instance, key 
 }
 
 func (view *View) createInventoryControls(readOnly bool, gameState *archive.GameState, onChange func()) {
-	for i := 0; i < archive.InventoryWeaponSlots; i++ {
-		imgui.Separator()
-		imgui.PushID(fmt.Sprintf("weapon%d", i))
-		view.createInventoryWeaponSlotControls(readOnly, gameState.InventoryWeaponSlot(i), onChange)
-		imgui.PopID()
+	if imgui.TreeNodeV("Weapons", imgui.TreeNodeFlagsFramed) {
+		for i := 0; i < archive.InventoryWeaponSlots; i++ {
+			if i > 0 {
+				imgui.Separator()
+			}
+			imgui.PushID(fmt.Sprintf("weapon%d", i))
+			view.createInventoryWeaponSlotControls(readOnly, gameState.InventoryWeaponSlot(i), onChange)
+			imgui.PopID()
+		}
+		imgui.TreePop()
 	}
-	for i := 0; i < archive.GrenadeTypeCount; i++ {
-		imgui.Separator()
-		imgui.PushID(fmt.Sprintf("grenade%d", i))
-		view.createInventoryGrenadeControls(readOnly, gameState.InventoryGrenade(i), onChange)
-		imgui.PopID()
+	if imgui.TreeNodeV("Grenades", imgui.TreeNodeFlagsFramed) {
+		for i := 0; i < archive.GrenadeTypeCount; i++ {
+			imgui.Separator()
+			imgui.PushID(fmt.Sprintf("grenade%d", i))
+			view.createInventoryGrenadeControls(readOnly, gameState.InventoryGrenade(i), onChange)
+			imgui.PopID()
+		}
+		imgui.TreePop()
 	}
+	if imgui.TreeNodeV("Patches", imgui.TreeNodeFlagsFramed) {
+		for i := 0; i < archive.GrenadeTypeCount; i++ {
+			imgui.PushID(fmt.Sprintf("patch%d", i))
+			view.createPatchStateControls(readOnly, gameState.PatchState(i), onChange)
+			imgui.PopID()
+		}
+		imgui.TreePop()
+	}
+}
+
+func (view *View) createPatchStateControls(readOnly bool, patch archive.PatchState, onChange func()) {
+	values.RenderUnifiedSliderInt(readOnly, false,
+		fmt.Sprintf("Patch Count (%s)", view.indexedName(object.ClassDrug, patch.Index)),
+		values.UnifierFor(patch.Count()),
+		func(u values.Unifier) int {
+			return u.Unified().(int)
+		}, func(value int) string {
+			return "%d"
+		}, 0, 0xFF,
+		func(newValue int) {
+			patch.SetCount(newValue)
+			onChange()
+		})
 }
 
 func (view *View) createInventoryGrenadeControls(readOnly bool, grenade archive.InventoryGrenade, onChange func()) {
 	values.RenderUnifiedSliderInt(readOnly, false,
-		fmt.Sprintf("Grenade Count (%s)", view.grenadeName(grenade.Index)),
+		fmt.Sprintf("Grenade Count (%s)", view.indexedName(object.ClassGrenade, grenade.Index)),
 		values.UnifierFor(grenade.Count()),
 		func(u values.Unifier) int {
 			return u.Unified().(int)
@@ -506,8 +537,8 @@ func (view *View) tripleName(triple object.Triple) string {
 	return triple.String() + ": " + suffix
 }
 
-func (view *View) grenadeName(index int) string {
-	startIndex := view.mod.ObjectProperties().TripleIndex(object.TripleFrom(int(object.ClassGrenade), 0, 0))
+func (view *View) indexedName(class object.Class, index int) string {
+	startIndex := view.mod.ObjectProperties().TripleIndex(object.TripleFrom(int(class), 0, 0))
 	if startIndex >= 0 {
 		key := resource.KeyOf(ids.ObjectLongNames, resource.LangDefault, startIndex+index)
 		objName, err := view.textCache.Text(key)

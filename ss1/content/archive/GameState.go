@@ -30,6 +30,10 @@ const (
 	// GrenadeTimerMaximum is the maximum time that can be set for a grenade in game.
 	GrenadeTimerMaximum = 571
 
+	// PatchTypeCount is the number of patches available to the character.
+	PatchTypeCount        = 7
+	patchCountStartOffset = 0x0349
+
 	engineTicksPerSecond = 280
 	secondsPerMinute     = 60
 	engineTicksPerMinute = secondsPerMinute * engineTicksPerSecond
@@ -169,6 +173,39 @@ func (grenade InventoryGrenade) SetTimerSetting(value GrenadeTimerSetting) {
 	raw := grenade.rawTimer()
 	raw[0] = byte(value >> 0)
 	raw[1] = byte(value >> 8)
+}
+
+// PatchState describes properties of patches by type
+type PatchState struct {
+	Index int
+	State *GameState
+}
+
+func (patch PatchState) isValid() bool {
+	return (patch.Index >= 0) && (patch.Index < GrenadeTypeCount) && (patch.State != nil)
+}
+
+// Count returns how many patches the character is carrying.
+func (patch PatchState) Count() int {
+	if !patch.isValid() {
+		return 0
+	}
+	return int(patch.State.Raw()[patchCountStartOffset+patch.Index])
+}
+
+// SetCount updates the amount of patches the character is carrying. Invalid values are clamped.
+func (patch PatchState) SetCount(value int) {
+	if !patch.isValid() {
+		return
+	}
+	count := byte(value)
+	if value < 0 {
+		count = 0
+	} else if value > math.MaxUint8 {
+		count = math.MaxUint8
+	}
+
+	patch.State.Raw()[patchCountStartOffset+patch.Index] = count
 }
 
 var gameStateDesc = interpreters.New().
@@ -343,6 +380,15 @@ func (state *GameState) InventoryWeaponSlot(index int) InventoryWeaponSlot {
 // Index should be within the range of [0..GrenadeTypeCount[
 func (state *GameState) InventoryGrenade(index int) InventoryGrenade {
 	return InventoryGrenade{
+		Index: index,
+		State: state,
+	}
+}
+
+// PatchState returns an accessor for the identified patch type index.
+// Index should be within the range of [0..PatchTypeCount[
+func (state *GameState) PatchState(index int) PatchState {
+	return PatchState{
 		Index: index,
 		State: state,
 	}
