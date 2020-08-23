@@ -1,4 +1,4 @@
-package lvlobj
+package numbers
 
 // ToBinaryCodedDecimal converts given integer value to a 4-digit BCD value.
 func ToBinaryCodedDecimal(value uint16) (bcd uint16) {

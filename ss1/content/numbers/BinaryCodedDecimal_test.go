@@ -1,11 +1,11 @@
-package lvlobj_test
+package numbers_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlobj"
+	"github.com/inkyblackness/hacked/ss1/content/numbers"
 )
 
 func TestBinaryCodedDecimal(t *testing.T) {
@@ -24,10 +24,10 @@ func TestBinaryCodedDecimal(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		toBCD := lvlobj.ToBinaryCodedDecimal(tc.int)
+		toBCD := numbers.ToBinaryCodedDecimal(tc.int)
 		assert.Equal(t, tc.bcd, toBCD, "Wrong result converting to BCD for %d", tc.int)
 
-		fromBCD := lvlobj.FromBinaryCodedDecimal(tc.bcd)
+		fromBCD := numbers.FromBinaryCodedDecimal(tc.bcd)
 		if tc.int <= 9999 {
 			assert.Equal(t, tc.int, fromBCD, "Wrong result converting from BCD for %d", tc.int)
 		} else {

@@ -14,6 +14,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlobj"
 	"github.com/inkyblackness/hacked/ss1/content/interpreters"
+	"github.com/inkyblackness/hacked/ss1/content/numbers"
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
@@ -455,11 +456,11 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 
 	simplifier.SetSpecialHandler("BinaryCodedDecimal", func() {
 		values.RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
-			func(u values.Unifier) int { return int(lvlobj.FromBinaryCodedDecimal(uint16(u.Unified().(int32)))) },
+			func(u values.Unifier) int { return int(numbers.FromBinaryCodedDecimal(uint16(u.Unified().(int32)))) },
 			func(value int) string { return "%03d" },
 			0, 999,
 			func(newValue int) {
-				updater(func(oldValue uint32) uint32 { return uint32(lvlobj.ToBinaryCodedDecimal(uint16(newValue))) })
+				updater(func(oldValue uint32) uint32 { return uint32(numbers.ToBinaryCodedDecimal(uint16(newValue))) })
 			})
 	})
 
