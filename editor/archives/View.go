@@ -27,6 +27,21 @@ const (
 	hintUnknown = "???"
 )
 
+type variableProvider interface {
+	IntegerVariable(index int) archive.GameVariableInfo
+	BooleanVariable(index int) archive.GameVariableInfo
+}
+
+type variableContext struct {
+	name     string
+	provider variableProvider
+}
+
+var variableContextList = []variableContext{
+	{name: "Citadel Mission", provider: citadel.MissionVariables{}},
+	{name: "Engine", provider: archive.EngineVariables{}},
+}
+
 // View provides edit controls for the archive.
 type View struct {
 	mod       *world.Mod
@@ -625,6 +640,39 @@ func (view *View) createInventoryWeaponSlotControls(readOnly bool, slot archive.
 }
 
 func (view *View) createVariableControls(readOnly bool, gameState *archive.GameState, onChange func()) {
+	if imgui.BeginCombo("Context", variableContextList[view.model.variableContextIndex].name) {
+		for i, context := range variableContextList {
+			if imgui.SelectableV(context.name, i == view.model.variableContextIndex, 0, imgui.Vec2{}) {
+				view.model.variableContextIndex = i
+			}
+		}
+		imgui.EndCombo()
+	}
+
+	varProvider := variableContextList[view.model.variableContextIndex].provider
+
+	if imgui.Button("Reset") {
+		for i := 0; i < archive.BooleanVarCount; i++ {
+			varIndex := i
+			info := varProvider.BooleanVariable(varIndex)
+			var initValue bool
+			if info.InitValue != nil {
+				initValue = *info.InitValue != 0
+			}
+			gameState.SetBooleanVar(i, initValue)
+		}
+		for i := 0; i < archive.IntegerVarCount; i++ {
+			varIndex := i
+			info := varProvider.IntegerVariable(varIndex)
+			var initValue int16
+			if info.InitValue != nil {
+				initValue = *info.InitValue
+			}
+			gameState.SetIntegerVar(i, initValue)
+		}
+		onChange()
+	}
+
 	if imgui.TreeNodeV("Boolean Variables", imgui.TreeNodeFlagsFramed) {
 		intConverter := func(u values.Unifier) int {
 			bValue := u.Unified().(bool)
@@ -637,7 +685,7 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 
 		for i := 0; i < archive.BooleanVarCount; i++ {
 			varIndex := i
-			info := citadel.BooleanVariable(varIndex)
+			info := varProvider.BooleanVariable(varIndex)
 
 			varReadOnly := readOnly || (info.Hardcoded && !gameState.IsSavegame())
 			varName := fmt.Sprintf("Var%03d: %s", varIndex, info.Name)
@@ -668,7 +716,7 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 		}
 		for i := 0; i < archive.IntegerVarCount; i++ {
 			varIndex := i
-			info := citadel.IntegerVariable(varIndex)
+			info := varProvider.IntegerVariable(varIndex)
 
 			varReadOnly := readOnly || (info.Hardcoded && !gameState.IsSavegame())
 			varName := fmt.Sprintf("Var%02d: %s", varIndex, info.Name)

@@ -80,13 +80,13 @@ func (info GameVariableInfo) DescribedAs(text string) GameVariableInfo {
 // GameVariables is a lookup map for information on game variables.
 type GameVariables map[int]GameVariableInfo
 
-// Lookup returns the information for given index. If the index is not known, the unknown function is used.
-func (vars GameVariables) Lookup(index int, unknown func() GameVariableInfo) GameVariableInfo {
+// Lookup returns the information for given index. If the index is not known, nil is returned.
+func (vars GameVariables) Lookup(index int) *GameVariableInfo {
 	info, known := vars[index]
-	if known {
-		return info
+	if !known {
+		return nil
 	}
-	return unknown()
+	return &info
 }
 
 const (
@@ -184,21 +184,42 @@ var engineBooleanVariables = GameVariables{
 	300: GameVariableInfoFor("New Message Flag").At(0),
 }
 
-func unusedVariable() GameVariableInfo {
-	return GameVariableInfoFor("(unused)").At(0)
-}
-
 // EngineIntegerVariable returns a variable info for integer variables.
-func EngineIntegerVariable(index int) GameVariableInfo {
-	return engineIntegerVariables.Lookup(index, unusedVariable)
+// If the given index is not used by the engine, nil is returned.
+func EngineIntegerVariable(index int) *GameVariableInfo {
+	return engineIntegerVariables.Lookup(index)
 }
 
 // EngineBooleanVariable returns a variable info for boolean variables.
-func EngineBooleanVariable(index int) GameVariableInfo {
-	return engineBooleanVariables.Lookup(index, unusedVariable)
+// If the given index is not used by the engine, nil is returned.
+func EngineBooleanVariable(index int) *GameVariableInfo {
+	return engineBooleanVariables.Lookup(index)
 }
 
 // IsRandomIntegerVariable returns true for the special variables that are randomized.
 func IsRandomIntegerVariable(index int) bool {
 	return (index == 31) || (index == 32)
+}
+
+// EngineVariables is a collector of engine-specific variable accessors.
+type EngineVariables struct{}
+
+var unusedVar = GameVariableInfoFor("(unused)").At(0)
+
+// IntegerVariable returns a variable info for given index.
+func (vars EngineVariables) IntegerVariable(index int) GameVariableInfo {
+	varInfo := EngineIntegerVariable(index)
+	if varInfo == nil {
+		return unusedVar
+	}
+	return *varInfo
+}
+
+// BooleanVariable returns a variable info for given index.
+func (vars EngineVariables) BooleanVariable(index int) GameVariableInfo {
+	varInfo := EngineBooleanVariable(index)
+	if varInfo == nil {
+		return unusedVar
+	}
+	return *varInfo
 }

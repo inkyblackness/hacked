@@ -5,6 +5,8 @@ type viewModel struct {
 	restoreFocus bool
 
 	selectedLevel int
+
+	variableContextIndex int
 }
 
 func freshViewModel() viewModel {

@@ -140,22 +140,53 @@ var booleanVariables = archive.GameVariables{
 }
 
 // IntegerVariable returns a variable info for integer variables.
-func IntegerVariable(index int) archive.GameVariableInfo {
-	return integerVariables.Lookup(index, func() archive.GameVariableInfo {
-		info := archive.EngineIntegerVariable(index)
-		if index == 31 {
-			info.Name = "Reactor Code 1"
-		}
-		if index == 32 {
-			info.Name = "Reactor Code 2"
-		}
-		return info
-	})
+func IntegerVariable(index int) *archive.GameVariableInfo {
+	varInfo := integerVariables.Lookup(index)
+	if varInfo != nil {
+		return varInfo
+	}
+	varInfo = archive.EngineIntegerVariable(index)
+	if varInfo == nil {
+		return nil
+	}
+
+	if index == 31 {
+		varInfo.Name = "Reactor Code 1"
+	}
+	if index == 32 {
+		varInfo.Name = "Reactor Code 2"
+	}
+	return varInfo
 }
 
 // BooleanVariable returns a variable info for boolean variables.
-func BooleanVariable(index int) archive.GameVariableInfo {
-	return booleanVariables.Lookup(index, func() archive.GameVariableInfo {
-		return archive.EngineBooleanVariable(index)
-	})
+func BooleanVariable(index int) *archive.GameVariableInfo {
+	varInfo := booleanVariables.Lookup(index)
+	if varInfo != nil {
+		return varInfo
+	}
+	return archive.EngineBooleanVariable(index)
+}
+
+// MissionVariables is a collector of mission-specific variable accessors.
+type MissionVariables struct{}
+
+var unknownVar = archive.GameVariableInfoFor("(unknown)").At(0)
+
+// IntegerVariable returns a variable info for given index.
+func (vars MissionVariables) IntegerVariable(index int) archive.GameVariableInfo {
+	varInfo := IntegerVariable(index)
+	if varInfo == nil {
+		return unknownVar
+	}
+	return *varInfo
+}
+
+// BooleanVariable returns a variable info for given index.
+func (vars MissionVariables) BooleanVariable(index int) archive.GameVariableInfo {
+	varInfo := BooleanVariable(index)
+	if varInfo == nil {
+		return unknownVar
+	}
+	return *varInfo
 }
