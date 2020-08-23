@@ -127,7 +127,7 @@ func (view *View) renderGameStateContent() {
 	data := view.gameStateData()
 	modStateIsDefaulting := false
 
-	imgui.PushItemWidth(-260 * view.guiScale)
+	imgui.PushItemWidth(-350 * view.guiScale)
 	if data.isPresent() {
 		modState := data.toInstance()
 		if !modState.IsSavegame() {
