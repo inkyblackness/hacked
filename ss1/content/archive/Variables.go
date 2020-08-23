@@ -71,6 +71,12 @@ func (info GameVariableInfo) LimitedBy(min, max int16) GameVariableInfo {
 	return info
 }
 
+// DescribedAs returns an information with given text as description.
+func (info GameVariableInfo) DescribedAs(text string) GameVariableInfo {
+	info.Description = text
+	return info
+}
+
 // GameVariables is a lookup map for information on game variables.
 type GameVariables map[int]GameVariableInfo
 
@@ -83,8 +89,15 @@ func (vars GameVariables) Lookup(index int, unknown func() GameVariableInfo) Gam
 	return unknown()
 }
 
+const (
+	securityValueDescription = "The current security value is re-calculated whenever a level is loaded up."
+	randomCodeDescription    = "If both codes are equal at the start of a new game, they will be randomized."
+	highscoreCodeDescription = "The highscore values are combined as one 32-bit integer, used for the MFD game MCOM."
+)
+
 var engineIntegerVariables = GameVariables{
-	2: GameVariableInfoFor("Destroyed Antenna Count").At(0).LimitedBy(0, 100),
+	2: GameVariableInfoFor("Plastique explosion counter").At(0).LimitedBy(0, 100).
+		DescribedAs("This value is incremented for each exploding plastique."),
 
 	9: GameVariableInfoFor("Plot counter").At(0),
 
@@ -92,24 +105,24 @@ var engineIntegerVariables = GameVariables{
 	14: GameVariableInfoFor("Difficulty: Cyber").HardcodedConfig().LimitedBy(0, 3),
 	15: GameVariableInfoFor("Difficulty: Combat").HardcodedConfig().LimitedBy(0, 3),
 
-	16: GameVariableInfoFor("Security Value: Level 0").HardcodedAt(0).LimitedBy(0, 1000),
-	17: GameVariableInfoFor("Security Value: Level 1").HardcodedAt(0).LimitedBy(0, 1000),
-	18: GameVariableInfoFor("Security Value: Level 2").HardcodedAt(0).LimitedBy(0, 1000),
-	19: GameVariableInfoFor("Security Value: Level 3").HardcodedAt(0).LimitedBy(0, 1000),
-	20: GameVariableInfoFor("Security Value: Level 4").HardcodedAt(0).LimitedBy(0, 1000),
-	21: GameVariableInfoFor("Security Value: Level 5").HardcodedAt(0).LimitedBy(0, 1000),
-	22: GameVariableInfoFor("Security Value: Level 6").HardcodedAt(0).LimitedBy(0, 1000),
-	23: GameVariableInfoFor("Security Value: Level 7").HardcodedAt(0).LimitedBy(0, 1000),
-	24: GameVariableInfoFor("Security Value: Level 8").HardcodedAt(0).LimitedBy(0, 1000),
-	25: GameVariableInfoFor("Security Value: Level 9").HardcodedAt(0).LimitedBy(0, 1000),
-	26: GameVariableInfoFor("Security Value: Level 10").HardcodedAt(0).LimitedBy(0, 1000),
-	27: GameVariableInfoFor("Security Value: Level 11").HardcodedAt(0).LimitedBy(0, 1000),
-	28: GameVariableInfoFor("Security Value: Level 12").HardcodedAt(0).LimitedBy(0, 1000),
-	29: GameVariableInfoFor("Security Value: Level 13").HardcodedAt(0).LimitedBy(0, 1000),
+	16: GameVariableInfoFor("Security Value: Level 0").HardcodedAt(0).LimitedBy(0, 1000).DescribedAs(securityValueDescription),
+	17: GameVariableInfoFor("Security Value: Level 1").HardcodedAt(0).LimitedBy(0, 1000).DescribedAs(securityValueDescription),
+	18: GameVariableInfoFor("Security Value: Level 2").HardcodedAt(0).LimitedBy(0, 1000).DescribedAs(securityValueDescription),
+	19: GameVariableInfoFor("Security Value: Level 3").HardcodedAt(0).LimitedBy(0, 1000).DescribedAs(securityValueDescription),
+	20: GameVariableInfoFor("Security Value: Level 4").HardcodedAt(0).LimitedBy(0, 1000).DescribedAs(securityValueDescription),
+	21: GameVariableInfoFor("Security Value: Level 5").HardcodedAt(0).LimitedBy(0, 1000).DescribedAs(securityValueDescription),
+	22: GameVariableInfoFor("Security Value: Level 6").HardcodedAt(0).LimitedBy(0, 1000).DescribedAs(securityValueDescription),
+	23: GameVariableInfoFor("Security Value: Level 7").HardcodedAt(0).LimitedBy(0, 1000).DescribedAs(securityValueDescription),
+	24: GameVariableInfoFor("Security Value: Level 8").HardcodedAt(0).LimitedBy(0, 1000).DescribedAs(securityValueDescription),
+	25: GameVariableInfoFor("Security Value: Level 9").HardcodedAt(0).LimitedBy(0, 1000).DescribedAs(securityValueDescription),
+	26: GameVariableInfoFor("Security Value: Level 10").HardcodedAt(0).LimitedBy(0, 1000).DescribedAs(securityValueDescription),
+	27: GameVariableInfoFor("Security Value: Level 11").HardcodedAt(0).LimitedBy(0, 1000).DescribedAs(securityValueDescription),
+	28: GameVariableInfoFor("Security Value: Level 12").HardcodedAt(0).LimitedBy(0, 1000).DescribedAs(securityValueDescription),
+	29: GameVariableInfoFor("Security Value: Level 13").HardcodedAt(0).LimitedBy(0, 1000).DescribedAs(securityValueDescription),
 
 	30: GameVariableInfoFor("Difficulty: Puzzle").HardcodedConfig().LimitedBy(0, 3),
-	31: GameVariableInfoFor("Random Code 1").At(0),
-	32: GameVariableInfoFor("Random Code 2").At(0),
+	31: GameVariableInfoFor("Random Code 1").At(0).DescribedAs(randomCodeDescription),
+	32: GameVariableInfoFor("Random Code 2").At(0).DescribedAs(randomCodeDescription),
 
 	41: GameVariableInfoFor("Music Volume").HardcodedConfig().LimitedBy(0, 100),
 	42: GameVariableInfoFor("Video Gamma").HardcodedConfig().LimitedBy(0, math.MaxInt16),
@@ -119,6 +132,8 @@ var engineIntegerVariables = GameVariables{
 			0: "Right Handed",
 			1: "Left Handed",
 		}),
+	45: GameVariableInfoFor("Game: Highscore (pt1)").At(0).DescribedAs(highscoreCodeDescription),
+	46: GameVariableInfoFor("Game: Highscore (pt2)").At(0).DescribedAs(highscoreCodeDescription),
 	47: GameVariableInfoFor("Double-Click Speed").HardcodedConfig().LimitedBy(0, math.MaxInt16),
 	48: GameVariableInfoFor("Language").HardcodedConfig().Enumerated(map[int16]string{
 		0: "Default",
@@ -159,4 +174,9 @@ func EngineIntegerVariable(index int) GameVariableInfo {
 // EngineBooleanVariable returns a variable info for boolean variables.
 func EngineBooleanVariable(index int) GameVariableInfo {
 	return engineBooleanVariables.Lookup(index, unusedVariable)
+}
+
+// IsRandomIntegerVariable returns true for the special variables that are randomized.
+func IsRandomIntegerVariable(index int) bool {
+	return (index == 31) || (index == 32)
 }

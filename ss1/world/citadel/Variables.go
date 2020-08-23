@@ -7,9 +7,6 @@ var integerVariables = archive.GameVariables{
 
 	12: archive.GameVariableInfoFor("Number of Groves").At(3).LimitedBy(0, 4),
 
-	31: archive.GameVariableInfoFor("Reactor Code 1").At(0),
-	32: archive.GameVariableInfoFor("Reactor Code 2").At(0),
-
 	33: archive.GameVariableInfoFor("Destroyed CPUs Level 1").At(0).LimitedBy(0, 100),
 	34: archive.GameVariableInfoFor("Destroyed CPUs Level 2").At(0).LimitedBy(0, 100),
 	35: archive.GameVariableInfoFor("Destroyed CPUs Level 3").At(0).LimitedBy(0, 100),
@@ -25,7 +22,14 @@ var booleanVariables = archive.GameVariables{}
 // IntegerVariable returns a variable info for integer variables.
 func IntegerVariable(index int) archive.GameVariableInfo {
 	return integerVariables.Lookup(index, func() archive.GameVariableInfo {
-		return archive.EngineIntegerVariable(index)
+		info := archive.EngineIntegerVariable(index)
+		if index == 31 {
+			info.Name = "Reactor Code 1"
+		}
+		if index == 32 {
+			info.Name = "Reactor Code 2"
+		}
+		return info
 	})
 }
 
