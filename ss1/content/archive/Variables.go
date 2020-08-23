@@ -160,7 +160,29 @@ var engineIntegerVariables = GameVariables{
 	}),
 }
 
-var engineBooleanVariables = GameVariables{}
+var engineBooleanVariables = GameVariables{
+	0: GameVariableInfoFor("Always False").At(0).
+		DescribedAs("This variable should always stay at 'False'.\n" +
+			"Default conditions assume boolean var 0 is zero to not block.\n" +
+			"For example, default doors would all become locked if it were 'True'."),
+
+	10: GameVariableInfoFor("Status HW: Delta Launch Enable").At(0),
+	11: GameVariableInfoFor("Status HW: Alpha Launch Enable").At(0),
+	12: GameVariableInfoFor("Status HW: Beta Launch Enable").At(0),
+	15: GameVariableInfoFor("Status HW: Beta Launched").At(0),
+
+	20: GameVariableInfoFor("Reactor on Destruct").At(0).
+		DescribedAs("Note: Rumble will stop if boolean var 152 is 'True'."),
+
+	145: GameVariableInfoFor("On-Line Help"),
+
+	152: GameVariableInfoFor("Self-Destruct Rumble Stop").At(0).
+		DescribedAs("Disables rumble caused by boolean var 20."),
+	153: GameVariableInfoFor("Four or more plastique exploded").At(0).
+		DescribedAs("Set to 'True' if integer variable 2 reached 4 (or higher)."),
+
+	300: GameVariableInfoFor("New Message Flag").At(0),
+}
 
 func unusedVariable() GameVariableInfo {
 	return GameVariableInfoFor("(unused)").At(0)
