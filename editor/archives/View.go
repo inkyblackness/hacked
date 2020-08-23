@@ -18,6 +18,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
+	"github.com/inkyblackness/hacked/ss1/world/citadel"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 )
 
@@ -637,19 +638,53 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 	}
 	if imgui.TreeNodeV("Integer Variables", imgui.TreeNodeFlagsFramed) {
 		for i := 0; i < archive.IntegerVarCount; i++ {
-			integerIndex := i
-			values.RenderUnifiedSliderInt(readOnly, false,
-				fmt.Sprintf("Var%02d", i),
-				values.UnifierFor(gameState.IntegerVar(integerIndex)),
-				func(u values.Unifier) int {
-					return int(u.Unified().(int16))
-				}, func(value int) string {
-					return "%d"
-				}, math.MinInt16, math.MaxInt16,
-				func(newValue int) {
-					gameState.SetIntegerVar(integerIndex, int16(newValue))
-					onChange()
-				})
+			varIndex := i
+			info := citadel.IntegerVariable(varIndex)
+
+			varReadOnly := readOnly || (info.Hardcoded && !gameState.IsSavegame())
+			varName := fmt.Sprintf("Var%02d: %s", varIndex, info.Name)
+			varUnifier := values.UnifierFor(gameState.IntegerVar(varIndex))
+			intConverter := func(u values.Unifier) int {
+				return int(u.Unified().(int16))
+			}
+			changeHandler := func(newValue int) {
+				gameState.SetIntegerVar(varIndex, int16(newValue))
+				onChange()
+			}
+
+			if len(info.ValueNames) > 0 {
+				var max int16
+				for key := range info.ValueNames {
+					if key > max {
+						max = key
+					}
+				}
+				values.RenderUnifiedCombo(varReadOnly, false, varName, varUnifier, intConverter,
+					func(value int) string {
+						name, found := info.ValueNames[int16(value)]
+						if found {
+							return name
+						}
+						return fmt.Sprintf("Unknown %d", value)
+					},
+					int(max+1),
+					changeHandler)
+			} else {
+
+				min := math.MinInt16
+				max := math.MaxInt16
+				if info.Limits != nil {
+					min = int(info.Limits.Minimum)
+					max = int(info.Limits.Maximum)
+				}
+
+				values.RenderUnifiedSliderInt(varReadOnly, false, varName, varUnifier, intConverter,
+					func(value int) string {
+						return "%d"
+					},
+					min, max,
+					changeHandler)
+			}
 		}
 		imgui.TreePop()
 	}
