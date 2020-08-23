@@ -633,7 +633,7 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 			}
 			return 0
 		}
-		defaultNames := map[int]string{0: "No", 1: "Yes"}
+		defaultNames := map[int]string{0: "False", 1: "True"}
 
 		for i := 0; i < archive.BooleanVarCount; i++ {
 			varIndex := i
