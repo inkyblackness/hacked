@@ -626,18 +626,46 @@ func (view *View) createInventoryWeaponSlotControls(readOnly bool, slot archive.
 
 func (view *View) createVariableControls(readOnly bool, gameState *archive.GameState, onChange func()) {
 	if imgui.TreeNodeV("Boolean Variables", imgui.TreeNodeFlagsFramed) {
+		intConverter := func(u values.Unifier) int {
+			bValue := u.Unified().(bool)
+			if bValue {
+				return 1
+			}
+			return 0
+		}
+		defaultNames := map[int]string{0: "No", 1: "Yes"}
+
 		for i := 0; i < archive.BooleanVarCount; i++ {
-			booleanIndex := i
-			values.RenderUnifiedCheckboxCombo(readOnly, false,
-				fmt.Sprintf("Var%03d", i),
-				values.UnifierFor(gameState.BooleanVar(booleanIndex)), func(newValue bool) {
-					gameState.SetBooleanVar(booleanIndex, newValue)
+			varIndex := i
+			info := citadel.BooleanVariable(varIndex)
+
+			varReadOnly := readOnly || (info.Hardcoded && !gameState.IsSavegame())
+			varName := fmt.Sprintf("Var%03d: %s", varIndex, info.Name)
+			varUnifier := values.UnifierFor(gameState.BooleanVar(varIndex))
+
+			values.RenderUnifiedCombo(varReadOnly, false, varName, varUnifier, intConverter,
+				func(value int) string {
+					name, found := info.ValueNames[int16(value)]
+					if found {
+						return name
+					}
+					return defaultNames[value]
+				},
+				2,
+				func(newValue int) {
+					gameState.SetBooleanVar(varIndex, newValue != 0)
 					onChange()
 				})
+			if imgui.IsItemHovered() && (len(info.Description) > 0) {
+				imgui.SetTooltip(info.Description)
+			}
 		}
 		imgui.TreePop()
 	}
 	if imgui.TreeNodeV("Integer Variables", imgui.TreeNodeFlagsFramed) {
+		intConverter := func(u values.Unifier) int {
+			return int(u.Unified().(int16))
+		}
 		for i := 0; i < archive.IntegerVarCount; i++ {
 			varIndex := i
 			info := citadel.IntegerVariable(varIndex)
@@ -645,9 +673,6 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 			varReadOnly := readOnly || (info.Hardcoded && !gameState.IsSavegame())
 			varName := fmt.Sprintf("Var%02d: %s", varIndex, info.Name)
 			varUnifier := values.UnifierFor(gameState.IntegerVar(varIndex))
-			intConverter := func(u values.Unifier) int {
-				return int(u.Unified().(int16))
-			}
 			changeHandler := func(newValue int) {
 				gameState.SetIntegerVar(varIndex, int16(newValue))
 				onChange()
