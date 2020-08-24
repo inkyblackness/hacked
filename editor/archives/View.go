@@ -147,21 +147,17 @@ func (view *View) renderGameStateContent() {
 		modState := data.toInstance()
 		if !modState.IsSavegame() {
 			modStateIsDefaulting = modState.IsDefaulting()
-			resetText := "Override"
-			if !modStateIsDefaulting {
-				if imgui.Button("Remove") {
-					view.requestSetGameState(archive.ZeroGameStateData())
+			if modStateIsDefaulting {
+				if imgui.Button("Override") {
+					view.requestSetGameState(citadel.DefaultGameState().Raw())
 				}
-				imgui.SameLine()
-				resetText = "Reset"
-			}
-			if imgui.Button(resetText) {
-				view.requestSetGameState(archive.DefaultGameStateData())
-			}
-			if imgui.IsItemHovered() {
-				imgui.BeginTooltip()
-				imgui.SetTooltip("Values of new game archives are only considered by special engines.")
-				imgui.EndTooltip()
+				if imgui.IsItemHovered() {
+					imgui.BeginTooltip()
+					imgui.SetTooltip("Values of new game archives are only considered by special engines.")
+					imgui.EndTooltip()
+				}
+			} else if imgui.Button("Remove") {
+				view.requestSetGameState(archive.ZeroGameStateData())
 			}
 		}
 	}
@@ -169,7 +165,7 @@ func (view *View) renderGameStateContent() {
 	readOnly := false
 	var editState *archive.GameState
 	if !data.isPresent() || modStateIsDefaulting {
-		editState = archive.NewGameState(archive.DefaultGameStateData())
+		editState = citadel.DefaultGameState()
 		readOnly = true
 	} else {
 		editState = data.imported().toInstance()
@@ -240,7 +236,7 @@ func (view *View) gameStateData() gameStateData {
 func (view *View) effectiveGameState() *archive.GameState {
 	state := view.gameStateData().toInstance()
 	if state.IsDefaulting() {
-		return archive.NewGameState(archive.DefaultGameStateData())
+		return citadel.DefaultGameState()
 	}
 	return state
 }
@@ -651,7 +647,7 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 
 	varProvider := variableContextList[view.model.variableContextIndex].provider
 
-	if imgui.Button("Reset") {
+	if !readOnly && imgui.Button("Reset") {
 		for i := 0; i < archive.BooleanVarCount; i++ {
 			varIndex := i
 			info := varProvider.BooleanVariable(varIndex)

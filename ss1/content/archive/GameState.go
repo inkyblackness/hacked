@@ -54,8 +54,10 @@ const (
 	cyberspaceMinTime    = 90 * engineTicksPerSecond
 	cyberspaceMaxTime    = 30 * secondsPerMinute * engineTicksPerSecond
 
-	messageStatusReceived = 0x80
-	messageStatusRead     = 0x40
+	// MessageStatusReceived marks a message stored in data reader.
+	MessageStatusReceived = 0x80
+	// MessageStatusRead marks a message as viewed at least once.
+	MessageStatusRead = 0x40
 
 	// BooleanVarCount is the number of available boolean variables.
 	BooleanVarCount       = 512
@@ -564,8 +566,13 @@ func (state *GameState) HardwareState(index int) HardwareState {
 	}
 }
 
-// DefaultGameStateData returns the state block initialized as if the engine started a new default game.
-func DefaultGameStateData() []byte {
+// ZeroGameStateData returns the state block reset for default engine behaviour.
+func ZeroGameStateData() []byte {
+	return make([]byte, GameStateSize)
+}
+
+// DefaultGameState returns a GameState that can be used for any mission.
+func DefaultGameState() *GameState {
 	data := ZeroGameStateData()
 	state := NewGameState(data)
 
@@ -587,61 +594,18 @@ func DefaultGameStateData() []byte {
 		state.InventoryGrenade(i).SetTimerSetting(grenadeTimerDefault)
 	}
 
-	setInitialCitadelHackerState(state)
-	setInitialCitadelVariables(state)
-
-	return data
-}
-
-// ZeroGameStateData returns the state block reset for default engine behaviour.
-func ZeroGameStateData() []byte {
-	return make([]byte, GameStateSize)
-}
-
-func setInitialCitadelHackerState(state *GameState) {
-	data := state.Raw()
-
-	state.Set("Current Level", 1)
-
-	// location: in the neurosurgery chamber, looking West
-	state.Set("Hacker Position X", (30<<16)+0x8000)
-	state.Set("Hacker Position Y", (22<<16)+0x8000)
-	state.Set("Hacker Position Z", 0x01BD00)
-	state.Set("Hacker Yaw", 0x03243E)
-
-	// set first message
-	data[0x0357+26] = messageStatusReceived // Rebecca Lansing's first message
-	data[0x0519+9] = 0xFF                   // HUD active email -- set for similarity, has no effect.
-}
-
-func setInitialCitadelVariables(state *GameState) {
-	// The following set is taken from player.c
-	initialBooleanVariables := []int{
-		0x001, 0x002, 0x003, 0x010, 0x012, 0x015, 0x016, 0x017, 0x018, 0x019, 0x01A,
-		0x020, 0x021, 0x024, 0x025,
-		0x04B, 0x04C, 0x04D, 0x04E, 0x04F,
-		0x050, 0x051, 0x052, 0x053, 0x054, 0x055, 0x056, 0x057, 0x058, 0x059, 0x05A, 0x05B, 0x05C, 0x05D, 0x05E, 0x05F,
-		0x070, 0x071, 0x072, 0x073, 0x074, 0x075, 0x076, 0x077, 0x078, 0x079, 0x07A, 0x07B, 0x07C, 0x07D, 0x07E, 0x07F,
-		0x0A0, 0x0A1, 0x0A2, 0x0A3, 0x0A4, 0x0A5, 0x0A6, 0x0A7, 0x0A8, 0x0A9,
-		0x0C0, 0x0C1, 0x0C2, 0x0C3, 0x0C4, 0x0C5, 0x0C6, 0x0C7, 0x0C8, 0x0C9, 0x0CA, 0x0CB, 0x0CC, 0x0CD, 0x0CE, 0x0CF,
-		0x0E1, 0x0E3, 0x0E5, 0x0E7, 0x0E9, 0x0EB, 0x0ED, 0x0EF,
-		0x0F1, 0x0F3, 0x0F5, 0x0F7, 0x0F9, 0x0FB, 0x0FD, 0x0FF,
-		0x101, 0x103, 0x105, 0x107, 0x109, 0x10B, 0x10D, 0x10F,
-		0x111, 0x113, 0x115, 0x117, 0x119, 0x11B, 0x11D, 0x11F,
-		0x121, 0x123, 0x125, 0x127, 0x129, 0x12B,
+	for index, info := range engineBooleanVariables {
+		if info.InitValue == nil {
+			continue
+		}
+		state.SetBooleanVar(index, *info.InitValue != 0)
 	}
-	initialIntegerVariables := map[int]int16{
-		0x03: 2,     // engine state
-		0x0C: 3,     // number of available groves
-		0x33: 0x100, // joystick sensitivity
+	for index, info := range engineIntegerVariables {
+		if info.InitValue == nil {
+			continue
+		}
+		state.SetIntegerVar(index, *info.InitValue)
 	}
-	for i := 0; i < BooleanVarCount; i++ {
-		state.SetBooleanVar(i, false)
-	}
-	for _, index := range initialBooleanVariables {
-		state.SetBooleanVar(index, true)
-	}
-	for i := 0; i < IntegerVarCount; i++ {
-		state.SetIntegerVar(i, initialIntegerVariables[i])
-	}
+
+	return state
 }
