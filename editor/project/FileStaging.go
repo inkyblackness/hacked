@@ -2,6 +2,7 @@ package project
 
 import (
 	"bytes"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -78,47 +79,50 @@ func (staging *fileStaging) stage(name string, isOnlyStagedFile bool) {
 			staging.stageList(joinedSubNames, false)
 		}
 	} else {
-		fileData, err := ioutil.ReadAll(file)
-		if err != nil {
-			staging.markFailedFile()
-			return
-		}
+		staging.stageFile(name, isOnlyStagedFile, file)
+	}
+}
 
-		reader, err := lgres.ReaderFrom(bytes.NewReader(fileData))
-		filename := filepath.Base(name)
-		if (err == nil) && (isOnlyStagedFile || fileAllowlist.Matches(filename)) {
-			location := world.FileLocation{DirPath: filepath.Dir(name), Name: filename}
-			staging.modify(func() {
-				if stateView, stateErr := reader.View(ids.GameState); (stateErr == nil) && archive.IsSavegame(stateView) {
-					staging.savegames[location] = reader
-				} else {
-					staging.resources[location] = reader
-				}
-			})
-		}
-		if strings.ToLower(filename) == world.ObjectPropertiesFilename {
-			decoder := serial.NewDecoder(bytes.NewReader(fileData))
-			properties := object.StandardPropertiesTable()
-			properties.Code(decoder)
-			err = decoder.FirstError()
-			if err == nil {
-				staging.modify(func() { staging.objectProperties = properties })
-			}
-		}
-		if strings.ToLower(filename) == world.TexturePropertiesFilename && (len(fileData) > 4) {
-			decoder := serial.NewDecoder(bytes.NewReader(fileData))
-			entryCount := (len(fileData) - 4) / texture.PropertiesSize
-			properties := make(texture.PropertiesList, entryCount)
-			properties.Code(decoder)
-			err = decoder.FirstError()
-			if err == nil {
-				staging.modify(func() { staging.textureProperties = properties })
-			}
-		}
+func (staging *fileStaging) stageFile(name string, isOnlyStagedFile bool, file io.Reader) {
+	fileData, err := ioutil.ReadAll(file)
+	if err != nil {
+		staging.markFailedFile()
+	}
 
-		if err != nil {
-			staging.markFailedFile()
+	reader, err := lgres.ReaderFrom(bytes.NewReader(fileData))
+	filename := filepath.Base(name)
+	if (err == nil) && (isOnlyStagedFile || fileAllowlist.Matches(filename)) {
+		location := world.FileLocation{DirPath: filepath.Dir(name), Name: filename}
+		staging.modify(func() {
+			if stateView, stateErr := reader.View(ids.GameState); (stateErr == nil) && archive.IsSavegame(stateView) {
+				staging.savegames[location] = reader
+			} else {
+				staging.resources[location] = reader
+			}
+		})
+	}
+	if strings.ToLower(filename) == world.ObjectPropertiesFilename {
+		decoder := serial.NewDecoder(bytes.NewReader(fileData))
+		properties := object.StandardPropertiesTable()
+		properties.Code(decoder)
+		err = decoder.FirstError()
+		if err == nil {
+			staging.modify(func() { staging.objectProperties = properties })
 		}
+	}
+	if strings.ToLower(filename) == world.TexturePropertiesFilename && (len(fileData) > 4) {
+		decoder := serial.NewDecoder(bytes.NewReader(fileData))
+		entryCount := (len(fileData) - 4) / texture.PropertiesSize
+		properties := make(texture.PropertiesList, entryCount)
+		properties.Code(decoder)
+		err = decoder.FirstError()
+		if err == nil {
+			staging.modify(func() { staging.textureProperties = properties })
+		}
+	}
+
+	if err != nil {
+		staging.markFailedFile()
 	}
 }
 
