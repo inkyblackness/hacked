@@ -48,6 +48,17 @@ const (
 	hardwareVersionStartOffset = 0x0309
 	hardwareStatusStartOffset  = 0x04AE
 
+	// SoftwareOffenseTypeCount is the number of available offense software.
+	SoftwareOffenseTypeCount = 7
+	// SoftwareDefenseTypeCount is the number of available defense software.
+	SoftwareDefenseTypeCount = 3
+	// SoftwareOneshotTypeCount is the number of available one-shot software.
+	SoftwareOneshotTypeCount = 4
+
+	installedOffenseSoftwareStartOffset = 0x0318
+	installedDefenseSoftwareStartOffset = 0x031F
+	installedOneshotSoftwareStartOffset = 0x0322
+
 	engineTicksPerSecond = 280
 	secondsPerMinute     = 60
 	engineTicksPerMinute = secondsPerMinute * engineTicksPerSecond
@@ -379,6 +390,76 @@ func (hardware HardwareState) SetActive(on bool) {
 	hardware.State.Raw()[hardwareStatusStartOffset+hardware.Index] = newValue
 }
 
+// VersionedSoftwareState describes software that is upgradeable (exists only once).
+type VersionedSoftwareState struct {
+	startOffset int
+	limit       int
+
+	Index int
+	State *GameState
+}
+
+func (sw VersionedSoftwareState) isValid() bool {
+	return (sw.Index >= 0) && (sw.Index < sw.limit) && (sw.State != nil)
+}
+
+// Version returns the installed version number of the software. Zero means not installed.
+func (sw VersionedSoftwareState) Version() int {
+	if !sw.isValid() {
+		return 0
+	}
+	return int(sw.State.Raw()[sw.startOffset+sw.Index])
+}
+
+// SetVersion sets the installed version number of the software.
+func (sw VersionedSoftwareState) SetVersion(value int) {
+	if !sw.isValid() {
+		return
+	}
+	count := byte(value)
+	if value < 0 {
+		count = 0
+	} else if value > math.MaxUint8 {
+		count = math.MaxUint8
+	}
+	sw.State.Raw()[sw.startOffset+sw.Index] = count
+}
+
+// CountedSoftwareState describes software that is expended upon use.
+type CountedSoftwareState struct {
+	startOffset int
+	limit       int
+
+	Index int
+	State *GameState
+}
+
+func (sw CountedSoftwareState) isValid() bool {
+	return (sw.Index >= 0) && (sw.Index < sw.limit) && (sw.State != nil)
+}
+
+// Count returns the available amount of the software.
+func (sw CountedSoftwareState) Count() int {
+	if !sw.isValid() {
+		return 0
+	}
+	return int(sw.State.Raw()[sw.startOffset+sw.Index])
+}
+
+// SetCount sets the installed amount of the software.
+func (sw CountedSoftwareState) SetCount(value int) {
+	if !sw.isValid() {
+		return
+	}
+	count := byte(value)
+	if value < 0 {
+		count = 0
+	} else if value > math.MaxUint8 {
+		count = math.MaxUint8
+	}
+	sw.State.Raw()[sw.startOffset+sw.Index] = count
+}
+
 // MessageState describes properties of message by index.
 type MessageState struct {
 	startOffset int
@@ -630,6 +711,39 @@ func (state *GameState) HardwareState(index int) HardwareState {
 	return HardwareState{
 		Index: index,
 		State: state,
+	}
+}
+
+// VersionedOffenseSoftwareState returns an accessor for the identified versioned software status.
+// Index should be within the range of [0..SoftwareOffenseTypeCount[
+func (state *GameState) VersionedOffenseSoftwareState(index int) VersionedSoftwareState {
+	return VersionedSoftwareState{
+		startOffset: installedOffenseSoftwareStartOffset,
+		limit:       SoftwareOffenseTypeCount,
+		Index:       index,
+		State:       state,
+	}
+}
+
+// VersionedDefenseSoftwareState returns an accessor for the identified versioned software status.
+// Index should be within the range of [0..SoftwareDefenseTypeCount[
+func (state *GameState) VersionedDefenseSoftwareState(index int) VersionedSoftwareState {
+	return VersionedSoftwareState{
+		startOffset: installedDefenseSoftwareStartOffset,
+		limit:       SoftwareDefenseTypeCount,
+		Index:       index,
+		State:       state,
+	}
+}
+
+// OneshotSoftwareState returns an accessor for the identified software status.
+// Index should be within the range of [0..SoftwareOneshotTypeCount[
+func (state *GameState) OneshotSoftwareState(index int) CountedSoftwareState {
+	return CountedSoftwareState{
+		startOffset: installedOneshotSoftwareStartOffset,
+		limit:       SoftwareOneshotTypeCount,
+		Index:       index,
+		State:       state,
 	}
 }
 

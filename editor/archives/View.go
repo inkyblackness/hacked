@@ -435,7 +435,24 @@ func (view *View) createWareControls(readOnly bool, gameState *archive.GameState
 		imgui.TreePop()
 	}
 
-	// TODO: Software
+	if imgui.TreeNodeV("Software", imgui.TreeNodeFlagsFramed) {
+		for i := 0; i < archive.SoftwareOffenseTypeCount; i++ {
+			imgui.PushID(fmt.Sprintf("swoffense%d", i))
+			view.createVersionedSoftwareControls(readOnly, gameState.VersionedOffenseSoftwareState(i), 0, onChange)
+			imgui.PopID()
+		}
+		for i := 0; i < archive.SoftwareDefenseTypeCount; i++ {
+			imgui.PushID(fmt.Sprintf("swdefense%d", i))
+			view.createVersionedSoftwareControls(readOnly, gameState.VersionedDefenseSoftwareState(i), 1, onChange)
+			imgui.PopID()
+		}
+		for i := 0; i < archive.SoftwareOneshotTypeCount; i++ {
+			imgui.PushID(fmt.Sprintf("swoneshot%d", i))
+			view.createCountedSoftwareControls(readOnly, gameState.OneshotSoftwareState(i), 2, onChange)
+			imgui.PopID()
+		}
+		imgui.TreePop()
+	}
 }
 
 func (view *View) createHardwareControls(readOnly bool, state archive.HardwareState, onChange func()) {
@@ -456,6 +473,36 @@ func (view *View) createHardwareControls(readOnly bool, state archive.HardwareSt
 		state.SetActive(newActive)
 		onChange()
 	})
+}
+
+func (view *View) createVersionedSoftwareControls(readOnly bool, sw archive.VersionedSoftwareState, subclass int, onChange func()) {
+	values.RenderUnifiedSliderInt(readOnly, false,
+		fmt.Sprintf("Version (%s)", view.tripleName(object.TripleFrom(int(object.ClassSoftware), subclass, sw.Index))),
+		values.UnifierFor(sw.Version()),
+		func(u values.Unifier) int {
+			return u.Unified().(int)
+		}, func(value int) string {
+			return "%d"
+		}, 0, 0xFF,
+		func(newValue int) {
+			sw.SetVersion(newValue)
+			onChange()
+		})
+}
+
+func (view *View) createCountedSoftwareControls(readOnly bool, sw archive.CountedSoftwareState, subclass int, onChange func()) {
+	values.RenderUnifiedSliderInt(readOnly, false,
+		fmt.Sprintf("Count (%s)", view.tripleName(object.TripleFrom(int(object.ClassSoftware), subclass, sw.Index))),
+		values.UnifierFor(sw.Count()),
+		func(u values.Unifier) int {
+			return u.Unified().(int)
+		}, func(value int) string {
+			return "%d"
+		}, 0, 0xFF,
+		func(newValue int) {
+			sw.SetCount(newValue)
+			onChange()
+		})
 }
 
 func (view *View) createGeneralInventoryControls(readOnly bool, slot archive.GeneralInventorySlot, onChange func()) {
@@ -805,7 +852,7 @@ func (view *View) tripleName(triple object.Triple) string {
 		key := resource.KeyOf(ids.ObjectLongNames, resource.LangDefault, linearIndex)
 		objName, err := view.textCache.Text(key)
 		if err == nil {
-			suffix = objName
+			suffix = singleLineString(objName)
 		}
 	}
 	return triple.String() + ": " + suffix
@@ -817,8 +864,12 @@ func (view *View) indexedName(class object.Class, index int) string {
 		key := resource.KeyOf(ids.ObjectLongNames, resource.LangDefault, startIndex+index)
 		objName, err := view.textCache.Text(key)
 		if err == nil {
-			return objName
+			return singleLineString(objName)
 		}
 	}
 	return hintUnknown
+}
+
+func singleLineString(str string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(str, "\r", ""), "\n", "")
 }
