@@ -54,10 +54,24 @@ const (
 	cyberspaceMinTime    = 90 * engineTicksPerSecond
 	cyberspaceMaxTime    = 30 * secondsPerMinute * engineTicksPerSecond
 
-	// MessageStatusReceived marks a message stored in data reader.
-	MessageStatusReceived = 0x80
-	// MessageStatusRead marks a message as viewed at least once.
-	MessageStatusRead = 0x40
+	// EMailCount is the number of available EMail status slots.
+	EMailCount = 47
+	// FragmentCount is the number of available fragment (data) status slots.
+	FragmentCount = 23
+	// PossibleLogsPerLevel is the number of logs slots available per level.
+	PossibleLogsPerLevel = 16
+	// LevelsWithLogs is the number of levels that can hold logs.
+	LevelsWithLogs = 14
+	// LogCount is the total number of logs available.
+	LogCount = PossibleLogsPerLevel * LevelsWithLogs
+
+	messageStatusReceived byte = 0x80
+	messageStatusRead     byte = 0x40
+
+	messageStatusStartOffset  = 0x0357
+	emailStatusStartOffset    = messageStatusStartOffset
+	logStatusStartOffset      = emailStatusStartOffset + EMailCount
+	fragmentStatusStartOffset = logStatusStartOffset + LogCount
 
 	// BooleanVarCount is the number of available boolean variables.
 	BooleanVarCount       = 512
@@ -365,6 +379,59 @@ func (hardware HardwareState) SetActive(on bool) {
 	hardware.State.Raw()[hardwareStatusStartOffset+hardware.Index] = newValue
 }
 
+// MessageState describes properties of message by index.
+type MessageState struct {
+	startOffset int
+	limit       int
+
+	Index int
+	State *GameState
+}
+
+func (message MessageState) isValid() bool {
+	return (message.Index >= 0) && (message.Index < message.limit) && (message.State != nil)
+}
+
+// Received returns whether the given message was received.
+func (message MessageState) Received() bool {
+	return message.hasFlag(messageStatusReceived)
+}
+
+// SetReceived marks the receive status of the message.
+func (message MessageState) SetReceived(value bool) {
+	message.setFlag(messageStatusReceived, value)
+}
+
+// Read returns whether the given message was read.
+func (message MessageState) Read() bool {
+	return message.hasFlag(messageStatusRead)
+}
+
+// SetRead marks the read status of the message.
+func (message MessageState) SetRead(value bool) {
+	message.setFlag(messageStatusRead, value)
+}
+
+func (message MessageState) hasFlag(flag byte) bool {
+	if !message.isValid() {
+		return false
+	}
+	return (message.State.Raw()[message.startOffset+message.Index] & flag) != 0
+}
+
+func (message MessageState) setFlag(flag byte, on bool) {
+	if !message.isValid() {
+		return
+	}
+	offset := message.startOffset + message.Index
+	newState := message.State.Raw()[offset]
+	newState &= ^flag
+	if on {
+		newState |= flag
+	}
+	message.State.Raw()[offset] = newState
+}
+
 var gameStateDesc = interpreters.New().
 	With("Difficulty: Combat", 0x0015, 1).As(interpreters.RangedValue(0, 3)).
 	With("Difficulty: Mission", 0x0016, 1).As(interpreters.RangedValue(0, 3)).
@@ -563,6 +630,39 @@ func (state *GameState) HardwareState(index int) HardwareState {
 	return HardwareState{
 		Index: index,
 		State: state,
+	}
+}
+
+// EmailState returns an accessor for the identified EMail status.
+// Index should be within the range of [0..EMailCount[
+func (state *GameState) EMailState(index int) MessageState {
+	return MessageState{
+		startOffset: emailStatusStartOffset,
+		limit:       EMailCount,
+		Index:       index,
+		State:       state,
+	}
+}
+
+// LogState returns an accessor for the identified log status.
+// Index should be within the range of [0..LogCount[
+func (state *GameState) LogState(index int) MessageState {
+	return MessageState{
+		startOffset: logStatusStartOffset,
+		limit:       LogCount,
+		Index:       index,
+		State:       state,
+	}
+}
+
+// FragmentState returns an accessor for the identified fragment status.
+// Index should be within the range of [0..FragmentCount[
+func (state *GameState) FragmentState(index int) MessageState {
+	return MessageState{
+		startOffset: fragmentStatusStartOffset,
+		limit:       FragmentCount,
+		Index:       index,
+		State:       state,
 	}
 }
 

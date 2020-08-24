@@ -6,6 +6,7 @@ import "github.com/inkyblackness/hacked/ss1/content/archive"
 func DefaultGameState() *archive.GameState {
 	state := archive.DefaultGameState()
 
+	// location: medical level
 	state.Set("Current Level", 1)
 
 	// location: in the neurosurgery chamber, looking West
@@ -15,10 +16,8 @@ func DefaultGameState() *archive.GameState {
 	state.Set("Hacker Yaw", 0x03243E)
 
 	// set first message
-	// TODO: use proper accessor
-	data := state.Raw()
-	data[0x0357+26] = archive.MessageStatusReceived // Rebecca Lansing's first message
-	data[0x0519+9] = 0xFF                           // HUD active email -- set for similarity, has no effect.
+	state.EMailState(26).SetReceived(true) // Rebecca Lansing's first message
+	// The engine also sets the active state of email, though this field index is not used.
 
 	for index, info := range booleanVariables {
 		if info.InitValue == nil {

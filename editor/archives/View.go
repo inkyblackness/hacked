@@ -21,6 +21,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/citadel"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
+	"github.com/inkyblackness/hacked/ui/gui"
 )
 
 const (
@@ -195,7 +196,7 @@ func (view *View) renderGameStateContent() {
 		imgui.TreePop()
 	}
 	if imgui.TreeNodeV("Game State: Messages", imgui.TreeNodeFlagsFramed) {
-
+		view.createMessageControls(readOnly, editState, onChange)
 		imgui.TreePop()
 	}
 
@@ -768,6 +769,33 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 		}
 		imgui.TreePop()
 	}
+}
+
+func (view *View) createMessageControls(readOnly bool, gameState *archive.GameState, onChange func()) {
+	view.createMessageControlsFor(readOnly, "EMail",
+		&view.model.emailIndex, archive.EMailCount, gameState.EMailState, onChange)
+	view.createMessageControlsFor(readOnly, "Log",
+		&view.model.logIndex, archive.LogCount, gameState.LogState, onChange)
+	view.createMessageControlsFor(readOnly, "Fragment",
+		&view.model.fragmentIndex, archive.FragmentCount, gameState.FragmentState, onChange)
+}
+
+func (view *View) createMessageControlsFor(readOnly bool, name string, index *int, limit int,
+	retriever func(int) archive.MessageState, onChange func()) {
+	imgui.PushID(name)
+	gui.StepSliderInt(name+" Index", index, 0, limit-1)
+	messageState := retriever(*index)
+	values.RenderUnifiedCheckboxCombo(readOnly, false, "Received", values.UnifierFor(messageState.Received()),
+		func(newState bool) {
+			messageState.SetReceived(newState)
+			onChange()
+		})
+	values.RenderUnifiedCheckboxCombo(readOnly, false, "Read", values.UnifierFor(messageState.Read()),
+		func(newState bool) {
+			messageState.SetRead(newState)
+			onChange()
+		})
+	imgui.PopID()
 }
 
 func (view *View) tripleName(triple object.Triple) string {

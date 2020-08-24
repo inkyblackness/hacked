@@ -7,6 +7,10 @@ type viewModel struct {
 	selectedLevel int
 
 	variableContextIndex int
+
+	emailIndex    int
+	logIndex      int
+	fragmentIndex int
 }
 
 func freshViewModel() viewModel {
