@@ -55,7 +55,7 @@ Typically, you would use the main "data" directory of the game
 }
 
 func (state *addManifestEntryWaitingState) HandleFiles(names []string) {
-	staging := newFileStaging()
+	staging := newFileStaging(true)
 
 	staging.stageAll(names)
 

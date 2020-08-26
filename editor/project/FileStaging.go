@@ -1,6 +1,7 @@
 package project
 
 import (
+	"archive/zip"
 	"bytes"
 	"io"
 	"io/ioutil"
@@ -22,6 +23,8 @@ import (
 type fileStaging struct {
 	resultMutex sync.Mutex
 
+	allowZips bool
+
 	failedFiles int
 	savegames   map[world.FileLocation]resource.Viewer
 	resources   map[world.FileLocation]resource.Viewer
@@ -30,8 +33,9 @@ type fileStaging struct {
 	textureProperties texture.PropertiesList
 }
 
-func newFileStaging() *fileStaging {
+func newFileStaging(allowZips bool) *fileStaging {
 	return &fileStaging{
+		allowZips: allowZips,
 		resources: make(map[world.FileLocation]resource.Viewer),
 		savegames: make(map[world.FileLocation]resource.Viewer),
 	}
@@ -79,8 +83,44 @@ func (staging *fileStaging) stage(name string, isOnlyStagedFile bool) {
 			staging.stageList(joinedSubNames, false)
 		}
 	} else {
-		staging.stageFile(name, isOnlyStagedFile, file)
+
+		tryDirect := true
+		if staging.allowZips && isOnlyStagedFile {
+			tryDirect = false
+			zipReader, err := zip.NewReader(file, fileInfo.Size())
+			if err != nil {
+				_, _ = file.Seek(0, io.SeekStart)
+				tryDirect = true
+			} else {
+				staging.stageArchive(zipReader)
+			}
+		}
+
+		if tryDirect {
+			staging.stageFile(name, isOnlyStagedFile, file)
+		}
 	}
+}
+
+func (staging *fileStaging) stageArchive(zipReader *zip.Reader) {
+	var wg sync.WaitGroup
+
+	for _, file := range zipReader.File {
+		wg.Add(1)
+		go func(entry *zip.File) {
+			defer wg.Done()
+			entryFile, err := entry.Open()
+			if err != nil {
+				return
+			}
+			defer func() {
+				_ = entryFile.Close()
+			}()
+
+			staging.stageFile(entry.Name, false, entryFile)
+		}(file)
+	}
+	wg.Wait()
 }
 
 func (staging *fileStaging) stageFile(name string, isOnlyStagedFile bool, file io.Reader) {

@@ -55,7 +55,7 @@ use the main "data" directory of the game.
 }
 
 func (state *loadModWaitingState) HandleFiles(names []string) {
-	staging := newFileStaging()
+	staging := newFileStaging(false)
 
 	staging.stageAll(names)
 
