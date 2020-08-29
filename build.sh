@@ -43,8 +43,8 @@ sed -i "s/§PATCH/$PATCH/g" $HACKED_BASE/_build/win_temp/hacked.exe.manifest
 x86_64-w64-mingw32-windres -o main-res.syso $HACKED_BASE/_build/win_temp/hacked.rc
 
 echo "Building executables..."
-go build -ldflags "-X main.version=$VERSION" -a -o $HACKED_BASE/_build/linux/$FOLDER_NAME/hacked -trimpath `pwd` .
-GOOS=windows GOARCH=amd64 CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc go build -ldflags "-X main.version=$VERSION -H=windowsgui" -a -o $HACKED_BASE/_build/win/$FOLDER_NAME/hacked.exe -trimpath `pwd` .
+go build -gcflags "-d=checkptr=0" -ldflags "-X main.version=$VERSION" -a -o $HACKED_BASE/_build/linux/$FOLDER_NAME/hacked -trimpath `pwd` .
+GOOS=windows GOARCH=amd64 CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc go build -gcflags "-d=checkptr=0" -ldflags "-X main.version=$VERSION -H=windowsgui" -a -o $HACKED_BASE/_build/win/$FOLDER_NAME/hacked.exe -trimpath `pwd` .
 
 
 echo "Copying distribution resources..."
