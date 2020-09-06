@@ -78,6 +78,32 @@ func (window *OpenGLWindow) Close() {
 	glfw.Terminate()
 }
 
+// StateSnapshot returns the current state of the window.
+func (window OpenGLWindow) StateSnapshot() opengl.WindowState {
+	var state opengl.WindowState
+	if window.glfwWindow.GetAttrib(glfw.Maximized) != 0 {
+		state.Maximized = true
+		// restore window to retrieve restored details, otherwise the maximized details will be read.
+		_ = window.glfwWindow.Restore()
+	}
+	state.Left, state.Top = window.glfwWindow.GetPos()
+	state.Width, state.Height = window.glfwWindow.GetSize()
+	if state.Maximized {
+		_ = window.glfwWindow.Maximize()
+	}
+	return state
+}
+
+// RestoreState puts the window into the same state when StateSnapshot() was called.
+func (window OpenGLWindow) RestoreState(state opengl.WindowState) {
+	_ = window.glfwWindow.Restore()
+	window.glfwWindow.SetPos(state.Left, state.Top)
+	window.glfwWindow.SetSize(state.Width, state.Height)
+	if state.Maximized {
+		_ = window.glfwWindow.Maximize()
+	}
+}
+
 // ClipboardString returns the current value of the clipboard, if it is compatible with UTF-8.
 func (window OpenGLWindow) ClipboardString() (string, error) {
 	return window.glfwWindow.GetClipboardString()

@@ -2,6 +2,7 @@ package editor
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/inkyblackness/imgui-go/v2"
 
@@ -110,6 +111,8 @@ func (app *Application) InitializeWindow(window opengl.Window) (err error) {
 	app.window = window
 	app.clipboard.window = window
 	app.gl = window.OpenGL()
+
+	app.window.RestoreState(opengl.WindowStateFromFile(app.windowStateConfigFilename(), app.window.StateSnapshot()))
 
 	app.initSignalling()
 	app.initWindowCallbacks()
@@ -249,6 +252,8 @@ func (app *Application) bitmapTextureForUI(textureID imgui.TextureID) (palette u
 
 func (app *Application) onWindowClosing() {
 
+	state := app.window.StateSnapshot()
+	_ = state.SaveTo(app.windowStateConfigFilename())
 }
 
 func (app *Application) onWindowResize(width int, height int) {
@@ -624,4 +629,8 @@ http://www.systemshock.org forums. Thank you!
 		}
 		imgui.EndPopup()
 	}
+}
+
+func (app *Application) windowStateConfigFilename() string {
+	return filepath.Join(app.ConfigDir, "WindowState.json")
 }

@@ -1,6 +1,9 @@
 package opengl
 
 import (
+	"encoding/json"
+	"io/ioutil"
+
 	"github.com/inkyblackness/hacked/ui/input"
 )
 
@@ -44,8 +47,51 @@ type ModifierCallback func(modifier input.Modifier)
 // FileDropCallback is called when one or more files were dropped into the window.
 type FileDropCallback func(filePaths []string)
 
+// WindowState describes how the window is currently presented to the user.
+type WindowState struct {
+	// Maximized is set to true if the window is currently resized to fill the screen.
+	Maximized bool
+	// Top marks the screen position of the upper border of the window.
+	Top int
+	// Left marks the screen position of the left border of the window.
+	Left int
+	// Width marks the width of the non-maximized window.
+	Width int
+	// Height marks the height of the non-maximized window.
+	Height int
+}
+
+// WindowStateFromFile attempts to load the state from a file with given name.
+// If this does not work, the given default state will be returned.
+func WindowStateFromFile(filename string, defaultState WindowState) WindowState {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return defaultState
+	}
+	var state WindowState
+	err = json.Unmarshal(data, &state)
+	if err != nil {
+		return defaultState
+	}
+	return state
+}
+
+// SaveTo stores the state in a file with given filename.
+func (state WindowState) SaveTo(filename string) error {
+	bytes, err := json.Marshal(state)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filename, bytes, 0640)
+}
+
 // Window represents an OpenGL render surface.
 type Window interface {
+	// StateSnapshot returns the current state of the window.
+	StateSnapshot() WindowState
+	// RestoreState puts the window into the same state when StateSnapshot() was called.
+	RestoreState(state WindowState)
+
 	// ClipboardString returns the current value of the clipboard, if it is compatible with UTF-8.
 	ClipboardString() (string, error)
 	// SetClipboardString sets the current value of the clipboard as UTF-8 string.
