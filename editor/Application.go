@@ -44,6 +44,9 @@ type Application struct {
 	// Version identifies the build of the application.
 	Version string
 
+	// ConfigDir is the base path to store configuration in.
+	ConfigDir string
+
 	window    opengl.Window
 	clipboard clipboardAdapter
 	gl        opengl.OpenGL
@@ -197,8 +200,9 @@ func (app *Application) initOpenGL() {
 func (app *Application) initGui() (err error) {
 	app.initGuiSizes()
 	param := gui.ContextParameters{
-		FontFile: app.FontFile,
-		FontSize: app.FontSize,
+		ConfigDir: app.ConfigDir,
+		FontFile:  app.FontFile,
+		FontSize:  app.FontSize,
 	}
 	app.guiContext, err = gui.NewContext(app.window, param)
 	if err != nil {

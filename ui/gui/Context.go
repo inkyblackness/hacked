@@ -2,6 +2,7 @@ package gui
 
 import (
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/inkyblackness/imgui-go/v2"
@@ -11,6 +12,8 @@ import (
 
 // ContextParameters describes how to create the context.
 type ContextParameters struct {
+	// ConfigDir is used to store the UI state in.
+	ConfigDir string
 	// FontFile is the filename of a .TTF file to load instead of using default.
 	FontFile string
 	// FontSize is the requested size of the font. Defaults to 12.
@@ -51,6 +54,8 @@ func NewContext(window opengl.Window, param ContextParameters) (context *Context
 		imguiContext: imgui.CreateContext(nil),
 		window:       window,
 	}
+
+	imgui.CurrentIO().SetIniFilename(filepath.Join(param.ConfigDir, "imgui.ini"))
 
 	err = context.createDeviceObjects(param)
 	if err != nil {

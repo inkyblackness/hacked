@@ -6,6 +6,7 @@ import (
 	_ "image/gif"
 	_ "image/png"
 	"os"
+	"path/filepath"
 	"runtime/pprof"
 	"time"
 
@@ -35,6 +36,13 @@ func main() {
 	}
 	deferrer := make(chan func(), 100)
 
+	configDir, err := configDir()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to determine config dir: %v", err)
+		os.Exit(-1)
+	}
+	app.ConfigDir = configDir
+
 	versionInfo := "InkyBlackness - HackEd - " + app.Version
 	defer crash.Handler(versionInfo)
 
@@ -60,4 +68,17 @@ func initProfiling(filename string) (func(), error) {
 		return func() { pprof.StopCPUProfile() }, err
 	}
 	return func() {}, nil
+}
+
+func configDir() (string, error) {
+	base, err := os.UserConfigDir()
+	if err != nil {
+		return "", err
+	}
+	fullPath := filepath.Join(base, "InkyBlackness", "HackEd")
+	err = os.MkdirAll(fullPath, os.ModeDir|0640)
+	if err != nil {
+		return "", err
+	}
+	return fullPath, nil
 }
