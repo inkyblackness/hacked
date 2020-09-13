@@ -187,11 +187,9 @@ func (view *View) requestMoveManifestEntry(to, from int) {
 }
 
 func (view *View) tryAddManifestEntryFrom(names []string) error {
-	staging := newFileStaging(true)
+	loaded := world.LoadFiles(true, names)
 
-	staging.stageAll(names)
-
-	if len(staging.resources) == 0 {
+	if len(loaded.Resources) == 0 {
 		return fmt.Errorf("no resources found")
 	}
 
@@ -199,7 +197,7 @@ func (view *View) tryAddManifestEntryFrom(names []string) error {
 		ID: names[0],
 	}
 
-	for location, viewer := range staging.resources {
+	for location, viewer := range loaded.Resources {
 		localized := resource.LocalizedResources{
 			ID:       location.Name,
 			Language: ids.LocalizeFilename(location.Name),
@@ -207,8 +205,8 @@ func (view *View) tryAddManifestEntryFrom(names []string) error {
 		}
 		entry.Resources = append(entry.Resources, localized)
 	}
-	entry.ObjectProperties = staging.objectProperties
-	entry.TextureProperties = staging.textureProperties
+	entry.ObjectProperties = loaded.ObjectProperties
+	entry.TextureProperties = loaded.TextureProperties
 
 	view.requestAddManifestEntry(entry)
 	return nil
