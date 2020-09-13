@@ -10,6 +10,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
+	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
@@ -183,6 +184,34 @@ func (view *View) requestMoveManifestEntry(to, from int) {
 		from:  from,
 	}
 	view.commander.Queue(command)
+}
+
+func (view *View) tryAddManifestEntryFrom(names []string) error {
+	staging := newFileStaging(true)
+
+	staging.stageAll(names)
+
+	if len(staging.resources) == 0 {
+		return fmt.Errorf("no resources found")
+	}
+
+	entry := &world.ManifestEntry{
+		ID: names[0],
+	}
+
+	for location, viewer := range staging.resources {
+		localized := resource.LocalizedResources{
+			ID:       location.Name,
+			Language: ids.LocalizeFilename(location.Name),
+			Viewer:   viewer,
+		}
+		entry.Resources = append(entry.Resources, localized)
+	}
+	entry.ObjectProperties = staging.objectProperties
+	entry.TextureProperties = staging.textureProperties
+
+	view.requestAddManifestEntry(entry)
+	return nil
 }
 
 func (view *View) requestAddManifestEntry(entry *world.ManifestEntry) {

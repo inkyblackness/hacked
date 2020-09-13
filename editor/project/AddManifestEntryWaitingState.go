@@ -6,9 +6,6 @@ import (
 	"github.com/inkyblackness/imgui-go/v2"
 	"github.com/sqweek/dialog"
 
-	"github.com/inkyblackness/hacked/ss1/resource"
-	"github.com/inkyblackness/hacked/ss1/world"
-	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
 )
 
@@ -55,29 +52,10 @@ Typically, you would use the main "data" directory of the game
 }
 
 func (state *addManifestEntryWaitingState) HandleFiles(names []string) {
-	staging := newFileStaging(true)
-
-	staging.stageAll(names)
-
-	if len(staging.resources) > 0 {
-		entry := &world.ManifestEntry{
-			ID: names[0],
-		}
-
-		for location, viewer := range staging.resources {
-			localized := resource.LocalizedResources{
-				ID:       location.Name,
-				Language: ids.LocalizeFilename(location.Name),
-				Viewer:   viewer,
-			}
-			entry.Resources = append(entry.Resources, localized)
-		}
-		entry.ObjectProperties = staging.objectProperties
-		entry.TextureProperties = staging.textureProperties
-
-		state.view.requestAddManifestEntry(entry)
-		state.machine.SetState(nil)
-	} else {
+	err := state.view.tryAddManifestEntryFrom(names)
+	if err != nil {
 		state.failureTime = time.Now()
+	} else {
+		state.machine.SetState(nil)
 	}
 }
