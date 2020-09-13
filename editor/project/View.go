@@ -7,8 +7,6 @@ import (
 
 	"github.com/inkyblackness/imgui-go/v2"
 
-	"github.com/inkyblackness/hacked/ss1/content/object"
-	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/edit"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -249,59 +247,7 @@ func (view *View) requestRemoveManifestEntry() {
 }
 
 func (view *View) tryLoadModFrom(names []string) error {
-	staging := newFileStaging(false)
-
-	staging.stageAll(names)
-
-	resourcesToTake := staging.resources
-	isSavegame := false
-	if (len(resourcesToTake) == 0) && (len(staging.savegames) == 1) {
-		resourcesToTake = staging.savegames
-		isSavegame = true
-	}
-	if len(resourcesToTake) == 0 {
-		return fmt.Errorf("no resources found")
-	}
-	var locs []*world.LocalizedResources
-	modPath := ""
-
-	for location := range resourcesToTake {
-		if (len(modPath) == 0) || (len(location.DirPath) < len(modPath)) {
-			modPath = location.DirPath
-		}
-	}
-
-	for location, viewer := range resourcesToTake {
-		lang := ids.LocalizeFilename(location.Name)
-		template := location.Name
-		if isSavegame {
-			template = string(ids.Archive)
-		}
-		loc := &world.LocalizedResources{
-			File:     location,
-			Template: template,
-			Language: lang,
-		}
-		for _, id := range viewer.IDs() {
-			view, err := viewer.View(id)
-			if err == nil {
-				_ = loc.Store.Put(id, view)
-			}
-			// TODO: handle error?
-		}
-		locs = append(locs, loc)
-	}
-
-	view.setActiveMod(modPath, locs, staging.objectProperties, staging.textureProperties)
-	return nil
-}
-
-func (view *View) setActiveMod(modPath string, resources []*world.LocalizedResources,
-	objectProperties object.PropertiesTable, textureProperties texture.PropertiesList) {
-	view.service.Mod().SetPath(modPath)
-	view.service.Mod().Reset(resources, objectProperties, textureProperties)
-	// fix list resources for any "old" mod.
-	view.service.Mod().FixListResources()
+	return view.service.TryLoadModFrom(names)
 }
 
 func (view *View) requestSaveMod(modPath string) {
