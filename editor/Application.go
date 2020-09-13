@@ -496,8 +496,9 @@ func (app *Application) initView() {
 	soundEffectService := undoable.NewSoundEffectService(edit.NewSoundEffectService(soundEffectViewer, soundEffectSetter), app)
 	augmentedTextService := undoable.NewAugmentedTextService(edit.NewAugmentedTextService(textViewer, textSetter, audioViewer, audioSetter), app)
 	movieService := undoable.NewMovieService(edit.NewMovieService(app.cp, movieViewer, movieSetter), app)
+	projectService := edit.NewProjectService(app.mod)
 
-	app.projectView = project.NewView(app.mod, &app.modalState, app.GuiScale, app)
+	app.projectView = project.NewView(projectService, &app.modalState, app.GuiScale, app)
 	app.archiveView = archives.NewArchiveView(app.mod, app.textLineCache, app.cp, app.GuiScale, app)
 	app.levelControlView = levels.NewControlView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.levelTilesView = levels.NewTilesView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)

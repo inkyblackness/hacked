@@ -9,6 +9,7 @@ import (
 
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
+	"github.com/inkyblackness/hacked/ss1/edit"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
@@ -18,7 +19,7 @@ import (
 
 // View handles the project display.
 type View struct {
-	mod *world.Mod
+	service *edit.ProjectService
 
 	modalStateMachine gui.ModalStateMachine
 	guiScale          float32
@@ -28,10 +29,9 @@ type View struct {
 }
 
 // NewView creates a new instance for the project display.
-func NewView(mod *world.Mod, modalStateMachine gui.ModalStateMachine,
-	guiScale float32, commander cmd.Commander) *View {
+func NewView(service *edit.ProjectService, modalStateMachine gui.ModalStateMachine, guiScale float32, commander cmd.Commander) *View {
 	return &View{
-		mod: mod,
+		service: service,
 
 		modalStateMachine: modalStateMachine,
 		guiScale:          guiScale,
@@ -54,19 +54,19 @@ func (view *View) Render() {
 		view.model.windowOpen = true
 	}
 	title := "Project"
-	changedFiles := len(view.mod.ModifiedFilenames())
+	changedFiles := len(view.service.Mod().ModifiedFilenames())
 	if changedFiles > 0 {
 		title += fmt.Sprintf(" - %d file(s) pending save", changedFiles)
-		lastChangeTime := view.mod.LastChangeTime()
+		lastChangeTime := view.service.Mod().LastChangeTime()
 
-		if (len(view.mod.Path()) > 0) && !lastChangeTime.IsZero() {
+		if (len(view.service.Mod().Path()) > 0) && !lastChangeTime.IsZero() {
 			saveAt := lastChangeTime.Add(time.Duration(view.model.autosaveTimeoutSec) * time.Second)
 			autoSaveIn := time.Until(saveAt)
 			if autoSaveIn.Seconds() < 4 {
 				title += fmt.Sprintf(" - auto-save in %d", int(math.Max(autoSaveIn.Seconds(), 0.0)))
 			}
 			if autoSaveIn.Seconds() <= 0 {
-				view.mod.ResetLastChangeTime()
+				view.service.Mod().ResetLastChangeTime()
 				view.StartSavingMod()
 			}
 		}
@@ -85,7 +85,7 @@ func (view *View) renderContent() {
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 1, Y: 0})
 	imgui.BeginChildV("ModLocation", imgui.Vec2{X: -200*view.guiScale - 10*view.guiScale, Y: imgui.TextLineHeight() * 1.5}, true,
 		imgui.WindowFlagsNoScrollbar|imgui.WindowFlagsNoScrollWithMouse)
-	modPath := view.mod.Path()
+	modPath := view.service.Mod().Path()
 	if len(modPath) > 0 {
 		imgui.Text(modPath)
 	} else {
@@ -108,7 +108,7 @@ func (view *View) renderContent() {
 
 	imgui.Text("Static World Data")
 	imgui.BeginChildV("ManifestEntries", imgui.Vec2{X: -100 * view.guiScale, Y: 0}, true, 0)
-	manifest := view.mod.World()
+	manifest := view.service.Mod().World()
 	entries := manifest.EntryCount()
 	for i := entries - 1; i >= 0; i-- {
 		entry, _ := manifest.Entry(i)
@@ -144,7 +144,7 @@ func (view *View) startLoadingMod() {
 // StartSavingMod initiates to save the mod.
 // It either opens the save-as dialog, or simply saves under the current folder.
 func (view *View) StartSavingMod() {
-	modPath := view.mod.Path()
+	modPath := view.service.Mod().Path()
 	if len(modPath) > 0 {
 		view.requestSaveMod(modPath)
 	} else {
@@ -163,7 +163,7 @@ func (view *View) startAddingManifestEntry() {
 }
 
 func (view *View) requestMoveManifestEntryUp() {
-	manifest := view.mod.World()
+	manifest := view.service.Mod().World()
 	entries := manifest.EntryCount()
 	if (view.model.selectedManifestEntry >= 0) && (view.model.selectedManifestEntry < (entries - 1)) {
 		view.requestMoveManifestEntry(view.model.selectedManifestEntry+1, view.model.selectedManifestEntry)
@@ -178,7 +178,7 @@ func (view *View) requestMoveManifestEntryDown() {
 
 func (view *View) requestMoveManifestEntry(to, from int) {
 	command := moveManifestEntryCommand{
-		mover: view.mod.World(),
+		mover: view.service.Mod().World(),
 		model: &view.model,
 		to:    to,
 		from:  from,
@@ -217,7 +217,7 @@ func (view *View) tryAddManifestEntryFrom(names []string) error {
 func (view *View) requestAddManifestEntry(entry *world.ManifestEntry) {
 	at := view.model.selectedManifestEntry + 1
 	command := listManifestEntryCommand{
-		keeper: view.mod.World(),
+		keeper: view.service.Mod().World(),
 		model:  &view.model,
 
 		at:    at,
@@ -228,7 +228,7 @@ func (view *View) requestAddManifestEntry(entry *world.ManifestEntry) {
 }
 
 func (view *View) requestRemoveManifestEntry() {
-	manifest := view.mod.World()
+	manifest := view.service.Mod().World()
 	at := view.model.selectedManifestEntry
 	if (at < 0) || (at >= manifest.EntryCount()) {
 		return
@@ -238,7 +238,7 @@ func (view *View) requestRemoveManifestEntry() {
 		return
 	}
 	command := listManifestEntryCommand{
-		keeper: view.mod.World(),
+		keeper: view.service.Mod().World(),
 		model:  &view.model,
 
 		at:    view.model.selectedManifestEntry,
@@ -298,15 +298,15 @@ func (view *View) tryLoadModFrom(names []string) error {
 
 func (view *View) setActiveMod(modPath string, resources []*world.LocalizedResources,
 	objectProperties object.PropertiesTable, textureProperties texture.PropertiesList) {
-	view.mod.SetPath(modPath)
-	view.mod.Reset(resources, objectProperties, textureProperties)
+	view.service.Mod().SetPath(modPath)
+	view.service.Mod().Reset(resources, objectProperties, textureProperties)
 	// fix list resources for any "old" mod.
-	view.mod.FixListResources()
+	view.service.Mod().FixListResources()
 }
 
 func (view *View) requestSaveMod(modPath string) {
-	view.mod.FixListResources()
-	err := saveModResourcesTo(view.mod, modPath)
+	view.service.Mod().FixListResources()
+	err := saveModResourcesTo(view.service.Mod(), modPath)
 	if err != nil {
 		view.modalStateMachine.SetState(&saveModFailedState{
 			machine:   view.modalStateMachine,
@@ -314,7 +314,7 @@ func (view *View) requestSaveMod(modPath string) {
 			errorInfo: err.Error(),
 		})
 	} else {
-		view.mod.SetPath(modPath)
-		view.mod.MarkSave()
+		view.service.Mod().SetPath(modPath)
+		view.service.Mod().MarkSave()
 	}
 }
