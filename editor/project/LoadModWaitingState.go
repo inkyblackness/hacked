@@ -6,8 +6,6 @@ import (
 	"github.com/inkyblackness/imgui-go/v2"
 	"github.com/sqweek/dialog"
 
-	"github.com/inkyblackness/hacked/ss1/world"
-	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
 )
 
@@ -55,50 +53,10 @@ use the main "data" directory of the game.
 }
 
 func (state *loadModWaitingState) HandleFiles(names []string) {
-	staging := newFileStaging(false)
-
-	staging.stageAll(names)
-
-	resourcesToTake := staging.resources
-	isSavegame := false
-	if (len(resourcesToTake) == 0) && (len(staging.savegames) == 1) {
-		resourcesToTake = staging.savegames
-		isSavegame = true
-	}
-	if len(resourcesToTake) > 0 {
-		var locs []*world.LocalizedResources
-		modPath := ""
-
-		for location := range resourcesToTake {
-			if (len(modPath) == 0) || (len(location.DirPath) < len(modPath)) {
-				modPath = location.DirPath
-			}
-		}
-
-		for location, viewer := range resourcesToTake {
-			lang := ids.LocalizeFilename(location.Name)
-			template := location.Name
-			if isSavegame {
-				template = string(ids.Archive)
-			}
-			loc := &world.LocalizedResources{
-				File:     location,
-				Template: template,
-				Language: lang,
-			}
-			for _, id := range viewer.IDs() {
-				view, err := viewer.View(id)
-				if err == nil {
-					_ = loc.Store.Put(id, view)
-				}
-				// TODO: handle error?
-			}
-			locs = append(locs, loc)
-		}
-
-		state.machine.SetState(nil)
-		state.view.requestLoadMod(modPath, locs, staging.objectProperties, staging.textureProperties)
-	} else {
+	err := state.view.tryLoadModFrom(names)
+	if err != nil {
 		state.failureTime = time.Now()
+	} else {
+		state.machine.SetState(nil)
 	}
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/world"
+	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
 )
 
@@ -218,7 +219,55 @@ func (view *View) requestRemoveManifestEntry() {
 	view.commander.Queue(command)
 }
 
-func (view *View) requestLoadMod(modPath string, resources []*world.LocalizedResources,
+func (view *View) tryLoadModFrom(names []string) error {
+	staging := newFileStaging(false)
+
+	staging.stageAll(names)
+
+	resourcesToTake := staging.resources
+	isSavegame := false
+	if (len(resourcesToTake) == 0) && (len(staging.savegames) == 1) {
+		resourcesToTake = staging.savegames
+		isSavegame = true
+	}
+	if len(resourcesToTake) == 0 {
+		return fmt.Errorf("no resources found")
+	}
+	var locs []*world.LocalizedResources
+	modPath := ""
+
+	for location := range resourcesToTake {
+		if (len(modPath) == 0) || (len(location.DirPath) < len(modPath)) {
+			modPath = location.DirPath
+		}
+	}
+
+	for location, viewer := range resourcesToTake {
+		lang := ids.LocalizeFilename(location.Name)
+		template := location.Name
+		if isSavegame {
+			template = string(ids.Archive)
+		}
+		loc := &world.LocalizedResources{
+			File:     location,
+			Template: template,
+			Language: lang,
+		}
+		for _, id := range viewer.IDs() {
+			view, err := viewer.View(id)
+			if err == nil {
+				_ = loc.Store.Put(id, view)
+			}
+			// TODO: handle error?
+		}
+		locs = append(locs, loc)
+	}
+
+	view.setActiveMod(modPath, locs, staging.objectProperties, staging.textureProperties)
+	return nil
+}
+
+func (view *View) setActiveMod(modPath string, resources []*world.LocalizedResources,
 	objectProperties object.PropertiesTable, textureProperties texture.PropertiesList) {
 	view.mod.SetPath(modPath)
 	view.mod.Reset(resources, objectProperties, textureProperties)
