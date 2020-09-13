@@ -57,7 +57,7 @@ func (view *View) Render() {
 		title += fmt.Sprintf(" - %d file(s) pending save", changedFiles)
 		lastChangeTime := view.service.Mod().LastChangeTime()
 
-		if (len(view.service.Mod().Path()) > 0) && !lastChangeTime.IsZero() {
+		if view.service.ModHasStorageLocation() && !lastChangeTime.IsZero() {
 			saveAt := lastChangeTime.Add(time.Duration(view.model.autosaveTimeoutSec) * time.Second)
 			autoSaveIn := time.Until(saveAt)
 			if autoSaveIn.Seconds() < 4 {
@@ -142,9 +142,11 @@ func (view *View) startLoadingMod() {
 // StartSavingMod initiates to save the mod.
 // It either opens the save-as dialog, or simply saves under the current folder.
 func (view *View) StartSavingMod() {
-	modPath := view.service.Mod().Path()
-	if len(modPath) > 0 {
-		view.requestSaveMod(modPath)
+	if view.service.ModHasStorageLocation() {
+		err := view.service.SaveMod()
+		if err != nil {
+			view.handleSaveModFailure(err)
+		}
 	} else {
 		view.modalStateMachine.SetState(&saveModAsStartState{
 			machine: view.modalStateMachine,
@@ -251,16 +253,16 @@ func (view *View) tryLoadModFrom(names []string) error {
 }
 
 func (view *View) requestSaveMod(modPath string) {
-	view.service.Mod().FixListResources()
-	err := saveModResourcesTo(view.service.Mod(), modPath)
+	err := view.service.SaveModUnder(modPath)
 	if err != nil {
-		view.modalStateMachine.SetState(&saveModFailedState{
-			machine:   view.modalStateMachine,
-			view:      view,
-			errorInfo: err.Error(),
-		})
-	} else {
-		view.service.Mod().SetPath(modPath)
-		view.service.Mod().MarkSave()
+		view.handleSaveModFailure(err)
 	}
+}
+
+func (view *View) handleSaveModFailure(err error) {
+	view.modalStateMachine.SetState(&saveModFailedState{
+		machine:   view.modalStateMachine,
+		view:      view,
+		errorInfo: err.Error(),
+	})
 }

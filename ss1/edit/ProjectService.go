@@ -1,10 +1,16 @@
 package edit
 
 import (
+	"bytes"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
+	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/resource/lgres"
+	"github.com/inkyblackness/hacked/ss1/serial"
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 )
@@ -77,4 +83,107 @@ func (service *ProjectService) setActiveMod(modPath string, resources []*world.L
 	service.mod.Reset(resources, objectProperties, textureProperties)
 	// fix list resources for any "old" mod.
 	service.mod.FixListResources()
+}
+
+// ModHasStorageLocation returns whether the mod has a place to be stored.
+func (service ProjectService) ModHasStorageLocation() bool {
+	return len(service.mod.Path()) > 0
+}
+
+// SaveMod will store the currently active mod in its current path.
+func (service *ProjectService) SaveMod() error {
+	if !service.ModHasStorageLocation() {
+		return fmt.Errorf("no storage location set")
+	}
+	return service.SaveModUnder(service.mod.Path())
+}
+
+// SaveModUnder will store the currently active mod in the given path.
+func (service *ProjectService) SaveModUnder(modPath string) error {
+	service.mod.FixListResources()
+	err := service.saveModResourcesTo(modPath)
+	if err != nil {
+		return err
+	}
+	service.mod.SetPath(modPath)
+	service.mod.MarkSave()
+	return nil
+}
+
+func (service *ProjectService) saveModResourcesTo(modPath string) error {
+	localized := service.mod.ModifiedResources()
+	filenamesToSave := service.mod.ModifiedFilenames()
+
+	shallBeSaved := func(filename string) bool {
+		for _, toSave := range filenamesToSave {
+			if toSave == filename {
+				return true
+			}
+		}
+		return false
+	}
+
+	for _, loc := range localized {
+		if shallBeSaved(loc.File.Name) {
+			err := saveResourcesTo(loc.Store, loc.File.AbsolutePathFrom(modPath))
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if shallBeSaved(world.TexturePropertiesFilename) {
+		err := saveTexturePropertiesTo(service.mod.TextureProperties(), filepath.Join(modPath, world.TexturePropertiesFilename))
+		if err != nil {
+			return err
+		}
+	}
+	if shallBeSaved(world.ObjectPropertiesFilename) {
+		err := saveObjectPropertiesTo(service.mod.ObjectProperties(), filepath.Join(modPath, world.ObjectPropertiesFilename))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func saveResourcesTo(viewer resource.Viewer, absFilename string) error {
+	file, err := os.Create(absFilename)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = file.Close() // nolint: gas
+	}()
+	err = lgres.Write(file, viewer)
+	return err
+}
+
+func saveTexturePropertiesTo(list texture.PropertiesList, absFilename string) error {
+	return saveCodableTo(list, absFilename)
+}
+
+func saveObjectPropertiesTo(list object.PropertiesTable, absFilename string) error {
+	return saveCodableTo(list, absFilename)
+}
+
+func saveCodableTo(codable serial.Codable, absFilename string) error {
+	buffer := bytes.NewBuffer(nil)
+	encoder := serial.NewEncoder(buffer)
+	codable.Code(encoder)
+	err := encoder.FirstError()
+	if err != nil {
+		return err
+	}
+
+	file, err := os.Create(absFilename)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = file.Close() // nolint: gas
+	}()
+	_, err = file.Write(buffer.Bytes())
+	return err
 }
