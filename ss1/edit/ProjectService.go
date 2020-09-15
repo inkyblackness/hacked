@@ -30,6 +30,50 @@ func NewProjectService(commander cmd.Registry, mod *world.Mod) *ProjectService {
 	}
 }
 
+// AddManifestEntry attempts to insert the given manifest entry at given index.
+func (service *ProjectService) AddManifestEntry(at int, entry *world.ManifestEntry) error {
+	service.commander.Register(
+		cmd.Forward(func(modder world.Modder) error {
+			return service.mod.World().InsertEntry(at, entry)
+		}),
+		cmd.Reverse(func(modder world.Modder) error {
+			return service.mod.World().RemoveEntry(at)
+		}),
+	)
+	return nil
+}
+
+// RemoveManifestEntry attempts to remove the manifest entry at given index.
+func (service *ProjectService) RemoveManifestEntry(at int) error {
+	manifest := service.mod.World()
+	entry, err := manifest.Entry(at)
+	if err != nil {
+		return err
+	}
+	service.commander.Register(
+		cmd.Forward(func(modder world.Modder) error {
+			return manifest.RemoveEntry(at)
+		}),
+		cmd.Reverse(func(modder world.Modder) error {
+			return manifest.InsertEntry(at, entry)
+		}),
+	)
+	return nil
+}
+
+// MoveManifestEntry attempts to remove the manifest entry at given from index and re-insert it at given to index.
+func (service *ProjectService) MoveManifestEntry(to, from int) error {
+	service.commander.Register(
+		cmd.Forward(func(modder world.Modder) error {
+			return service.mod.World().MoveEntry(to, from)
+		}),
+		cmd.Reverse(func(modder world.Modder) error {
+			return service.mod.World().MoveEntry(from, to)
+		}),
+	)
+	return nil
+}
+
 // Mod returns the currently active mod in the project.
 func (service ProjectService) Mod() *world.Mod {
 	return service.mod

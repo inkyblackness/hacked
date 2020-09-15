@@ -182,12 +182,7 @@ func (view *View) requestMoveManifestEntry(to, from int) {
 		cmd.Reverse(view.taskToRestoreFocus()),
 		cmd.Reverse(view.taskToSelectEntry(from)),
 		cmd.Nested(func() {
-			command := moveManifestEntryCommand{
-				mover: view.service.Mod().World(),
-				to:    to,
-				from:  from,
-			}
-			view.commander.Queue(command)
+			view.service.MoveManifestEntry(to, from)
 		}),
 		cmd.Forward(view.taskToSelectEntry(to)),
 		cmd.Forward(view.taskToRestoreFocus()),
@@ -241,14 +236,7 @@ func (view *View) requestAddManifestEntry(entry *world.ManifestEntry) {
 		cmd.Reverse(view.taskToRestoreFocus()),
 		cmd.Reverse(view.taskToSelectEntry(view.model.selectedManifestEntry)),
 		cmd.Nested(func() {
-			command := listManifestEntryCommand{
-				keeper: view.service.Mod().World(),
-
-				at:    at,
-				entry: entry,
-				adder: true,
-			}
-			view.commander.Queue(command)
+			view.service.AddManifestEntry(at, entry)
 		}),
 		cmd.Forward(view.taskToSelectEntry(at)),
 		cmd.Forward(view.taskToRestoreFocus()),
@@ -261,24 +249,13 @@ func (view *View) requestRemoveManifestEntry() {
 	if (at < 0) || (at >= manifest.EntryCount()) {
 		return
 	}
-	entry, err := manifest.Entry(at)
-	if err != nil {
-		return
-	}
 
 	view.commander.Register(
 		cmd.Named("removeManifestEntry"),
 		cmd.Reverse(view.taskToRestoreFocus()),
 		cmd.Reverse(view.taskToSelectEntry(view.model.selectedManifestEntry)),
 		cmd.Nested(func() {
-			command := listManifestEntryCommand{
-				keeper: view.service.Mod().World(),
-
-				at:    view.model.selectedManifestEntry,
-				entry: entry,
-				adder: false,
-			}
-			view.commander.Queue(command)
+			view.service.RemoveManifestEntry(at)
 		}),
 		cmd.Forward(view.taskToSelectEntry(view.model.selectedManifestEntry-1)),
 		cmd.Forward(view.taskToRestoreFocus()),
