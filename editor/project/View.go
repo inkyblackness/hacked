@@ -230,6 +230,7 @@ func (view *View) requestAddManifestEntry(entry *world.ManifestEntry) {
 	at := view.model.selectedManifestEntry + 1
 	view.commander.Register(
 		cmd.Named("addManifestEntry"),
+		cmd.Reverse(view.taskToRestoreFocus()),
 		cmd.Reverse(view.taskToSelectEntry(view.model.selectedManifestEntry)),
 		cmd.Nested(func() {
 			command := listManifestEntryCommand{
@@ -241,7 +242,9 @@ func (view *View) requestAddManifestEntry(entry *world.ManifestEntry) {
 			}
 			view.commander.Queue(command)
 		}),
-		cmd.Forward(view.taskToSelectEntry(at)))
+		cmd.Forward(view.taskToSelectEntry(at)),
+		cmd.Forward(view.taskToRestoreFocus()),
+	)
 }
 
 func (view *View) requestRemoveManifestEntry() {
@@ -257,6 +260,7 @@ func (view *View) requestRemoveManifestEntry() {
 
 	view.commander.Register(
 		cmd.Named("removeManifestEntry"),
+		cmd.Reverse(view.taskToRestoreFocus()),
 		cmd.Reverse(view.taskToSelectEntry(view.model.selectedManifestEntry)),
 		cmd.Nested(func() {
 			command := listManifestEntryCommand{
@@ -268,7 +272,9 @@ func (view *View) requestRemoveManifestEntry() {
 			}
 			view.commander.Queue(command)
 		}),
-		cmd.Forward(view.taskToSelectEntry(view.model.selectedManifestEntry-1)))
+		cmd.Forward(view.taskToSelectEntry(view.model.selectedManifestEntry-1)),
+		cmd.Forward(view.taskToRestoreFocus()),
+	)
 }
 
 func (view *View) tryLoadModFrom(names []string) error {
