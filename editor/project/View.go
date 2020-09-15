@@ -9,9 +9,7 @@ import (
 
 	"github.com/inkyblackness/hacked/ss1/edit"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
-	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
-	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/gui"
 )
 
@@ -188,26 +186,10 @@ func (view *View) requestMoveManifestEntry(to, from int) {
 }
 
 func (view *View) tryAddManifestEntryFrom(names []string) error {
-	loaded := world.LoadFiles(true, names)
-
-	if len(loaded.Resources) == 0 {
-		return fmt.Errorf("no resources found")
+	entry, err := world.NewManifestEntryFrom(names)
+	if err != nil {
+		return err
 	}
-
-	entry := &world.ManifestEntry{
-		ID: names[0],
-	}
-
-	for location, viewer := range loaded.Resources {
-		localized := resource.LocalizedResources{
-			ID:       location.Name,
-			Language: ids.LocalizeFilename(location.Name),
-			Viewer:   viewer,
-		}
-		entry.Resources = append(entry.Resources, localized)
-	}
-	entry.ObjectProperties = loaded.ObjectProperties
-	entry.TextureProperties = loaded.TextureProperties
 
 	view.requestAddManifestEntry(entry)
 	return nil
