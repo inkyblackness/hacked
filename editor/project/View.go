@@ -21,13 +21,13 @@ type View struct {
 
 	modalStateMachine gui.ModalStateMachine
 	guiScale          float32
-	commander         cmd.Commander
+	commander         cmd.Registry
 
 	model viewModel
 }
 
 // NewView creates a new instance for the project display.
-func NewView(service *edit.ProjectService, modalStateMachine gui.ModalStateMachine, guiScale float32, commander cmd.Commander) *View {
+func NewView(service *edit.ProjectService, modalStateMachine gui.ModalStateMachine, guiScale float32, commander cmd.Registry) *View {
 	return &View{
 		service: service,
 
@@ -212,17 +212,36 @@ func (view *View) tryAddManifestEntryFrom(names []string) error {
 	return nil
 }
 
+func (view *View) taskToRestoreFocus() cmd.Task {
+	return func(modder world.Modder) error {
+		view.model.restoreFocus = true
+		return nil
+	}
+}
+
+func (view *View) taskToSelectEntry(index int) cmd.Task {
+	return func(modder world.Modder) error {
+		view.model.selectedManifestEntry = index
+		return nil
+	}
+}
+
 func (view *View) requestAddManifestEntry(entry *world.ManifestEntry) {
 	at := view.model.selectedManifestEntry + 1
-	command := listManifestEntryCommand{
-		keeper: view.service.Mod().World(),
-		model:  &view.model,
+	view.commander.Register(
+		cmd.Named("addManifestEntry"),
+		cmd.Reverse(view.taskToSelectEntry(view.model.selectedManifestEntry)),
+		cmd.Nested(func() {
+			command := listManifestEntryCommand{
+				keeper: view.service.Mod().World(),
 
-		at:    at,
-		entry: entry,
-		adder: true,
-	}
-	view.commander.Queue(command)
+				at:    at,
+				entry: entry,
+				adder: true,
+			}
+			view.commander.Queue(command)
+		}),
+		cmd.Forward(view.taskToSelectEntry(at)))
 }
 
 func (view *View) requestRemoveManifestEntry() {
@@ -235,15 +254,21 @@ func (view *View) requestRemoveManifestEntry() {
 	if err != nil {
 		return
 	}
-	command := listManifestEntryCommand{
-		keeper: view.service.Mod().World(),
-		model:  &view.model,
 
-		at:    view.model.selectedManifestEntry,
-		entry: entry,
-		adder: false,
-	}
-	view.commander.Queue(command)
+	view.commander.Register(
+		cmd.Named("removeManifestEntry"),
+		cmd.Reverse(view.taskToSelectEntry(view.model.selectedManifestEntry)),
+		cmd.Nested(func() {
+			command := listManifestEntryCommand{
+				keeper: view.service.Mod().World(),
+
+				at:    view.model.selectedManifestEntry,
+				entry: entry,
+				adder: false,
+			}
+			view.commander.Queue(command)
+		}),
+		cmd.Forward(view.taskToSelectEntry(view.model.selectedManifestEntry-1)))
 }
 
 func (view *View) tryLoadModFrom(names []string) error {

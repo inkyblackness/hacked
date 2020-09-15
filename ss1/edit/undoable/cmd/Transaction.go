@@ -68,6 +68,7 @@ type TransactionModifier func(*Transaction)
 
 // Registry allows to build commands as transactions with modifier functions.
 type Registry interface {
+	Commander
 	Register(modifier ...TransactionModifier)
 }
 

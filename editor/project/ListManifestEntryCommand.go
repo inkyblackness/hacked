@@ -11,7 +11,6 @@ type manifestEntryKeeper interface {
 
 type listManifestEntryCommand struct {
 	keeper manifestEntryKeeper
-	model  *viewModel
 
 	at    int
 	entry *world.ManifestEntry
@@ -31,12 +30,6 @@ func (cmd listManifestEntryCommand) perform(insert bool) error {
 	err := cmd.callKeeper(insert)
 	if err != nil {
 		return err
-	}
-	cmd.model.restoreFocus = true
-	if cmd.adder == insert {
-		cmd.model.selectedManifestEntry = cmd.at
-	} else {
-		cmd.model.selectedManifestEntry = -1
 	}
 	return nil
 }

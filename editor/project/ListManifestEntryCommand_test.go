@@ -31,7 +31,6 @@ type ListManifestEntryCommandSuite struct {
 	suite.Suite
 
 	instance  listManifestEntryCommand
-	model     viewModel
 	keeper    testingKeeper
 	lastError error
 }
@@ -42,10 +41,8 @@ func TestListManifestEntryCommandSuite(t *testing.T) {
 
 func (suite *ListManifestEntryCommandSuite) SetupTest() {
 	suite.keeper = testingKeeper{}
-	suite.model = freshViewModel()
 	suite.instance = listManifestEntryCommand{
 		keeper: &suite.keeper,
-		model:  &suite.model,
 
 		at: -1,
 	}
@@ -90,36 +87,6 @@ func (suite *ListManifestEntryCommandSuite) TestUndoInsertsEntryIfNotAdder() {
 	suite.thenEntryShouldHaveBeenInserted(1, entry)
 }
 
-func (suite *ListManifestEntryCommandSuite) TestCommandRequestsFocus() {
-	suite.givenParameters(2, suite.someEntry(), true)
-	suite.whenCommandIsDone()
-	suite.thenRestoreFocusShouldBe(true)
-}
-
-func (suite *ListManifestEntryCommandSuite) TestCommandSetsSelectedEntryWhenInsertingOnAdd() {
-	suite.givenParameters(0, suite.someEntry(), true)
-	suite.whenCommandIsDone()
-	suite.thenCurrentlySelectedItemShouldBe(0)
-}
-
-func (suite *ListManifestEntryCommandSuite) TestCommandSetsSelectedEntryWhenInsertingOnRemove() {
-	suite.givenParameters(0, suite.someEntry(), false)
-	suite.whenCommandIsUndone()
-	suite.thenCurrentlySelectedItemShouldBe(0)
-}
-
-func (suite *ListManifestEntryCommandSuite) TestCommandClearsSelectedEntryWhenRemovingOnAdd() {
-	suite.givenParameters(1, suite.someEntry(), true)
-	suite.whenCommandIsUndone()
-	suite.thenCurrentlySelectedItemShouldBe(-1)
-}
-
-func (suite *ListManifestEntryCommandSuite) TestCommandClearsSelectedEntryWhenRemovingOnRemove() {
-	suite.givenParameters(1, suite.someEntry(), false)
-	suite.whenCommandIsDone()
-	suite.thenCurrentlySelectedItemShouldBe(-1)
-}
-
 func (suite *ListManifestEntryCommandSuite) givenParameters(at int, entry *world.ManifestEntry, adder bool) {
 	suite.instance.at = at
 	suite.instance.entry = entry
@@ -149,14 +116,6 @@ func (suite *ListManifestEntryCommandSuite) thenEntryShouldHaveBeenInserted(at i
 
 func (suite *ListManifestEntryCommandSuite) thenEntryShouldHaveBeenRemoved(at int) {
 	assert.Equal(suite.T(), at, suite.keeper.lastAt, "AT mismatch")
-}
-
-func (suite *ListManifestEntryCommandSuite) thenRestoreFocusShouldBe(expected bool) {
-	assert.Equal(suite.T(), expected, suite.model.restoreFocus, "focus not as expected")
-}
-
-func (suite *ListManifestEntryCommandSuite) thenCurrentlySelectedItemShouldBe(expected int) {
-	assert.Equal(suite.T(), expected, suite.model.selectedManifestEntry, "SELECTED mismatch")
 }
 
 func (suite *ListManifestEntryCommandSuite) someEntry() *world.ManifestEntry {
