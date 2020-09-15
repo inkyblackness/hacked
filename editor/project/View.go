@@ -195,20 +195,6 @@ func (view *View) tryAddManifestEntryFrom(names []string) error {
 	return nil
 }
 
-func (view *View) taskToRestoreFocus() cmd.Task {
-	return func(modder world.Modder) error {
-		view.model.restoreFocus = true
-		return nil
-	}
-}
-
-func (view *View) taskToSelectEntry(index int) cmd.Task {
-	return func(modder world.Modder) error {
-		view.model.selectedManifestEntry = index
-		return nil
-	}
-}
-
 func (view *View) requestAddManifestEntry(entry *world.ManifestEntry) {
 	at := view.model.selectedManifestEntry + 1
 	_ = view.commander.Register(
@@ -255,4 +241,18 @@ func (view *View) handleSaveModFailure(err error) {
 		view:      view,
 		errorInfo: err.Error(),
 	})
+}
+
+func (view *View) taskToRestoreFocus() cmd.Task {
+	return func(modder world.Modder) error {
+		view.model.restoreFocus = true
+		return nil
+	}
+}
+
+func (view *View) taskToSelectEntry(index int) cmd.Task {
+	return func(modder world.Modder) error {
+		view.model.selectedManifestEntry = index
+		return nil
+	}
 }
