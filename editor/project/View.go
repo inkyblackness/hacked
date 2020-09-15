@@ -177,13 +177,21 @@ func (view *View) requestMoveManifestEntryDown() {
 }
 
 func (view *View) requestMoveManifestEntry(to, from int) {
-	command := moveManifestEntryCommand{
-		mover: view.service.Mod().World(),
-		model: &view.model,
-		to:    to,
-		from:  from,
-	}
-	view.commander.Queue(command)
+	view.commander.Register(
+		cmd.Named("moveManifestEntry"),
+		cmd.Reverse(view.taskToRestoreFocus()),
+		cmd.Reverse(view.taskToSelectEntry(from)),
+		cmd.Nested(func() {
+			command := moveManifestEntryCommand{
+				mover: view.service.Mod().World(),
+				to:    to,
+				from:  from,
+			}
+			view.commander.Queue(command)
+		}),
+		cmd.Forward(view.taskToSelectEntry(to)),
+		cmd.Forward(view.taskToRestoreFocus()),
+	)
 }
 
 func (view *View) tryAddManifestEntryFrom(names []string) error {

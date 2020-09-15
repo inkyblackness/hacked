@@ -10,7 +10,6 @@ type manifestEntryMover interface {
 
 type moveManifestEntryCommand struct {
 	mover manifestEntryMover
-	model *viewModel
 	from  int
 	to    int
 }
@@ -28,7 +27,5 @@ func (cmd moveManifestEntryCommand) move(target, source int) error {
 	if err != nil {
 		return err
 	}
-	cmd.model.selectedManifestEntry = target
-	cmd.model.restoreFocus = true
 	return nil
 }
