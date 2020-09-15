@@ -66,6 +66,11 @@ func (txn Transaction) perform(tasks []Task, modder world.Modder) error {
 // TransactionModifier is a function to change a transaction while it is being built.
 type TransactionModifier func(*Transaction)
 
+// Registry allows to build commands as transactions with modifier functions.
+type Registry interface {
+	Register(modifier ...TransactionModifier)
+}
+
 // TransactionBuilder provides a way to register a command at a commander with
 // possibly nested actions.
 type TransactionBuilder struct {

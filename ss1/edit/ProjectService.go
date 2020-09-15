@@ -8,6 +8,7 @@ import (
 
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/resource/lgres"
 	"github.com/inkyblackness/hacked/ss1/serial"
@@ -17,12 +18,16 @@ import (
 
 // ProjectService handles the overall information about the active mod.
 type ProjectService struct {
-	mod *world.Mod
+	commander cmd.Registry
+	mod       *world.Mod
 }
 
 // NewProjectService returns a new instance of a service for given mod.
-func NewProjectService(mod *world.Mod) *ProjectService {
-	return &ProjectService{mod: mod}
+func NewProjectService(commander cmd.Registry, mod *world.Mod) *ProjectService {
+	return &ProjectService{
+		commander: commander,
+		mod:       mod,
+	}
 }
 
 // Mod returns the currently active mod in the project.

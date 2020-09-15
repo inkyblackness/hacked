@@ -67,6 +67,7 @@ type Application struct {
 	eventQueue      event.Queue
 	eventDispatcher *event.Dispatcher
 
+	txnBuilder       cmd.TransactionBuilder
 	cmdStack         *cmd.Stack
 	mod              *world.Mod
 	cp               text.Codepage
@@ -443,6 +444,7 @@ func (app *Application) initGuiStyle() {
 func (app *Application) initSignalling() {
 	app.eventDispatcher = event.NewDispatcher()
 	app.cmdStack = new(cmd.Stack)
+	app.txnBuilder.Commander = app
 }
 
 func (app *Application) initModel() {
@@ -496,9 +498,9 @@ func (app *Application) initView() {
 	soundEffectService := undoable.NewSoundEffectService(edit.NewSoundEffectService(soundEffectViewer, soundEffectSetter), app)
 	augmentedTextService := undoable.NewAugmentedTextService(edit.NewAugmentedTextService(textViewer, textSetter, audioViewer, audioSetter), app)
 	movieService := undoable.NewMovieService(edit.NewMovieService(app.cp, movieViewer, movieSetter), app)
-	projectService := edit.NewProjectService(app.mod)
+	projectService := edit.NewProjectService(&app.txnBuilder, app.mod)
 
-	app.projectView = project.NewView(projectService, &app.modalState, app.GuiScale, app)
+	app.projectView = project.NewView(projectService, &app.modalState, app.GuiScale, &app.txnBuilder)
 	app.archiveView = archives.NewArchiveView(app.mod, app.textLineCache, app.cp, app.GuiScale, app)
 	app.levelControlView = levels.NewControlView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.levelTilesView = levels.NewTilesView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
