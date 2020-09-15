@@ -55,7 +55,9 @@ func (suite *TransactionBuilderSuite) TestTransactionCallsReverseTasksFromRightT
 func (suite *TransactionBuilderSuite) TestTransactionCallsNestedInForwardDirection() {
 	suite.givenRegisteredTransaction(
 		cmd.Forward(suite.aTask("fa")),
-		cmd.Nested(func() { suite.builder.Register(cmd.Forward(suite.aTask("na"))) }),
+		cmd.Nested(func() error {
+			return suite.builder.Register(cmd.Forward(suite.aTask("na")))
+		}),
 		cmd.Forward(suite.aTask("fb")),
 	)
 	suite.whenCommandIsDone()
@@ -65,7 +67,9 @@ func (suite *TransactionBuilderSuite) TestTransactionCallsNestedInForwardDirecti
 func (suite *TransactionBuilderSuite) TestTransactionCallsNestedInReverseDirection() {
 	suite.givenRegisteredTransaction(
 		cmd.Reverse(suite.aTask("ra")),
-		cmd.Nested(func() { suite.builder.Register(cmd.Reverse(suite.aTask("na")), cmd.Reverse(suite.aTask("nb"))) }),
+		cmd.Nested(func() error {
+			return suite.builder.Register(cmd.Reverse(suite.aTask("na")), cmd.Reverse(suite.aTask("nb")))
+		}),
 		cmd.Reverse(suite.aTask("rb")),
 	)
 	suite.whenCommandIsUndone()
@@ -76,8 +80,8 @@ func (suite *TransactionBuilderSuite) TestTransactionReturnsErrorWithNamedPath()
 	suite.givenRegisteredTransaction(
 		cmd.Named("main"),
 		cmd.Forward(suite.aTask("fa")),
-		cmd.Nested(func() {
-			suite.builder.Register(cmd.Named("nested"), cmd.Forward(suite.aTaskReturning(errors.New("fail"))))
+		cmd.Nested(func() error {
+			return suite.builder.Register(cmd.Named("nested"), cmd.Forward(suite.aTaskReturning(errors.New("fail"))))
 		}),
 		cmd.Forward(suite.aTask("fb")),
 	)
@@ -86,7 +90,8 @@ func (suite *TransactionBuilderSuite) TestTransactionReturnsErrorWithNamedPath()
 }
 
 func (suite *TransactionBuilderSuite) givenRegisteredTransaction(modifier ...cmd.TransactionModifier) {
-	suite.builder.Register(modifier...)
+	err := suite.builder.Register(modifier...)
+	require.Nil(suite.T(), err, "no error expected registering transaction")
 }
 
 func (suite *TransactionBuilderSuite) whenCommandIsDone() {

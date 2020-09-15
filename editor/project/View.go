@@ -177,13 +177,11 @@ func (view *View) requestMoveManifestEntryDown() {
 }
 
 func (view *View) requestMoveManifestEntry(to, from int) {
-	view.commander.Register(
+	_ = view.commander.Register(
 		cmd.Named("moveManifestEntry"),
 		cmd.Reverse(view.taskToRestoreFocus()),
 		cmd.Reverse(view.taskToSelectEntry(from)),
-		cmd.Nested(func() {
-			view.service.MoveManifestEntry(to, from)
-		}),
+		cmd.Nested(func() error { return view.service.MoveManifestEntry(to, from) }),
 		cmd.Forward(view.taskToSelectEntry(to)),
 		cmd.Forward(view.taskToRestoreFocus()),
 	)
@@ -231,13 +229,11 @@ func (view *View) taskToSelectEntry(index int) cmd.Task {
 
 func (view *View) requestAddManifestEntry(entry *world.ManifestEntry) {
 	at := view.model.selectedManifestEntry + 1
-	view.commander.Register(
+	_ = view.commander.Register(
 		cmd.Named("addManifestEntry"),
 		cmd.Reverse(view.taskToRestoreFocus()),
 		cmd.Reverse(view.taskToSelectEntry(view.model.selectedManifestEntry)),
-		cmd.Nested(func() {
-			view.service.AddManifestEntry(at, entry)
-		}),
+		cmd.Nested(func() error { return view.service.AddManifestEntry(at, entry) }),
 		cmd.Forward(view.taskToSelectEntry(at)),
 		cmd.Forward(view.taskToRestoreFocus()),
 	)
@@ -250,13 +246,11 @@ func (view *View) requestRemoveManifestEntry() {
 		return
 	}
 
-	view.commander.Register(
+	_ = view.commander.Register(
 		cmd.Named("removeManifestEntry"),
 		cmd.Reverse(view.taskToRestoreFocus()),
 		cmd.Reverse(view.taskToSelectEntry(view.model.selectedManifestEntry)),
-		cmd.Nested(func() {
-			view.service.RemoveManifestEntry(at)
-		}),
+		cmd.Nested(func() error { return view.service.RemoveManifestEntry(at) }),
 		cmd.Forward(view.taskToSelectEntry(view.model.selectedManifestEntry-1)),
 		cmd.Forward(view.taskToRestoreFocus()),
 	)

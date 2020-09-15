@@ -64,12 +64,12 @@ func (txn Transaction) perform(tasks []Task, modder world.Modder) error {
 }
 
 // TransactionModifier is a function to change a transaction while it is being built.
-type TransactionModifier func(*Transaction)
+type TransactionModifier func(*Transaction) error
 
 // Registry allows to build commands as transactions with modifier functions.
 type Registry interface {
 	Commander
-	Register(modifier ...TransactionModifier)
+	Register(modifier ...TransactionModifier) error
 }
 
 // TransactionBuilder provides a way to register a command at a commander with
@@ -80,13 +80,16 @@ type TransactionBuilder struct {
 }
 
 // Register creates a new transaction based on given modifier.
-func (logger *TransactionBuilder) Register(modifier ...TransactionModifier) {
+func (logger *TransactionBuilder) Register(modifier ...TransactionModifier) error {
 	previous := logger.active
 	current := &Transaction{}
 
 	logger.active = current
 	for _, mod := range modifier {
-		mod(current)
+		err := mod(current)
+		if err != nil {
+			return err
+		}
 	}
 	logger.active = previous
 
@@ -96,6 +99,7 @@ func (logger *TransactionBuilder) Register(modifier ...TransactionModifier) {
 	}
 
 	logger.Queue(current)
+	return nil
 }
 
 // Queue implements the Commander interface to add given command to a currently built transaction.
@@ -113,8 +117,9 @@ func (logger *TransactionBuilder) Queue(command Command) {
 
 // Named allows to name the current level of transaction.
 func Named(name string) TransactionModifier {
-	return func(txn *Transaction) {
+	return func(txn *Transaction) error {
 		txn.Name = name
+		return nil
 	}
 }
 
@@ -124,8 +129,9 @@ func Named(name string) TransactionModifier {
 // If a nested command is added to the transaction before the forward function, then
 // the nested task is performed before the given task.
 func Forward(task Task) TransactionModifier {
-	return func(txn *Transaction) {
+	return func(txn *Transaction) error {
 		txn.Forward = append(txn.Forward, task)
+		return nil
 	}
 }
 
@@ -135,16 +141,17 @@ func Forward(task Task) TransactionModifier {
 // If a nested command is added to the transaction before the reverse function, then
 // the nested task is performed after the given task.
 func Reverse(task Task) TransactionModifier {
-	return func(txn *Transaction) {
+	return func(txn *Transaction) error {
 		txn.Reverse = append(txn.Reverse, task)
+		return nil
 	}
 }
 
 // Nested adds a further level to the currently registered transaction.
 // Depending on the order of the modifier in the register, the corresponding tasks will be called
 // in sequence. See other modifier.
-func Nested(nested func()) TransactionModifier {
-	return func(txn *Transaction) {
-		nested()
+func Nested(nested func() error) TransactionModifier {
+	return func(txn *Transaction) error {
+		return nested()
 	}
 }
