@@ -1,11 +1,33 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/inkyblackness/hacked/ss1/world"
 )
 
 // Task represents a modification on given modder.
 type Task func(modder world.Modder) error
+
+// TransactionError is returned from a transaction execution if a task failed.
+type TransactionError struct {
+	// Name is that of the transaction, if it was set.
+	Name string
+	// Index identifies the list index of tasks.
+	Index int
+	// Nested is the error returned from the task. In case of nested commands, this may be another TransactionError.
+	Nested error
+}
+
+// Error returns the path of the transaction task, combined with the nested error text.
+func (err TransactionError) Error() string {
+	return fmt.Sprintf("%s[%d]: %v", err.Name, err.Index, err.Nested)
+}
+
+// Unwrap returns the nested error, to support diving into nested errors.
+func (err TransactionError) Unwrap() error {
+	return err.Nested
+}
 
 // Transaction is a named list of forward and reverse tasks.
 // Transaction provides execution of the tasks as a Command.
@@ -16,20 +38,26 @@ type Transaction struct {
 }
 
 // Do executes the forward tasks in series. The first task to return an error aborts the iteration.
+// A TransactionError is returned in case of aborted iteration.
 func (txn Transaction) Do(modder world.Modder) error {
 	return txn.perform(txn.Forward, modder)
 }
 
 // Do executes the reverse tasks in series. The first task to return an error aborts the iteration.
+// A TransactionError is returned in case of aborted iteration.
 func (txn Transaction) Undo(modder world.Modder) error {
 	return txn.perform(txn.Reverse, modder)
 }
 
 func (txn Transaction) perform(tasks []Task, modder world.Modder) error {
-	for _, task := range tasks {
+	for i, task := range tasks {
 		err := task(modder)
 		if err != nil {
-			return err
+			return TransactionError{
+				Name:   txn.Name,
+				Index:  i,
+				Nested: err,
+			}
 		}
 	}
 	return nil
