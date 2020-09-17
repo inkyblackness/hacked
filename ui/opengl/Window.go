@@ -78,7 +78,7 @@ func WindowStateFromFile(filename string, defaultState WindowState) WindowState 
 
 // SaveTo stores the state in a file with given filename.
 func (state WindowState) SaveTo(filename string) error {
-	bytes, err := json.Marshal(state)
+	bytes, err := json.MarshalIndent(state, "", "  ")
 	if err != nil {
 		return err
 	}
