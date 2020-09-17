@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"path/filepath"
+	"sort"
 	"time"
 
 	"github.com/inkyblackness/hacked/ss1/content/object"
@@ -72,6 +74,22 @@ func (mod Mod) ModifiedFilenames() []string {
 	for filename := range mod.changedFiles {
 		result = append(result, filename)
 	}
+	return result
+}
+
+// AllAbsoluteFilenames returns the list of all filenames currently loaded in the mod.
+func (mod Mod) AllAbsoluteFilenames() []string {
+	var result []string
+	for _, res := range mod.data.LocalizedResources {
+		result = append(result, res.File.AbsolutePathFrom(mod.modPath))
+	}
+	if len(mod.data.ObjectProperties) > 0 {
+		result = append(result, filepath.Join(mod.modPath, ObjectPropertiesFilename))
+	}
+	if len(mod.data.TextureProperties) > 0 {
+		result = append(result, filepath.Join(mod.modPath, TexturePropertiesFilename))
+	}
+	sort.Strings(result)
 	return result
 }
 

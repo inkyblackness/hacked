@@ -18,6 +18,7 @@ import (
 
 // ProjectSettings describe the properties of a project.
 type ProjectSettings struct {
+	ModFiles []string
 	Manifest []ManifestEntrySettings
 }
 
@@ -50,6 +51,9 @@ func NewProjectService(commander cmd.Registry, mod *world.Mod, settings ProjectS
 			continue
 		}
 	}
+
+	_ = service.TryLoadModFrom(settings.ModFiles)
+
 	return service
 }
 
@@ -61,6 +65,9 @@ func (service ProjectService) CurrentSettings() ProjectSettings {
 		entry, _ := manifest.Entry(i)
 		settings.Manifest[i].Origin = entry.Origin
 	}
+
+	settings.ModFiles = service.mod.AllAbsoluteFilenames()
+
 	return settings
 }
 
