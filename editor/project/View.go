@@ -13,6 +13,8 @@ import (
 	"github.com/inkyblackness/hacked/ui/gui"
 )
 
+const autosaveTimeoutSec = 5
+
 // View handles the project display.
 type View struct {
 	service *edit.ProjectService
@@ -56,7 +58,7 @@ func (view *View) Render() {
 		lastChangeTime := view.service.Mod().LastChangeTime()
 
 		if view.service.ModHasStorageLocation() && !lastChangeTime.IsZero() {
-			saveAt := lastChangeTime.Add(time.Duration(view.model.autosaveTimeoutSec) * time.Second)
+			saveAt := lastChangeTime.Add(time.Duration(autosaveTimeoutSec) * time.Second)
 			autoSaveIn := time.Until(saveAt)
 			if autoSaveIn.Seconds() < 4 {
 				title += fmt.Sprintf(" - auto-save in %d", int(math.Max(autoSaveIn.Seconds(), 0.0)))
