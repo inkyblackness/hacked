@@ -41,33 +41,25 @@ import (
 	"github.com/inkyblackness/hacked/ui/opengl"
 )
 
-type lastProjectState struct {
-	Settings *edit.ProjectSettings
+type projectState struct {
+	Settings edit.ProjectSettings
 }
 
-func lastProjectStateFromFile(filename string) lastProjectState {
+func lastProjectStateFromFile(filename string) projectState {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return lastProjectState{}
+		return projectState{}
 	}
-	var state lastProjectState
+	var state projectState
 	err = json.Unmarshal(data, &state)
 	if err != nil {
-		return lastProjectState{}
+		return projectState{}
 	}
 	return state
 }
 
-// SettingsToRestore resolves the actual settings that should be used to re-load the last files.
-func (state lastProjectState) SettingsToRestore() edit.ProjectSettings {
-	if state.Settings == nil {
-		return edit.ProjectSettings{}
-	}
-	return *state.Settings
-}
-
 // SaveTo stores the state in a file with given filename.
-func (state lastProjectState) SaveTo(filename string) error {
+func (state projectState) SaveTo(filename string) error {
 	bytes, err := json.MarshalIndent(state, "", "  ")
 	if err != nil {
 		return err
@@ -295,8 +287,8 @@ func (app *Application) onWindowClosing() {
 	_ = windowState.SaveTo(app.windowStateConfigFilename())
 
 	projectSettings := app.projectService.CurrentSettings()
-	projectState := lastProjectState{Settings: &projectSettings}
-	_ = projectState.SaveTo(app.lastProjectStateConfigFilename())
+	lastProjectState := projectState{Settings: projectSettings}
+	_ = lastProjectState.SaveTo(app.lastProjectStateConfigFilename())
 }
 
 func (app *Application) onWindowResize(width int, height int) {
@@ -541,8 +533,8 @@ func (app *Application) initView() {
 	augmentedTextService := undoable.NewAugmentedTextService(edit.NewAugmentedTextService(textViewer, textSetter, audioViewer, audioSetter), app)
 	movieService := undoable.NewMovieService(edit.NewMovieService(app.cp, movieViewer, movieSetter), app)
 
-	projectState := lastProjectStateFromFile(app.lastProjectStateConfigFilename())
-	app.projectService = edit.NewProjectService(&app.txnBuilder, app.mod, projectState.SettingsToRestore())
+	lastProjectState := lastProjectStateFromFile(app.lastProjectStateConfigFilename())
+	app.projectService = edit.NewProjectService(&app.txnBuilder, app.mod, lastProjectState.Settings)
 
 	app.projectView = project.NewView(app.projectService, &app.modalState, app.GuiScale, &app.txnBuilder)
 	app.archiveView = archives.NewArchiveView(app.mod, app.textLineCache, app.cp, app.GuiScale, app)
