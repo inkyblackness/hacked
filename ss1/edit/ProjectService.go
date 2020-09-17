@@ -16,6 +16,16 @@ import (
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 )
 
+// ProjectSettings describe the properties of a project.
+type ProjectSettings struct {
+	Manifest []ManifestEntrySettings
+}
+
+// ManifestEntrySettings describe the properties of one manifest entry in a project.
+type ManifestEntrySettings struct {
+	Origin []string
+}
+
 // ProjectService handles the overall information about the active mod.
 type ProjectService struct {
 	commander cmd.Registry
@@ -23,11 +33,35 @@ type ProjectService struct {
 }
 
 // NewProjectService returns a new instance of a service for given mod.
-func NewProjectService(commander cmd.Registry, mod *world.Mod) *ProjectService {
-	return &ProjectService{
+func NewProjectService(commander cmd.Registry, mod *world.Mod, settings ProjectSettings) *ProjectService {
+	service := &ProjectService{
 		commander: commander,
 		mod:       mod,
 	}
+
+	manifest := service.mod.World()
+	for _, entrySettings := range settings.Manifest {
+		entry, err := world.NewManifestEntryFrom(entrySettings.Origin)
+		if err != nil {
+			continue
+		}
+		err = manifest.InsertEntry(manifest.EntryCount(), entry)
+		if err != nil {
+			continue
+		}
+	}
+	return service
+}
+
+// CurrentSettings returns the snapshot of the project.
+func (service ProjectService) CurrentSettings() ProjectSettings {
+	manifest := service.mod.World()
+	settings := ProjectSettings{Manifest: make([]ManifestEntrySettings, manifest.EntryCount())}
+	for i := 0; i < manifest.EntryCount(); i++ {
+		entry, _ := manifest.Entry(i)
+		settings.Manifest[i].Origin = entry.Origin
+	}
+	return settings
 }
 
 // AddManifestEntry attempts to insert the given manifest entry at given index.

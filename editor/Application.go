@@ -1,7 +1,9 @@
 package editor
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 
 	"github.com/inkyblackness/imgui-go/v2"
@@ -38,6 +40,40 @@ import (
 	"github.com/inkyblackness/hacked/ui/input"
 	"github.com/inkyblackness/hacked/ui/opengl"
 )
+
+type lastProjectState struct {
+	Settings *edit.ProjectSettings
+}
+
+func lastProjectStateFromFile(filename string) lastProjectState {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return lastProjectState{}
+	}
+	var state lastProjectState
+	err = json.Unmarshal(data, &state)
+	if err != nil {
+		return lastProjectState{}
+	}
+	return state
+}
+
+// SettingsToRestore resolves the actual settings that should be used to re-load the last files.
+func (state lastProjectState) SettingsToRestore() edit.ProjectSettings {
+	if state.Settings == nil {
+		return edit.ProjectSettings{}
+	}
+	return *state.Settings
+}
+
+// SaveTo stores the state in a file with given filename.
+func (state lastProjectState) SaveTo(filename string) error {
+	bytes, err := json.MarshalIndent(state, "", "  ")
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filename, bytes, 0640)
+}
 
 // Application is the root object of the graphical editor.
 // It is set up by the main method.
@@ -84,6 +120,8 @@ type Application struct {
 	mapDisplay *levels.MapDisplay
 
 	levels [archive.MaxLevels]*level.Level
+
+	projectService *edit.ProjectService
 
 	projectView      *project.View
 	archiveView      *archives.View
@@ -253,8 +291,12 @@ func (app *Application) bitmapTextureForUI(textureID imgui.TextureID) (palette u
 
 func (app *Application) onWindowClosing() {
 
-	state := app.window.StateSnapshot()
-	_ = state.SaveTo(app.windowStateConfigFilename())
+	windowState := app.window.StateSnapshot()
+	_ = windowState.SaveTo(app.windowStateConfigFilename())
+
+	projectSettings := app.projectService.CurrentSettings()
+	projectState := lastProjectState{Settings: &projectSettings}
+	_ = projectState.SaveTo(app.lastProjectStateConfigFilename())
 }
 
 func (app *Application) onWindowResize(width int, height int) {
@@ -498,9 +540,11 @@ func (app *Application) initView() {
 	soundEffectService := undoable.NewSoundEffectService(edit.NewSoundEffectService(soundEffectViewer, soundEffectSetter), app)
 	augmentedTextService := undoable.NewAugmentedTextService(edit.NewAugmentedTextService(textViewer, textSetter, audioViewer, audioSetter), app)
 	movieService := undoable.NewMovieService(edit.NewMovieService(app.cp, movieViewer, movieSetter), app)
-	projectService := edit.NewProjectService(&app.txnBuilder, app.mod)
 
-	app.projectView = project.NewView(projectService, &app.modalState, app.GuiScale, &app.txnBuilder)
+	projectState := lastProjectStateFromFile(app.lastProjectStateConfigFilename())
+	app.projectService = edit.NewProjectService(&app.txnBuilder, app.mod, projectState.SettingsToRestore())
+
+	app.projectView = project.NewView(app.projectService, &app.modalState, app.GuiScale, &app.txnBuilder)
 	app.archiveView = archives.NewArchiveView(app.mod, app.textLineCache, app.cp, app.GuiScale, app)
 	app.levelControlView = levels.NewControlView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.levelTilesView = levels.NewTilesView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
@@ -636,4 +680,8 @@ http://www.systemshock.org forums. Thank you!
 
 func (app *Application) windowStateConfigFilename() string {
 	return filepath.Join(app.ConfigDir, "WindowState.json")
+}
+
+func (app *Application) lastProjectStateConfigFilename() string {
+	return filepath.Join(app.ConfigDir, "LastProjectState.json")
 }

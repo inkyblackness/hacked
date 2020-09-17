@@ -11,6 +11,7 @@ import (
 
 // ManifestEntry describes a set of localized resources under a collective identifier.
 type ManifestEntry struct {
+	Origin    []string
 	ID        string
 	Resources resource.LocalizedResourcesList
 
@@ -28,7 +29,8 @@ func NewManifestEntryFrom(names []string) (*ManifestEntry, error) {
 	}
 
 	entry := &ManifestEntry{
-		ID: names[0],
+		Origin: names,
+		ID:     names[0],
 	}
 
 	for location, viewer := range loaded.Resources {
