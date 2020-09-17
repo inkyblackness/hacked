@@ -80,39 +80,39 @@ type TransactionBuilder struct {
 }
 
 // Register creates a new transaction based on given modifier.
-func (logger *TransactionBuilder) Register(modifier ...TransactionModifier) error {
-	previous := logger.active
+func (builder *TransactionBuilder) Register(modifier ...TransactionModifier) error {
+	previous := builder.active
 	current := &Transaction{}
 
-	logger.active = current
+	builder.active = current
 	for _, mod := range modifier {
 		err := mod(current)
 		if err != nil {
 			return err
 		}
 	}
-	logger.active = previous
+	builder.active = previous
 
 	// invert reverse task for easier iteration
 	for left, right := 0, len(current.Reverse)-1; left < right; left, right = left+1, right-1 {
 		current.Reverse[left], current.Reverse[right] = current.Reverse[right], current.Reverse[left]
 	}
 
-	logger.Queue(current)
+	builder.Queue(current)
 	return nil
 }
 
 // Queue implements the Commander interface to add given command to a currently built transaction.
 // If there is no outer transaction being built, then the command is immediately forwarded to the commander.
 // Avoid building a loop between TransactionBuilder instances, as this will result in a stack overflow.
-func (logger *TransactionBuilder) Queue(command Command) {
-	if logger.active == nil {
-		logger.Commander.Queue(command)
+func (builder *TransactionBuilder) Queue(command Command) {
+	if builder.active == nil {
+		builder.Commander.Queue(command)
 		return
 	}
 
-	logger.active.Forward = append(logger.active.Forward, command.Do)
-	logger.active.Reverse = append(logger.active.Reverse, command.Undo)
+	builder.active.Forward = append(builder.active.Forward, command.Do)
+	builder.active.Reverse = append(builder.active.Reverse, command.Undo)
 }
 
 // Named allows to name the current level of transaction.
