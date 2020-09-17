@@ -19,7 +19,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 )
 
-var fileAllowlist = resource.FilenameList{
+var fileAllowlist = ids.FilenameList{
 	ids.Archive,
 	ids.CybStrng,
 	ids.CitALog,

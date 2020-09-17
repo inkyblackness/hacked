@@ -1,21 +1,25 @@
-package resource
+package ids
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/inkyblackness/hacked/ss1/resource"
+)
 
 // Filename defines a wrapper for a file that is possibly language-specific.
 type Filename interface {
 	// For returns the name of the file for the given language.
-	For(lang Language) string
+	For(lang resource.Language) string
 
 	// Matches returns true if the given filename matches the described one.
 	Matches(filename string) bool
 }
 
 // I18nFile is for internationalized resource files - i.e., those that store resources per file.
-type I18nFile [LanguageCount]string
+type I18nFile [resource.LanguageCount]string
 
 // For returns the string per language index.
-func (spec I18nFile) For(lang Language) string {
+func (spec I18nFile) For(lang resource.Language) string {
 	return spec[int(lang)]
 }
 
@@ -34,7 +38,7 @@ func (spec I18nFile) Matches(filename string) bool {
 type AnyLanguage string
 
 // For returns the string itself.
-func (any AnyLanguage) For(lang Language) string {
+func (any AnyLanguage) For(lang resource.Language) string {
 	return string(any)
 }
 

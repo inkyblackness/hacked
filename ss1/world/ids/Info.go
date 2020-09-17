@@ -27,7 +27,7 @@ type ResourceInfo struct {
 	MaxCount int
 
 	// ResFile specifies the .res file in which this resource should be stored.
-	ResFile resource.Filename
+	ResFile Filename
 }
 
 // Info returns the resource information for the identified resource.
