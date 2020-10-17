@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
@@ -25,6 +26,22 @@ type ProjectSettings struct {
 // ManifestEntrySettings describe the properties of one manifest entry in a project.
 type ManifestEntrySettings struct {
 	Origin []string
+}
+
+const autosaveTimeoutSec = 5
+
+type SaveStatus struct {
+	mod           *world.Mod
+	FilesModified int
+	SavePending   bool
+	SaveIn        time.Duration
+}
+
+func (status SaveStatus) ConfirmPendingSave() {
+	if status.mod == nil {
+		return
+	}
+	status.mod.ResetLastChangeTime()
 }
 
 // ProjectService handles the overall information about the active mod.
@@ -55,6 +72,24 @@ func NewProjectService(commander cmd.Registry, mod *world.Mod, settings ProjectS
 	_ = service.TryLoadModFrom(settings.ModFiles)
 
 	return service
+}
+
+func (service ProjectService) SaveStatus() SaveStatus {
+	var status SaveStatus
+	status.FilesModified = len(service.mod.ModifiedFilenames())
+	if status.FilesModified > 0 {
+		lastChangeTime := service.mod.LastChangeTime()
+
+		if service.ModHasStorageLocation() && !lastChangeTime.IsZero() {
+			status.SavePending = true
+			saveAt := lastChangeTime.Add(time.Duration(autosaveTimeoutSec) * time.Second)
+			status.SaveIn = time.Until(saveAt)
+			if status.SaveIn <= 0 {
+				status.SaveIn = 0
+			}
+		}
+	}
+	return status
 }
 
 // CurrentSettings returns the snapshot of the project.

@@ -2,8 +2,6 @@ package project
 
 import (
 	"fmt"
-	"math"
-	"time"
 
 	"github.com/inkyblackness/imgui-go/v2"
 
@@ -12,8 +10,6 @@ import (
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ui/gui"
 )
-
-const autosaveTimeoutSec = 5
 
 // View handles the project display.
 type View struct {
@@ -52,21 +48,11 @@ func (view *View) Render() {
 		view.model.windowOpen = true
 	}
 	title := "Project"
-	changedFiles := len(view.service.Mod().ModifiedFilenames())
-	if changedFiles > 0 {
-		title += fmt.Sprintf(" - %d file(s) pending save", changedFiles)
-		lastChangeTime := view.service.Mod().LastChangeTime()
-
-		if view.service.ModHasStorageLocation() && !lastChangeTime.IsZero() {
-			saveAt := lastChangeTime.Add(time.Duration(autosaveTimeoutSec) * time.Second)
-			autoSaveIn := time.Until(saveAt)
-			if autoSaveIn.Seconds() < 4 {
-				title += fmt.Sprintf(" - auto-save in %d", int(math.Max(autoSaveIn.Seconds(), 0.0)))
-			}
-			if autoSaveIn.Seconds() <= 0 {
-				view.service.Mod().ResetLastChangeTime()
-				view.StartSavingMod()
-			}
+	saveStatus := view.service.SaveStatus()
+	if saveStatus.FilesModified > 0 {
+		title += fmt.Sprintf(" - %d file(s) pending save", saveStatus.FilesModified)
+		if saveStatus.SavePending && (saveStatus.SaveIn.Seconds() < 4) {
+			title += fmt.Sprintf(" - auto-save in %d", int(saveStatus.SaveIn.Seconds()))
 		}
 	}
 	if view.model.windowOpen {
