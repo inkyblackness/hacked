@@ -22,6 +22,8 @@ type OpenGLWindow struct {
 	glfwWindow *glfw.Window
 	glWrapper  *OpenGL
 
+	titleBase string
+
 	framesPerSecond float64
 	frameTime       time.Duration
 	nextRenderTick  time.Time
@@ -47,6 +49,7 @@ func NewOpenGLWindow(title string, framesPerSecond float64) (window *OpenGLWindo
 				WindowEventDispatcher: opengl.NullWindowEventDispatcher(),
 				glfwWindow:            glfwWindow,
 				glWrapper:             NewOpenGL(),
+				titleBase:             title,
 				framesPerSecond:       framesPerSecond,
 				frameTime:             time.Duration(int64(float64(time.Second) / framesPerSecond)),
 				nextRenderTick:        time.Now()}
@@ -162,6 +165,15 @@ func (window *OpenGLWindow) SetFullScreen(on bool) {
 		window.glfwWindow.SetMonitor(monitor, 0, 0, videoMode.Width, videoMode.Height, glfw.DontCare)
 	} else {
 		window.glfwWindow.SetMonitor(nil, 0, 0, 1280, 720, glfw.DontCare)
+	}
+}
+
+// SetProjectModified sets an indicator in the window frame that the project has not been saved.
+func (window *OpenGLWindow) SetProjectModified(modified bool) {
+	if modified {
+		window.glfwWindow.SetTitle(window.titleBase + " (unsaved changes)")
+	} else {
+		window.glfwWindow.SetTitle(window.titleBase)
 	}
 }
 

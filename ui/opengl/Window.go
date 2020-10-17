@@ -116,6 +116,8 @@ type Window interface {
 	Size() (width int, height int)
 	// SetFullScreen sets the full screen state of the window.
 	SetFullScreen(on bool)
+	// SetProjectModified sets an indicator in the window frame that the project has not been saved.
+	SetProjectModified(modified bool)
 
 	// SetCursorVisible controls whether the mouse cursor is currently visible.
 	SetCursorVisible(visible bool)

@@ -76,6 +76,7 @@ func NewProjectService(commander cmd.Registry, mod *world.Mod, settings ProjectS
 
 func (service ProjectService) SaveStatus() SaveStatus {
 	var status SaveStatus
+	status.mod = service.mod
 	status.FilesModified = len(service.mod.ModifiedFilenames())
 	if status.FilesModified > 0 {
 		lastChangeTime := service.mod.LastChangeTime()

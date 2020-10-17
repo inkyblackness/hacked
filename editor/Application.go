@@ -196,6 +196,8 @@ func (app *Application) render() {
 	app.renderMainMenu()
 
 	app.projectView.Render()
+	app.updateAutoSave()
+
 	app.archiveView.Render()
 	activeLevel := app.levels[app.levelControlView.SelectedLevel()]
 	app.levelControlView.Render(activeLevel)
@@ -667,6 +669,15 @@ http://www.systemshock.org forums. Thank you!
 			app.window.SetCloseRequest(true)
 		}
 		imgui.EndPopup()
+	}
+}
+
+func (app *Application) updateAutoSave() {
+	status := app.projectService.SaveStatus()
+	app.window.SetProjectModified(status.FilesModified > 0)
+	if status.SavePending && (status.SaveIn == 0) {
+		status.ConfirmPendingSave()
+		app.projectView.StartSavingMod()
 	}
 }
 
