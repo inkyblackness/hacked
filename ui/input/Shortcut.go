@@ -16,6 +16,7 @@ var shortcuts = []shortcut{
 	{keyName: "z", modifier: ModControl.With(ModShift), key: KeyRedo},
 	{keyName: "y", modifier: ModControl, key: KeyRedo},
 	{keyName: "s", modifier: ModControl, key: KeySave},
+	{keyName: "n", modifier: ModControl, key: KeyNew},
 }
 
 // ResolveShortcut tries to map the given name and modifier combination to a

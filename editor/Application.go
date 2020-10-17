@@ -311,17 +311,19 @@ func (app *Application) onKey(key input.Key, modifier input.Modifier) {
 		app.tryUndo()
 	case key == input.KeyRedo:
 		app.tryRedo()
+	case key == input.KeyNew:
+		app.projectService.NewMod()
 	case key == input.KeySave:
 		app.projectView.StartSavingMod()
-	case key == input.KeyF1:
+	case key == input.KeyF1 && modifier.IsClear():
 		*app.projectView.WindowOpen() = !*app.projectView.WindowOpen()
-	case key == input.KeyF2:
+	case key == input.KeyF2 && modifier.IsClear():
 		*app.levelControlView.WindowOpen() = !*app.levelControlView.WindowOpen()
-	case key == input.KeyF3:
+	case key == input.KeyF3 && modifier.IsClear():
 		*app.levelTilesView.WindowOpen() = !*app.levelTilesView.WindowOpen()
-	case key == input.KeyF4:
+	case key == input.KeyF4 && modifier.IsClear():
 		*app.levelObjectsView.WindowOpen() = !*app.levelObjectsView.WindowOpen()
-	case key == input.KeyF5:
+	case key == input.KeyF5 && modifier.IsClear():
 		*app.messagesView.WindowOpen() = !*app.messagesView.WindowOpen()
 	}
 }
@@ -592,6 +594,12 @@ func (app *Application) renderMainMenu() {
 
 	if imgui.BeginMainMenuBar() {
 		if imgui.BeginMenu("File") {
+			if imgui.MenuItemV("New Mod", "Ctrl+N", false, true) {
+				app.projectService.NewMod()
+			}
+			if imgui.MenuItemV("Save Mod", "Ctrl+S", false, true) {
+				app.projectView.StartSavingMod()
+			}
 			windowEntry("Project", "F1", app.projectView.WindowOpen())
 			imgui.Separator()
 			if imgui.MenuItem("Exit") {

@@ -163,6 +163,11 @@ func (service ProjectService) Mod() *world.Mod {
 	return service.mod
 }
 
+// NewMod resets the mod to a new state.
+func (service *ProjectService) NewMod() {
+	service.setActiveMod("", nil, nil, nil)
+}
+
 // TryLoadModFrom attempts to set the active mod from given filenames.
 func (service *ProjectService) TryLoadModFrom(names []string) error {
 	loaded := world.LoadFiles(false, names)

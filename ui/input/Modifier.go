@@ -12,6 +12,11 @@ const (
 	ModSuper   = Modifier(0x00000008)
 )
 
+// IsClear returns true if nothing is set.
+func (mod Modifier) IsClear() bool {
+	return mod == ModNone
+}
+
 // With returns a combination of this modifier and the given one.
 func (mod Modifier) With(other Modifier) Modifier {
 	return Modifier(uint32(mod) | uint32(other))
