@@ -93,7 +93,7 @@ func (view *View) Render() {
 		view.model.windowOpen = true
 	}
 	if view.model.windowOpen {
-		imgui.SetNextWindowSizeV(imgui.Vec2{X: 640 * view.guiScale, Y: 480 * view.guiScale}, imgui.ConditionOnce)
+		imgui.SetNextWindowSizeV(imgui.Vec2{X: 640 * view.guiScale, Y: 480 * view.guiScale}, imgui.ConditionFirstUseEver)
 		if imgui.BeginV("Messages", view.WindowOpen(), imgui.WindowFlagsNoCollapse) {
 			view.renderContent()
 		}

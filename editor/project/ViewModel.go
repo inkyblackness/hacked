@@ -8,7 +8,7 @@ type viewModel struct {
 
 func freshViewModel() viewModel {
 	return viewModel{
-		windowOpen:            true,
+		windowOpen:            false,
 		selectedManifestEntry: -1,
 	}
 }

@@ -74,7 +74,7 @@ func (view *TilesView) Render(lvl *level.Level) {
 		view.model.windowOpen = true
 	}
 	if view.model.windowOpen {
-		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 500 * view.guiScale}, imgui.ConditionOnce)
+		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 500 * view.guiScale}, imgui.ConditionFirstUseEver)
 		title := fmt.Sprintf("Level Tiles, %d selected", len(view.model.selectedTiles.list))
 		readOnly := !view.editingAllowed(lvl.ID())
 		if readOnly {
@@ -586,7 +586,7 @@ func (view *TilesView) changeTiles(lvl *level.Level, positions []MapPosition, mo
 }
 
 func (view *TilesView) setSelectedLevel(id int) {
-	view.eventListener.Event(LevelSelectionSetEvent{id: id})
+	view.eventListener.Event(LevelSelectionSetEvent{Id: id})
 }
 
 func (view *TilesView) setSelectedTiles(positions []MapPosition) {

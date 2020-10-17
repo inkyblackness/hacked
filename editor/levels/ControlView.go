@@ -68,7 +68,7 @@ func (view *ControlView) Render(lvl *level.Level) {
 		view.model.windowOpen = true
 	}
 	if view.model.windowOpen {
-		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 300 * view.guiScale}, imgui.ConditionOnce)
+		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 300 * view.guiScale}, imgui.ConditionFirstUseEver)
 		title := "Level Control"
 		readOnly := !view.editingAllowed(lvl.ID())
 		if readOnly {
@@ -418,9 +418,9 @@ func (view *ControlView) patchLevelResources(lvl *level.Level, extraRestoreState
 }
 
 func (view *ControlView) setSelectedLevel(id int) {
-	view.eventListener.Event(LevelSelectionSetEvent{id: id})
+	view.eventListener.Event(LevelSelectionSetEvent{Id: id})
 }
 
 func (view *ControlView) onLevelSelectionSetEvent(evt LevelSelectionSetEvent) {
-	view.model.selectedLevel = evt.id
+	view.model.selectedLevel = evt.Id
 }

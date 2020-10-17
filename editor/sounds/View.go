@@ -50,7 +50,7 @@ func (view *View) Render() {
 		view.model.windowOpen = true
 	}
 	if view.model.windowOpen {
-		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 300 * view.guiScale}, imgui.ConditionOnce)
+		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 300 * view.guiScale}, imgui.ConditionFirstUseEver)
 		if imgui.BeginV("Sound Effects", view.WindowOpen(), imgui.WindowFlagsNoCollapse) {
 			view.renderContent()
 		}

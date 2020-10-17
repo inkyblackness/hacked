@@ -83,7 +83,7 @@ func (view *View) Render() {
 		view.model.windowOpen = true
 	}
 	if view.model.windowOpen {
-		imgui.SetNextWindowSizeV(imgui.Vec2{X: 650 * view.guiScale, Y: 400 * view.guiScale}, imgui.ConditionOnce)
+		imgui.SetNextWindowSizeV(imgui.Vec2{X: 650 * view.guiScale, Y: 400 * view.guiScale}, imgui.ConditionFirstUseEver)
 		if imgui.BeginV("Archive", view.WindowOpen(), imgui.WindowFlagsNoCollapse) {
 			view.renderContent()
 		}

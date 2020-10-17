@@ -56,7 +56,7 @@ func (view *View) Render() {
 		}
 	}
 	if view.model.windowOpen {
-		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 300 * view.guiScale}, imgui.ConditionOnce)
+		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 300 * view.guiScale}, imgui.ConditionFirstUseEver)
 		if imgui.BeginV(title+"###Project", view.WindowOpen(), 0) {
 			view.renderContent()
 		}

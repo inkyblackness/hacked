@@ -69,7 +69,7 @@ func (view *ObjectsView) Render(lvl *level.Level) {
 	if view.model.windowOpen {
 		view.model.selectedObjects.filterInvalid(lvl)
 
-		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 500 * view.guiScale}, imgui.ConditionOnce)
+		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 500 * view.guiScale}, imgui.ConditionFirstUseEver)
 		title := fmt.Sprintf("Level Objects, %d selected", len(view.model.selectedObjects.list))
 		readOnly := !view.editingAllowed(lvl.ID())
 		if readOnly {
@@ -880,7 +880,7 @@ func (view *ObjectsView) patchLevel(lvl *level.Level, forwardObjectIDs []level.O
 }
 
 func (view *ObjectsView) setSelectedLevel(id int) {
-	view.eventListener.Event(LevelSelectionSetEvent{id: id})
+	view.eventListener.Event(LevelSelectionSetEvent{Id: id})
 }
 
 func (view *ObjectsView) setSelectedObjects(objectIDs []level.ObjectID) {

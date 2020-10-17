@@ -42,7 +42,9 @@ import (
 )
 
 type projectState struct {
-	Settings edit.ProjectSettings
+	Settings         edit.ProjectSettings
+	OpenWindows      []string `json:",omitempty"`
+	ActiveLevelIndex *int     `json:",omitempty"`
 }
 
 func lastProjectStateFromFile(filename string) projectState {
@@ -289,7 +291,19 @@ func (app *Application) onWindowClosing() {
 	_ = windowState.SaveTo(app.windowStateConfigFilename())
 
 	projectSettings := app.projectService.CurrentSettings()
-	lastProjectState := projectState{Settings: projectSettings}
+	windowOpenByName := app.windowOpenByName()
+	var openWindows []string
+	for key, open := range windowOpenByName {
+		if *open {
+			openWindows = append(openWindows, key)
+		}
+	}
+	activeLevelIndex := app.levelControlView.SelectedLevel()
+	lastProjectState := projectState{
+		Settings:         projectSettings,
+		OpenWindows:      openWindows,
+		ActiveLevelIndex: &activeLevelIndex,
+	}
 	_ = lastProjectState.SaveTo(app.lastProjectStateConfigFilename())
 }
 
@@ -556,6 +570,22 @@ func (app *Application) initView() {
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 	app.licensesView = about.NewLicensesView(app.GuiScale)
 
+	if len(lastProjectState.OpenWindows) == 0 {
+		*app.projectView.WindowOpen() = true
+	}
+	windowOpenByName := app.windowOpenByName()
+	for _, key := range lastProjectState.OpenWindows {
+		open := windowOpenByName[key]
+		if open != nil {
+			*open = true
+		}
+	}
+	if (lastProjectState.ActiveLevelIndex != nil) &&
+		(*lastProjectState.ActiveLevelIndex >= 0) &&
+		(*lastProjectState.ActiveLevelIndex < len(app.levels)) {
+		app.eventQueue.Event(levels.LevelSelectionSetEvent{Id: *lastProjectState.ActiveLevelIndex})
+	}
+
 	app.eventDispatcher.RegisterHandler(app.onLevelObjectRequestCreateEvent)
 }
 
@@ -695,4 +725,22 @@ func (app *Application) windowStateConfigFilename() string {
 
 func (app *Application) lastProjectStateConfigFilename() string {
 	return filepath.Join(app.ConfigDir, "LastProjectState.json")
+}
+
+func (app *Application) windowOpenByName() map[string]*bool {
+	return map[string]*bool{
+		"project":      app.projectView.WindowOpen(),
+		"archive":      app.archiveView.WindowOpen(),
+		"levelControl": app.levelControlView.WindowOpen(),
+		"levelTiles":   app.levelTilesView.WindowOpen(),
+		"levelObjects": app.levelObjectsView.WindowOpen(),
+		"messages":     app.messagesView.WindowOpen(),
+		"texts":        app.textsView.WindowOpen(),
+		"bitmaps":      app.bitmapsView.WindowOpen(),
+		"textures":     app.texturesView.WindowOpen(),
+		"animations":   app.animationsView.WindowOpen(),
+		"movies":       app.moviesView.WindowOpen(),
+		"soundEffects": app.soundEffectsView.WindowOpen(),
+		"gameObjects":  app.objectsView.WindowOpen(),
+	}
 }
