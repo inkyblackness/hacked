@@ -30,13 +30,19 @@ type ManifestEntrySettings struct {
 
 const autosaveTimeoutSec = 5
 
+// SaveStatus describes the current change state.
 type SaveStatus struct {
-	mod           *world.Mod
+	mod *world.Mod
+	// FilesModified is the count of how many files are affected by the current pending change.
 	FilesModified int
-	SavePending   bool
-	SaveIn        time.Duration
+	// SavePending is set if the mod has a storage location and changes are to be saved.
+	SavePending bool
+	// SaveIn is the duration after which an auto-save should happen.
+	SaveIn time.Duration
 }
 
+// ConfirmPendingSave marks that the recent auto-save status has been acknowledged and should no longer be notified.
+// A new change will re-start the auto-save timer.
 func (status SaveStatus) ConfirmPendingSave() {
 	if status.mod == nil {
 		return
@@ -74,6 +80,7 @@ func NewProjectService(commander cmd.Registry, mod *world.Mod, settings ProjectS
 	return service
 }
 
+// SaveStatus returns the current pending save information.
 func (service ProjectService) SaveStatus() SaveStatus {
 	var status SaveStatus
 	status.mod = service.mod
