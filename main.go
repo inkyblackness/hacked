@@ -76,7 +76,7 @@ func configDir() (string, error) {
 		return "", err
 	}
 	fullPath := filepath.Join(base, "InkyBlackness", "HackEd")
-	err = os.MkdirAll(fullPath, os.ModeDir|0640)
+	err = os.MkdirAll(fullPath, os.ModeDir|0750)
 	if err != nil {
 		return "", err
 	}
