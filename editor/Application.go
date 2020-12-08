@@ -368,7 +368,7 @@ func (app *Application) tryUndo() {
 	if !app.cmdStack.CanUndo() || app.modalActive() {
 		return
 	}
-	err := app.modifyModByCommand(app.cmdStack.Undo)
+	err := app.projectService.ModifyModWith(app.cmdStack.Undo)
 	if err != nil {
 		app.onFailure("Undo", "", err)
 	}
@@ -378,17 +378,10 @@ func (app *Application) tryRedo() {
 	if !app.cmdStack.CanRedo() || app.modalActive() {
 		return
 	}
-	err := app.modifyModByCommand(app.cmdStack.Redo)
+	err := app.projectService.ModifyModWith(app.cmdStack.Redo)
 	if err != nil {
 		app.onFailure("Redo", "", err)
 	}
-}
-
-func (app *Application) modifyModByCommand(modifier func(world.Modder) error) (err error) {
-	app.mod.Modify(func(modder world.Modder) {
-		err = modifier(modder)
-	})
-	return
 }
 
 func (app *Application) onMouseMove(x, y float32) {
@@ -591,7 +584,7 @@ func (app *Application) initView() {
 
 // Queue requests to perform the given command.
 func (app *Application) Queue(command cmd.Command) {
-	err := app.modifyModByCommand(func(modder world.Modder) error {
+	err := app.projectService.ModifyModWith(func(modder world.Modder) error {
 		return app.cmdStack.Perform(command, modder)
 	})
 	if err != nil {

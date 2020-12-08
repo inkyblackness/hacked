@@ -223,6 +223,14 @@ func (service *ProjectService) setActiveMod(modPath string, resources []*world.L
 	service.mod.FixListResources()
 }
 
+// ModifyModWith runs a function with the intent to alter the current mod.
+func (service *ProjectService) ModifyModWith(modifier func(world.Modder) error) (err error) {
+	service.mod.Modify(func(modder world.Modder) {
+		err = modifier(modder)
+	})
+	return
+}
+
 // ModHasStorageLocation returns whether the mod has a place to be stored.
 func (service ProjectService) ModHasStorageLocation() bool {
 	return len(service.mod.Path()) > 0
