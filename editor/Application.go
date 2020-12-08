@@ -700,7 +700,7 @@ func (app *Application) saveWorkspace() {
 func (app *Application) restoreWorkspace() {
 	lastProjectState := lastProjectStateFromFile(app.lastProjectStateConfigFilename())
 
-	app.projectService.RestoreProject(lastProjectState.Settings)
+	app.projectService.RestoreProject(lastProjectState.Settings, "")
 
 	if len(lastProjectState.OpenWindows) == 0 {
 		*app.projectView.WindowOpen() = true

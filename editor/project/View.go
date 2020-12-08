@@ -130,8 +130,8 @@ func (view *View) NewProject() {
 
 // LoadProject requests to load a stored project from storage.
 func (view *View) LoadProject() {
-	importProjectFile(view.modalStateMachine, func(filename string, settings edit.ProjectSettings) {
-		view.service.RestoreProject(settings)
+	importProjectFile(view.modalStateMachine, func(settings edit.ProjectSettings, filename string) {
+		view.service.RestoreProject(settings, filename)
 	})
 }
 
@@ -146,7 +146,7 @@ func projectFileTypes() []external.TypeInfo {
 	}
 }
 
-func importProjectFile(machine gui.ModalStateMachine, callback func(string, edit.ProjectSettings)) {
+func importProjectFile(machine gui.ModalStateMachine, callback func(edit.ProjectSettings, string)) {
 	fileHandler := func(filename string) error {
 		data, err := ioutil.ReadFile(filename)
 		if err != nil {
@@ -157,7 +157,7 @@ func importProjectFile(machine gui.ModalStateMachine, callback func(string, edit
 		if err != nil {
 			return errors.New("could not read file")
 		}
-		callback(filename, settings)
+		callback(settings, filename)
 		return nil
 	}
 
@@ -166,14 +166,17 @@ func importProjectFile(machine gui.ModalStateMachine, callback func(string, edit
 
 // SaveProject requests to save the project to storage.
 func (view *View) SaveProject() {
-	external.SaveFile(view.modalStateMachine, projectFileTypes(), func(filename string) error {
-		completeFilename := filename
-		dotExtension := "." + settingsFileExtension
-		if !strings.HasSuffix(completeFilename, dotExtension) {
-			completeFilename += dotExtension
-		}
-		return view.saveCurrentSettingsAs(completeFilename)
-	})
+	currentFilename := view.service.CurrentSettingsFilename()
+	if (len(currentFilename) == 0) || (view.saveCurrentSettingsAs(currentFilename) != nil) {
+		external.SaveFile(view.modalStateMachine, projectFileTypes(), func(filename string) error {
+			completeFilename := filename
+			dotExtension := "." + settingsFileExtension
+			if !strings.HasSuffix(completeFilename, dotExtension) {
+				completeFilename += dotExtension
+			}
+			return view.saveCurrentSettingsAs(completeFilename)
+		})
+	}
 }
 
 func (view *View) saveCurrentSettingsAs(filename string) error {
