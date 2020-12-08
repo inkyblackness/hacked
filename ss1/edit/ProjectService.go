@@ -2,10 +2,7 @@ package edit
 
 import (
 	"bytes"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -24,33 +21,6 @@ import (
 type ProjectSettings struct {
 	ModFiles []string
 	Manifest []ManifestEntrySettings
-}
-
-// ProjectSettingsFromFile decodes the settings from a file with given filename.
-func ProjectSettingsFromFile(filename string) (ProjectSettings, error) {
-	var settings ProjectSettings
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return settings, errors.New("could not load file")
-	}
-	err = json.Unmarshal(data, &settings)
-	if err != nil {
-		return settings, errors.New("could not read file")
-	}
-	return settings, nil
-}
-
-// SaveTo stores the state in a file with given filename.
-func (settings ProjectSettings) SaveTo(filename string) error {
-	data, err := json.Marshal(settings)
-	if err != nil {
-		return errors.New("could not encode settings")
-	}
-	err = ioutil.WriteFile(filename, data, 0640)
-	if err != nil {
-		return errors.New("could not write file")
-	}
-	return nil
 }
 
 // ManifestEntrySettings describe the properties of one manifest entry in a project.
@@ -84,8 +54,8 @@ func (status SaveStatus) ConfirmPendingSave() {
 type ProjectService struct {
 	commander cmd.Registry
 
-	mod       *world.Mod
-	modPath   string
+	mod     *world.Mod
+	modPath string
 
 	stateFilename string
 }
