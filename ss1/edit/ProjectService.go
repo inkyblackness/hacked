@@ -107,9 +107,27 @@ func (service ProjectService) CurrentSettings() ProjectSettings {
 		settings.Manifest[i].Origin = entry.Origin
 	}
 
-	settings.ModFiles = service.mod.AllAbsoluteFilenames(service.absoluteModPath())
+	settings.ModFiles = service.relativeToSettings(service.mod.AllAbsoluteFilenames(service.modPath)...)
 
 	return settings
+}
+
+func (service *ProjectService) relativeToSettings(filenames ...string) []string {
+	loc := world.FileLocationFrom(service.stateFilename)
+	relatives := make([]string, 0, len(filenames))
+	for _, filename := range filenames {
+		relatives = append(relatives, world.FileLocationFrom(filename).NestedRelativeTo(loc.DirPath))
+	}
+	return relatives
+}
+
+func (service *ProjectService) absoluteFromSettings(filenames ...string) []string {
+	loc := world.FileLocationFrom(service.stateFilename)
+	absolutes := make([]string, 0, len(filenames))
+	for _, filename := range filenames {
+		absolutes = append(absolutes, world.FileLocationFrom(filename).AbsolutePathFrom(loc.DirPath))
+	}
+	return absolutes
 }
 
 // RestoreProject sets internal data based on the given settings.
@@ -130,7 +148,7 @@ func (service *ProjectService) RestoreProject(settings ProjectSettings, stateFil
 		}
 	}
 
-	_ = service.TryLoadModFrom(settings.ModFiles)
+	_ = service.TryLoadModFrom(service.absoluteFromSettings(settings.ModFiles...))
 }
 
 // ResetProject clears the project and returns it to initial state.
@@ -243,7 +261,7 @@ func (service *ProjectService) TryLoadModFrom(names []string) error {
 
 func (service *ProjectService) setActiveMod(modPath string, resources []*world.LocalizedResources,
 	objectProperties object.PropertiesTable, textureProperties texture.PropertiesList) {
-	service.modPath = modPath
+	service.setModPath(modPath)
 	service.mod.Reset(resources, objectProperties, textureProperties)
 	// fix list resources for any "old" mod.
 	service.mod.FixListResources()
@@ -267,8 +285,8 @@ func (service ProjectService) ModPath() string {
 	return service.modPath
 }
 
-func (service ProjectService) absoluteModPath() string {
-	return service.modPath
+func (service *ProjectService) setModPath(value string) {
+	service.modPath = value
 }
 
 // SaveMod will store the currently active mod in its current path.
@@ -286,7 +304,7 @@ func (service *ProjectService) SaveModUnder(modPath string) error {
 	if err != nil {
 		return err
 	}
-	service.modPath = modPath
+	service.setModPath(modPath)
 	service.mod.MarkSave()
 	return nil
 }
