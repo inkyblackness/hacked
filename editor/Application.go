@@ -761,6 +761,7 @@ func (app *Application) saveProject() {
 				return err
 			}
 			app.projectService.SetCurrentStateFilename(completeFilename)
+			app.window.SetTitleSuffix(completeFilename)
 			return nil
 		})
 	}
@@ -848,6 +849,8 @@ func (app *Application) restoreProjectState(state projectState, filename string)
 		activeLevel = *state.ActiveLevelIndex
 	}
 	app.eventQueue.Event(levels.LevelSelectionSetEvent{Id: activeLevel})
+
+	app.window.SetTitleSuffix(filename)
 }
 
 func (app *Application) updateAutoSave() {

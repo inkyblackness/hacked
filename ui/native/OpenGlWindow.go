@@ -22,7 +22,9 @@ type OpenGLWindow struct {
 	glfwWindow *glfw.Window
 	glWrapper  *OpenGL
 
-	titleBase string
+	titleBase       string
+	titleSuffix     string
+	projectModified bool
 
 	framesPerSecond float64
 	frameTime       time.Duration
@@ -168,13 +170,27 @@ func (window *OpenGLWindow) SetFullScreen(on bool) {
 	}
 }
 
+// SetTitleSuffix appends a text to the current window title.
+func (window *OpenGLWindow) SetTitleSuffix(value string) {
+	window.titleSuffix = value
+	window.updateTitle()
+}
+
 // SetProjectModified sets an indicator in the window frame that the project has not been saved.
 func (window *OpenGLWindow) SetProjectModified(modified bool) {
-	if modified {
-		window.glfwWindow.SetTitle(window.titleBase + " (unsaved changes)")
-	} else {
-		window.glfwWindow.SetTitle(window.titleBase)
+	window.projectModified = modified
+	window.updateTitle()
+}
+
+func (window *OpenGLWindow) updateTitle() {
+	title := window.titleBase
+	if len(window.titleSuffix) > 0 {
+		title += " - " + window.titleSuffix
 	}
+	if window.projectModified {
+		title += " (unsaved changes)"
+	}
+	window.glfwWindow.SetTitle(title)
 }
 
 // SetCloseRequest sets the should-close property of the window.

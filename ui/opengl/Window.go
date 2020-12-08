@@ -116,6 +116,8 @@ type Window interface {
 	Size() (width int, height int)
 	// SetFullScreen sets the full screen state of the window.
 	SetFullScreen(on bool)
+	// SetTitleSuffix appends a text to the current window title.
+	SetTitleSuffix(value string)
 	// SetProjectModified sets an indicator in the window frame that the project has not been saved.
 	SetProjectModified(modified bool)
 
