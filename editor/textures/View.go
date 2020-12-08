@@ -95,7 +95,7 @@ func (view *View) renderContent() {
 				view.model.currentIndex = newValue
 			})
 
-		readOnly := !view.mod.HasModifyableTextureProperties()
+		readOnly := !view.mod.HasModifiableTextureProperties()
 
 		imgui.Separator()
 		if imgui.BeginCombo("Language", view.model.currentLang.String()) {

@@ -243,27 +243,27 @@ func (mod *Mod) Modify(modifier func(Modder)) {
 
 // ObjectProperties returns the table of object properties.
 func (mod *Mod) ObjectProperties() object.PropertiesTable {
-	if mod.HasModifyableObjectProperties() {
+	if mod.HasModifiableObjectProperties() {
 		return mod.data.ObjectProperties
 	}
 	return mod.worldManifest.ObjectProperties()
 }
 
-// HasModifyableObjectProperties returns true if the mod has dedicated object properties.
-func (mod *Mod) HasModifyableObjectProperties() bool {
+// HasModifiableObjectProperties returns true if the mod has dedicated object properties.
+func (mod *Mod) HasModifiableObjectProperties() bool {
 	return len(mod.data.ObjectProperties) > 0
 }
 
 // TextureProperties returns the list of texture properties.
 func (mod *Mod) TextureProperties() texture.PropertiesList {
-	if mod.HasModifyableTextureProperties() {
+	if mod.HasModifiableTextureProperties() {
 		return mod.data.TextureProperties
 	}
 	return mod.worldManifest.TextureProperties()
 }
 
-// HasModifyableTextureProperties returns true if the mod has dedicated texture properties.
-func (mod *Mod) HasModifyableTextureProperties() bool {
+// HasModifiableTextureProperties returns true if the mod has dedicated texture properties.
+func (mod *Mod) HasModifiableTextureProperties() bool {
 	return len(mod.data.TextureProperties) > 0
 }
 

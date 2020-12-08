@@ -107,7 +107,7 @@ func (view *View) renderContent() {
 			imgui.EndCombo()
 		}
 
-		readOnly := !view.mod.HasModifyableObjectProperties()
+		readOnly := !view.mod.HasModifiableObjectProperties()
 		properties, propErr := view.mod.ObjectProperties().ForObject(view.model.currentObject)
 
 		imgui.Separator()
