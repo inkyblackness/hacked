@@ -1,10 +1,7 @@
 package project
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
 	"strings"
 
 	"github.com/inkyblackness/imgui-go/v2"
@@ -148,14 +145,9 @@ func projectFileTypes() []external.TypeInfo {
 
 func importProjectFile(machine gui.ModalStateMachine, callback func(edit.ProjectSettings, string)) {
 	fileHandler := func(filename string) error {
-		data, err := ioutil.ReadFile(filename)
+		settings, err := edit.ProjectSettingsFromFile(filename)
 		if err != nil {
-			return errors.New("could not load file")
-		}
-		var settings edit.ProjectSettings
-		err = json.Unmarshal(data, &settings)
-		if err != nil {
-			return errors.New("could not read file")
+			return err
 		}
 		callback(settings, filename)
 		return nil
@@ -166,30 +158,23 @@ func importProjectFile(machine gui.ModalStateMachine, callback func(edit.Project
 
 // SaveProject requests to save the project to storage.
 func (view *View) SaveProject() {
+	settings := view.service.CurrentSettings()
 	currentFilename := view.service.CurrentSettingsFilename()
-	if (len(currentFilename) == 0) || (view.saveCurrentSettingsAs(currentFilename) != nil) {
+	if (len(currentFilename) == 0) || (settings.SaveTo(currentFilename) != nil) {
 		external.SaveFile(view.modalStateMachine, projectFileTypes(), func(filename string) error {
 			completeFilename := filename
 			dotExtension := "." + settingsFileExtension
 			if !strings.HasSuffix(completeFilename, dotExtension) {
 				completeFilename += dotExtension
 			}
-			return view.saveCurrentSettingsAs(completeFilename)
+			err := settings.SaveTo(completeFilename)
+			if err != nil {
+				return err
+			}
+			view.service.SetCurrentSettingsFilename(completeFilename)
+			return nil
 		})
 	}
-}
-
-func (view *View) saveCurrentSettingsAs(filename string) error {
-	settings := view.service.CurrentSettings()
-	data, err := json.Marshal(settings)
-	if err != nil {
-		return errors.New("could not encode settings")
-	}
-	err = ioutil.WriteFile(filename, data, 0640)
-	if err != nil {
-		return errors.New("could not write file")
-	}
-	return nil
 }
 
 func (view *View) startLoadingMod() {

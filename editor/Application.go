@@ -42,9 +42,10 @@ import (
 )
 
 type projectState struct {
-	Settings         edit.ProjectSettings
-	OpenWindows      []string `json:",omitempty"`
-	ActiveLevelIndex *int     `json:",omitempty"`
+	Settings         *edit.ProjectSettings `json:",omitempty"`
+	LastProject      string                `json:",omitempty"`
+	OpenWindows      []string              `json:",omitempty"`
+	ActiveLevelIndex *int                  `json:",omitempty"`
 }
 
 func lastProjectStateFromFile(filename string) projectState {
@@ -681,6 +682,17 @@ func (app *Application) saveWorkspace() {
 	_ = windowState.SaveTo(app.windowStateConfigFilename())
 
 	projectSettings := app.projectService.CurrentSettings()
+	projectSettingsFilename := app.projectService.CurrentSettingsFilename()
+	projectSettingsToSaveCentrally := &projectSettings
+	if len(projectSettingsFilename) > 0 {
+		err := projectSettings.SaveTo(projectSettingsFilename)
+		if err != nil {
+			projectSettingsFilename = ""
+		} else {
+			projectSettingsToSaveCentrally = nil
+		}
+	}
+
 	windowOpenByName := app.windowOpenByName()
 	var openWindows []string
 	for key, open := range windowOpenByName {
@@ -690,7 +702,8 @@ func (app *Application) saveWorkspace() {
 	}
 	activeLevelIndex := app.levelControlView.SelectedLevel()
 	lastProjectState := projectState{
-		Settings:         projectSettings,
+		Settings:         projectSettingsToSaveCentrally,
+		LastProject:      projectSettingsFilename,
 		OpenWindows:      openWindows,
 		ActiveLevelIndex: &activeLevelIndex,
 	}
@@ -700,7 +713,20 @@ func (app *Application) saveWorkspace() {
 func (app *Application) restoreWorkspace() {
 	lastProjectState := lastProjectStateFromFile(app.lastProjectStateConfigFilename())
 
-	app.projectService.RestoreProject(lastProjectState.Settings, "")
+	var projectSettings *edit.ProjectSettings
+	projectSettingsFilename := ""
+	if len(lastProjectState.LastProject) > 0 {
+		settings, err := edit.ProjectSettingsFromFile(lastProjectState.LastProject)
+		if err == nil {
+			projectSettings = &settings
+			projectSettingsFilename = lastProjectState.LastProject
+		}
+	} else if lastProjectState.Settings != nil {
+		projectSettings = lastProjectState.Settings
+	}
+	if projectSettings != nil {
+		app.projectService.RestoreProject(*projectSettings, projectSettingsFilename)
+	}
 
 	if len(lastProjectState.OpenWindows) == 0 {
 		*app.projectView.WindowOpen() = true
