@@ -27,7 +27,6 @@ type Mod struct {
 	resourcesChanged resource.ModificationCallback
 	resetCallback    ModResetCallback
 
-	modPath        string
 	lastChangeTime time.Time
 	changedFiles   map[string]struct{}
 
@@ -53,16 +52,6 @@ func (mod Mod) World() *Manifest {
 	return mod.worldManifest
 }
 
-// Path returns the path where the mod is loaded from/saved to.
-func (mod Mod) Path() string {
-	return mod.modPath
-}
-
-// SetPath sets the path where the mod is loaded from/saved to.
-func (mod *Mod) SetPath(p string) {
-	mod.modPath = p
-}
-
 // ModifiedResources returns the current modification state.
 func (mod Mod) ModifiedResources() []*LocalizedResources {
 	return mod.data.LocalizedResources
@@ -78,16 +67,16 @@ func (mod Mod) ModifiedFilenames() []string {
 }
 
 // AllAbsoluteFilenames returns the list of all filenames currently loaded in the mod.
-func (mod Mod) AllAbsoluteFilenames() []string {
+func (mod Mod) AllAbsoluteFilenames(reference string) []string {
 	var result []string
 	for _, res := range mod.data.LocalizedResources {
-		result = append(result, res.File.AbsolutePathFrom(mod.modPath))
+		result = append(result, res.File.AbsolutePathFrom(reference))
 	}
 	if len(mod.data.ObjectProperties) > 0 {
-		result = append(result, filepath.Join(mod.modPath, ObjectPropertiesFilename))
+		result = append(result, filepath.Join(reference, ObjectPropertiesFilename))
 	}
 	if len(mod.data.TextureProperties) > 0 {
-		result = append(result, filepath.Join(mod.modPath, TexturePropertiesFilename))
+		result = append(result, filepath.Join(reference, TexturePropertiesFilename))
 	}
 	sort.Strings(result)
 	return result

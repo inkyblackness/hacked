@@ -83,7 +83,9 @@ func (status SaveStatus) ConfirmPendingSave() {
 // ProjectService handles the overall information about the active project.
 type ProjectService struct {
 	commander cmd.Registry
+
 	mod       *world.Mod
+	modPath   string
 
 	stateFilename string
 }
@@ -135,7 +137,7 @@ func (service ProjectService) CurrentSettings() ProjectSettings {
 		settings.Manifest[i].Origin = entry.Origin
 	}
 
-	settings.ModFiles = service.mod.AllAbsoluteFilenames()
+	settings.ModFiles = service.mod.AllAbsoluteFilenames(service.absoluteModPath())
 
 	return settings
 }
@@ -271,7 +273,7 @@ func (service *ProjectService) TryLoadModFrom(names []string) error {
 
 func (service *ProjectService) setActiveMod(modPath string, resources []*world.LocalizedResources,
 	objectProperties object.PropertiesTable, textureProperties texture.PropertiesList) {
-	service.mod.SetPath(modPath)
+	service.modPath = modPath
 	service.mod.Reset(resources, objectProperties, textureProperties)
 	// fix list resources for any "old" mod.
 	service.mod.FixListResources()
@@ -287,12 +289,16 @@ func (service *ProjectService) ModifyModWith(modifier func(world.Modder) error) 
 
 // ModHasStorageLocation returns whether the mod has a place to be stored.
 func (service ProjectService) ModHasStorageLocation() bool {
-	return len(service.mod.Path()) > 0
+	return len(service.modPath) > 0
 }
 
 // ModPath returns the base path of the mod in the project.
 func (service ProjectService) ModPath() string {
-	return service.mod.Path()
+	return service.modPath
+}
+
+func (service ProjectService) absoluteModPath() string {
+	return service.modPath
 }
 
 // SaveMod will store the currently active mod in its current path.
@@ -300,7 +306,7 @@ func (service *ProjectService) SaveMod() error {
 	if !service.ModHasStorageLocation() {
 		return fmt.Errorf("no storage location set")
 	}
-	return service.SaveModUnder(service.mod.Path())
+	return service.SaveModUnder(service.modPath)
 }
 
 // SaveModUnder will store the currently active mod in the given path.
@@ -310,7 +316,7 @@ func (service *ProjectService) SaveModUnder(modPath string) error {
 	if err != nil {
 		return err
 	}
-	service.mod.SetPath(modPath)
+	service.modPath = modPath
 	service.mod.MarkSave()
 	return nil
 }
