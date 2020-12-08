@@ -100,7 +100,7 @@ func (service ProjectService) CurrentSettings() ProjectSettings {
 
 // RestoreProject sets internal data based on the given settings.
 func (service *ProjectService) RestoreProject(settings ProjectSettings) {
-	service.resetProject()
+	service.ResetProject()
 
 	manifest := service.mod.World()
 	for _, entrySettings := range settings.Manifest {
@@ -117,7 +117,8 @@ func (service *ProjectService) RestoreProject(settings ProjectSettings) {
 	_ = service.TryLoadModFrom(settings.ModFiles)
 }
 
-func (service *ProjectService) resetProject() {
+// ResetProject clears the project and returns it to initial state.
+func (service *ProjectService) ResetProject() {
 	service.setActiveMod("", nil, nil, nil)
 	service.mod.World().Reset()
 }
