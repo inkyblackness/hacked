@@ -545,7 +545,8 @@ func (app *Application) initView() {
 	movieService := undoable.NewMovieService(edit.NewMovieService(app.cp, movieViewer, movieSetter), app)
 
 	lastProjectState := lastProjectStateFromFile(app.lastProjectStateConfigFilename())
-	app.projectService = edit.NewProjectService(&app.txnBuilder, app.mod, lastProjectState.Settings)
+	app.projectService = edit.NewProjectService(&app.txnBuilder, app.mod)
+	app.projectService.RestoreProject(lastProjectState.Settings)
 
 	app.projectView = project.NewView(app.projectService, &app.modalState, app.GuiScale, &app.txnBuilder)
 	app.archiveView = archives.NewArchiveView(app.mod, app.textLineCache, app.cp, app.GuiScale, app)

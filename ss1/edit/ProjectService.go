@@ -50,34 +50,18 @@ func (status SaveStatus) ConfirmPendingSave() {
 	status.mod.ResetLastChangeTime()
 }
 
-// ProjectService handles the overall information about the active mod.
+// ProjectService handles the overall information about the active project.
 type ProjectService struct {
 	commander cmd.Registry
 	mod       *world.Mod
 }
 
 // NewProjectService returns a new instance of a service for given mod.
-func NewProjectService(commander cmd.Registry, mod *world.Mod, settings ProjectSettings) *ProjectService {
-	service := &ProjectService{
+func NewProjectService(commander cmd.Registry, mod *world.Mod) *ProjectService {
+	return &ProjectService{
 		commander: commander,
 		mod:       mod,
 	}
-
-	manifest := service.mod.World()
-	for _, entrySettings := range settings.Manifest {
-		entry, err := world.NewManifestEntryFrom(entrySettings.Origin)
-		if err != nil {
-			continue
-		}
-		err = manifest.InsertEntry(manifest.EntryCount(), entry)
-		if err != nil {
-			continue
-		}
-	}
-
-	_ = service.TryLoadModFrom(settings.ModFiles)
-
-	return service
 }
 
 // SaveStatus returns the current pending save information.
@@ -112,6 +96,30 @@ func (service ProjectService) CurrentSettings() ProjectSettings {
 	settings.ModFiles = service.mod.AllAbsoluteFilenames()
 
 	return settings
+}
+
+// RestoreProject sets internal data based on the given settings.
+func (service *ProjectService) RestoreProject(settings ProjectSettings) {
+	service.resetProject()
+
+	manifest := service.mod.World()
+	for _, entrySettings := range settings.Manifest {
+		entry, err := world.NewManifestEntryFrom(entrySettings.Origin)
+		if err != nil {
+			continue
+		}
+		err = manifest.InsertEntry(manifest.EntryCount(), entry)
+		if err != nil {
+			continue
+		}
+	}
+
+	_ = service.TryLoadModFrom(settings.ModFiles)
+}
+
+func (service *ProjectService) resetProject() {
+	service.setActiveMod("", nil, nil, nil)
+	service.mod.World().Reset()
 }
 
 // AddManifestEntry attempts to insert the given manifest entry at given index.
