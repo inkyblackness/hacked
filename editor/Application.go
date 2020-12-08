@@ -309,7 +309,7 @@ func (app *Application) onKey(key input.Key, modifier input.Modifier) {
 	case key == input.KeyRedo:
 		app.tryRedo()
 	case key == input.KeyNew:
-		app.projectService.NewMod()
+		app.projectView.NewProject()
 	case key == input.KeySave:
 		app.projectView.StartSavingMod()
 	case key == input.KeyF1 && modifier.IsClear():
@@ -583,9 +583,16 @@ func (app *Application) renderMainMenu() {
 
 	if imgui.BeginMainMenuBar() {
 		if imgui.BeginMenu("File") {
-			if imgui.MenuItemV("New Mod", "Ctrl+N", false, true) {
-				app.projectService.NewMod()
+			if imgui.MenuItemV("New Project", "Ctrl+N", false, true) {
+				app.projectView.NewProject()
 			}
+			if imgui.MenuItemV("Load Project", "", false, true) {
+				app.projectView.LoadProject()
+			}
+			if imgui.MenuItemV("Save Project", "", false, true) {
+				app.projectView.SaveProject()
+			}
+			imgui.Separator()
 			if imgui.MenuItemV("Save Mod", "Ctrl+S", false, true) {
 				app.projectView.StartSavingMod()
 			}
