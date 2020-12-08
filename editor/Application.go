@@ -721,20 +721,29 @@ func projectFileTypes() []external.TypeInfo {
 }
 
 func (app *Application) newProject() {
+	app.saveStoredProject()
 	app.restoreProjectState(projectState{}, "")
 }
 
 func (app *Application) loadProject() {
-	fileHandler := func(filename string) error {
+	app.saveStoredProject()
+
+	external.LoadFile(&app.modalState, projectFileTypes(), func(filename string) error {
 		state, err := projectStateFromFile(filename)
 		if err != nil {
 			return err
 		}
 		app.restoreProjectState(state, filename)
 		return nil
-	}
+	})
+}
 
-	external.LoadFile(&app.modalState, projectFileTypes(), fileHandler)
+func (app *Application) saveStoredProject() {
+	currentFilename := app.projectService.CurrentStateFilename()
+	if len(currentFilename) > 0 {
+		currentState := app.currentProjectState()
+		_ = currentState.SaveTo(currentFilename)
+	}
 }
 
 func (app *Application) saveProject() {
