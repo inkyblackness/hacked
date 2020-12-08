@@ -69,7 +69,7 @@ func (view *View) renderContent() {
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 1, Y: 0})
 	imgui.BeginChildV("ModLocation", imgui.Vec2{X: -200*view.guiScale - 10*view.guiScale, Y: imgui.TextLineHeight() * 1.5}, true,
 		imgui.WindowFlagsNoScrollbar|imgui.WindowFlagsNoScrollWithMouse)
-	modPath := view.service.Mod().Path()
+	modPath := view.service.ModPath()
 	if len(modPath) > 0 {
 		imgui.Text(modPath)
 	} else {

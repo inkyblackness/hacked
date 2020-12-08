@@ -228,6 +228,11 @@ func (service ProjectService) ModHasStorageLocation() bool {
 	return len(service.mod.Path()) > 0
 }
 
+// ModPath returns the base path of the mod in the project.
+func (service ProjectService) ModPath() string {
+	return service.mod.Path()
+}
+
 // SaveMod will store the currently active mod in its current path.
 func (service *ProjectService) SaveMod() error {
 	if !service.ModHasStorageLocation() {
