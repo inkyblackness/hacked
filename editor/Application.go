@@ -2,9 +2,11 @@ package editor
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 
 	"github.com/inkyblackness/imgui-go/v2"
 
@@ -13,6 +15,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/archives"
 	"github.com/inkyblackness/hacked/editor/bitmaps"
 	"github.com/inkyblackness/hacked/editor/event"
+	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/levels"
 	"github.com/inkyblackness/hacked/editor/messages"
@@ -43,26 +46,52 @@ import (
 
 type projectState struct {
 	Settings         *edit.ProjectSettings `json:",omitempty"`
-	LastProject      string                `json:",omitempty"`
 	OpenWindows      []string              `json:",omitempty"`
 	ActiveLevelIndex *int                  `json:",omitempty"`
 }
 
-func lastProjectStateFromFile(filename string) projectState {
+func projectStateFromFile(filename string) (projectState, error) {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return projectState{}
+		return projectState{}, errors.New("could not open file")
 	}
 	var state projectState
 	err = json.Unmarshal(data, &state)
 	if err != nil {
-		return projectState{}
+		return projectState{}, errors.New("could not read file")
+	}
+	return state, nil
+}
+
+// SaveTo stores the state in a file with given filename.
+func (state projectState) SaveTo(filename string) error {
+	bytes, err := json.MarshalIndent(state, "", "  ")
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filename, bytes, 0640)
+}
+
+type lastProjectState struct {
+	projectState
+	LastProject string `json:",omitempty"`
+}
+
+func lastProjectStateFromFile(filename string) lastProjectState {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return lastProjectState{}
+	}
+	var state lastProjectState
+	err = json.Unmarshal(data, &state)
+	if err != nil {
+		return lastProjectState{}
 	}
 	return state
 }
 
 // SaveTo stores the state in a file with given filename.
-func (state projectState) SaveTo(filename string) error {
+func (state lastProjectState) SaveTo(filename string) error {
 	bytes, err := json.MarshalIndent(state, "", "  ")
 	if err != nil {
 		return err
@@ -288,6 +317,9 @@ func (app *Application) bitmapTextureForUI(textureID imgui.TextureID) (palette u
 }
 
 func (app *Application) onWindowClosing() {
+	windowState := app.window.StateSnapshot()
+	_ = windowState.SaveTo(app.windowStateConfigFilename())
+
 	app.saveWorkspace()
 }
 
@@ -310,7 +342,7 @@ func (app *Application) onKey(key input.Key, modifier input.Modifier) {
 	case key == input.KeyRedo:
 		app.tryRedo()
 	case key == input.KeyNew:
-		app.projectView.NewProject()
+		app.newProject()
 	case key == input.KeySave:
 		app.projectView.StartSavingMod()
 	case key == input.KeyF1 && modifier.IsClear():
@@ -585,13 +617,13 @@ func (app *Application) renderMainMenu() {
 	if imgui.BeginMainMenuBar() {
 		if imgui.BeginMenu("File") {
 			if imgui.MenuItemV("New Project", "Ctrl+N", false, true) {
-				app.projectView.NewProject()
+				app.newProject()
 			}
 			if imgui.MenuItemV("Load Project", "", false, true) {
-				app.projectView.LoadProject()
+				app.loadProject()
 			}
 			if imgui.MenuItemV("Save Project", "", false, true) {
-				app.projectView.SaveProject()
+				app.saveProject()
 			}
 			imgui.Separator()
 			if imgui.MenuItemV("Save Mod", "Ctrl+S", false, true) {
@@ -677,21 +709,56 @@ http://www.systemshock.org forums. Thank you!
 	}
 }
 
-func (app *Application) saveWorkspace() {
-	windowState := app.window.StateSnapshot()
-	_ = windowState.SaveTo(app.windowStateConfigFilename())
+const settingsFileExtension = "hacked-project"
 
-	projectSettings := app.projectService.CurrentSettings()
-	projectSettingsFilename := app.projectService.CurrentSettingsFilename()
-	projectSettingsToSaveCentrally := &projectSettings
-	if len(projectSettingsFilename) > 0 {
-		err := projectSettings.SaveTo(projectSettingsFilename)
-		if err != nil {
-			projectSettingsFilename = ""
-		} else {
-			projectSettingsToSaveCentrally = nil
-		}
+func projectFileTypes() []external.TypeInfo {
+	return []external.TypeInfo{
+		{
+			Title:      "HackEd Project File (*." + settingsFileExtension + ")",
+			Extensions: []string{settingsFileExtension},
+		},
 	}
+}
+
+func (app *Application) newProject() {
+	app.restoreProjectState(projectState{}, "")
+}
+
+func (app *Application) loadProject() {
+	fileHandler := func(filename string) error {
+		state, err := projectStateFromFile(filename)
+		if err != nil {
+			return err
+		}
+		app.restoreProjectState(state, filename)
+		return nil
+	}
+
+	external.LoadFile(&app.modalState, projectFileTypes(), fileHandler)
+}
+
+func (app *Application) saveProject() {
+	currentState := app.currentProjectState()
+	currentFilename := app.projectService.CurrentStateFilename()
+	if (len(currentFilename) == 0) || (currentState.SaveTo(currentFilename) != nil) {
+		external.SaveFile(&app.modalState, projectFileTypes(), func(filename string) error {
+			completeFilename := filename
+			dotExtension := "." + settingsFileExtension
+			if !strings.HasSuffix(completeFilename, dotExtension) {
+				completeFilename += dotExtension
+			}
+			err := currentState.SaveTo(completeFilename)
+			if err != nil {
+				return err
+			}
+			app.projectService.SetCurrentStateFilename(completeFilename)
+			return nil
+		})
+	}
+}
+
+func (app *Application) currentProjectState() projectState {
+	projectSettings := app.projectService.CurrentSettings()
 
 	windowOpenByName := app.windowOpenByName()
 	var openWindows []string
@@ -701,11 +768,28 @@ func (app *Application) saveWorkspace() {
 		}
 	}
 	activeLevelIndex := app.levelControlView.SelectedLevel()
-	lastProjectState := projectState{
-		Settings:         projectSettingsToSaveCentrally,
-		LastProject:      projectSettingsFilename,
+	return projectState{
+		Settings:         &projectSettings,
 		OpenWindows:      openWindows,
 		ActiveLevelIndex: &activeLevelIndex,
+	}
+}
+
+func (app *Application) saveWorkspace() {
+	currentProjectState := app.currentProjectState()
+	currentProjectStateFilename := app.projectService.CurrentStateFilename()
+	if len(currentProjectStateFilename) > 0 {
+		err := currentProjectState.SaveTo(currentProjectStateFilename)
+		if err != nil {
+			currentProjectStateFilename = ""
+		} else {
+			currentProjectState = projectState{}
+		}
+	}
+
+	lastProjectState := lastProjectState{
+		projectState: currentProjectState,
+		LastProject:  currentProjectStateFilename,
 	}
 	_ = lastProjectState.SaveTo(app.lastProjectStateConfigFilename())
 }
@@ -713,36 +797,44 @@ func (app *Application) saveWorkspace() {
 func (app *Application) restoreWorkspace() {
 	lastProjectState := lastProjectStateFromFile(app.lastProjectStateConfigFilename())
 
-	var projectSettings *edit.ProjectSettings
-	projectSettingsFilename := ""
+	projectStateToRestore := lastProjectState.projectState
+
+	projectStateFilename := ""
 	if len(lastProjectState.LastProject) > 0 {
-		settings, err := edit.ProjectSettingsFromFile(lastProjectState.LastProject)
+		state, err := projectStateFromFile(lastProjectState.LastProject)
 		if err == nil {
-			projectSettings = &settings
-			projectSettingsFilename = lastProjectState.LastProject
+			projectStateToRestore = state
+			projectStateFilename = lastProjectState.LastProject
 		}
-	} else if lastProjectState.Settings != nil {
-		projectSettings = lastProjectState.Settings
-	}
-	if projectSettings != nil {
-		app.projectService.RestoreProject(*projectSettings, projectSettingsFilename)
 	}
 
-	if len(lastProjectState.OpenWindows) == 0 {
+	app.restoreProjectState(projectStateToRestore, projectStateFilename)
+}
+
+func (app *Application) restoreProjectState(state projectState, filename string) {
+	var settings edit.ProjectSettings
+	if state.Settings != nil {
+		settings = *state.Settings
+	}
+	app.projectService.RestoreProject(settings, filename)
+
+	if len(state.OpenWindows) == 0 {
 		*app.projectView.WindowOpen() = true
 	}
 	windowOpenByName := app.windowOpenByName()
-	for _, key := range lastProjectState.OpenWindows {
+	for _, key := range state.OpenWindows {
 		open := windowOpenByName[key]
 		if open != nil {
 			*open = true
 		}
 	}
-	if (lastProjectState.ActiveLevelIndex != nil) &&
-		(*lastProjectState.ActiveLevelIndex >= 0) &&
-		(*lastProjectState.ActiveLevelIndex < len(app.levels)) {
-		app.eventQueue.Event(levels.LevelSelectionSetEvent{Id: *lastProjectState.ActiveLevelIndex})
+	activeLevel := world.StartingLevel
+	if (state.ActiveLevelIndex != nil) &&
+		(*state.ActiveLevelIndex >= 0) &&
+		(*state.ActiveLevelIndex < len(app.levels)) {
+		activeLevel = *state.ActiveLevelIndex
 	}
+	app.eventQueue.Event(levels.LevelSelectionSetEvent{Id: activeLevel})
 }
 
 func (app *Application) updateAutoSave() {

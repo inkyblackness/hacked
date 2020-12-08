@@ -85,7 +85,7 @@ type ProjectService struct {
 	commander cmd.Registry
 	mod       *world.Mod
 
-	settingsFilename string
+	stateFilename string
 }
 
 // NewProjectService returns a new instance of a service for given mod.
@@ -116,14 +116,14 @@ func (service ProjectService) SaveStatus() SaveStatus {
 	return status
 }
 
-// CurrentSettingsFilename returns the name for the settings of the project.
-func (service ProjectService) CurrentSettingsFilename() string {
-	return service.settingsFilename
+// CurrentStateFilename returns the name for the state of the project.
+func (service ProjectService) CurrentStateFilename() string {
+	return service.stateFilename
 }
 
-// SetCurrentSettingsFilename updates the current filename.
-func (service *ProjectService) SetCurrentSettingsFilename(value string) {
-	service.settingsFilename = value
+// SetCurrentStateFilename updates the current filename.
+func (service *ProjectService) SetCurrentStateFilename(value string) {
+	service.stateFilename = value
 }
 
 // CurrentSettings returns the snapshot of the project.
@@ -141,10 +141,10 @@ func (service ProjectService) CurrentSettings() ProjectSettings {
 }
 
 // RestoreProject sets internal data based on the given settings.
-func (service *ProjectService) RestoreProject(settings ProjectSettings, settingsFilename string) {
+func (service *ProjectService) RestoreProject(settings ProjectSettings, stateFilename string) {
 	service.ResetProject()
 
-	service.settingsFilename = settingsFilename
+	service.stateFilename = stateFilename
 
 	manifest := service.mod.World()
 	for _, entrySettings := range settings.Manifest {
@@ -165,7 +165,7 @@ func (service *ProjectService) RestoreProject(settings ProjectSettings, settings
 func (service *ProjectService) ResetProject() {
 	service.setActiveMod("", nil, nil, nil)
 	service.mod.World().Reset()
-	service.settingsFilename = ""
+	service.stateFilename = ""
 }
 
 // AddManifestEntry attempts to insert the given manifest entry at given index.

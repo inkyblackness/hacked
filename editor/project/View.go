@@ -2,11 +2,9 @@ package project
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/inkyblackness/imgui-go/v2"
 
-	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/ss1/edit"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/world"
@@ -118,63 +116,6 @@ func (view *View) renderContent() {
 		view.requestRemoveManifestEntry()
 	}
 	imgui.EndGroup()
-}
-
-// NewProject resets the current project and prepares for a new one.
-func (view *View) NewProject() {
-	view.service.ResetProject()
-}
-
-// LoadProject requests to load a stored project from storage.
-func (view *View) LoadProject() {
-	importProjectFile(view.modalStateMachine, func(settings edit.ProjectSettings, filename string) {
-		view.service.RestoreProject(settings, filename)
-	})
-}
-
-const settingsFileExtension = "hacked-project"
-
-func projectFileTypes() []external.TypeInfo {
-	return []external.TypeInfo{
-		{
-			Title:      "HackEd Project File (*." + settingsFileExtension + ")",
-			Extensions: []string{settingsFileExtension},
-		},
-	}
-}
-
-func importProjectFile(machine gui.ModalStateMachine, callback func(edit.ProjectSettings, string)) {
-	fileHandler := func(filename string) error {
-		settings, err := edit.ProjectSettingsFromFile(filename)
-		if err != nil {
-			return err
-		}
-		callback(settings, filename)
-		return nil
-	}
-
-	external.LoadFile(machine, projectFileTypes(), fileHandler)
-}
-
-// SaveProject requests to save the project to storage.
-func (view *View) SaveProject() {
-	settings := view.service.CurrentSettings()
-	currentFilename := view.service.CurrentSettingsFilename()
-	if (len(currentFilename) == 0) || (settings.SaveTo(currentFilename) != nil) {
-		external.SaveFile(view.modalStateMachine, projectFileTypes(), func(filename string) error {
-			completeFilename := filename
-			dotExtension := "." + settingsFileExtension
-			if !strings.HasSuffix(completeFilename, dotExtension) {
-				completeFilename += dotExtension
-			}
-			err := settings.SaveTo(completeFilename)
-			if err != nil {
-				return err
-			}
-			view.service.SetCurrentSettingsFilename(completeFilename)
-			return nil
-		})
-	}
 }
 
 func (view *View) startLoadingMod() {
