@@ -157,6 +157,7 @@ func (app *Application) InitializeWindow(window opengl.Window) (err error) {
 
 	app.initModel()
 	app.initView()
+	app.restoreWorkspace()
 
 	app.onWindowResize(app.window.Size())
 
@@ -286,25 +287,7 @@ func (app *Application) bitmapTextureForUI(textureID imgui.TextureID) (palette u
 }
 
 func (app *Application) onWindowClosing() {
-
-	windowState := app.window.StateSnapshot()
-	_ = windowState.SaveTo(app.windowStateConfigFilename())
-
-	projectSettings := app.projectService.CurrentSettings()
-	windowOpenByName := app.windowOpenByName()
-	var openWindows []string
-	for key, open := range windowOpenByName {
-		if *open {
-			openWindows = append(openWindows, key)
-		}
-	}
-	activeLevelIndex := app.levelControlView.SelectedLevel()
-	lastProjectState := projectState{
-		Settings:         projectSettings,
-		OpenWindows:      openWindows,
-		ActiveLevelIndex: &activeLevelIndex,
-	}
-	_ = lastProjectState.SaveTo(app.lastProjectStateConfigFilename())
+	app.saveWorkspace()
 }
 
 func (app *Application) onWindowResize(width int, height int) {
@@ -544,9 +527,7 @@ func (app *Application) initView() {
 	augmentedTextService := undoable.NewAugmentedTextService(edit.NewAugmentedTextService(textViewer, textSetter, audioViewer, audioSetter), app)
 	movieService := undoable.NewMovieService(edit.NewMovieService(app.cp, movieViewer, movieSetter), app)
 
-	lastProjectState := lastProjectStateFromFile(app.lastProjectStateConfigFilename())
 	app.projectService = edit.NewProjectService(&app.txnBuilder, app.mod)
-	app.projectService.RestoreProject(lastProjectState.Settings)
 
 	app.projectView = project.NewView(app.projectService, &app.modalState, app.GuiScale, &app.txnBuilder)
 	app.archiveView = archives.NewArchiveView(app.mod, app.textLineCache, app.cp, app.GuiScale, app)
@@ -563,22 +544,6 @@ func (app *Application) initView() {
 	app.objectsView = objects.NewView(app.mod, app.textLineCache, app.cp, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 	app.licensesView = about.NewLicensesView(app.GuiScale)
-
-	if len(lastProjectState.OpenWindows) == 0 {
-		*app.projectView.WindowOpen() = true
-	}
-	windowOpenByName := app.windowOpenByName()
-	for _, key := range lastProjectState.OpenWindows {
-		open := windowOpenByName[key]
-		if open != nil {
-			*open = true
-		}
-	}
-	if (lastProjectState.ActiveLevelIndex != nil) &&
-		(*lastProjectState.ActiveLevelIndex >= 0) &&
-		(*lastProjectState.ActiveLevelIndex < len(app.levels)) {
-		app.eventQueue.Event(levels.LevelSelectionSetEvent{Id: *lastProjectState.ActiveLevelIndex})
-	}
 
 	app.eventDispatcher.RegisterHandler(app.onLevelObjectRequestCreateEvent)
 }
@@ -701,6 +666,49 @@ http://www.systemshock.org forums. Thank you!
 			app.window.SetCloseRequest(true)
 		}
 		imgui.EndPopup()
+	}
+}
+
+func (app *Application) saveWorkspace() {
+	windowState := app.window.StateSnapshot()
+	_ = windowState.SaveTo(app.windowStateConfigFilename())
+
+	projectSettings := app.projectService.CurrentSettings()
+	windowOpenByName := app.windowOpenByName()
+	var openWindows []string
+	for key, open := range windowOpenByName {
+		if *open {
+			openWindows = append(openWindows, key)
+		}
+	}
+	activeLevelIndex := app.levelControlView.SelectedLevel()
+	lastProjectState := projectState{
+		Settings:         projectSettings,
+		OpenWindows:      openWindows,
+		ActiveLevelIndex: &activeLevelIndex,
+	}
+	_ = lastProjectState.SaveTo(app.lastProjectStateConfigFilename())
+}
+
+func (app *Application) restoreWorkspace() {
+	lastProjectState := lastProjectStateFromFile(app.lastProjectStateConfigFilename())
+
+	app.projectService.RestoreProject(lastProjectState.Settings)
+
+	if len(lastProjectState.OpenWindows) == 0 {
+		*app.projectView.WindowOpen() = true
+	}
+	windowOpenByName := app.windowOpenByName()
+	for _, key := range lastProjectState.OpenWindows {
+		open := windowOpenByName[key]
+		if open != nil {
+			*open = true
+		}
+	}
+	if (lastProjectState.ActiveLevelIndex != nil) &&
+		(*lastProjectState.ActiveLevelIndex >= 0) &&
+		(*lastProjectState.ActiveLevelIndex < len(app.levels)) {
+		app.eventQueue.Event(levels.LevelSelectionSetEvent{Id: *lastProjectState.ActiveLevelIndex})
 	}
 }
 
