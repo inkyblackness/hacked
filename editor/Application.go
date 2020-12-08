@@ -818,16 +818,20 @@ func (app *Application) restoreProjectState(state projectState, filename string)
 	}
 	app.projectService.RestoreProject(settings, filename)
 
-	if len(state.OpenWindows) == 0 {
-		*app.projectView.WindowOpen() = true
-	}
 	windowOpenByName := app.windowOpenByName()
+	for _, open := range windowOpenByName {
+		*open = false
+	}
 	for _, key := range state.OpenWindows {
 		open := windowOpenByName[key]
 		if open != nil {
 			*open = true
 		}
 	}
+	if len(state.OpenWindows) == 0 {
+		*app.projectView.WindowOpen() = true
+	}
+
 	activeLevel := world.StartingLevel
 	if (state.ActiveLevelIndex != nil) &&
 		(*state.ActiveLevelIndex >= 0) &&
