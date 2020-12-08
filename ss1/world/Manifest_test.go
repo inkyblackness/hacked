@@ -316,6 +316,18 @@ func (suite *ManifestSuite) TestModifiedCallbackWithChangedIDsOnMove() {
 	suite.thenModifiedResourcesShouldBe([]int{0x0800})
 }
 
+func (suite *ManifestSuite) TestReset() {
+	suite.givenEntryWasInsertedWith(0, "id1",
+		suite.someLocalizedResources(resource.LangAny,
+			suite.storing(0x0800, [][]byte{{0xAA}})))
+	suite.givenEntryWasInsertedWith(1, "id2",
+		suite.someLocalizedResources(resource.LangAny,
+			suite.storing(0x0900, [][]byte{{0xBB}})))
+	suite.whenManifestIsReset()
+	suite.thenModifiedResourcesShouldBe([]int{0x0800, 0x0900})
+	suite.thenEntryCountShouldBe(0)
+}
+
 func (suite *ManifestSuite) onManifestModified(modifiedIDs []resource.ID, failedIDs []resource.ID) {
 	suite.lastModifiedIDs = modifiedIDs
 	suite.lastFailedIDs = failedIDs
@@ -382,6 +394,10 @@ func (suite *ManifestSuite) whenEntryIsMoved(to int, from int) {
 func (suite *ManifestSuite) whenResourcesAreQueriedFor(lang resource.Language) {
 	selector := suite.manifest.LocalizedResources(lang)
 	suite.selector = &selector
+}
+
+func (suite *ManifestSuite) whenManifestIsReset() {
+	suite.manifest.Reset()
 }
 
 func (suite *ManifestSuite) thenEntryCountShouldBe(expected int) {

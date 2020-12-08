@@ -40,6 +40,14 @@ func (manifest Manifest) Entry(at int) (*ManifestEntry, error) {
 	return manifest.entries[at], nil
 }
 
+// Reset clears the manifest by removing all entries and notifying of all the removed resource identifier.
+func (manifest *Manifest) Reset() {
+	oldEntries := manifest.entries
+	manifest.changeAndNotify(func() {
+		manifest.entries = nil
+	}, manifest.listIDs(oldEntries...))
+}
+
 // InsertEntry puts the provided entries in sequence at the specified index.
 // Any entry at the identified index, and all those after that, are moved behind the given ones.
 func (manifest *Manifest) InsertEntry(at int, entries ...*ManifestEntry) error {
