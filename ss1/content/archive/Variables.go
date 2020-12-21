@@ -24,6 +24,12 @@ type GameVariableInfo struct {
 	Hardcoded bool
 }
 
+// GameVariableInfoProvider provides lookup functionality for integer and boolean variables.
+type GameVariableInfoProvider interface {
+	IntegerVariable(index int) GameVariableInfo
+	BooleanVariable(index int) GameVariableInfo
+}
+
 // GameVariableInfoFor returns a new instance with given name.
 func GameVariableInfoFor(name string) GameVariableInfo {
 	return GameVariableInfo{Name: name}

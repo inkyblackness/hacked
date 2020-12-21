@@ -145,7 +145,8 @@ type Application struct {
 
 	levels [archive.MaxLevels]*level.Level
 
-	projectService *edit.ProjectService
+	projectService   *edit.ProjectService
+	gameStateService *edit.GameStateService
 
 	projectView      *project.View
 	archiveView      *archives.View
@@ -561,9 +562,10 @@ func (app *Application) initView() {
 	movieService := undoable.NewMovieService(edit.NewMovieService(app.cp, movieViewer, movieSetter), app)
 
 	app.projectService = edit.NewProjectService(&app.txnBuilder, app.mod)
+	app.gameStateService = edit.NewGameStateService()
 
 	app.projectView = project.NewView(app.projectService, &app.modalState, app.GuiScale, &app.txnBuilder)
-	app.archiveView = archives.NewArchiveView(app.mod, app.textLineCache, app.cp, app.GuiScale, app)
+	app.archiveView = archives.NewArchiveView(app.gameStateService, app.mod, app.textLineCache, app.cp, app.GuiScale, app)
 	app.levelControlView = levels.NewControlView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.levelTilesView = levels.NewTilesView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.levelObjectsView = levels.NewObjectsView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)

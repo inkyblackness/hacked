@@ -16,6 +16,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/numbers"
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/text"
+	"github.com/inkyblackness/hacked/ss1/edit"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
@@ -28,26 +29,18 @@ const (
 	hintUnknown = "???"
 )
 
-type variableProvider interface {
-	IntegerVariable(index int) archive.GameVariableInfo
-	BooleanVariable(index int) archive.GameVariableInfo
-}
-
-type variableContext struct {
-	name     string
-	provider variableProvider
-}
-
-var variableContextList = []variableContext{
-	{name: "Citadel Mission", provider: citadel.MissionVariables{}},
-	{name: "Engine", provider: archive.EngineVariables{}},
+var variableContextList = map[edit.VariableContextIdentifier]string{
+	edit.VariableContextCitadel: "Citadel Mission",
+	edit.VariableContextEngine:  "Engine",
+	edit.VariableContextProject: "Project",
 }
 
 // View provides edit controls for the archive.
 type View struct {
-	mod       *world.Mod
-	textCache *text.Cache
-	cp        text.Codepage
+	gameStateService *edit.GameStateService
+	mod              *world.Mod
+	textCache        *text.Cache
+	cp               text.Codepage
 
 	guiScale  float32
 	commander cmd.Commander
@@ -56,11 +49,13 @@ type View struct {
 }
 
 // NewArchiveView returns a new instance.
-func NewArchiveView(mod *world.Mod, textCache *text.Cache, cp text.Codepage, guiScale float32, commander cmd.Commander) *View {
+func NewArchiveView(gameStateService *edit.GameStateService, mod *world.Mod,
+	textCache *text.Cache, cp text.Codepage, guiScale float32, commander cmd.Commander) *View {
 	view := &View{
-		mod:       mod,
-		textCache: textCache,
-		cp:        cp,
+		gameStateService: gameStateService,
+		mod:              mod,
+		textCache:        textCache,
+		cp:               cp,
 
 		guiScale:  guiScale,
 		commander: commander,
@@ -684,16 +679,18 @@ func (view *View) createInventoryWeaponSlotControls(readOnly bool, slot archive.
 }
 
 func (view *View) createVariableControls(readOnly bool, gameState *archive.GameState, onChange func()) {
-	if imgui.BeginCombo("Context", variableContextList[view.model.variableContextIndex].name) {
-		for i, context := range variableContextList {
-			if imgui.SelectableV(context.name, i == view.model.variableContextIndex, 0, imgui.Vec2{}) {
-				view.model.variableContextIndex = i
+	currentContextIdentifier := view.gameStateService.VariableContext()
+	if imgui.BeginCombo("Context", variableContextList[currentContextIdentifier]) {
+		contextIdentifiers := edit.VariableContextIdentifiers()
+		for _, identifier := range contextIdentifiers {
+			if imgui.SelectableV(variableContextList[identifier], identifier == currentContextIdentifier, 0, imgui.Vec2{}) {
+				view.gameStateService.SetVariableContext(identifier)
 			}
 		}
 		imgui.EndCombo()
 	}
 
-	varProvider := variableContextList[view.model.variableContextIndex].provider
+	varProvider := view.gameStateService.GameVariableInfoProvider()
 
 	if !readOnly && imgui.Button("Reset") {
 		for i := 0; i < archive.BooleanVarCount; i++ {
