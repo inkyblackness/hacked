@@ -209,7 +209,8 @@ func (app *Application) initWindowCallbacks() {
 
 	app.window.OnResize(app.onWindowResize)
 
-	app.window.OnKey(app.onKey)
+	app.window.OnKeyPress(app.onKeyPress)
+	app.window.OnKeyRelease(app.onKeyRelease)
 	app.window.OnCharCallback(app.onChar)
 	app.window.OnModifier(app.onModifier)
 
@@ -278,6 +279,23 @@ func (app *Application) initGui() (err error) {
 	if err != nil {
 		return
 	}
+
+	imguiIO := imgui.CurrentIO()
+	imguiIO.KeyMap(imgui.KeyTab, int(input.KeyTab))
+	imguiIO.KeyMap(imgui.KeyLeftArrow, int(input.KeyLeft))
+	imguiIO.KeyMap(imgui.KeyRightArrow, int(input.KeyRight))
+	imguiIO.KeyMap(imgui.KeyUpArrow, int(input.KeyUp))
+	imguiIO.KeyMap(imgui.KeyDownArrow, int(input.KeyDown))
+	imguiIO.KeyMap(imgui.KeyPageUp, int(input.KeyPageUp))
+	imguiIO.KeyMap(imgui.KeyPageDown, int(input.KeyPageDown))
+	imguiIO.KeyMap(imgui.KeyHome, int(input.KeyHome))
+	imguiIO.KeyMap(imgui.KeyEnd, int(input.KeyEnd))
+	imguiIO.KeyMap(imgui.KeyInsert, int(input.KeyInsert))
+	imguiIO.KeyMap(imgui.KeyDelete, int(input.KeyDelete))
+	imguiIO.KeyMap(imgui.KeyBackspace, int(input.KeyBackspace))
+	imguiIO.KeyMap(imgui.KeyEnter, int(input.KeyEnter))
+	imguiIO.KeyMap(imgui.KeyEscape, int(input.KeyEscape))
+
 	app.initGuiStyle()
 
 	app.mapDisplay = levels.NewMapDisplay(app.gl, app.GuiScale,
@@ -333,8 +351,16 @@ func (app *Application) onFilesDropped(names []string) {
 	app.modalState.HandleFiles(names)
 }
 
-func (app *Application) onKey(key input.Key, modifier input.Modifier) {
+func (app *Application) onKeyPress(key input.Key, modifier input.Modifier) {
 	app.lastModifier = modifier
+
+	if app.guiContext.IsUsingKeyboard() {
+		imguiIO := imgui.CurrentIO()
+		imguiIO.KeyPress(int(key))
+		app.updateKeyModifier()
+		return
+	}
+
 	switch {
 	case key == input.KeyEscape:
 		app.modalState.SetState(nil)
@@ -359,17 +385,39 @@ func (app *Application) onKey(key input.Key, modifier input.Modifier) {
 	}
 }
 
+func (app *Application) onKeyRelease(key input.Key, modifier input.Modifier) {
+	app.lastModifier = modifier
+
+	if app.guiContext.IsUsingKeyboard() {
+		imguiIO := imgui.CurrentIO()
+		imguiIO.KeyRelease(int(key))
+		app.updateKeyModifier()
+		return
+	}
+}
+
+func (app *Application) updateKeyModifier() {
+	imguiIO := imgui.CurrentIO()
+	imguiIO.KeyCtrl(int(input.KeyControl), int(input.KeyControl))
+	imguiIO.KeyShift(int(input.KeyShift), int(input.KeyShift))
+	imguiIO.KeyAlt(int(input.KeyAlt), int(input.KeyAlt))
+	imguiIO.KeySuper(int(input.KeySuper), int(input.KeySuper))
+}
+
 func (app *Application) onChar(char rune) {
-	if !app.guiContext.IsUsingKeyboard() {
-		activeLevel := app.levels[app.levelControlView.SelectedLevel()]
-		switch char {
-		case 'v':
-			app.levelObjectsView.PlaceSelectedObjectsOnFloor(activeLevel)
-		case 'f':
-			app.levelObjectsView.PlaceSelectedObjectsOnEyeLevel(activeLevel)
-		case 'r':
-			app.levelObjectsView.PlaceSelectedObjectsOnCeiling(activeLevel)
-		}
+	if app.guiContext.IsUsingKeyboard() {
+		imgui.CurrentIO().AddInputCharacters(string(char))
+		return
+	}
+
+	activeLevel := app.levels[app.levelControlView.SelectedLevel()]
+	switch char {
+	case 'v':
+		app.levelObjectsView.PlaceSelectedObjectsOnFloor(activeLevel)
+	case 'f':
+		app.levelObjectsView.PlaceSelectedObjectsOnEyeLevel(activeLevel)
+	case 'r':
+		app.levelObjectsView.PlaceSelectedObjectsOnCeiling(activeLevel)
 	}
 }
 

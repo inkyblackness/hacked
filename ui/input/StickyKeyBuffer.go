@@ -2,8 +2,10 @@ package input
 
 // StickyKeyListener is the listener interface for receiving key events.
 type StickyKeyListener interface {
-	// Key is called for a typed key
-	Key(key Key, modifier Modifier)
+	// KeyPress is called for a pressed key.
+	KeyPress(key Key, modifier Modifier)
+	// KeyRelease is called for a released key.
+	KeyRelease(key Key, modifier Modifier)
 	// Modifier is called when the currently active modifier changed.
 	Modifier(modifier Modifier)
 }
@@ -39,16 +41,16 @@ func (buffer *StickyKeyBuffer) ActiveModifier() Modifier {
 // registered for the same key and result in only one key event.
 func (buffer *StickyKeyBuffer) KeyDown(key Key, modifier Modifier) {
 	keyAsModifier := key.AsModifier()
+	updatedModifier := modifier.With(keyAsModifier)
 
-	buffer.setActiveModifier(modifier.With(keyAsModifier))
-	if keyAsModifier == ModNone {
-		oldCount := buffer.pressedKeys[key]
+	oldCount := buffer.pressedKeys[key]
+	buffer.pressedKeys[key] = oldCount + 1
+	if oldCount == 0 {
+		buffer.listener.KeyPress(key, updatedModifier)
+	}
 
-		buffer.pressedKeys[key] = oldCount + 1
-		if oldCount == 0 {
-			buffer.listener.Key(key, modifier)
-		}
-	} else {
+	buffer.setActiveModifier(updatedModifier)
+	if keyAsModifier != ModNone {
 		buffer.pressedModifier[keyAsModifier]++
 	}
 }
@@ -56,25 +58,26 @@ func (buffer *StickyKeyBuffer) KeyDown(key Key, modifier Modifier) {
 // KeyUp registers a released key state. Multiple up states can be registered
 // for the same key, as long as enough down states were reported.
 func (buffer *StickyKeyBuffer) KeyUp(key Key, modifier Modifier) {
+	updatedModifier := modifier
 	keyAsModifier := key.AsModifier()
-
-	if keyAsModifier == ModNone {
-		oldCount := buffer.pressedKeys[key]
-
-		buffer.setActiveModifier(modifier)
-		if oldCount > 0 {
-			buffer.pressedKeys[key] = oldCount - 1
-		}
-	} else {
+	if keyAsModifier != ModNone {
 		oldCount := buffer.pressedModifier[keyAsModifier]
-
 		if oldCount > 0 {
 			buffer.pressedModifier[keyAsModifier] = oldCount - 1
 			if oldCount == 1 {
-				buffer.setActiveModifier(modifier.Without(keyAsModifier))
+				updatedModifier = updatedModifier.Without(keyAsModifier)
 			}
 		}
 	}
+
+	oldCount := buffer.pressedKeys[key]
+	if oldCount > 0 {
+		buffer.pressedKeys[key] = oldCount - 1
+		if oldCount == 1 {
+			buffer.listener.KeyRelease(key, updatedModifier)
+		}
+	}
+	buffer.setActiveModifier(updatedModifier)
 }
 
 // ReleaseAll notifies the listener of the reset of all modifiers.

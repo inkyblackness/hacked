@@ -8,15 +8,19 @@ type keyDeferrer struct {
 	window *WindowEventDispatcher
 }
 
-func (def *keyDeferrer) Key(key input.Key, modifier input.Modifier) {
-	def.window.CallKey(key, modifier)
+func (def *keyDeferrer) KeyPress(key input.Key, modifier input.Modifier) {
+	def.window.CallKeyPress(key, modifier)
+}
+
+func (def *keyDeferrer) KeyRelease(key input.Key, modifier input.Modifier) {
+	def.window.CallKeyRelease(key, modifier)
 }
 
 func (def *keyDeferrer) Modifier(modifier input.Modifier) {
 	def.window.CallModifier(modifier)
 }
 
-// WindowEventDispatcher implements the common, basic functionality of WindowEventDispatcher.
+// WindowEventDispatcher implements the common, basic functionality of Window.
 type WindowEventDispatcher struct {
 	CallClosing           ClosingCallback
 	CallClosed            ClosedCallback
@@ -27,7 +31,8 @@ type WindowEventDispatcher struct {
 	CallOnMouseButtonDown MouseButtonCallback
 	CallOnMouseScroll     MouseScrollCallback
 	CallModifier          ModifierCallback
-	CallKey               KeyCallback
+	CallKeyPress          KeyCallback
+	CallKeyRelease        KeyCallback
 	CallCharCallback      CharCallback
 	CallFileDropCallback  FileDropCallback
 }
@@ -43,7 +48,8 @@ func NullWindowEventDispatcher() WindowEventDispatcher {
 		CallOnMouseButtonUp:   func(uint32, input.Modifier) {},
 		CallOnMouseButtonDown: func(uint32, input.Modifier) {},
 		CallOnMouseScroll:     func(float32, float32) {},
-		CallKey:               func(input.Key, input.Modifier) {},
+		CallKeyPress:          func(input.Key, input.Modifier) {},
+		CallKeyRelease:        func(input.Key, input.Modifier) {},
 		CallModifier:          func(input.Modifier) {},
 		CallCharCallback:      func(rune) {},
 		CallFileDropCallback:  func([]string) {},
@@ -56,49 +62,54 @@ func (window *WindowEventDispatcher) StickyKeyListener() input.StickyKeyListener
 	return &keyDeferrer{window: window}
 }
 
-// OnClosing implements the WindowEventDispatcher interface.
+// OnClosing implements the Window interface.
 func (window *WindowEventDispatcher) OnClosing(callback ClosingCallback) {
 	window.CallClosing = callback
 }
 
-// OnClosed implements the WindowEventDispatcher interface.
+// OnClosed implements the Window interface.
 func (window *WindowEventDispatcher) OnClosed(callback ClosedCallback) {
 	window.CallClosed = callback
 }
 
-// OnRender implements the WindowEventDispatcher interface.
+// OnRender implements the Window interface.
 func (window *WindowEventDispatcher) OnRender(callback RenderCallback) {
 	window.CallRender = callback
 }
 
-// OnResize implements the WindowEventDispatcher interface.
+// OnResize implements the Window interface.
 func (window *WindowEventDispatcher) OnResize(callback ResizeCallback) {
 	window.CallResize = callback
 }
 
-// OnMouseMove implements the WindowEventDispatcher interface.
+// OnMouseMove implements the Window interface.
 func (window *WindowEventDispatcher) OnMouseMove(callback MouseMoveCallback) {
 	window.CallOnMouseMove = callback
 }
 
-// OnMouseButtonDown implements the WindowEventDispatcher interface.
+// OnMouseButtonDown implements the Window interface.
 func (window *WindowEventDispatcher) OnMouseButtonDown(callback MouseButtonCallback) {
 	window.CallOnMouseButtonDown = callback
 }
 
-// OnMouseButtonUp implements the WindowEventDispatcher interface.
+// OnMouseButtonUp implements the Window interface.
 func (window *WindowEventDispatcher) OnMouseButtonUp(callback MouseButtonCallback) {
 	window.CallOnMouseButtonUp = callback
 }
 
-// OnMouseScroll implements the WindowEventDispatcher interface.
+// OnMouseScroll implements the Window interface.
 func (window *WindowEventDispatcher) OnMouseScroll(callback MouseScrollCallback) {
 	window.CallOnMouseScroll = callback
 }
 
-// OnKey implements the WindowEventDispatcher interface
-func (window *WindowEventDispatcher) OnKey(callback KeyCallback) {
-	window.CallKey = callback
+// OnKeyPress implements the Window interface
+func (window *WindowEventDispatcher) OnKeyPress(callback KeyCallback) {
+	window.CallKeyPress = callback
+}
+
+// OnKeyRelease implements the Window interface
+func (window *WindowEventDispatcher) OnKeyRelease(callback KeyCallback) {
+	window.CallKeyRelease = callback
 }
 
 // OnModifier implements the WindowEventDispatcher interface
@@ -106,12 +117,12 @@ func (window *WindowEventDispatcher) OnModifier(callback ModifierCallback) {
 	window.CallModifier = callback
 }
 
-// OnCharCallback implements the WindowEventDispatcher interface
+// OnCharCallback implements the Window interface
 func (window *WindowEventDispatcher) OnCharCallback(callback CharCallback) {
 	window.CallCharCallback = callback
 }
 
-// OnFileDropCallback implements the WindowEventDispatcher interface
+// OnFileDropCallback implements the Window interface
 func (window *WindowEventDispatcher) OnFileDropCallback(callback FileDropCallback) {
 	window.CallFileDropCallback = callback
 }

@@ -133,8 +133,10 @@ type Window interface {
 	// OnMouseScroll registers a callback function for mouse scroll events.
 	OnMouseScroll(callback MouseScrollCallback)
 
-	// OnKey registers a callback function for key events.
-	OnKey(callback KeyCallback)
+	// OnKeyPress registers a callback function for key events.
+	OnKeyPress(callback KeyCallback)
+	// OnKeyRelease registers a callback function for key events.
+	OnKeyRelease(callback KeyCallback)
 	// OnModifier registers a callback function for change of modifier events.
 	OnModifier(callback ModifierCallback)
 	// OnCharCallback registers a callback function for typed characters.
