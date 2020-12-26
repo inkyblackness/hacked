@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/inkyblackness/hacked/ss1/content/archive"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
+	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/citadel"
 )
 
@@ -24,13 +26,21 @@ func VariableContextIdentifiers() []VariableContextIdentifier {
 
 // GameStateService handles all details on the global game state.
 type GameStateService struct {
+	registry cmd.Registry
+
 	currentContext VariableContextIdentifier
+
+	booleanVariables archive.GameVariables
 }
 
 // NewGameStateService returns a new instance.
-func NewGameStateService() *GameStateService {
+func NewGameStateService(registry cmd.Registry) *GameStateService {
 	return &GameStateService{
+		registry: registry,
+
 		currentContext: VariableContextCitadel,
+
+		booleanVariables: make(archive.GameVariables),
 	}
 }
 
@@ -39,7 +49,7 @@ func (service GameStateService) VariableContext() VariableContextIdentifier {
 	return service.currentContext
 }
 
-// SEtVariableContext sets the current variable context.
+// SetVariableContext sets the current variable context.
 func (service *GameStateService) SetVariableContext(identifier VariableContextIdentifier) {
 	service.currentContext = identifier
 }
@@ -67,11 +77,57 @@ func (service GameStateService) IntegerVariable(index int) archive.GameVariableI
 	return *varInfo
 }
 
+func (service GameStateService) BooleanVariableInUse(index int) bool {
+	_, perProject := service.booleanVariables[index]
+	return perProject
+}
+
 // BooleanVariable returns the variable info as per project settings for the given index.
 func (service GameStateService) BooleanVariable(index int) archive.GameVariableInfo {
-	varInfo := archive.EngineBooleanVariable(index)
-	if varInfo == nil {
+	varInfo, perProject := service.booleanVariables[index]
+	if perProject {
+		return varInfo
+	}
+
+	varInfoPtr := archive.EngineBooleanVariable(index)
+	if varInfoPtr == nil {
 		return archive.GameVariableInfoFor("(unused)").At(0)
 	}
-	return *varInfo
+	return *varInfoPtr
+}
+
+// SetBooleanVariable sets the variable info for the given index in the project settings.
+func (service *GameStateService) SetBooleanVariable(index int, info archive.GameVariableInfo) {
+	service.registry.Register(cmd.Named("SetBooleanVariable"),
+		cmd.Forward(setVariableTask(service.booleanVariables, index, info)),
+		cmd.Reverse(restoreVariableTask(service.booleanVariables, index)))
+}
+
+// DefaultBooleanVariable clears the variable info for the given index in the project settings.
+func (service *GameStateService) DefaultBooleanVariable(index int) {
+	service.registry.Register(cmd.Named("DefaultBooleanVariable"),
+		cmd.Forward(deleteVariableTask(service.booleanVariables, index)),
+		cmd.Reverse(restoreVariableTask(service.booleanVariables, index)))
+}
+
+func setVariableTask(variables archive.GameVariables, index int, info archive.GameVariableInfo) cmd.Task {
+	return func(modder world.Modder) error {
+		variables[index] = info
+		return nil
+	}
+}
+
+func deleteVariableTask(variables archive.GameVariables, index int) cmd.Task {
+	return func(modder world.Modder) error {
+		delete(variables, index)
+		return nil
+	}
+}
+
+func restoreVariableTask(variables archive.GameVariables, index int) cmd.Task {
+	info, present := variables[index]
+	if present {
+		return setVariableTask(variables, index, info)
+	}
+	return deleteVariableTask(variables, index)
 }

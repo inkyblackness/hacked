@@ -295,6 +295,10 @@ func (app *Application) initGui() (err error) {
 	imguiIO.KeyMap(imgui.KeyBackspace, int(input.KeyBackspace))
 	imguiIO.KeyMap(imgui.KeyEnter, int(input.KeyEnter))
 	imguiIO.KeyMap(imgui.KeyEscape, int(input.KeyEscape))
+	imguiIO.KeyMap(imgui.KeyA, int(input.KeyA))
+	imguiIO.KeyMap(imgui.KeyC, int(input.KeyC))
+	imguiIO.KeyMap(imgui.KeyV, int(input.KeyV))
+	imguiIO.KeyMap(imgui.KeyX, int(input.KeyX))
 
 	app.initGuiStyle()
 
@@ -354,13 +358,7 @@ func (app *Application) onFilesDropped(names []string) {
 func (app *Application) onKeyPress(key input.Key, modifier input.Modifier) {
 	app.lastModifier = modifier
 
-	if app.guiContext.IsUsingKeyboard() {
-		imguiIO := imgui.CurrentIO()
-		imguiIO.KeyPress(int(key))
-		app.updateKeyModifier()
-		return
-	}
-
+	usedGlobalShortcut := true
 	switch {
 	case key == input.KeyEscape:
 		app.modalState.SetState(nil)
@@ -382,26 +380,31 @@ func (app *Application) onKeyPress(key input.Key, modifier input.Modifier) {
 		*app.levelObjectsView.WindowOpen() = !*app.levelObjectsView.WindowOpen()
 	case key == input.KeyF5 && modifier.IsClear():
 		*app.messagesView.WindowOpen() = !*app.messagesView.WindowOpen()
+	default:
+		usedGlobalShortcut = false
+	}
+	if usedGlobalShortcut {
+		return
+	}
+
+	if app.shouldReportKeyToImgui(key) {
+		imgui.CurrentIO().KeyPress(int(key))
+		app.updateKeyModifier()
 	}
 }
 
 func (app *Application) onKeyRelease(key input.Key, modifier input.Modifier) {
 	app.lastModifier = modifier
 
-	if app.guiContext.IsUsingKeyboard() {
-		imguiIO := imgui.CurrentIO()
-		imguiIO.KeyRelease(int(key))
+	if app.shouldReportKeyToImgui(key) {
+		imgui.CurrentIO().KeyRelease(int(key))
 		app.updateKeyModifier()
-		return
 	}
 }
 
-func (app *Application) updateKeyModifier() {
-	imguiIO := imgui.CurrentIO()
-	imguiIO.KeyCtrl(int(input.KeyControl), int(input.KeyControl))
-	imguiIO.KeyShift(int(input.KeyShift), int(input.KeyShift))
-	imguiIO.KeyAlt(int(input.KeyAlt), int(input.KeyAlt))
-	imguiIO.KeySuper(int(input.KeySuper), int(input.KeySuper))
+func (app *Application) shouldReportKeyToImgui(key input.Key) bool {
+	keyIsModifier := key.AsModifier() != input.ModNone
+	return keyIsModifier || app.guiContext.IsUsingKeyboard()
 }
 
 func (app *Application) onChar(char rune) {
@@ -421,6 +424,14 @@ func (app *Application) onChar(char rune) {
 	}
 }
 
+func (app *Application) updateKeyModifier() {
+	imguiIO := imgui.CurrentIO()
+	imguiIO.KeyCtrl(int(input.KeyControl), int(input.KeyControl))
+	imguiIO.KeyShift(int(input.KeyShift), int(input.KeyShift))
+	imguiIO.KeyAlt(int(input.KeyAlt), int(input.KeyAlt))
+	imguiIO.KeySuper(int(input.KeySuper), int(input.KeySuper))
+}
+
 func (app *Application) onModifier(modifier input.Modifier) {
 	app.lastModifier = modifier
 }
@@ -433,6 +444,7 @@ func (app *Application) tryUndo() {
 	if !app.cmdStack.CanUndo() || app.modalActive() {
 		return
 	}
+	imgui.ClearActiveID()
 	err := app.projectService.ModifyModWith(app.cmdStack.Undo)
 	if err != nil {
 		app.onFailure("Undo", "", err)
@@ -443,6 +455,7 @@ func (app *Application) tryRedo() {
 	if !app.cmdStack.CanRedo() || app.modalActive() {
 		return
 	}
+	imgui.ClearActiveID()
 	err := app.projectService.ModifyModWith(app.cmdStack.Redo)
 	if err != nil {
 		app.onFailure("Redo", "", err)
@@ -610,7 +623,7 @@ func (app *Application) initView() {
 	movieService := undoable.NewMovieService(edit.NewMovieService(app.cp, movieViewer, movieSetter), app)
 
 	app.projectService = edit.NewProjectService(&app.txnBuilder, app.mod)
-	app.gameStateService = edit.NewGameStateService()
+	app.gameStateService = edit.NewGameStateService(&app.txnBuilder)
 
 	app.projectView = project.NewView(app.projectService, &app.modalState, app.GuiScale, &app.txnBuilder)
 	app.archiveView = archives.NewArchiveView(app.gameStateService, app.mod, app.textLineCache, app.cp, app.GuiScale, app)
