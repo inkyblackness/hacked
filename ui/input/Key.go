@@ -69,13 +69,19 @@ const (
 
 	KeySave = Key(400)
 	KeyNew  = Key(401)
+
+	KeyA = Key(410)
+	KeyC = Key(411)
+	KeyV = Key(412)
+	KeyX = Key(413)
 )
 
 var keyToModifier = map[Key]Modifier{
 	KeyShift:   ModShift,
 	KeyControl: ModControl,
 	KeyAlt:     ModAlt,
-	KeySuper:   ModSuper}
+	KeySuper:   ModSuper,
+}
 
 // AsModifier returns the modifier equivalent for the key - if applicable.
 func (key Key) AsModifier() Modifier {

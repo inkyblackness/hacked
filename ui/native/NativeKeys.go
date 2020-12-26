@@ -65,4 +65,9 @@ var keyMap = map[glfw.Key]input.Key{
 	glfw.KeyF7:  input.KeyF7,
 	glfw.KeyF8:  input.KeyF8,
 	glfw.KeyF9:  input.KeyF9,
+
+	glfw.KeyA: input.KeyA,
+	glfw.KeyC: input.KeyC,
+	glfw.KeyV: input.KeyV,
+	glfw.KeyX: input.KeyX,
 }
