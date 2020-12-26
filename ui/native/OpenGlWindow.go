@@ -231,16 +231,24 @@ func (window *OpenGLWindow) onMouseScroll(rawWindow *glfw.Window, dx float64, dy
 func (window *OpenGLWindow) onKey(rawWindow *glfw.Window, glfwKey glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
 	modifier := window.mapModifier(mods)
 	key, knownKey := keyMap[glfwKey]
-	if !knownKey {
-		keyName := glfw.GetKeyName(glfwKey, scancode)
-		key, knownKey = input.ResolveShortcut(keyName, modifier)
-	}
-	if !knownKey {
-		return
+	if knownKey {
+		window.reportKey(action, key, modifier)
 	}
 
+	keyName := glfw.GetKeyName(glfwKey, scancode)
+	key, knownKey = input.ResolveShortcut(keyName, modifier)
+	if knownKey {
+		window.reportKey(action, key, modifier)
+	}
+
+}
+
+func (window *OpenGLWindow) reportKey(action glfw.Action, key input.Key, modifier input.Modifier) {
 	switch action {
 	case glfw.Press:
+		window.keyBuffer.KeyDown(key, modifier)
+	case glfw.Repeat:
+		window.keyBuffer.KeyUp(key, modifier)
 		window.keyBuffer.KeyDown(key, modifier)
 	case glfw.Release:
 		window.keyBuffer.KeyUp(key, modifier)
