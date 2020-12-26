@@ -22,7 +22,14 @@ func StepSliderIntV(label string, value *int, min, max int, format string) bool 
 	imgui.SameLineV(0, innerSpacing.X)
 	value32 := int32(*value)
 	if imgui.SliderIntV(label, &value32, int32(min), int32(max), format) {
-		*value = int(value32)
+		switch {
+		case int(value32) < min:
+			*value = min
+		case int(value32) > max:
+			*value = max
+		default:
+			*value = int(value32)
+		}
 		changed = true
 	}
 	imgui.PopID()
