@@ -23,6 +23,91 @@ func VariableContextIdentifiers() []VariableBaseContextIdentifier {
 	return []VariableBaseContextIdentifier{VariableContextCitadel, VariableContextEngine}
 }
 
+// GameStateSettings describe the game state details.
+type GameStateSettings struct {
+	BaseContext int
+
+	BooleanVariables []VariableSettings
+	IntegerVariables []VariableSettings
+}
+
+// VariableSettings describe game variables.
+type VariableSettings struct {
+	Index int
+
+	ResetValue  *int16 `json:",omitempty"`
+	Name        string
+	Description string
+	Limits      *struct {
+		Minimum int16
+		Maximum int16
+	} `json:",omitempty"`
+	ValueNames []struct {
+		Value int16
+		Name  string
+	} `json:",omitempty"`
+}
+
+func variableSettingsFrom(variables archive.GameVariables) []VariableSettings {
+	settings := make([]VariableSettings, 0, len(variables))
+	for varIndex, varInfo := range variables {
+		varSettings := VariableSettings{
+			Index:       varIndex,
+			ResetValue:  varInfo.InitValue,
+			Name:        varInfo.Name,
+			Description: varInfo.Description,
+			Limits:      nil,
+			ValueNames:  nil,
+		}
+		if varInfo.Limits != nil {
+			varSettings.Limits = &struct {
+				Minimum int16
+				Maximum int16
+			}{
+				Minimum: varInfo.Limits.Minimum,
+				Maximum: varInfo.Limits.Maximum,
+			}
+		}
+		for valIndex, valName := range varInfo.ValueNames {
+			varSettings.ValueNames = append(varSettings.ValueNames,
+				struct {
+					Value int16
+					Name  string
+				}{
+					Value: valIndex,
+					Name:  valName,
+				})
+		}
+		settings = append(settings, varSettings)
+	}
+	return settings
+}
+
+func variablesFrom(list []VariableSettings) archive.GameVariables {
+	variables := make(archive.GameVariables)
+	for _, settings := range list {
+		varInfo := archive.GameVariableInfo{
+			InitValue:   settings.ResetValue,
+			Name:        settings.Name,
+			Description: settings.Description,
+		}
+		if settings.Limits != nil {
+			varInfo.Limits = &archive.GameVariableLimits{
+				Minimum: settings.Limits.Maximum,
+				Maximum: settings.Limits.Minimum,
+			}
+		}
+		if len(settings.ValueNames) > 0 {
+			varInfo.ValueNames = make(map[int16]string)
+			for _, valName := range settings.ValueNames {
+				varInfo.ValueNames[valName.Value] = valName.Name
+			}
+		}
+		variables[settings.Index] = varInfo
+	}
+	return variables
+}
+
 // GameStateService handles all details on the global game state.
 type GameStateService struct {
 	registry cmd.Registry
@@ -43,6 +128,22 @@ func NewGameStateService(registry cmd.Registry) *GameStateService {
 		booleanVariables: make(archive.GameVariables),
 		integerVariables: make(archive.GameVariables),
 	}
+}
+
+// CurrentSettings returns the snapshot of the project.
+func (service GameStateService) CurrentSettings() GameStateSettings {
+	return GameStateSettings{
+		BaseContext:      int(service.currentContext),
+		BooleanVariables: variableSettingsFrom(service.booleanVariables),
+		IntegerVariables: variableSettingsFrom(service.integerVariables),
+	}
+}
+
+// RestoreSettings loads the given snapshot.
+func (service *GameStateService) RestoreSettings(settings GameStateSettings) {
+	service.currentContext = VariableBaseContextIdentifier(settings.BaseContext)
+	service.booleanVariables = variablesFrom(settings.BooleanVariables)
+	service.integerVariables = variablesFrom(settings.IntegerVariables)
 }
 
 // VariableBaseContext returns the current context to use as basis for variables not specified by the project.

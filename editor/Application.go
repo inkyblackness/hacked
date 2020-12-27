@@ -45,9 +45,10 @@ import (
 )
 
 type projectState struct {
-	Settings         *edit.ProjectSettings `json:",omitempty"`
-	OpenWindows      []string              `json:",omitempty"`
-	ActiveLevelIndex *int                  `json:",omitempty"`
+	ProjectSettings   *edit.ProjectSettings   `json:",omitempty"`
+	GameStateSettings *edit.GameStateSettings `json:",omitempty"`
+	OpenWindows       []string                `json:",omitempty"`
+	ActiveLevelIndex  *int                    `json:",omitempty"`
 }
 
 func projectStateFromFile(filename string) (projectState, error) {
@@ -832,6 +833,7 @@ func (app *Application) saveProject() {
 
 func (app *Application) currentProjectState() projectState {
 	projectSettings := app.projectService.CurrentSettings()
+	gameStateSettings := app.gameStateService.CurrentSettings()
 
 	windowOpenByName := app.windowOpenByName()
 	var openWindows []string
@@ -842,9 +844,10 @@ func (app *Application) currentProjectState() projectState {
 	}
 	activeLevelIndex := app.levelControlView.SelectedLevel()
 	return projectState{
-		Settings:         &projectSettings,
-		OpenWindows:      openWindows,
-		ActiveLevelIndex: &activeLevelIndex,
+		ProjectSettings:   &projectSettings,
+		GameStateSettings: &gameStateSettings,
+		OpenWindows:       openWindows,
+		ActiveLevelIndex:  &activeLevelIndex,
 	}
 }
 
@@ -885,11 +888,16 @@ func (app *Application) restoreWorkspace() {
 }
 
 func (app *Application) restoreProjectState(state projectState, filename string) {
-	var settings edit.ProjectSettings
-	if state.Settings != nil {
-		settings = *state.Settings
+	var projectSettings edit.ProjectSettings
+	if state.ProjectSettings != nil {
+		projectSettings = *state.ProjectSettings
 	}
-	app.projectService.RestoreProject(settings, filename)
+	app.projectService.RestoreProject(projectSettings, filename)
+	var gameStateSettings edit.GameStateSettings
+	if state.GameStateSettings != nil {
+		gameStateSettings = *state.GameStateSettings
+	}
+	app.gameStateService.RestoreSettings(gameStateSettings)
 
 	windowOpenByName := app.windowOpenByName()
 	for _, open := range windowOpenByName {
