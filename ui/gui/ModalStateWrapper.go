@@ -20,7 +20,9 @@ func (machine *ModalStateWrapper) Render() {
 
 // HandleFiles forwards the given filenames to the current state.
 func (machine *ModalStateWrapper) HandleFiles(filenames []string) {
-	if machine.State != nil {
-		machine.State.HandleFiles(filenames)
+	handler, isHandler := machine.State.(FileHandler)
+	if !isHandler {
+		return
 	}
+	handler.HandleFiles(filenames)
 }
