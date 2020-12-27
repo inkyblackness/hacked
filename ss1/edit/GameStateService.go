@@ -97,15 +97,15 @@ func (service GameStateService) BooleanVariable(index int) archive.GameVariableI
 }
 
 // SetBooleanVariable sets the variable info for the given index in the project settings.
-func (service *GameStateService) SetBooleanVariable(index int, info archive.GameVariableInfo) {
-	service.registry.Register(cmd.Named("SetBooleanVariable"),
+func (service *GameStateService) SetBooleanVariable(index int, info archive.GameVariableInfo) error {
+	return service.registry.Register(cmd.Named("SetBooleanVariable"),
 		cmd.Forward(setVariableTask(service.booleanVariables, index, info)),
 		cmd.Reverse(restoreVariableTask(service.booleanVariables, index)))
 }
 
 // DefaultBooleanVariable clears the variable info for the given index in the project settings.
-func (service *GameStateService) DefaultBooleanVariable(index int) {
-	service.registry.Register(cmd.Named("DefaultBooleanVariable"),
+func (service *GameStateService) DefaultBooleanVariable(index int) error {
+	return service.registry.Register(cmd.Named("DefaultBooleanVariable"),
 		cmd.Forward(deleteVariableTask(service.booleanVariables, index)),
 		cmd.Reverse(restoreVariableTask(service.booleanVariables, index)))
 }

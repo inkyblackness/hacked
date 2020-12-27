@@ -42,23 +42,26 @@ type View struct {
 	textCache        *text.Cache
 	cp               text.Codepage
 
-	guiScale  float32
-	commander cmd.Commander
+	modalStateMachine gui.ModalStateMachine
+	guiScale          float32
+	commander         cmd.Commander
 
 	model viewModel
 }
 
 // NewArchiveView returns a new instance.
 func NewArchiveView(gameStateService *edit.GameStateService, mod *world.Mod,
-	textCache *text.Cache, cp text.Codepage, guiScale float32, commander cmd.Commander) *View {
+	textCache *text.Cache, cp text.Codepage,
+	modalStateMachine gui.ModalStateMachine, guiScale float32, commander cmd.Commander) *View {
 	view := &View{
 		gameStateService: gameStateService,
 		mod:              mod,
 		textCache:        textCache,
 		cp:               cp,
 
-		guiScale:  guiScale,
-		commander: commander,
+		modalStateMachine: modalStateMachine,
+		guiScale:          guiScale,
+		commander:         commander,
 
 		model: freshViewModel(),
 	}
@@ -714,6 +717,7 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 		onChange()
 	}
 
+	isSavegame := gameState.IsSavegame()
 	if imgui.TreeNodeV("Boolean Variables", imgui.TreeNodeFlagsFramed) {
 		intConverter := func(u values.Unifier) int {
 			bValue := u.Unified().(bool)
@@ -728,7 +732,8 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 			varIndex := i
 			info := varProvider.BooleanVariable(varIndex)
 
-			varReadOnly := readOnly || (info.Hardcoded && !gameState.IsSavegame())
+			varReadOnly := readOnly || (info.Hardcoded && !isSavegame)
+			varLabel := fmt.Sprintf("Var%03d", varIndex)
 			varName := fmt.Sprintf("Var%03d: %s", varIndex, info.Name)
 			varUnifier := values.UnifierFor(gameState.BooleanVar(varIndex))
 
@@ -745,7 +750,25 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 					gameState.SetBooleanVar(varIndex, newValue != 0)
 					onChange()
 				})
-			if imgui.IsItemHovered() && (len(info.Description) > 0) {
+
+			if imgui.BeginPopupContextItemV(varLabel+"-Popup", 1) {
+				if imgui.Selectable("Edit info...") {
+					view.modalStateMachine.SetState(&editBooleanVariableDialog{
+						machine: view.modalStateMachine,
+						view:    view,
+						service: view.gameStateService,
+						index:   varIndex,
+					})
+				}
+				if !varReadOnly {
+					imgui.Separator()
+					if imgui.Selectable("Reset") {
+						gameState.SetBooleanVar(varIndex, (info.InitValue != nil) && (*info.InitValue != 0))
+						onChange()
+					}
+				}
+				imgui.EndPopup()
+			} else if imgui.IsItemHovered() && (len(info.Description) > 0) {
 				imgui.SetTooltip(info.Description)
 			}
 		}
@@ -759,7 +782,7 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 			varIndex := i
 			info := varProvider.IntegerVariable(varIndex)
 
-			varReadOnly := readOnly || (info.Hardcoded && !gameState.IsSavegame())
+			varReadOnly := readOnly || (info.Hardcoded && !isSavegame)
 			varName := fmt.Sprintf("Var%02d: %s", varIndex, info.Name)
 			varUnifier := values.UnifierFor(gameState.IntegerVar(varIndex))
 			changeHandler := func(newValue int) {
