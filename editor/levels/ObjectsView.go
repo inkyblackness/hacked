@@ -10,6 +10,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
+	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlobj"
@@ -25,9 +26,10 @@ import (
 
 // ObjectsView is for object properties.
 type ObjectsView struct {
-	mod          *world.Mod
-	textCache    *text.Cache
-	textureCache *graphics.TextureCache
+	varInfoProvider archive.GameVariableInfoProvider
+	mod             *world.Mod
+	textCache       *text.Cache
+	textureCache    *graphics.TextureCache
 
 	guiScale      float32
 	commander     cmd.Commander
@@ -37,12 +39,14 @@ type ObjectsView struct {
 }
 
 // NewObjectsView returns a new instance.
-func NewObjectsView(mod *world.Mod, guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
+func NewObjectsView(varInfoProvider archive.GameVariableInfoProvider,
+	mod *world.Mod, guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
 	commander cmd.Commander, eventListener event.Listener, eventRegistry event.Registry) *ObjectsView {
 	view := &ObjectsView{
-		mod:          mod,
-		textCache:    textCache,
-		textureCache: textureCache,
+		varInfoProvider: varInfoProvider,
+		mod:             mod,
+		textCache:       textCache,
+		textureCache:    textureCache,
 
 		guiScale:      guiScale,
 		commander:     commander,
@@ -400,14 +404,20 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 		switch {
 		case unifier.IsUnique():
 			key := unifier.Unified().(int32)
-			limit := 0x1FF
-			if (key & int32(typeMask)) != 0 {
-				limit = 0x3F
+			isIntegerVar := (key & int32(typeMask)) != 0
+			limit := archive.BooleanVarCount
+			if isIntegerVar {
+				limit = archive.IntegerVarCount
 			}
 			values.RenderUnifiedSliderInt(readOnly, multiple, valueLabel, unifier,
 				func(u values.Unifier) int { return int(u.Unified().(int32)) & 0x1FF },
-				func(value int) string { return "%d" },
-				0, limit,
+				func(value int) string {
+					if isIntegerVar {
+						return fmt.Sprintf("%%d: %s", view.varInfoProvider.IntegerVariable(value).Name)
+					}
+					return fmt.Sprintf("%%d: %s", view.varInfoProvider.BooleanVariable(value).Name)
+				},
+				0, limit-1,
 				func(newValue int) {
 					updater(func(oldValue uint32) uint32 {
 						result := oldValue & ^uint32(0x01FF)
