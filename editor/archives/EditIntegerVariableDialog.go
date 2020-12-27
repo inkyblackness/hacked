@@ -112,10 +112,7 @@ func (dialog *editIntegerVariableDialog) renderControls() {
 			imgui.LabelText("Value", dialog.info.ValueNames[int16(dialog.selectedEnum)])
 		}
 
-		resetValue := int16(0)
-		if dialog.info.InitValue != nil {
-			resetValue = *dialog.info.InitValue
-		}
+		resetValue := dialog.info.ResetValueInt()
 		enumEntries := toEnumEntries(dialog.info.ValueNames)
 		linearInitIndex := linearIndex(enumEntries, resetValue)
 		initUnifier := values.UnifierFor(linearInitIndex)
@@ -168,10 +165,7 @@ func (dialog *editIntegerVariableDialog) renderControls() {
 			imgui.LabelText("Maximum", fmt.Sprintf("%d", maxValue))
 		}
 
-		resetValue := 0
-		if dialog.info.InitValue != nil {
-			resetValue = int(*dialog.info.InitValue)
-		}
+		resetValue := int(dialog.info.ResetValueInt())
 		if dialog.info.Hardcoded || !dialog.varOverride {
 			imgui.LabelText("Reset Value", fmt.Sprintf("%d", resetValue))
 		} else if gui.StepSliderInt("Reset Value", &resetValue, minValue, maxValue) {

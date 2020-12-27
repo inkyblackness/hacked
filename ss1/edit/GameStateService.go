@@ -66,6 +66,26 @@ func (service GameStateService) baseInfoProvider() archive.GameVariableInfoProvi
 	}
 }
 
+// DefaultAllVariables removes all project specific overrides.
+func (service *GameStateService) DefaultAllVariables() error {
+	return service.registry.Register(cmd.Named("RemoveAllOverrides"),
+		cmd.Nested(func() error {
+			for i := 0; i < archive.BooleanVarCount; i++ {
+				err := service.DefaultBooleanVariable(i)
+				if err != nil {
+					return err
+				}
+			}
+			for i := 0; i < archive.IntegerVarCount; i++ {
+				err := service.DefaultIntegerVariable(i)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		}))
+}
+
 // IntegerVariableOverride returns true if project-specific details are stored for given variable index.
 func (service GameStateService) IntegerVariableOverride(index int) bool {
 	_, perProject := service.integerVariables[index]

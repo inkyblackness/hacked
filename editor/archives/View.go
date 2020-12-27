@@ -47,6 +47,7 @@ var variableContextList = map[edit.VariableBaseContextIdentifier]struct {
 
 // View provides edit controls for the archive.
 type View struct {
+	registry         cmd.Registry
 	gameStateService *edit.GameStateService
 	mod              *world.Mod
 	textCache        *text.Cache
@@ -60,10 +61,12 @@ type View struct {
 }
 
 // NewArchiveView returns a new instance.
-func NewArchiveView(gameStateService *edit.GameStateService, mod *world.Mod,
+func NewArchiveView(registry cmd.Registry,
+	gameStateService *edit.GameStateService, mod *world.Mod,
 	textCache *text.Cache, cp text.Codepage,
 	modalStateMachine gui.ModalStateMachine, guiScale float32, commander cmd.Commander) *View {
 	view := &View{
+		registry:         registry,
 		gameStateService: gameStateService,
 		mod:              mod,
 		textCache:        textCache,
@@ -706,26 +709,27 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 		imgui.EndCombo()
 	}
 
-	if !readOnly && imgui.Button("Reset All") {
-		for i := 0; i < archive.BooleanVarCount; i++ {
-			varIndex := i
-			info := view.gameStateService.BooleanVariable(varIndex)
-			var initValue bool
-			if info.InitValue != nil {
-				initValue = *info.InitValue != 0
+	if imgui.Button("Remove All Overrides") {
+		_ = view.gameStateService.DefaultAllVariables()
+	}
+	if imgui.IsItemHovered() {
+		imgui.SetTooltip("Removes all overrides and their parameters.")
+	}
+	if !readOnly {
+		imgui.SameLine()
+		if imgui.Button("Reset All") {
+			for i := 0; i < archive.BooleanVarCount; i++ {
+				gameState.SetBooleanVar(i, view.gameStateService.BooleanVariable(i).ResetValueBool())
 			}
-			gameState.SetBooleanVar(i, initValue)
-		}
-		for i := 0; i < archive.IntegerVarCount; i++ {
-			varIndex := i
-			info := view.gameStateService.IntegerVariable(varIndex)
-			var initValue int16
-			if info.InitValue != nil {
-				initValue = *info.InitValue
+			for i := 0; i < archive.IntegerVarCount; i++ {
+				gameState.SetIntegerVar(i, view.gameStateService.IntegerVariable(i).ResetValueInt())
 			}
-			gameState.SetIntegerVar(i, initValue)
+			onChange()
 		}
-		onChange()
+		if imgui.IsItemHovered() {
+			imgui.SetTooltip("Resets all variables to their configured initial value.\n" +
+				"To reset a single variable, hover over the specific variable and use the context menu.")
+		}
 	}
 
 	isSavegame := gameState.IsSavegame()
@@ -774,7 +778,7 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 				if !varReadOnly {
 					imgui.Separator()
 					if imgui.Selectable("Reset") {
-						gameState.SetBooleanVar(varIndex, (info.InitValue != nil) && (*info.InitValue != 0))
+						gameState.SetBooleanVar(varIndex, info.ResetValueBool())
 						onChange()
 					}
 				}
@@ -854,7 +858,7 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 				if !varReadOnly {
 					imgui.Separator()
 					if imgui.Selectable("Reset") {
-						gameState.SetBooleanVar(varIndex, (info.InitValue != nil) && (*info.InitValue != 0))
+						gameState.SetIntegerVar(varIndex, info.ResetValueInt())
 						onChange()
 					}
 				}

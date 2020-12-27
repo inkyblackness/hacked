@@ -105,11 +105,7 @@ func (dialog *editBooleanVariableDialog) renderControls() {
 		imgui.LabelText(defaultValues[1], defaultValues[1])
 	}
 
-	resetValue := int16(0)
-	if dialog.info.InitValue != nil {
-		resetValue = *dialog.info.InitValue
-	}
-	initUnifier := values.UnifierFor(resetValue)
+	initUnifier := values.UnifierFor(dialog.info.ResetValueInt())
 	values.RenderUnifiedCombo(dialog.info.Hardcoded || !dialog.varOverride, false, "Reset Value", initUnifier,
 		func(u values.Unifier) int { return int(u.Unified().(int16)) },
 		func(value int) string {

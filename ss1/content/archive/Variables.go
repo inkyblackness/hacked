@@ -24,6 +24,22 @@ type GameVariableInfo struct {
 	Hardcoded bool
 }
 
+// ResetValueInt returns the expected reset value for integer variables.
+func (info GameVariableInfo) ResetValueInt() int16 {
+	if info.InitValue == nil {
+		return 0
+	}
+	return *info.InitValue
+}
+
+// ResetValueBool returns the expected reset value for boolean variables.
+func (info GameVariableInfo) ResetValueBool() bool {
+	if info.InitValue == nil {
+		return false
+	}
+	return *info.InitValue != 0
+}
+
 // GameVariableInfoProvider provides lookup functionality for integer and boolean variables.
 type GameVariableInfoProvider interface {
 	IntegerVariable(index int) GameVariableInfo
