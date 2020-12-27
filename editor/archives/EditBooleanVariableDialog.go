@@ -29,6 +29,7 @@ func (dialog *editBooleanVariableDialog) Render() {
 		imgui.OpenPopup("Edit boolean variable")
 	}
 
+	imgui.SetNextWindowSize(imgui.Vec2{X: 600, Y: 0}.Times(dialog.view.guiScale))
 	if imgui.BeginPopupModalV("Edit boolean variable", nil,
 		imgui.WindowFlagsNoSavedSettings|imgui.WindowFlagsAlwaysAutoResize) {
 		dialog.renderControls()
@@ -61,7 +62,7 @@ func (dialog *editBooleanVariableDialog) close() {
 }
 
 func (dialog *editBooleanVariableDialog) renderControls() {
-	imgui.PushItemWidth(600 * dialog.view.guiScale)
+	imgui.PushItemWidth(-150 * dialog.view.guiScale)
 	values.RenderUnifiedCheckboxCombo(false, false, "Override", values.UnifierFor(dialog.varOverride), func(newValue bool) {
 		dialog.varOverride = newValue
 	})

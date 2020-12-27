@@ -34,6 +34,7 @@ func (dialog *editIntegerVariableDialog) Render() {
 		imgui.OpenPopup("Edit integer variable")
 	}
 
+	imgui.SetNextWindowSize(imgui.Vec2{X: 600, Y: 0}.Times(dialog.view.guiScale))
 	if imgui.BeginPopupModalV("Edit integer variable", nil,
 		imgui.WindowFlagsNoSavedSettings|imgui.WindowFlagsAlwaysAutoResize) {
 		dialog.renderControls()
@@ -66,7 +67,7 @@ func (dialog *editIntegerVariableDialog) close() {
 }
 
 func (dialog *editIntegerVariableDialog) renderControls() {
-	imgui.PushItemWidth(600 * dialog.view.guiScale)
+	imgui.PushItemWidth(-150 * dialog.view.guiScale)
 	values.RenderUnifiedCheckboxCombo(false, false, "Override", values.UnifierFor(dialog.varOverride), func(newValue bool) {
 		dialog.varOverride = newValue
 	})
