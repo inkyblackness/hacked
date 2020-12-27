@@ -94,11 +94,13 @@ func (service GameStateService) IntegerVariableOverride(index int) bool {
 
 // IntegerVariable returns the variable info as per project settings for the given index.
 func (service GameStateService) IntegerVariable(index int) archive.GameVariableInfo {
-	varInfo, perProject := service.integerVariables[index]
+	baseInfo := service.baseInfoProvider().IntegerVariable(index)
+	projInfo, perProject := service.integerVariables[index]
 	if perProject {
-		return varInfo
+		projInfo.Hardcoded = baseInfo.Hardcoded
+		return projInfo
 	}
-	return service.baseInfoProvider().IntegerVariable(index)
+	return baseInfo
 }
 
 // SetIntegerVariable sets the variable info for the given index in the project settings.
@@ -123,11 +125,13 @@ func (service GameStateService) BooleanVariableOverride(index int) bool {
 
 // BooleanVariable returns the variable info as per project settings for the given index.
 func (service GameStateService) BooleanVariable(index int) archive.GameVariableInfo {
-	varInfo, perProject := service.booleanVariables[index]
+	baseInfo := service.baseInfoProvider().BooleanVariable(index)
+	projInfo, perProject := service.booleanVariables[index]
 	if perProject {
-		return varInfo
+		projInfo.Hardcoded = baseInfo.Hardcoded
+		return projInfo
 	}
-	return service.baseInfoProvider().BooleanVariable(index)
+	return baseInfo
 }
 
 // SetBooleanVariable sets the variable info for the given index in the project settings.
