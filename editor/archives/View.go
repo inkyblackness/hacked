@@ -783,6 +783,7 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 			info := varProvider.IntegerVariable(varIndex)
 
 			varReadOnly := readOnly || (info.Hardcoded && !isSavegame)
+			varLabel := fmt.Sprintf("Var%02d", varIndex)
 			varName := fmt.Sprintf("Var%02d: %s", varIndex, info.Name)
 			varUnifier := values.UnifierFor(gameState.IntegerVar(varIndex))
 			changeHandler := func(newValue int) {
@@ -830,7 +831,24 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 					min, max,
 					changeHandler)
 			}
-			if imgui.IsItemHovered() && (len(info.Description) > 0) {
+			if imgui.BeginPopupContextItemV(varLabel+"-Popup", 1) {
+				if imgui.Selectable("Edit info...") {
+					view.modalStateMachine.SetState(&editIntegerVariableDialog{
+						machine: view.modalStateMachine,
+						view:    view,
+						service: view.gameStateService,
+						index:   varIndex,
+					})
+				}
+				if !varReadOnly {
+					imgui.Separator()
+					if imgui.Selectable("Reset") {
+						gameState.SetBooleanVar(varIndex, (info.InitValue != nil) && (*info.InitValue != 0))
+						onChange()
+					}
+				}
+				imgui.EndPopup()
+			} else if imgui.IsItemHovered() && (len(info.Description) > 0) {
 				imgui.SetTooltip(info.Description)
 			}
 		}

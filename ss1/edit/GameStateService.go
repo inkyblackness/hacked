@@ -31,6 +31,7 @@ type GameStateService struct {
 	currentContext VariableContextIdentifier
 
 	booleanVariables archive.GameVariables
+	integerVariables archive.GameVariables
 }
 
 // NewGameStateService returns a new instance.
@@ -41,6 +42,7 @@ func NewGameStateService(registry cmd.Registry) *GameStateService {
 		currentContext: VariableContextCitadel,
 
 		booleanVariables: make(archive.GameVariables),
+		integerVariables: make(archive.GameVariables),
 	}
 }
 
@@ -68,16 +70,42 @@ func (service GameStateService) GameVariableInfoProvider() archive.GameVariableI
 	}
 }
 
-// IntegerVariable returns the variable info as per project settings for the given index.
-func (service GameStateService) IntegerVariable(index int) archive.GameVariableInfo {
-	varInfo := archive.EngineIntegerVariable(index)
-	if varInfo == nil {
-		return archive.GameVariableInfoFor("(unused)").At(0)
-	}
-	return *varInfo
+// IntegerVariableOverride returns true if project-specific details are stored for given variable index.
+func (service GameStateService) IntegerVariableOverride(index int) bool {
+	_, perProject := service.integerVariables[index]
+	return perProject
 }
 
-func (service GameStateService) BooleanVariableInUse(index int) bool {
+// IntegerVariable returns the variable info as per project settings for the given index.
+func (service GameStateService) IntegerVariable(index int) archive.GameVariableInfo {
+	varInfo, perProject := service.integerVariables[index]
+	if perProject {
+		return varInfo
+	}
+
+	varInfoPtr := archive.EngineIntegerVariable(index)
+	if varInfoPtr == nil {
+		return archive.GameVariableInfoFor("(unused)").At(0)
+	}
+	return *varInfoPtr
+}
+
+// SetIntegerVariable sets the variable info for the given index in the project settings.
+func (service *GameStateService) SetIntegerVariable(index int, info archive.GameVariableInfo) error {
+	return service.registry.Register(cmd.Named("SetIntegerVariable"),
+		cmd.Forward(setVariableTask(service.integerVariables, index, info)),
+		cmd.Reverse(restoreVariableTask(service.integerVariables, index)))
+}
+
+// DefaultIntegerVariable clears the variable info for the given index in the project settings.
+func (service *GameStateService) DefaultIntegerVariable(index int) error {
+	return service.registry.Register(cmd.Named("DefaultIntegerVariable"),
+		cmd.Forward(deleteVariableTask(service.integerVariables, index)),
+		cmd.Reverse(restoreVariableTask(service.integerVariables, index)))
+}
+
+// BooleanVariableOverride returns true if project-specific details are stored for given variable index.
+func (service GameStateService) BooleanVariableOverride(index int) bool {
 	_, perProject := service.booleanVariables[index]
 	return perProject
 }

@@ -24,7 +24,7 @@ type editBooleanVariableDialog struct {
 func (dialog *editBooleanVariableDialog) Render() {
 	if !dialog.opened {
 		dialog.opened = true
-		dialog.varOverride = dialog.service.BooleanVariableInUse(dialog.index)
+		dialog.varOverride = dialog.service.BooleanVariableOverride(dialog.index)
 		dialog.info = dialog.service.BooleanVariable(dialog.index)
 		imgui.OpenPopup("Edit boolean variable")
 	}
@@ -104,12 +104,12 @@ func (dialog *editBooleanVariableDialog) renderControls() {
 		imgui.LabelText(defaultValues[1], defaultValues[1])
 	}
 
-	initValue := int16(0)
+	resetValue := int16(0)
 	if dialog.info.InitValue != nil {
-		initValue = *dialog.info.InitValue
+		resetValue = *dialog.info.InitValue
 	}
-	initUnifier := values.UnifierFor(initValue)
-	values.RenderUnifiedCombo(dialog.info.Hardcoded || !dialog.varOverride, false, "Init Value", initUnifier,
+	initUnifier := values.UnifierFor(resetValue)
+	values.RenderUnifiedCombo(dialog.info.Hardcoded || !dialog.varOverride, false, "Reset Value", initUnifier,
 		func(u values.Unifier) int { return int(u.Unified().(int16)) },
 		func(value int) string {
 			name, found := dialog.info.ValueNames[int16(value)]
