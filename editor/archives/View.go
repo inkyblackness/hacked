@@ -708,6 +708,10 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 		}
 		imgui.EndCombo()
 	}
+	if imgui.IsItemHovered() {
+		imgui.SetTooltip("The base context defines to what variables default to\n" +
+			"in case they are not overridden by the project.")
+	}
 
 	if imgui.Button("Remove All Overrides") {
 		_ = view.gameStateService.DefaultAllVariables()
