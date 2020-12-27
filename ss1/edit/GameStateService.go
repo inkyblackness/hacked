@@ -9,26 +9,25 @@ import (
 	"github.com/inkyblackness/hacked/ss1/world/citadel"
 )
 
-// VariableContextIdentifier identifies which context for variable naming should be used.
-type VariableContextIdentifier int
+// VariableBaseContextIdentifier identifies which context for variable naming should be used.
+type VariableBaseContextIdentifier int
 
 // Context identifier
 const (
-	VariableContextCitadel = VariableContextIdentifier(0)
-	VariableContextEngine  = VariableContextIdentifier(1)
-	VariableContextProject = VariableContextIdentifier(2)
+	VariableContextCitadel = VariableBaseContextIdentifier(0)
+	VariableContextEngine  = VariableBaseContextIdentifier(1)
 )
 
 // VariableContextIdentifiers returns a list of all available identifiers.
-func VariableContextIdentifiers() []VariableContextIdentifier {
-	return []VariableContextIdentifier{VariableContextCitadel, VariableContextEngine, VariableContextProject}
+func VariableContextIdentifiers() []VariableBaseContextIdentifier {
+	return []VariableBaseContextIdentifier{VariableContextCitadel, VariableContextEngine}
 }
 
 // GameStateService handles all details on the global game state.
 type GameStateService struct {
 	registry cmd.Registry
 
-	currentContext VariableContextIdentifier
+	currentContext VariableBaseContextIdentifier
 
 	booleanVariables archive.GameVariables
 	integerVariables archive.GameVariables
@@ -46,25 +45,22 @@ func NewGameStateService(registry cmd.Registry) *GameStateService {
 	}
 }
 
-// VariableContext returns the current variable context.
-func (service GameStateService) VariableContext() VariableContextIdentifier {
+// VariableBaseContext returns the current context to use as basis for variables not specified by the project.
+func (service GameStateService) VariableBaseContext() VariableBaseContextIdentifier {
 	return service.currentContext
 }
 
-// SetVariableContext sets the current variable context.
-func (service *GameStateService) SetVariableContext(identifier VariableContextIdentifier) {
+// SetVariableBaseContext sets the current context to use as basis for variables not specified by the project.
+func (service *GameStateService) SetVariableBaseContext(identifier VariableBaseContextIdentifier) {
 	service.currentContext = identifier
 }
 
-// GameVariableInfoProviderFor returns the provider for the current identifier.
-func (service GameStateService) GameVariableInfoProvider() archive.GameVariableInfoProvider {
+func (service GameStateService) baseInfoProvider() archive.GameVariableInfoProvider {
 	switch service.currentContext {
 	case VariableContextCitadel:
 		return citadel.MissionVariables{}
 	case VariableContextEngine:
 		return archive.EngineVariables{}
-	case VariableContextProject:
-		return service
 	default:
 		panic(fmt.Sprintf("invalid identifier: %d", service.currentContext))
 	}
@@ -82,12 +78,7 @@ func (service GameStateService) IntegerVariable(index int) archive.GameVariableI
 	if perProject {
 		return varInfo
 	}
-
-	varInfoPtr := archive.EngineIntegerVariable(index)
-	if varInfoPtr == nil {
-		return archive.GameVariableInfoFor("(unused)").At(0)
-	}
-	return *varInfoPtr
+	return service.baseInfoProvider().IntegerVariable(index)
 }
 
 // SetIntegerVariable sets the variable info for the given index in the project settings.
@@ -116,12 +107,7 @@ func (service GameStateService) BooleanVariable(index int) archive.GameVariableI
 	if perProject {
 		return varInfo
 	}
-
-	varInfoPtr := archive.EngineBooleanVariable(index)
-	if varInfoPtr == nil {
-		return archive.GameVariableInfoFor("(unused)").At(0)
-	}
-	return *varInfoPtr
+	return service.baseInfoProvider().BooleanVariable(index)
 }
 
 // SetBooleanVariable sets the variable info for the given index in the project settings.

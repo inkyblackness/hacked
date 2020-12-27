@@ -29,10 +29,20 @@ const (
 	hintUnknown = "???"
 )
 
-var variableContextList = map[edit.VariableContextIdentifier]string{
-	edit.VariableContextCitadel: "Citadel Mission",
-	edit.VariableContextEngine:  "Engine",
-	edit.VariableContextProject: "Project",
+var variableContextList = map[edit.VariableBaseContextIdentifier]struct {
+	title string
+	info  string
+}{
+	edit.VariableContextCitadel: {
+		title: "Citadel Mission",
+		info: "Variables are listed based on use on Citadel.\n" +
+			"Useful for Citadel-based savegames and mods, such as 'New Game+' variants.",
+	},
+	edit.VariableContextEngine: {
+		title: "Engine",
+		info: "Variables are listed based on the hardcoded engine behaviour.\n" +
+			"Useful for dedicated missions.",
+	},
 }
 
 // View provides edit controls for the archive.
@@ -151,9 +161,8 @@ func (view *View) renderGameStateContent() {
 					view.requestSetGameState(citadel.DefaultGameState().Raw())
 				}
 				if imgui.IsItemHovered() {
-					imgui.BeginTooltip()
-					imgui.SetTooltip("Values of new game archives are only considered by special engines.")
-					imgui.EndTooltip()
+					imgui.SetTooltip("Values of new game archives are only considered by special engines.\n" +
+						"Overriding them will only work in those.")
 				}
 			} else if imgui.Button("Remove") {
 				view.requestSetGameState(archive.ZeroGameStateData())
@@ -682,23 +691,25 @@ func (view *View) createInventoryWeaponSlotControls(readOnly bool, slot archive.
 }
 
 func (view *View) createVariableControls(readOnly bool, gameState *archive.GameState, onChange func()) {
-	currentContextIdentifier := view.gameStateService.VariableContext()
-	if imgui.BeginCombo("Context", variableContextList[currentContextIdentifier]) {
+	currentContextIdentifier := view.gameStateService.VariableBaseContext()
+	if imgui.BeginCombo("Base Context", variableContextList[currentContextIdentifier].title) {
 		contextIdentifiers := edit.VariableContextIdentifiers()
 		for _, identifier := range contextIdentifiers {
-			if imgui.SelectableV(variableContextList[identifier], identifier == currentContextIdentifier, 0, imgui.Vec2{}) {
-				view.gameStateService.SetVariableContext(identifier)
+			contextInfo := variableContextList[identifier]
+			if imgui.SelectableV(contextInfo.title, identifier == currentContextIdentifier, 0, imgui.Vec2{}) {
+				view.gameStateService.SetVariableBaseContext(identifier)
+			}
+			if imgui.IsItemHovered() {
+				imgui.SetTooltip(contextInfo.info)
 			}
 		}
 		imgui.EndCombo()
 	}
 
-	varProvider := view.gameStateService.GameVariableInfoProvider()
-
-	if !readOnly && imgui.Button("Reset") {
+	if !readOnly && imgui.Button("Reset All") {
 		for i := 0; i < archive.BooleanVarCount; i++ {
 			varIndex := i
-			info := varProvider.BooleanVariable(varIndex)
+			info := view.gameStateService.BooleanVariable(varIndex)
 			var initValue bool
 			if info.InitValue != nil {
 				initValue = *info.InitValue != 0
@@ -707,7 +718,7 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 		}
 		for i := 0; i < archive.IntegerVarCount; i++ {
 			varIndex := i
-			info := varProvider.IntegerVariable(varIndex)
+			info := view.gameStateService.IntegerVariable(varIndex)
 			var initValue int16
 			if info.InitValue != nil {
 				initValue = *info.InitValue
@@ -730,7 +741,7 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 
 		for i := 0; i < archive.BooleanVarCount; i++ {
 			varIndex := i
-			info := varProvider.BooleanVariable(varIndex)
+			info := view.gameStateService.BooleanVariable(varIndex)
 
 			varReadOnly := readOnly || (info.Hardcoded && !isSavegame)
 			varLabel := fmt.Sprintf("Var%03d", varIndex)
@@ -780,7 +791,7 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 		}
 		for i := 0; i < archive.IntegerVarCount; i++ {
 			varIndex := i
-			info := varProvider.IntegerVariable(varIndex)
+			info := view.gameStateService.IntegerVariable(varIndex)
 
 			varReadOnly := readOnly || (info.Hardcoded && !isSavegame)
 			varLabel := fmt.Sprintf("Var%02d", varIndex)
