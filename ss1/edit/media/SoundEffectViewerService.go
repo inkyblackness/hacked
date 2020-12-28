@@ -13,12 +13,12 @@ type SoundEffectBlockGetter interface {
 
 // SoundEffectViewerService provides read-only access to audio resources.
 type SoundEffectViewerService struct {
-	soundCache *sound.SoundEffectCache
+	soundCache *sound.EffectCache
 	getter     SoundEffectBlockGetter
 }
 
 // NewSoundViewerService returns a new instance.
-func NewSoundViewerService(soundCache *sound.SoundEffectCache, getter SoundEffectBlockGetter) SoundEffectViewerService {
+func NewSoundViewerService(soundCache *sound.EffectCache, getter SoundEffectBlockGetter) SoundEffectViewerService {
 	return SoundEffectViewerService{
 		soundCache: soundCache,
 		getter:     getter,

@@ -140,7 +140,7 @@ type Application struct {
 	frameCache       *graphics.FrameCache
 	animationCache   *bitmap.AnimationCache
 	movieCache       *movie.Cache
-	soundEffectCache *sound.SoundEffectCache
+	soundEffectCache *sound.EffectCache
 
 	mapDisplay *levels.MapDisplay
 
@@ -579,7 +579,7 @@ func (app *Application) initModel() {
 	app.textPageCache = text.NewPageCache(app.cp, app.mod)
 	app.messagesCache = text.NewElectronicMessageCache(app.cp, app.mod)
 	app.movieCache = movie.NewCache(app.cp, app.mod)
-	app.soundEffectCache = sound.NewSoundCache(app.mod)
+	app.soundEffectCache = sound.NewEffectCache(app.mod)
 
 	for i := 0; i < archive.MaxLevels; i++ {
 		app.levels[i] = level.NewLevel(ids.LevelResourcesStart, i, app.mod)

@@ -8,17 +8,17 @@ import (
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
-// SoundEffectCache retrieves audio samples stored as VOC files from a localizer and
+// EffectCache retrieves audio samples stored as VOC files from a localizer and
 // keeps them cached until they are invalidated.
-type SoundEffectCache struct {
+type EffectCache struct {
 	localizer resource.Localizer
 
 	sounds map[resource.Key]audio.L8
 }
 
-// NewSoundCache returns a new instance.
-func NewSoundCache(localizer resource.Localizer) *SoundEffectCache {
-	cache := &SoundEffectCache{
+// NewEffectCache returns a new instance.
+func NewEffectCache(localizer resource.Localizer) *EffectCache {
+	cache := &EffectCache{
 		localizer: localizer,
 
 		sounds: make(map[resource.Key]audio.L8),
@@ -27,7 +27,7 @@ func NewSoundCache(localizer resource.Localizer) *SoundEffectCache {
 }
 
 // InvalidateResources lets the cache remove any sounds from resources that are specified in the given slice.
-func (cache *SoundEffectCache) InvalidateResources(ids []resource.ID) {
+func (cache *EffectCache) InvalidateResources(ids []resource.ID) {
 	for _, id := range ids {
 		for key := range cache.sounds {
 			if key.ID == id {
@@ -37,7 +37,7 @@ func (cache *SoundEffectCache) InvalidateResources(ids []resource.ID) {
 	}
 }
 
-func (cache *SoundEffectCache) cached(key resource.Key) (audio.L8, error) {
+func (cache *EffectCache) cached(key resource.Key) (audio.L8, error) {
 	value, existing := cache.sounds[key]
 	if existing {
 		return value, nil
@@ -63,7 +63,7 @@ func (cache *SoundEffectCache) cached(key resource.Key) (audio.L8, error) {
 }
 
 // Audio retrieves and caches the underlying sound.
-func (cache *SoundEffectCache) Audio(key resource.Key) (audio.L8, error) {
+func (cache *EffectCache) Audio(key resource.Key) (audio.L8, error) {
 	cached, err := cache.cached(key)
 	if err != nil {
 		return audio.L8{}, err
