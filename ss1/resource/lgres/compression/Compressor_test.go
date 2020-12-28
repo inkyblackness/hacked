@@ -27,7 +27,7 @@ func (suite *CompressorSuite) SetupTest() {
 	suite.compressor = NewCompressor(suite.store)
 }
 
-func (suite *CompressorSuite) TestWriteCompressesFirstReocurrence() {
+func (suite *CompressorSuite) TestWriteCompressesFirstReoccurrence() {
 	suite.givenWrittenData([]byte{0x00, 0x01})
 	suite.givenWrittenData([]byte{0x00, 0x01})
 
