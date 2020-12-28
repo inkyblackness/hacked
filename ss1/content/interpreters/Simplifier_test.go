@@ -1,4 +1,4 @@
-package interpreters
+package interpreters // nolint: testpackage
 
 import (
 	"testing"
