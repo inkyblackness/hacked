@@ -23,7 +23,7 @@ func Save(writer io.Writer, sampleRate float32, samples []byte) error {
 func writeHeader(writer io.Writer) error {
 	version := baseVersion
 
-	_, err := writer.Write(bytes.NewBufferString(fileHeader).Bytes())
+	_, err := writer.Write(bytes.NewBufferString(FileHeader).Bytes())
 	if err != nil {
 		return err
 	}

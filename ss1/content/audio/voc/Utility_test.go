@@ -1,4 +1,4 @@
-package voc
+package voc // nolint: testpackage
 
 import (
 	"testing"

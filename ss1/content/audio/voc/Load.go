@@ -22,7 +22,7 @@ func Load(source io.Reader) (data audio.L8, err error) {
 }
 
 func readAndVerifyHeader(source io.Reader) error {
-	start := make([]byte, len(fileHeader))
+	start := make([]byte, len(FileHeader))
 	headerSize := uint16(0)
 	version := uint16(0)
 	versionValidity := uint16(0)

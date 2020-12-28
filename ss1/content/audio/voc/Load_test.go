@@ -1,4 +1,4 @@
-package voc
+package voc_test
 
 import (
 	"bytes"
@@ -7,16 +7,18 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/inkyblackness/hacked/ss1/content/audio/voc"
 )
 
 func TestLoadReturnsErrorOnNil(t *testing.T) {
-	_, err := Load(nil)
+	_, err := voc.Load(nil)
 
 	assert.Errorf(t, err, "source is nil")
 }
 
 func newHeader() *bytes.Buffer {
-	writer := bytes.NewBufferString(fileHeader)
+	writer := bytes.NewBufferString(voc.FileHeader)
 	version := uint16(0x010A)
 	headerSize := uint16(0x001A)
 
@@ -36,7 +38,7 @@ func TestLoadReturnsErrorOnInvalidVersion(t *testing.T) {
 	data := writer.Bytes()
 	data[24] = 0x00
 	source := bytes.NewReader(data)
-	_, err := Load(source)
+	_, err := voc.Load(source)
 
 	assert.Errorf(t, err, "Version validity failed: 0x1129 != 0x1100")
 }
@@ -47,7 +49,7 @@ func TestLoadReturnsErrorOnValidButEmptyFile(t *testing.T) {
 	writer.Write([]byte{0x00}) // Terminator
 
 	source := bytes.NewReader(writer.Bytes())
-	_, err := Load(source)
+	_, err := voc.Load(source)
 
 	assert.Errorf(t, err, "No audio found")
 }
@@ -63,7 +65,7 @@ func TestLoadReturnsSoundDataOnSampleData(t *testing.T) {
 	writer.Write([]byte{0x00}) // Terminator
 
 	source := bytes.NewReader(writer.Bytes())
-	data, err := Load(source)
+	data, err := voc.Load(source)
 
 	require.Nil(t, err)
 	assert.NotNil(t, data)
@@ -80,7 +82,7 @@ func TestLoadReturnsSoundDataWithSampleRate(t *testing.T) {
 	writer.Write([]byte{0x00}) // Terminator
 
 	source := bytes.NewReader(writer.Bytes())
-	data, err := Load(source)
+	data, err := voc.Load(source)
 
 	require.Nil(t, err)
 	assert.Equal(t, float32(10000.0), data.SampleRate)
@@ -98,7 +100,7 @@ func TestLoadReturnsSoundDataWithSamples(t *testing.T) {
 	writer.Write([]byte{0x00}) // Terminator
 
 	source := bytes.NewReader(writer.Bytes())
-	data, err := Load(source)
+	data, err := voc.Load(source)
 
 	require.Nil(t, err)
 	assert.Equal(t, samples, data.Samples)
