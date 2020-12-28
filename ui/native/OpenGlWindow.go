@@ -240,7 +240,6 @@ func (window *OpenGLWindow) onKey(rawWindow *glfw.Window, glfwKey glfw.Key, scan
 	if knownKey {
 		window.reportKey(action, key, modifier)
 	}
-
 }
 
 func (window *OpenGLWindow) reportKey(action glfw.Action, key input.Key, modifier input.Modifier) {

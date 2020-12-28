@@ -489,7 +489,6 @@ func (view *View) requestImportScene(returningInfo string) {
 
 		scene.Palette = palette
 		for index, img := range data.Image {
-
 			for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
 				for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
 					colorIndex := img.ColorIndexAt(x, y)

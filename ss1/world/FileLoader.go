@@ -115,7 +115,6 @@ func (loader *fileLoader) load(name string, isOnlyRequestedFile bool) {
 			loader.loadList(joinedSubNames, false)
 		}
 	} else {
-
 		tryDirect := true
 		if loader.allowZips && isOnlyRequestedFile {
 			tryDirect = false
