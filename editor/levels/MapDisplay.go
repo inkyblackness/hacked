@@ -130,7 +130,7 @@ func (display *MapDisplay) Render(properties object.PropertiesTable, lvl *level.
 	display.selectedObjects.filterInvalid(lvl)
 
 	display.activeLevel = lvl
-	display.background.Render()
+	display.background.Render(columns, rows)
 	if lvl.IsCyberspace() {
 		if paletteTexture != nil {
 			var colorQuery ColorQuery

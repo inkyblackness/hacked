@@ -29,6 +29,8 @@ var gridFragmentShaderSource = `
 #version 150
 precision mediump float;
 
+uniform vec4 gridSize;
+
 in vec4 gridColor;
 in vec3 originalPosition;
 
@@ -51,8 +53,8 @@ float nearGrid(float stepSize, float value) {
 void main(void) {
    float alphaX = nearGrid(256.0, originalPosition.x);
    float alphaY = nearGrid(256.0, originalPosition.y);
-   bool beyondX = (originalPosition.x / 256.0) >= 64.0 || (originalPosition.x < 0.0);
-   bool beyondY = (originalPosition.y / 256.0) >= 64.0 || (originalPosition.y < 0.0);
+   bool beyondX = (originalPosition.x / 256.0) >= gridSize.x || (originalPosition.x < 0.0);
+   bool beyondY = (originalPosition.y / 256.0) >= gridSize.y || (originalPosition.y < 0.0);
    float alpha = 0.0;
 
    if (!beyondX && !beyondY) {
@@ -79,8 +81,12 @@ type BackgroundGrid struct {
 	vao                     *opengl.VertexArrayObject
 	vertexPositionBuffer    uint32
 	vertexPositionAttrib    int32
+	gridSizeUniform         opengl.Vector4Uniform
 	viewMatrixUniform       opengl.Matrix4Uniform
 	projectionMatrixUniform opengl.Matrix4Uniform
+
+	lastReportedColumns int
+	lastReportedRows    int
 }
 
 // NewBackgroundGrid returns a new instance of BackgroundGrid.
@@ -97,22 +103,52 @@ func NewBackgroundGrid(context *render.Context) *BackgroundGrid {
 		vertexPositionBuffer:    gl.GenBuffers(1)[0],
 		vertexPositionAttrib:    gl.GetAttribLocation(program, "vertexPosition"),
 		viewMatrixUniform:       opengl.Matrix4Uniform(gl.GetUniformLocation(program, "viewMatrix")),
-		projectionMatrixUniform: opengl.Matrix4Uniform(gl.GetUniformLocation(program, "projectionMatrix"))}
+		projectionMatrixUniform: opengl.Matrix4Uniform(gl.GetUniformLocation(program, "projectionMatrix")),
+		gridSizeUniform:         opengl.Vector4Uniform(gl.GetUniformLocation(program, "gridSize")),
+	}
 
+	return grid
+}
+
+// Render renders the grid.
+func (grid *BackgroundGrid) Render(columns, rows int) {
+	gl := grid.context.OpenGL
+
+	grid.setGridSize(rows, columns)
+
+	grid.vao.OnShader(func() {
+		grid.viewMatrixUniform.Set(gl, grid.context.ViewMatrix)
+		grid.projectionMatrixUniform.Set(gl, &grid.context.ProjectionMatrix)
+		grid.gridSizeUniform.Set(gl, &[4]float32{float32(rows), float32(columns), 0, 0})
+
+		gl.DrawArrays(opengl.TRIANGLES, 0, 6)
+	})
+}
+
+func (grid *BackgroundGrid) setGridSize(columns, rows int) {
+	if (grid.lastReportedColumns == columns) && (grid.lastReportedRows == rows) {
+		return
+	}
+	grid.lastReportedColumns = columns
+	grid.lastReportedRows = rows
+
+	gl := grid.context.OpenGL
 	{
-		tilesPerMapSide := float32(64.0)
+		hTiles := float32(columns)
+		vTiles := float32(rows)
 
 		gl.BindBuffer(opengl.ARRAY_BUFFER, grid.vertexPositionBuffer)
-		half := fineCoordinatesPerTileSide / float32(2.0)
-		limit := fineCoordinatesPerTileSide*tilesPerMapSide + half
+		fineHalf := fineCoordinatesPerTileSide / float32(2.0)
+		hLimit := fineCoordinatesPerTileSide*hTiles + fineHalf
+		vLimit := fineCoordinatesPerTileSide*vTiles + fineHalf
 		var vertices = []float32{
-			-half, -half, 0.0,
-			limit, -half, 0.0,
-			limit, limit, 0.0,
+			-fineHalf, -fineHalf, 0.0,
+			hLimit, -fineHalf, 0.0,
+			hLimit, vLimit, 0.0,
 
-			limit, limit, 0.0,
-			-half, limit, 0.0,
-			-half, -half, 0.0}
+			hLimit, vLimit, 0.0,
+			-fineHalf, vLimit, 0.0,
+			-fineHalf, -fineHalf, 0.0}
 		gl.BufferData(opengl.ARRAY_BUFFER, len(vertices)*4, vertices, opengl.STATIC_DRAW)
 		gl.BindBuffer(opengl.ARRAY_BUFFER, 0)
 	}
@@ -121,19 +157,5 @@ func NewBackgroundGrid(context *render.Context) *BackgroundGrid {
 		gl.BindBuffer(opengl.ARRAY_BUFFER, grid.vertexPositionBuffer)
 		gl.VertexAttribOffset(uint32(grid.vertexPositionAttrib), 3, opengl.FLOAT, false, 0, 0)
 		gl.BindBuffer(opengl.ARRAY_BUFFER, 0)
-	})
-
-	return grid
-}
-
-// Render renders the grid.
-func (grid *BackgroundGrid) Render() {
-	gl := grid.context.OpenGL
-
-	grid.vao.OnShader(func() {
-		grid.viewMatrixUniform.Set(gl, grid.context.ViewMatrix)
-		grid.projectionMatrixUniform.Set(gl, &grid.context.ProjectionMatrix)
-
-		gl.DrawArrays(opengl.TRIANGLES, 0, 6)
 	})
 }
