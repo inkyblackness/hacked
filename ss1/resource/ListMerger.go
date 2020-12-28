@@ -50,7 +50,7 @@ func (view listMerger) Block(index int) (reader io.Reader, err error) {
 		tempReader, tempErr := view.list[layer].Block(index)
 		if tempErr == nil {
 			var buf [1]byte
-			read, _ := tempReader.Read(buf[:]) // nolint
+			read, _ := tempReader.Read(buf[:])
 			if read == 1 {
 				reader, err = view.list[layer].Block(index)
 			}

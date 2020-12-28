@@ -103,7 +103,6 @@ func init() {
 
 var infoByID = map[resource.ID]ResourceInfo{}
 
-// nolint: govet
 var infoList = []ResourceInfo{
 	{GamePalettesStart, GamePalettesStart.Plus(3), resource.Palette, false, false, false, 3, GamePal},
 
