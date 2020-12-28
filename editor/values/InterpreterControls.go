@@ -157,7 +157,7 @@ func StandardSimplifier(readOnly bool, multiple bool, fullKey string, unifier Un
 			center := winTopLeft.Plus(winSize.Times(0.5))
 			circleRadius := ((winSize.X / 2) * 5) / 6
 			dl.AddCircleV(center, circleRadius, lineColor, 100, lineThickness)
-			// TODO: This code needs to be generalized to allow for any rotation, not just specialized for Hacker-Yaw.
+			// This code is specialized for Hacker-Yaw. To re-use it for other rotations, the target needs to be provided.
 			targetX := 1.0
 			targetY := 0.0
 			dl.AddLineV(center, imgui.Vec2{

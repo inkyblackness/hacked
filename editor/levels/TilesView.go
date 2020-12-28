@@ -574,8 +574,7 @@ func (view *TilesView) changeTiles(lvl *level.Level, positions []MapPosition, mo
 			resourceID := ids.LevelResourcesStart.Plus(lvlids.PerLevel*lvl.ID() + id)
 			patch, changed, err := view.mod.CreateBlockPatch(resource.LangAny, resourceID, 0, newData)
 			if err != nil {
-				fmt.Printf("err: %v\n", err)
-				// TODO how to handle this? We're not expecting this, so crash and burn?
+				panic(err)
 			} else if changed {
 				command.patches = append(command.patches, patch)
 			}

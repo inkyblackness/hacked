@@ -180,7 +180,7 @@ func (view *View) renderContent() {
 				frame = &scene.Frames[view.model.currentFrame]
 			}
 			if frame != nil {
-				// TODO: only update if something changed
+				// This code updates the texture every render cycle. In case of performance loss, this is a point to optimize.
 				view.frameCache.SetTexture(view.frameCacheKey, 600, 300, frame.Pixels, &scene.Palette)
 
 				render.FrameImage("Frame", view.frameCache, view.frameCacheKey,

@@ -247,10 +247,11 @@ func (service *ProjectService) TryLoadModFrom(names []string) error {
 		}
 		for _, id := range viewer.IDs() {
 			view, err := viewer.View(id)
-			if err == nil {
-				_ = loc.Store.Put(id, view)
+			if err != nil {
+				// optimistic ignore
+				continue
 			}
-			// TODO: handle error?
+			_ = loc.Store.Put(id, view)
 		}
 		locs = append(locs, loc)
 	}
