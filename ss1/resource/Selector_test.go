@@ -133,6 +133,23 @@ func (suite *ResourceSelectorSuite) TestMetaOfNonCompoundListIsThatOfLast() {
 	suite.thenResourceShouldHaveMeta(false, resource.Text, false)
 }
 
+func (suite *ResourceSelectorSuite) TestBlockReturnsErrorForIndexOutOfRange() {
+	suite.givenSpecificResource(func(res *resource.Resource) {
+		res.Blocks = resource.BlocksFrom(nil)
+	})
+	suite.whenInstanceIsCreated()
+	suite.thenBlockShouldReturnErrorFor(0)
+	suite.thenBlockShouldReturnErrorFor(-1)
+}
+
+func (suite *ResourceSelectorSuite) TestBlockReturnsEmptyReaderIfAllLayersAreEmpty() {
+	suite.givenSpecificResource(func(res *resource.Resource) {
+		res.Blocks = resource.BlocksFrom([][]byte{{}})
+	})
+	suite.whenInstanceIsCreated()
+	suite.thenBlockShouldReturnFor(0, []byte{})
+}
+
 func (suite *ResourceSelectorSuite) givenResourceIsACompoundList() {
 	suite.isCompoundList = true
 	suite.viewStrategy = suite
@@ -184,11 +201,25 @@ func (suite *ResourceSelectorSuite) thenResourceShouldHaveMeta(compound bool, co
 	assert.Equal(suite.T(), compressed, suite.view.Compressed(), "Compression is wrong")
 }
 
+func (suite *ResourceSelectorSuite) thenBlockShouldReturnErrorFor(index int) {
+	_, err := suite.view.Block(index)
+	assert.NotNil(suite.T(), err, "Error expected")
+}
+
+func (suite *ResourceSelectorSuite) thenBlockShouldReturnFor(index int, expected []byte) {
+	reader, readerErr := suite.view.Block(index)
+	require.Nil(suite.T(), readerErr, "No error expected retrieving block")
+	require.NotNil(suite.T(), reader, "Reader expected")
+	data, dataErr := ioutil.ReadAll(reader)
+	require.Nil(suite.T(), dataErr, "No error expected reading block")
+	assert.Equal(suite.T(), expected, data, "Data mismatch")
+}
+
 func (suite *ResourceSelectorSuite) IsCompoundList(id resource.ID) bool {
 	assert.Equal(suite.T(), resource.ID(1000), id, "Unknown resource queried")
 	return suite.isCompoundList
 }
 
 func (suite *ResourceSelectorSuite) Filter(lang resource.Language, id resource.ID) resource.List {
-	return resource.List(suite.resources)
+	return suite.resources
 }
