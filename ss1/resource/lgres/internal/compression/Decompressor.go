@@ -8,7 +8,7 @@ import (
 
 type decompressor struct {
 	coder  serial.Coder
-	reader *wordReader
+	reader *WordReader
 
 	isEndOfStream  bool
 	dictBuffer     dictEntryBuffer
@@ -26,7 +26,7 @@ func NewDecompressor(source io.Reader) io.Reader {
 	coder := serial.NewDecoder(source)
 	obj := &decompressor{
 		coder:      coder,
-		reader:     newWordReader(coder),
+		reader:     NewWordReader(coder),
 		dictionary: rootDictEntry(),
 		scratch:    make([]byte, 1024)}
 	obj.resetDictionary()
@@ -39,8 +39,8 @@ func (obj *decompressor) resetDictionary() {
 	obj.lookup = make([]*dictEntry, 1024)
 	obj.dictionary = rootDictEntry()
 	for i := 0; i < 0x100; i++ {
-		entry := obj.dictionary.Add(byte(i), word(i), obj.dictBuffer.entry(word(i)))
-		obj.lookup[word(i)] = entry
+		entry := obj.dictionary.Add(byte(i), Word(i), obj.dictBuffer.entry(Word(i)))
+		obj.lookup[Word(i)] = entry
 	}
 	obj.lastEntry = obj.dictionary
 }
@@ -80,7 +80,7 @@ func (obj *decompressor) takeFromLeftover(target []byte) (provided int) {
 }
 
 func (obj *decompressor) readNextWord() {
-	nextWord := obj.reader.read()
+	nextWord := obj.reader.Read()
 
 	if obj.lastEntry.depth > len(obj.scratch) {
 		obj.scratch = make([]byte, len(obj.scratch)+1024)
@@ -88,9 +88,9 @@ func (obj *decompressor) readNextWord() {
 	obj.leftover = obj.scratch[:obj.lastEntry.depth]
 	obj.lastEntry.Data(obj.leftover)
 	switch nextWord {
-	case endOfStream:
+	case EndOfStream:
 		obj.isEndOfStream = true
-	case reset:
+	case Reset:
 		obj.resetDictionary()
 	default:
 		var nextEntry *dictEntry
@@ -117,7 +117,7 @@ func (obj *decompressor) readNextWord() {
 }
 
 func (obj *decompressor) addToDictionary(value byte) {
-	key := word(int(literalLimit) + obj.dictionarySize)
+	key := Word(int(literalLimit) + obj.dictionarySize)
 	nextEntry := obj.lastEntry.Add(value, key, obj.dictBuffer.entry(key))
 	if int(key) >= len(obj.lookup) {
 		newLookup := make([]*dictEntry, len(obj.lookup)+1024)

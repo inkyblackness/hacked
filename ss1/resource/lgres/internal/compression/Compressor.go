@@ -8,7 +8,7 @@ import (
 
 type compressor struct {
 	coder  serial.Coder
-	writer *wordWriter
+	writer *WordWriter
 
 	dictBuffer     dictEntryBuffer
 	overtime       int
@@ -22,7 +22,7 @@ func NewCompressor(target io.Writer) io.WriteCloser {
 	coder := serial.NewEncoder(target)
 	obj := &compressor{
 		coder:          coder,
-		writer:         newWordWriter(coder),
+		writer:         NewWordWriter(coder),
 		dictionary:     rootDictEntry(),
 		dictionarySize: 0,
 		overtime:       0}
@@ -35,14 +35,14 @@ func NewCompressor(target io.Writer) io.WriteCloser {
 func (obj *compressor) resetDictionary() {
 	obj.dictionarySize = 0
 	for i := 0; i < 0x100; i++ {
-		obj.dictionary.Add(byte(i), word(i), obj.dictBuffer.entry(word(i)))
+		obj.dictionary.Add(byte(i), Word(i), obj.dictBuffer.entry(Word(i)))
 	}
 	obj.curEntry = obj.dictionary
 }
 
 func (obj *compressor) Close() error {
-	obj.writer.write(obj.curEntry.key)
-	obj.writer.close()
+	obj.writer.Write(obj.curEntry.key)
+	obj.writer.Close()
 
 	return obj.coder.FirstError()
 }
@@ -60,10 +60,10 @@ func (obj *compressor) addByte(value byte) {
 	if nextEntry != nil {
 		obj.curEntry = nextEntry
 	} else {
-		obj.writer.write(obj.curEntry.key)
+		obj.writer.Write(obj.curEntry.key)
 
-		key := word(int(literalLimit) + obj.dictionarySize)
-		if key < reset {
+		key := Word(int(literalLimit) + obj.dictionarySize)
+		if key < Reset {
 			obj.curEntry.Add(value, key, obj.dictBuffer.entry(key))
 			obj.dictionarySize++
 		} else {
@@ -77,7 +77,7 @@ func (obj *compressor) addByte(value byte) {
 func (obj *compressor) onKeySaturation() {
 	obj.overtime++
 	if obj.overtime > 1000 {
-		obj.writer.write(reset)
+		obj.writer.Write(Reset)
 		obj.resetDictionary()
 		obj.overtime = 0
 	}

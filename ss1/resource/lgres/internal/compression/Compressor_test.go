@@ -1,10 +1,11 @@
-package compression
+package compression_test
 
 import (
 	"bytes"
 	"io"
 	"testing"
 
+	"github.com/inkyblackness/hacked/ss1/resource/lgres/internal/compression"
 	"github.com/inkyblackness/hacked/ss1/serial"
 
 	"github.com/stretchr/testify/assert"
@@ -24,17 +25,17 @@ func TestCompressorSuite(t *testing.T) {
 
 func (suite *CompressorSuite) SetupTest() {
 	suite.store = serial.NewByteStore()
-	suite.compressor = NewCompressor(suite.store)
+	suite.compressor = compression.NewCompressor(suite.store)
 }
 
-func (suite *CompressorSuite) TestWriteCompressesFirstReoccurrence() {
+func (suite *CompressorSuite) TestWriteCompressesFirstReocurrence() {
 	suite.givenWrittenData([]byte{0x00, 0x01})
 	suite.givenWrittenData([]byte{0x00, 0x01})
 
 	err := suite.compressor.Close()
 	assert.Nil(suite.T(), err, "no error expected")
 
-	suite.thenWordsShouldBe(word(0x0000), word(0x0001), word(0x0100))
+	suite.thenWordsShouldBe(compression.Word(0x0000), compression.Word(0x0001), compression.Word(0x0100))
 }
 
 func (suite *CompressorSuite) TestWriteCompressesTest1() {
@@ -43,7 +44,9 @@ func (suite *CompressorSuite) TestWriteCompressesTest1() {
 	err := suite.compressor.Close()
 	assert.Nil(suite.T(), err, "no error expected")
 
-	suite.thenWordsShouldBe(word(0x0000), word(0x0001), word(0x0000), word(0x0002), word(0x0101), word(0x0001))
+	suite.thenWordsShouldBe(
+		compression.Word(0x0000), compression.Word(0x0001), compression.Word(0x0000),
+		compression.Word(0x0002), compression.Word(0x0101), compression.Word(0x0001))
 }
 
 func (suite *CompressorSuite) givenWrittenData(data []byte) {
@@ -52,12 +55,12 @@ func (suite *CompressorSuite) givenWrittenData(data []byte) {
 	require.Equal(suite.T(), len(data), written, "expected all bytes to be written")
 }
 
-func (suite *CompressorSuite) thenWordsShouldBe(expected ...word) {
+func (suite *CompressorSuite) thenWordsShouldBe(expected ...compression.Word) {
 	source := bytes.NewReader(suite.store.Data())
-	reader := newWordReader(serial.NewDecoder(source))
-	var words []word
+	reader := compression.NewWordReader(serial.NewDecoder(source))
+	var words []compression.Word
 
-	for read := reader.read(); read != endOfStream; read = reader.read() {
+	for read := reader.Read(); read != compression.EndOfStream; read = reader.Read() {
 		words = append(words, read)
 	}
 

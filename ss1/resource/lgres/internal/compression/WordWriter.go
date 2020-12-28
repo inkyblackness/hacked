@@ -2,7 +2,8 @@ package compression
 
 import "github.com/inkyblackness/hacked/ss1/serial"
 
-type wordWriter struct {
+// WordWriter serializes a stream of word entries.
+type WordWriter struct {
 	coder serial.Coder
 
 	bufferedBits uint
@@ -12,14 +13,16 @@ type wordWriter struct {
 	outUsed   int
 }
 
-func newWordWriter(coder serial.Coder) *wordWriter {
-	writer := &wordWriter{coder: coder, bufferedBits: 0, scratch: 0}
+// NewWordWriter returns a new instance.
+func NewWordWriter(coder serial.Coder) *WordWriter {
+	writer := &WordWriter{coder: coder, bufferedBits: 0, scratch: 0}
 
 	return writer
 }
 
-func (writer *wordWriter) close() {
-	writer.write(endOfStream)
+// Close finishes the stream of words.
+func (writer *WordWriter) Close() {
+	writer.Write(EndOfStream)
 	if writer.bufferedBits > 0 {
 		writer.writeByte(byte(writer.scratch >> 16))
 	}
@@ -27,7 +30,8 @@ func (writer *wordWriter) close() {
 	writer.flushBuffer()
 }
 
-func (writer *wordWriter) write(value word) {
+// Write adds the given word to the stream.
+func (writer *WordWriter) Write(value Word) {
 	writer.scratch |= uint32(value) << ((16 - bitsPerWord) + (8 - writer.bufferedBits))
 	writer.bufferedBits += bitsPerWord
 	writer.writeByte(byte(writer.scratch >> 16))
@@ -41,7 +45,7 @@ func (writer *wordWriter) write(value word) {
 	}
 }
 
-func (writer *wordWriter) writeByte(value byte) {
+func (writer *WordWriter) writeByte(value byte) {
 	writer.outBuffer[writer.outUsed] = value
 	writer.outUsed++
 	if writer.outUsed >= len(writer.outBuffer) {
@@ -49,7 +53,7 @@ func (writer *wordWriter) writeByte(value byte) {
 	}
 }
 
-func (writer *wordWriter) flushBuffer() {
+func (writer *WordWriter) flushBuffer() {
 	writer.coder.Code(writer.outBuffer[:writer.outUsed])
 	writer.outUsed = 0
 }

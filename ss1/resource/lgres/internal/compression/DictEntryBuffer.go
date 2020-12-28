@@ -9,7 +9,7 @@ type dictEntryBuffer struct {
 	buckets []*dictEntryBucket
 }
 
-func (buffer *dictEntryBuffer) entry(key word) *dictEntry {
+func (buffer *dictEntryBuffer) entry(key Word) *dictEntry {
 	bucketIndex := int(key) >> dictEntryBucketSizeBits
 	index := int(key & ((1 << dictEntryBucketSizeBits) - 1))
 

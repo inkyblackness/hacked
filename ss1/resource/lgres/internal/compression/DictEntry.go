@@ -6,19 +6,19 @@ type dictEntry struct {
 
 	next [256]*dictEntry
 
-	key   word
+	key   Word
 	value byte
 	first byte
 	used  bool
 }
 
 func rootDictEntry() *dictEntry {
-	return &dictEntry{prev: nil, depth: 0, value: 0x00, key: reset}
+	return &dictEntry{prev: nil, depth: 0, value: 0x00, key: Reset}
 }
 
 var emptyList [256]*dictEntry
 
-func (entry *dictEntry) Add(value byte, key word, newEntry *dictEntry) *dictEntry {
+func (entry *dictEntry) Add(value byte, key Word, newEntry *dictEntry) *dictEntry {
 	newEntry.prev = entry
 	newEntry.depth = entry.depth + 1
 	newEntry.value = value

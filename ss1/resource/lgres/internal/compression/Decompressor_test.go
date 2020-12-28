@@ -1,4 +1,4 @@
-package compression
+package compression_test
 
 import (
 	"bytes"
@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/inkyblackness/hacked/ss1/resource/lgres/internal/compression"
 	"github.com/inkyblackness/hacked/ss1/serial"
 )
 
@@ -68,31 +69,31 @@ func (suite *DecompressorSuite) TestDecompressTestRandom() {
 }
 
 func (suite *DecompressorSuite) TestDecompressHandlesDictionaryResets() {
-	suite.writeWords(0x0001, 0x0002, 0x0100, reset, 0x0003, 0x0004, 0x0100, endOfStream)
+	suite.writeWords(0x0001, 0x0002, 0x0100, compression.Reset, 0x0003, 0x0004, 0x0100, compression.EndOfStream)
 
 	suite.verifyOutput([]byte{0x01, 0x02, 0x01, 0x02, 0x03, 0x04, 0x03, 0x04})
 }
 
 func (suite *DecompressorSuite) TestDecompressHandlesSelfReferencingWords() {
-	suite.writeWords(0x0001, 0x0002, 0x0101, endOfStream)
+	suite.writeWords(0x0001, 0x0002, 0x0101, compression.EndOfStream)
 
 	suite.verifyOutput([]byte{0x01, 0x02, 0x02, 0x02})
 }
 
-func (suite *DecompressorSuite) writeWords(values ...word) {
+func (suite *DecompressorSuite) writeWords(values ...compression.Word) {
 	suite.store = serial.NewByteStore()
 	coder := serial.NewEncoder(suite.store)
-	writer := newWordWriter(coder)
+	writer := compression.NewWordWriter(coder)
 
 	for _, value := range values {
-		writer.write(value)
+		writer.Write(value)
 	}
-	writer.close()
+	writer.Close()
 }
 
 func (suite *DecompressorSuite) verify(input []byte) {
 	suite.store = serial.NewByteStore()
-	suite.compressor = NewCompressor(serial.NewEncoder(suite.store))
+	suite.compressor = compression.NewCompressor(serial.NewEncoder(suite.store))
 
 	n, err := suite.compressor.Write(input)
 	assert.Nil(suite.T(), err, "no error expected writing")
@@ -106,7 +107,7 @@ func (suite *DecompressorSuite) verify(input []byte) {
 func (suite *DecompressorSuite) verifyOutput(expected []byte) {
 	output := suite.buffer(len(expected))
 	source := bytes.NewReader(suite.store.Data())
-	decompressor := NewDecompressor(source)
+	decompressor := compression.NewDecompressor(source)
 	read, err := decompressor.Read(output)
 
 	assert.True(suite.T(), (err == nil) || (err == io.EOF), fmt.Sprintf("unexpected error: %v", err))
