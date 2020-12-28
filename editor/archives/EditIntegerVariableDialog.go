@@ -55,9 +55,9 @@ func (dialog *editIntegerVariableDialog) Render() {
 
 func (dialog *editIntegerVariableDialog) applyChanges() {
 	if dialog.varOverride {
-		dialog.service.SetIntegerVariable(dialog.index, dialog.info)
+		_ = dialog.service.SetIntegerVariable(dialog.index, dialog.info)
 	} else {
-		dialog.service.DefaultIntegerVariable(dialog.index)
+		_ = dialog.service.DefaultIntegerVariable(dialog.index)
 	}
 }
 

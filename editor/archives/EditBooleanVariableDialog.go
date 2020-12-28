@@ -50,9 +50,9 @@ func (dialog *editBooleanVariableDialog) Render() {
 
 func (dialog *editBooleanVariableDialog) applyChanges() {
 	if dialog.varOverride {
-		dialog.service.SetBooleanVariable(dialog.index, dialog.info)
+		_ = dialog.service.SetBooleanVariable(dialog.index, dialog.info)
 	} else {
-		dialog.service.DefaultBooleanVariable(dialog.index)
+		_ = dialog.service.DefaultBooleanVariable(dialog.index)
 	}
 }
 
