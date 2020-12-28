@@ -2,7 +2,6 @@ package editor
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -26,6 +25,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/sounds"
 	"github.com/inkyblackness/hacked/editor/texts"
 	"github.com/inkyblackness/hacked/editor/textures"
+	"github.com/inkyblackness/hacked/ss1"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
@@ -44,6 +44,11 @@ import (
 	"github.com/inkyblackness/hacked/ui/opengl"
 )
 
+const (
+	errCouldNotOpenFile ss1.StringError = "could not open file"
+	errCouldNotReadFile ss1.StringError = "could not read file"
+)
+
 type projectState struct {
 	ProjectSettings   *edit.ProjectSettings   `json:",omitempty"`
 	GameStateSettings *edit.GameStateSettings `json:",omitempty"`
@@ -54,12 +59,12 @@ type projectState struct {
 func projectStateFromFile(filename string) (projectState, error) {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return projectState{}, errors.New("could not open file")
+		return projectState{}, errCouldNotOpenFile
 	}
 	var state projectState
 	err = json.Unmarshal(data, &state)
 	if err != nil {
-		return projectState{}, errors.New("could not read file")
+		return projectState{}, errCouldNotReadFile
 	}
 	return state, nil
 }

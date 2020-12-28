@@ -24,6 +24,28 @@ var metaExpression = regexp.MustCompile("^[ ]*(?:(?:" +
 	metaExpressionLeftDisplay + "|" +
 	metaExpressionRightDisplay + ")[ ]*)*$")
 
+type metaStringError struct {
+	MetaString string
+}
+
+func (err metaStringError) Error() string {
+	return fmt.Sprintf("failed to parse meta string: '%s'", err.MetaString)
+}
+
+type blockError struct {
+	Action string
+	Index  int
+	Nested error
+}
+
+func (err blockError) Error() string {
+	return fmt.Sprintf("failed to %s block %d: %v", err.Action, err.Index, err.Nested)
+}
+
+func (err blockError) Unwrap() error {
+	return err.Nested
+}
+
 // ElectronicMessage describes one message.
 type ElectronicMessage struct {
 	// NextMessage identifies the message that should follow this one. -1 for none.
@@ -71,12 +93,20 @@ func DecodeElectronicMessage(cp Codepage, provider resource.BlockProvider) (mess
 		if blockIndex < provider.BlockCount() {
 			blockReader, blockErr := provider.Block(blockIndex)
 			if blockErr != nil {
-				err = fmt.Errorf("failed to access block %v: %v", blockIndex, blockErr)
+				err = blockError{
+					Action: "access",
+					Index:  blockIndex,
+					Nested: blockErr,
+				}
 				return
 			}
 			data, dataErr := ioutil.ReadAll(blockReader)
 			if dataErr != nil {
-				err = fmt.Errorf("failed to read data from block %v: %v", blockIndex, dataErr)
+				err = blockError{
+					Action: "read data from",
+					Index:  blockIndex,
+					Nested: dataErr,
+				}
 			}
 			line = cp.Decode(data)
 			blockIndex++
@@ -106,7 +136,7 @@ func DecodeElectronicMessage(cp Codepage, provider resource.BlockProvider) (mess
 
 	message = EmptyElectronicMessage()
 	if (len(metaData) == 0) || (len(metaData[0]) != len(metaString)) {
-		err = fmt.Errorf("failed to parse meta string: <%v>", metaString)
+		err = metaStringError{MetaString: metaString}
 	}
 	if (err == nil) && (len(metaData[1]) > 0) {
 		message.IsInterrupt = true

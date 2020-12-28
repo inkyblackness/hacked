@@ -1,11 +1,15 @@
 package graphics
 
 import (
-	"errors"
-
+	"github.com/inkyblackness/hacked/ss1"
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ui/opengl"
+)
+
+const (
+	errReferenceNotFound        ss1.StringError = "reference not existing"
+	errReferenceWrongDimensions ss1.StringError = "reference has wrong dimensions"
 )
 
 // TextureCache loads bitmaps and provides OpenGL textures.
@@ -70,11 +74,11 @@ func (cache *TextureCache) TextureReferenced(key resource.Key, reference *resour
 		}
 		refTex, refExisting := cache.textures[*reference]
 		if !refExisting {
-			return nil, errors.New("reference not existing")
+			return nil, errReferenceNotFound
 		}
 		refWidth, refHeight := refTex.Size()
 		if (int16(refWidth) != width) || (int16(refHeight) != height) {
-			return nil, errors.New("reference has wrong dimensions")
+			return nil, errReferenceWrongDimensions
 		}
 		copy(buf, refTex.PixelData())
 		return buf, nil

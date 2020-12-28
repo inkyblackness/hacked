@@ -2,7 +2,6 @@ package voc
 
 import (
 	"encoding/binary"
-	"fmt"
 	"io"
 
 	"github.com/inkyblackness/hacked/ss1"
@@ -10,8 +9,9 @@ import (
 )
 
 const (
-	errSourceIsNil  ss1.StringError = "source is nil"
-	errNoAudioFound ss1.StringError = "no audio found"
+	errSourceIsNil            ss1.StringError = "source is nil"
+	errNoAudioFound           ss1.StringError = "no audio found"
+	errInvalidVersionValidity ss1.StringError = "version validity check failed"
 )
 
 // Load reads from the provided source a Creative Voice Sound and returns the data.
@@ -52,7 +52,7 @@ func readAndVerifyHeader(source io.Reader) error {
 
 	calculated := ^version + versionCheckValue
 	if calculated != versionValidity {
-		return fmt.Errorf("version validity failed: 0x%04X != 0x%04X", calculated, versionValidity)
+		return errInvalidVersionValidity
 	}
 
 	skip := make([]byte, headerSize-standardHeaderSize)

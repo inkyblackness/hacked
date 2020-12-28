@@ -24,5 +24,6 @@ const (
 )
 
 const (
-	errNoResourcesFound ss1.StringError = "resource unknown"
+	errNoResourcesFound    ss1.StringError = "resource unknown"
+	errBlockLengthMismatch ss1.StringError = "block length mismatch"
 )

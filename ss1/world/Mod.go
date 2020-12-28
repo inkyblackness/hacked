@@ -2,7 +2,6 @@ package world
 
 import (
 	"bytes"
-	"fmt"
 	"path/filepath"
 	"sort"
 	"time"
@@ -138,7 +137,7 @@ func (mod Mod) CreateBlockPatch(lang resource.Language, id resource.ID, index in
 		return patch, false, err
 	}
 	if len(oldData) != len(newData) {
-		return patch, false, fmt.Errorf("block length mismatch: current=%d, newData=%d", len(oldData), len(newData))
+		return patch, false, errBlockLengthMismatch
 	}
 
 	forwardData := bytes.NewBuffer(nil)

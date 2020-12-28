@@ -10,6 +10,14 @@ import (
 	"github.com/inkyblackness/hacked/ui/opengl"
 )
 
+type fontFileError struct {
+	Filename string
+}
+
+func (err fontFileError) Error() string {
+	return fmt.Sprintf("could not load font '%s'", err.Filename)
+}
+
 // ContextParameters describes how to create the context.
 type ContextParameters struct {
 	// ConfigDir is used to store the UI state in.
@@ -191,7 +199,7 @@ func (context *Context) createFontsTexture(gl opengl.OpenGL, param ContextParame
 		}
 		font := fontAtlas.AddFontFromFileTTF(param.FontFile, fontSize)
 		if font == imgui.DefaultFont {
-			return fmt.Errorf("could not load font <%s>", param.FontFile)
+			return fontFileError{Filename: param.FontFile}
 		}
 	}
 	image := fontAtlas.TextureDataAlpha8()
