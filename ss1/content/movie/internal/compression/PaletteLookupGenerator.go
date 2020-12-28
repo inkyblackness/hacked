@@ -14,7 +14,7 @@ type paletteLookupEntry struct {
 // PaletteLookup is a dictionary of tile delta data, found in a palette buffer.
 type PaletteLookup struct {
 	buffer  []byte
-	entries map[tilePaletteKey]paletteLookupEntry
+	entries map[TilePaletteKey]paletteLookupEntry
 }
 
 // Buffer returns the underlying slice.
@@ -24,13 +24,13 @@ func (lookup *PaletteLookup) Buffer() []byte {
 
 // Lookup finds the given tile again and returns the properties where and how to reproduce it.
 func (lookup *PaletteLookup) Lookup(tile tileDelta) (index int, pal []byte, mask uint64) {
-	key := tilePaletteKeyFrom(tile[:])
+	key := TilePaletteKeyFrom(tile[:])
 	entry, inLookup := lookup.entries[key]
 	if inLookup {
 		index = entry.start
 		pal = lookup.buffer[entry.start : entry.start+entry.size]
 	} else {
-		pal = key.buffer()
+		pal = key.Buffer()
 	}
 	var mapped [256]byte
 	for mappedIndex := len(pal) - 1; mappedIndex >= 0; mappedIndex-- {
@@ -46,32 +46,32 @@ func (lookup *PaletteLookup) Lookup(tile tileDelta) (index int, pal []byte, mask
 
 // PaletteLookupGenerator creates palette lookups based on a set of registered tiles.
 type PaletteLookupGenerator struct {
-	keyUses map[tilePaletteKey]int
+	keyUses map[TilePaletteKey]int
 }
 
 // Generate creates a lookup based on all currently registered tile deltas.
 func (gen *PaletteLookupGenerator) Generate(ctx context.Context) (PaletteLookup, error) {
 	var lookup PaletteLookup
-	lookup.entries = make(map[tilePaletteKey]paletteLookupEntry)
+	lookup.entries = make(map[TilePaletteKey]paletteLookupEntry)
 
-	remainder := make(map[tilePaletteKey]struct{})
+	remainder := make(map[TilePaletteKey]struct{})
 	for key := range gen.keyUses {
 		remainder[key] = struct{}{}
 	}
 
 	type sizedEntry struct {
-		entries    map[tilePaletteKey]paletteLookupEntry
+		entries    map[TilePaletteKey]paletteLookupEntry
 		lastOffset int
 	}
 	sizedEntries := make(map[int]*sizedEntry)
 	knownSizes := []int{4, 8, 16}
 	for _, size := range knownSizes {
 		sizedEntries[size] = &sizedEntry{
-			entries: make(map[tilePaletteKey]paletteLookupEntry),
+			entries: make(map[TilePaletteKey]paletteLookupEntry),
 		}
 	}
 
-	toDeleteCache := make([]tilePaletteKey, 0, len(remainder))
+	toDeleteCache := make([]TilePaletteKey, 0, len(remainder))
 	addToBuffer := func(data []byte) {
 		lookup.buffer = append(lookup.buffer, data...)
 
@@ -95,7 +95,7 @@ func (gen *PaletteLookupGenerator) Generate(ctx context.Context) (PaletteLookup,
 
 			// find any new keys
 			for start := entry.lastOffset; start < fitLimit; start++ {
-				tempKey := tilePaletteKeyFrom(lookup.buffer[start : start+fitSize])
+				tempKey := TilePaletteKeyFrom(lookup.buffer[start : start+fitSize])
 				if _, existing := entry.entries[tempKey]; !existing {
 					entry.entries[tempKey] = paletteLookupEntry{
 						start: start,
@@ -109,12 +109,12 @@ func (gen *PaletteLookupGenerator) Generate(ctx context.Context) (PaletteLookup,
 		}
 	}
 
-	addEarlyEntry := func(key tilePaletteKey, limitSize int) bool {
+	addEarlyEntry := func(key TilePaletteKey, limitSize int) bool {
 		for _, fitSize := range knownSizes {
 			if key.size <= fitSize && fitSize <= limitSize {
 				entry := sizedEntries[fitSize]
 				for tempKey, paletteEntry := range entry.entries {
-					if tempKey.contains(&key) && (!key.hasColor(0x00) || (lookup.buffer[paletteEntry.start] == 0x00)) {
+					if tempKey.Contains(&key) && (!key.HasColor(0x00) || (lookup.buffer[paletteEntry.start] == 0x00)) {
 						lookup.entries[key] = paletteEntry
 						return true
 					}
@@ -126,13 +126,13 @@ func (gen *PaletteLookupGenerator) Generate(ctx context.Context) (PaletteLookup,
 
 	sizeLimitForSize := map[int]int{3: 4, 4: 8, 5: 8, 6: 8, 7: 8, 8: 8, 9: 16, 10: 16, 11: 16, 12: 16, 13: 16, 14: 16, 15: 16, 16: 16}
 	for size := PixelPerTile; (size > 2) && (ctx.Err() == nil); size-- {
-		keysInSize := make([]tilePaletteKey, 0, len(remainder))
+		keysInSize := make([]TilePaletteKey, 0, len(remainder))
 		for key := range remainder {
 			if key.size == size {
 				keysInSize = append(keysInSize, key)
 			}
 		}
-		sort.Slice(keysInSize, func(a, b int) bool { return keysInSize[a].lessThan(&keysInSize[b]) })
+		sort.Slice(keysInSize, func(a, b int) bool { return keysInSize[a].LessThan(&keysInSize[b]) })
 
 		// fmt.Printf("Working on key size %v, have %v sized, %v total remaining\n", size, len(keysInSize), len(remainder))
 		for _, sizedKey := range keysInSize {
@@ -141,7 +141,7 @@ func (gen *PaletteLookupGenerator) Generate(ctx context.Context) (PaletteLookup,
 			}
 
 			{
-				var earlyRemoved []tilePaletteKey
+				var earlyRemoved []TilePaletteKey
 				for key := range remainder {
 					if addEarlyEntry(key, sizeLimitForSize[size]) {
 						earlyRemoved = append(earlyRemoved, key)
@@ -152,7 +152,7 @@ func (gen *PaletteLookupGenerator) Generate(ctx context.Context) (PaletteLookup,
 				}
 			}
 			if _, stillRemaining := remainder[sizedKey]; stillRemaining {
-				bytes := sizedKey.buffer()
+				bytes := sizedKey.Buffer()
 				lookup.entries[sizedKey] = paletteLookupEntry{start: len(lookup.buffer), size: len(bytes)}
 				addToBuffer(bytes)
 
@@ -166,10 +166,10 @@ func (gen *PaletteLookupGenerator) Generate(ctx context.Context) (PaletteLookup,
 
 // Add registers a further delta to the generator.
 func (gen *PaletteLookupGenerator) Add(delta tileDelta) {
-	key := tilePaletteKeyFrom(delta[:])
+	key := TilePaletteKeyFrom(delta[:])
 	if key.size > 2 {
 		if gen.keyUses == nil {
-			gen.keyUses = make(map[tilePaletteKey]int)
+			gen.keyUses = make(map[TilePaletteKey]int)
 		}
 		gen.keyUses[key]++
 	}
