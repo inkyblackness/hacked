@@ -63,10 +63,6 @@ func (service SoundEffectService) RequestSetAudio(key resource.Key, data audio.L
 		restoreFunc)
 }
 
-func (service SoundEffectService) RequestClearAudio() {
-
-}
-
 func (service SoundEffectService) requestCommand(
 	forward func(modder media.SoundEffectBlockSetter),
 	reverse func(modder media.SoundEffectBlockSetter),
