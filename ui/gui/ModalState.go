@@ -1,6 +1,6 @@
 package gui
 
-// ModalState represents a modal dialog
+// ModalState represents a modal dialog.
 type ModalState interface {
 	// Render renders the dialog.
 	Render()

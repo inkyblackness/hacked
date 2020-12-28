@@ -117,7 +117,7 @@ func NewMapColors(context *render.Context) *MapColors {
 	return renderable
 }
 
-// Dispose releases any internal resources
+// Dispose releases any internal resources.
 func (renderable *MapColors) Dispose() {
 	gl := renderable.context.OpenGL
 	gl.DeleteProgram(renderable.program)
@@ -125,7 +125,7 @@ func (renderable *MapColors) Dispose() {
 	renderable.vao.Dispose()
 }
 
-// Render renders
+// Render renders the renderable.
 func (renderable *MapColors) Render(columnCount, rowCount int, query ColorQuery) {
 	gl := renderable.context.OpenGL
 

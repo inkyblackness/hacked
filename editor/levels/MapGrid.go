@@ -92,7 +92,7 @@ func NewMapGrid(context *render.Context) *MapGrid {
 	return grid
 }
 
-// Dispose releases any internal resources
+// Dispose releases any internal resources.
 func (grid *MapGrid) Dispose() {
 	gl := grid.context.OpenGL
 	gl.DeleteProgram(grid.program)
@@ -130,7 +130,7 @@ func (grid *MapGrid) calculateTickVertices() []float32 {
 	}
 }
 
-// Render renders
+// Render renders the grid.
 func (grid *MapGrid) Render(mapper TileMapper) {
 	gl := grid.context.OpenGL
 

@@ -21,7 +21,7 @@ func (word ControlWord) Packed(times int) PackedControlWord {
 	return PackedControlWord((uint32(word) & 0x00FFFFFF) | (uint32(times) << 24))
 }
 
-// Count returns the count value of the control
+// Count returns the count value of the control.
 func (word ControlWord) Count() int {
 	return int((uint32(word) >> 20) & 0xF)
 }

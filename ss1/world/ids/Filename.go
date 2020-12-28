@@ -47,7 +47,7 @@ func (any AnyLanguage) Matches(filename string) bool {
 	return strings.ToLower(filename) == string(any)
 }
 
-// FilenameList is a list of filenames
+// FilenameList is a list of filenames.
 type FilenameList []Filename
 
 // Matches returns true if the given filename matches any of the contained entries.

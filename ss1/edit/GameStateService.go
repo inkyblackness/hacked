@@ -12,7 +12,7 @@ import (
 // VariableBaseContextIdentifier identifies which context for variable naming should be used.
 type VariableBaseContextIdentifier int
 
-// Context identifier
+// Context identifier are listed below.
 const (
 	VariableContextCitadel = VariableBaseContextIdentifier(0)
 	VariableContextEngine  = VariableBaseContextIdentifier(1)

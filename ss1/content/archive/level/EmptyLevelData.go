@@ -8,7 +8,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/serial"
 )
 
-// EmptyLevelParameters contain the values to create an empty level
+// EmptyLevelParameters contain the values to create an empty level.
 type EmptyLevelParameters struct {
 	// Cyberspace indicates whether the level should be marked as cyberspace.
 	Cyberspace bool

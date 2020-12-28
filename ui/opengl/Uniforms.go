@@ -4,7 +4,7 @@ import (
 	mgl "github.com/go-gl/mathgl/mgl32"
 )
 
-// UniformLocation represents a uniform parameter for a shader program
+// UniformLocation represents a uniform parameter for a shader program.
 type UniformLocation int32
 
 // Matrix4Uniform represents one uniform parameter for a 4x4 matrix.

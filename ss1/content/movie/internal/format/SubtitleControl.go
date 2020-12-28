@@ -5,7 +5,7 @@ import "github.com/inkyblackness/hacked/ss1/resource"
 // SubtitleControl specifies how to interpret a subtitle entry.
 type SubtitleControl uint32
 
-// Subtitle constants
+// Subtitle constants are based on four-letter ASCII sequences.
 const (
 	SubtitleArea    = SubtitleControl(0x41455241)
 	SubtitleTextStd = SubtitleControl(0x20445453)

@@ -1,6 +1,6 @@
 package format
 
-// DataType identifies entries
+// DataType classifies entries.
 type DataType byte
 
 const (

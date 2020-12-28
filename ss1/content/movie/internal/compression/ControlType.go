@@ -1,9 +1,9 @@
 package compression
 
-// ControlType defines how to interpret a ControlWord
+// ControlType defines how to interpret a ControlWord.
 type ControlType byte
 
-// Control type constants
+// Control type constants are listed below.
 const (
 	CtrlColorTile2ColorsStatic  = ControlType(0)
 	CtrlColorTile2ColorsMasked  = ControlType(1)

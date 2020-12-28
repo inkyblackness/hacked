@@ -399,7 +399,7 @@ func (context *Context) SetMousePosition(x, y float32) {
 	imgui.CurrentIO().SetMousePosition(imgui.Vec2{X: x, Y: y})
 }
 
-// MouseScroll must be
+// MouseScroll must be called to report the current scroll delta.
 func (context *Context) MouseScroll(dx, dy float32) {
 	imgui.CurrentIO().AddMouseWheelDelta(dx, dy)
 }

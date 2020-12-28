@@ -36,7 +36,7 @@ func StepSliderIntV(label string, value *int, min, max int, format string) bool 
 	return changed
 }
 
-// StepSliderInt calls StepSliderIntV(label, value, min, max, "%d")
+// StepSliderInt calls StepSliderIntV(label, value, min, max, "%d").
 func StepSliderInt(label string, value *int, min, max int) bool {
 	return StepSliderIntV(label, value, min, max, "%d")
 }

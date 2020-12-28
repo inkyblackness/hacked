@@ -125,7 +125,7 @@ func NewMapIcons(context *render.Context) *MapIcons {
 	return renderable
 }
 
-// Render renders the icons with their center at given position
+// Render renders the icons with their center at given position.
 func (renderable *MapIcons) Render(paletteTexture *graphics.PaletteTexture, iconSize float32, icons []iconData) {
 	gl := renderable.context.OpenGL
 

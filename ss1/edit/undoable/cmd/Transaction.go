@@ -43,7 +43,7 @@ func (txn Transaction) Do(modder world.Modder) error {
 	return txn.perform(txn.Forward, modder)
 }
 
-// Do executes the reverse tasks in series. The first task to return an error aborts the iteration.
+// Undo executes the reverse tasks in series. The first task to return an error aborts the iteration.
 // A TransactionError is returned in case of aborted iteration.
 func (txn Transaction) Undo(modder world.Modder) error {
 	return txn.perform(txn.Reverse, modder)

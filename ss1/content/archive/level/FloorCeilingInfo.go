@@ -1,6 +1,6 @@
 package level
 
-// FloorInfo describes the properties of a floor
+// FloorInfo describes the properties of a floor.
 type FloorInfo byte
 
 // AbsoluteHeight returns the floor height in range of [0..TileHeightUnitMax-1].
@@ -40,7 +40,7 @@ func (info FloorInfo) WithHazard(value bool) FloorInfo {
 	return FloorInfo(byte(info&^0x80) | flag)
 }
 
-// CeilingInfo describes the properties of a ceiling
+// CeilingInfo describes the properties of a ceiling.
 type CeilingInfo byte
 
 // AbsoluteHeight returns the height (from minimum floor height zero) of the ceiling.

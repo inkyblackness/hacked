@@ -10,7 +10,7 @@ const (
 	FirstUnused = 54
 )
 
-// Level resource identifier
+// Level resource identifier are listed below.
 const (
 	MapVersionNumber    = 2
 	ObjectVersionNumber = 3

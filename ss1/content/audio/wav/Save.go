@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-// Save encodes the provided samples into the given writer
+// Save encodes the provided samples into the given writer.
 func Save(writer io.Writer, sampleRate float32, samples []byte) error {
 	dataSize := uint32(len(samples))
 	var fmt formatHeader

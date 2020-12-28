@@ -154,7 +154,7 @@ func (slot InventoryWeaponSlot) SetWeaponState(a, b byte) {
 	rawData[3] = b
 }
 
-// InventoryGrenade describes properties of grenades by type
+// InventoryGrenade describes properties of grenades by type.
 type InventoryGrenade struct {
 	Index int
 	State *GameState
@@ -216,7 +216,7 @@ func (grenade InventoryGrenade) SetTimerSetting(value GrenadeTimerSetting) {
 	raw[1] = byte(value >> 8)
 }
 
-// PatchState describes properties of patches by type
+// PatchState describes properties of patches by type.
 type PatchState struct {
 	Index int
 	State *GameState
@@ -249,7 +249,7 @@ func (patch PatchState) SetCount(value int) {
 	patch.State.Raw()[patchCountStartOffset+patch.Index] = count
 }
 
-// InventoryAmmo describes properties of ammo by type
+// InventoryAmmo describes properties of ammo by type.
 type InventoryAmmo struct {
 	Index int
 	State *GameState
@@ -568,7 +568,7 @@ func edmsFullCircle() int64 {
 	return int64(full) - 1
 }
 
-// NewGameState() returns a GameState instance for given raw data.
+// NewGameState returns a GameState instance for given raw data.
 func NewGameState(raw []byte) *GameState {
 	return &GameState{Instance: gameStateDesc.For(raw)}
 }
@@ -610,7 +610,7 @@ func (state GameState) CurrentLevel() int {
 	return int(state.Get("Current Level"))
 }
 
-// HackerPosition returns the rough X/Y location on the map.
+// HackerMapPosition returns the rough X/Y location on the map.
 func (state GameState) HackerMapPosition() (level.Coordinate, level.Coordinate) {
 	x := state.Get("Hacker Position X")
 	y := state.Get("Hacker Position Y")
@@ -670,7 +670,7 @@ func (state *GameState) InventoryWeaponSlot(index int) InventoryWeaponSlot {
 }
 
 // InventoryGrenade returns an accessor for the identified grenade type index.
-// Index should be within the range of [0..GrenadeTypeCount[
+// Index should be within the range of [0..GrenadeTypeCount[ .
 func (state *GameState) InventoryGrenade(index int) InventoryGrenade {
 	return InventoryGrenade{
 		Index: index,
@@ -679,7 +679,7 @@ func (state *GameState) InventoryGrenade(index int) InventoryGrenade {
 }
 
 // PatchState returns an accessor for the identified patch type index.
-// Index should be within the range of [0..PatchTypeCount[
+// Index should be within the range of [0..PatchTypeCount[ .
 func (state *GameState) PatchState(index int) PatchState {
 	return PatchState{
 		Index: index,
@@ -688,7 +688,7 @@ func (state *GameState) PatchState(index int) PatchState {
 }
 
 // InventoryAmmo returns an accessor for the identified ammo type index.
-// Index should be within the range of [0..AmmoTypeCount[
+// Index should be within the range of [0..AmmoTypeCount[ .
 func (state *GameState) InventoryAmmo(index int) InventoryAmmo {
 	return InventoryAmmo{
 		Index: index,
@@ -697,7 +697,7 @@ func (state *GameState) InventoryAmmo(index int) InventoryAmmo {
 }
 
 // GeneralInventorySlot returns an accessor for the identified general slot.
-// Index should be within the range of [0..GeneralInventorySlotCount[.
+// Index should be within the range of [0..GeneralInventorySlotCount[ .
 func (state *GameState) GeneralInventorySlot(index int) GeneralInventorySlot {
 	return GeneralInventorySlot{
 		Index: index,
@@ -706,7 +706,7 @@ func (state *GameState) GeneralInventorySlot(index int) GeneralInventorySlot {
 }
 
 // HardwareState returns an accessor for the identified hardware type index.
-// Index should be within the range of [0..HardwareTypeCount[
+// Index should be within the range of [0..HardwareTypeCount[ .
 func (state *GameState) HardwareState(index int) HardwareState {
 	return HardwareState{
 		Index: index,
@@ -715,7 +715,7 @@ func (state *GameState) HardwareState(index int) HardwareState {
 }
 
 // VersionedOffenseSoftwareState returns an accessor for the identified versioned software status.
-// Index should be within the range of [0..SoftwareOffenseTypeCount[
+// Index should be within the range of [0..SoftwareOffenseTypeCount[ .
 func (state *GameState) VersionedOffenseSoftwareState(index int) VersionedSoftwareState {
 	return VersionedSoftwareState{
 		startOffset: installedOffenseSoftwareStartOffset,
@@ -726,7 +726,7 @@ func (state *GameState) VersionedOffenseSoftwareState(index int) VersionedSoftwa
 }
 
 // VersionedDefenseSoftwareState returns an accessor for the identified versioned software status.
-// Index should be within the range of [0..SoftwareDefenseTypeCount[
+// Index should be within the range of [0..SoftwareDefenseTypeCount[ .
 func (state *GameState) VersionedDefenseSoftwareState(index int) VersionedSoftwareState {
 	return VersionedSoftwareState{
 		startOffset: installedDefenseSoftwareStartOffset,
@@ -737,7 +737,7 @@ func (state *GameState) VersionedDefenseSoftwareState(index int) VersionedSoftwa
 }
 
 // OneshotSoftwareState returns an accessor for the identified software status.
-// Index should be within the range of [0..SoftwareOneshotTypeCount[
+// Index should be within the range of [0..SoftwareOneshotTypeCount[ .
 func (state *GameState) OneshotSoftwareState(index int) CountedSoftwareState {
 	return CountedSoftwareState{
 		startOffset: installedOneshotSoftwareStartOffset,
@@ -747,8 +747,8 @@ func (state *GameState) OneshotSoftwareState(index int) CountedSoftwareState {
 	}
 }
 
-// EmailState returns an accessor for the identified EMail status.
-// Index should be within the range of [0..EMailCount[
+// EMailState returns an accessor for the identified EMail status.
+// Index should be within the range of [0..EMailCount[ .
 func (state *GameState) EMailState(index int) MessageState {
 	return MessageState{
 		startOffset: emailStatusStartOffset,
@@ -759,7 +759,7 @@ func (state *GameState) EMailState(index int) MessageState {
 }
 
 // LogState returns an accessor for the identified log status.
-// Index should be within the range of [0..LogCount[
+// Index should be within the range of [0..LogCount[ .
 func (state *GameState) LogState(index int) MessageState {
 	return MessageState{
 		startOffset: logStatusStartOffset,
@@ -770,7 +770,7 @@ func (state *GameState) LogState(index int) MessageState {
 }
 
 // FragmentState returns an accessor for the identified fragment status.
-// Index should be within the range of [0..FragmentCount[
+// Index should be within the range of [0..FragmentCount[ .
 func (state *GameState) FragmentState(index int) MessageState {
 	return MessageState{
 		startOffset: fragmentStatusStartOffset,

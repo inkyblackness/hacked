@@ -7,7 +7,7 @@ import (
 // ColorDisplay is an enumeration to how a tile should be colored.
 type ColorDisplay int
 
-// ColorDisplay constants
+// ColorDisplay constants are listed below.
 const (
 	ColorDisplayNone    ColorDisplay = 0
 	ColorDisplayFloor   ColorDisplay = 1

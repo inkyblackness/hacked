@@ -47,7 +47,7 @@ func (pull CyberspaceFlightPull) String() string {
 	}
 }
 
-// CyberspaceFlightPull constants
+// CyberspaceFlightPull constants are listed below.
 const (
 	CyberspaceFlightPullNone          CyberspaceFlightPull = 0
 	CyberspaceFlightPullWeakEast      CyberspaceFlightPull = 1

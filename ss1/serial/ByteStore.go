@@ -12,7 +12,7 @@ type ByteStore struct {
 	offset int
 }
 
-// NewByteStore returns a new byte store instance
+// NewByteStore returns a new byte store instance.
 func NewByteStore() *ByteStore {
 	return NewByteStoreFromData(make([]byte, 0, bufferCapacityIncrement))
 }
@@ -27,12 +27,12 @@ func NewByteStoreFromData(data []byte) *ByteStore {
 	return store
 }
 
-// Data returns the current data buffer
+// Data returns the current data buffer.
 func (store *ByteStore) Data() []byte {
 	return store.data
 }
 
-// Seek implements the Seeker interface
+// Seek implements the Seeker interface.
 func (store *ByteStore) Seek(offset int64, whence int) (int64, error) {
 	switch whence {
 	case 0:
@@ -46,7 +46,7 @@ func (store *ByteStore) Seek(offset int64, whence int) (int64, error) {
 	return int64(store.offset), nil
 }
 
-// Read implements the Reader interface
+// Read implements the Reader interface.
 func (store *ByteStore) Read(p []byte) (n int, err error) {
 	size := len(p)
 	n = len(store.data) - store.offset
@@ -62,7 +62,7 @@ func (store *ByteStore) Read(p []byte) (n int, err error) {
 	return
 }
 
-// Write implements the Writer interface
+// Write implements the Writer interface.
 func (store *ByteStore) Write(p []byte) (n int, err error) {
 	size := len(p)
 	store.ensureAvailable(size)

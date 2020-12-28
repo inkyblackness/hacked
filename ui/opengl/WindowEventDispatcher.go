@@ -102,27 +102,27 @@ func (window *WindowEventDispatcher) OnMouseScroll(callback MouseScrollCallback)
 	window.CallOnMouseScroll = callback
 }
 
-// OnKeyPress implements the Window interface
+// OnKeyPress implements the Window interface.
 func (window *WindowEventDispatcher) OnKeyPress(callback KeyCallback) {
 	window.CallKeyPress = callback
 }
 
-// OnKeyRelease implements the Window interface
+// OnKeyRelease implements the Window interface.
 func (window *WindowEventDispatcher) OnKeyRelease(callback KeyCallback) {
 	window.CallKeyRelease = callback
 }
 
-// OnModifier implements the WindowEventDispatcher interface
+// OnModifier implements the WindowEventDispatcher interface.
 func (window *WindowEventDispatcher) OnModifier(callback ModifierCallback) {
 	window.CallModifier = callback
 }
 
-// OnCharCallback implements the Window interface
+// OnCharCallback implements the Window interface.
 func (window *WindowEventDispatcher) OnCharCallback(callback CharCallback) {
 	window.CallCharCallback = callback
 }
 
-// OnFileDropCallback implements the Window interface
+// OnFileDropCallback implements the Window interface.
 func (window *WindowEventDispatcher) OnFileDropCallback(callback FileDropCallback) {
 	window.CallFileDropCallback = callback
 }

@@ -86,7 +86,7 @@ func RotationValue(minValue, maxValue int64) FieldRange {
 // * Unknown - It is unclear whether this field would have any effect, none identified so far
 // * Ignored - Although values have been found in this field, they don't appear to have any effect
 // * Mistake - It is assumed that these values should have been placed somewhere else. Typical example: Container content
-// * Internal - Fields that are handled mainly by the engine and shouldn't be modified
+// * Internal - Fields that are handled mainly by the engine and shouldn't be modified.
 func SpecialValue(specialType string) FieldRange {
 	return func(simpl *Simplifier) bool {
 		return simpl.specialValue(specialType)
@@ -179,6 +179,7 @@ func (simpl *Simplifier) specialValue(specialType string) (result bool) {
 	return
 }
 
+// SetRotationHandler registers the handler for rotation values.
 func (simpl *Simplifier) SetRotationHandler(handler RotationHandler) {
 	simpl.rotationHandler = handler
 }

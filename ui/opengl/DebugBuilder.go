@@ -1,6 +1,6 @@
 package opengl
 
-// DebuggingEntryFunc is a function to be called on function entry of
+// DebuggingEntryFunc is a function to be called on function entry.
 type DebuggingEntryFunc func(name string, param ...interface{})
 
 // DebuggingExitFunc is a function to be called after an OpenGL function has returned.

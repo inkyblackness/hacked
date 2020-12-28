@@ -21,7 +21,7 @@ func (pattern WallTexturePattern) String() string {
 	}
 }
 
-// WallTexturePattern constants
+// WallTexturePattern constants are listed below.
 const (
 	WallTexturePatternRegular                 WallTexturePattern = 0
 	WallTexturePatternFlipHorizontal          WallTexturePattern = 1

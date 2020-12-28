@@ -42,7 +42,7 @@ func (inst *Instance) Undefined() []byte {
 	return mask
 }
 
-// Keys returns an array of all registered keys, sorted by start index
+// Keys returns an array of all registered keys, sorted by start index.
 func (inst *Instance) Keys() []string {
 	return sortKeys(inst.desc.fields)
 }

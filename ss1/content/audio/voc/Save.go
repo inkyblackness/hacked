@@ -6,7 +6,7 @@ import (
 	"io"
 )
 
-// Save encodes the provided samples into the given writer
+// Save encodes the provided samples into the given writer.
 func Save(writer io.Writer, sampleRate float32, samples []byte) error {
 	err := writeHeader(writer)
 	if err != nil {

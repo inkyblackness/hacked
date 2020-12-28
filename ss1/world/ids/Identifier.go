@@ -2,12 +2,12 @@ package ids
 
 import "github.com/inkyblackness/hacked/ss1/resource"
 
-// Palettes
+// Palette identifier are listed below.
 const (
 	GamePalettesStart resource.ID = 0x02BC
 )
 
-// Textures
+// Texture identifier are listed below.
 const (
 	IconTextures   resource.ID = 0x004C
 	SmallTextures  resource.ID = 0x004D
@@ -18,7 +18,7 @@ const (
 	TextureUsages resource.ID = 0x086B
 )
 
-// Bitmaps
+// Bitmap identifier are listed below.
 const (
 	ObjectBitmaps         resource.ID = 0x0546
 	ObjectTextureBitmaps  resource.ID = 0x01DB
@@ -30,20 +30,20 @@ const (
 	MfdDataBitmaps resource.ID = 0x0028
 )
 
-// Animations and videos
+// Animation and video identifier are listed below.
 const (
 	VideoMailBitmapsStart    resource.ID = 0x0A40
 	VideoMailAnimationsStart resource.ID = 0x0A4C
 )
 
-// Movies
+// Movie identifier are listed below.
 const (
 	MovieIntro resource.ID = 0x0BD6
 	MovieDeath resource.ID = 0x0BD7
 	MovieEnd   resource.ID = 0x0BD8
 )
 
-// Texts
+// Text identifier are listed below.
 const (
 	PaperTextsStart      resource.ID = 0x003C
 	TrapMessageTexts     resource.ID = 0x0867
@@ -60,7 +60,7 @@ const (
 	ObjectShortNames resource.ID = 0x086D
 )
 
-// Messages
+// Message identifier are listed below.
 const (
 	MailsStart     resource.ID = 0x0989
 	LogsStart      resource.ID = 0x09B8
@@ -70,14 +70,14 @@ const (
 	LogsAudioStart  resource.ID = 0x09B8 + 300
 )
 
-// Sounds
+// Sound identifier are listed below.
 const (
 	TrapMessagesAudioStart resource.ID = 0x0C1C
 
 	SoundEffectsAudioStart resource.ID = 0x00C9
 )
 
-// Archives
+// Archive identifier are listed below.
 const (
 	ArchiveName resource.ID = 0x0FA0
 	GameState   resource.ID = 0x0FA1

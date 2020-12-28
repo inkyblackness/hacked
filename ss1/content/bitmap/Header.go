@@ -3,7 +3,7 @@ package bitmap
 // Type describes the data layout of a bitmap.
 type Type byte
 
-// Type constants
+// Type constants are listed below.
 const (
 	// TypeFlat8Bit bitmaps are 8-bit paletted bitmaps that have their pixel stored in a flat layout.
 	TypeFlat8Bit Type = 2
@@ -12,10 +12,10 @@ const (
 	TypeCompressed8Bit Type = 4
 )
 
-// Flag adds further properties
+// Flag adds further properties.
 type Flag uint16
 
-// Flag constants
+// Flag constants are listed below.
 const (
 	// FlagTransparent is set for bitmaps that shall treat palette index 0x00 as fully transparent.
 	FlagTransparent Flag = 0x0001

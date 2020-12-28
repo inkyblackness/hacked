@@ -9,7 +9,7 @@ func (dir Direction) Plus(other Direction) DirectionMask {
 	return dir.AsMask().Plus(other)
 }
 
-// AsMask returns the direction as a mask
+// AsMask returns the direction as a mask.
 func (dir Direction) AsMask() DirectionMask {
 	return DirectionMask(1 << dir)
 }
@@ -28,7 +28,7 @@ func (mask DirectionMask) Plus(dir Direction) DirectionMask {
 	return mask | dir.AsMask()
 }
 
-// Direction constants
+// Direction constants are listed below.
 const (
 	DirNorth Direction = iota
 	DirNorthEast

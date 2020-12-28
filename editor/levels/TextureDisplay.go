@@ -9,7 +9,7 @@ import (
 // TextureDisplay is an enumeration which texture to display in a 2D map view.
 type TextureDisplay int
 
-// TextureDisplay constants
+// TextureDisplay constants are listed below.
 const (
 	TextureDisplayFloor   TextureDisplay = 0
 	TextureDisplayWall    TextureDisplay = 1

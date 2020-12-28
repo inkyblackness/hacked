@@ -1,6 +1,6 @@
 package level
 
-// TileHeightUnit constants
+// TileHeightUnit constants are listed below.
 const (
 	TileHeightUnitMin TileHeightUnit = 0
 	TileHeightUnitMax TileHeightUnit = 32

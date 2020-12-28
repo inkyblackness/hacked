@@ -6,7 +6,7 @@ import (
 	"math"
 )
 
-// reference white point
+// d64 is the reference white point.
 var d65 = [3]float64{0.95047, 1.00000, 1.08883}
 
 func labF(t float64) float64 {

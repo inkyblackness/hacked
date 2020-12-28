@@ -129,7 +129,7 @@ func NewBackgroundGrid(context *render.Context) *BackgroundGrid {
 	return grid
 }
 
-// Render renders
+// Render renders the grid.
 func (grid *BackgroundGrid) Render() {
 	gl := grid.context.OpenGL
 

@@ -12,8 +12,8 @@ import (
 	"github.com/inkyblackness/hacked/ss1/serial"
 )
 
-// to be run with
-// go test -bench . -args -cpuprofile=prof
+// To run a profile, run it with the following command:
+//     go test -bench . -args -cpuprofile=prof
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 func rawData(size int) []byte {

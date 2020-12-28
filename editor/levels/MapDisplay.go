@@ -540,7 +540,7 @@ func (display *MapDisplay) MouseMoved(mouseX, mouseY float32) {
 	display.moveCapture(mouseX, mouseY)
 }
 
-// MouseScrolled must be called for a mouse scroll
+// MouseScrolled must be called for a mouse scroll.
 func (display *MapDisplay) MouseScrolled(mouseX, mouseY float32, deltaX, deltaY float32, modifier input.Modifier) {
 	if modifier.Has(input.ModControl) {
 		hoverItems := len(display.availableHoverItems)

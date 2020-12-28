@@ -126,7 +126,7 @@ func NewMapTextures(context *render.Context, textureQuery TextureQuery) *MapText
 	return renderable
 }
 
-// Dispose releases any internal resources
+// Dispose releases any internal resources.
 func (renderable *MapTextures) Dispose() {
 	gl := renderable.context.OpenGL
 
@@ -135,7 +135,7 @@ func (renderable *MapTextures) Dispose() {
 	gl.DeleteBuffers([]uint32{renderable.vertexPositionBuffer})
 }
 
-// Render renders
+// Render renders the textures.
 func (renderable *MapTextures) Render(columns, rows int, tileTextureQuery TileTextureQuery, paletteTexture *graphics.PaletteTexture) {
 	gl := renderable.context.OpenGL
 
