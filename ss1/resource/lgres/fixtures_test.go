@@ -5,13 +5,14 @@ import (
 	"encoding/binary"
 
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/resource/lgres/internal/format"
 	"github.com/inkyblackness/hacked/ss1/serial"
 )
 
 func emptyResourceFile() []byte {
-	buf := bytes.NewBufferString(headerString)
-	headerTrailer := make([]byte, resourceDirectoryFileOffsetPos-buf.Len())
-	headerTrailer[0] = commentTerminator
+	buf := bytes.NewBufferString(format.HeaderString)
+	headerTrailer := make([]byte, format.ResourceDirectoryFileOffsetPos-buf.Len())
+	headerTrailer[0] = format.CommentTerminator
 
 	_ = binary.Write(buf, binary.LittleEndian, headerTrailer)
 	dictionaryOffset := uint32(buf.Len() + 4)

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/resource/lgres/internal/format"
 	"github.com/inkyblackness/hacked/ss1/serial"
 
 	"github.com/stretchr/testify/assert"
@@ -61,7 +62,7 @@ func TestWriterUncompressedSingleBlockResourceCanBeWritten(t *testing.T) {
 		0x00,             // resource type (uncompressed, single-block)
 		0x05, 0x00, 0x00, // resource length in file
 		0x0A) // content type
-	assert.Equal(t, expected, result[resourceDirectoryFileOffsetPos+4:])
+	assert.Equal(t, expected, result[format.ResourceDirectoryFileOffsetPos+4:])
 }
 
 func TestWriterUncompressedCompoundResourceCanBeWritten(t *testing.T) {
@@ -95,7 +96,7 @@ func TestWriterUncompressedCompoundResourceCanBeWritten(t *testing.T) {
 		0x02,             // resource type
 		0x15, 0x00, 0x00, // resource length in file
 		0x0B) // content type
-	assert.Equal(t, expected, result[resourceDirectoryFileOffsetPos+4:])
+	assert.Equal(t, expected, result[format.ResourceDirectoryFileOffsetPos+4:])
 }
 
 func TestWriterUncompressedCompoundResourceCanBeWrittenWithPaddingForSpecialID(t *testing.T) {
@@ -130,7 +131,7 @@ func TestWriterUncompressedCompoundResourceCanBeWrittenWithPaddingForSpecialID(t
 		0x02,             // resource type
 		0x17, 0x00, 0x00, // resource length in file
 		0x0B) // content type
-	assert.Equal(t, expected, result[resourceDirectoryFileOffsetPos+4:])
+	assert.Equal(t, expected, result[format.ResourceDirectoryFileOffsetPos+4:])
 }
 
 func TestWriterCompressedSingleBlockResourceCanBeWritten(t *testing.T) {
@@ -157,7 +158,7 @@ func TestWriterCompressedSingleBlockResourceCanBeWritten(t *testing.T) {
 		0x01,             // resource type
 		0x08, 0x00, 0x00, // resource length in file
 		0x0C) // content type
-	assert.Equal(t, expected, result[resourceDirectoryFileOffsetPos+4:])
+	assert.Equal(t, expected, result[format.ResourceDirectoryFileOffsetPos+4:])
 }
 
 func TestWriterCompressedCompoundResourceCanBeWritten(t *testing.T) {
@@ -190,5 +191,5 @@ func TestWriterCompressedCompoundResourceCanBeWritten(t *testing.T) {
 		0x03,             // resource type
 		0x1A, 0x00, 0x00, // resource length in file
 		0x09) // content type
-	assert.Equal(t, expected, result[resourceDirectoryFileOffsetPos+4:])
+	assert.Equal(t, expected, result[format.ResourceDirectoryFileOffsetPos+4:])
 }

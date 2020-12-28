@@ -10,6 +10,7 @@ import (
 
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/resource/lgres/internal/compression"
+	"github.com/inkyblackness/hacked/ss1/resource/lgres/internal/format"
 	"github.com/inkyblackness/hacked/ss1/serial"
 )
 
@@ -40,7 +41,7 @@ func ReaderFrom(source io.ReaderAt) (reader *Reader, err error) {
 	}
 
 	var dirOffset uint32
-	dirOffset, err = readAndVerifyHeader(io.NewSectionReader(source, 0, resourceDirectoryFileOffsetPos+4))
+	dirOffset, err = readAndVerifyHeader(io.NewSectionReader(source, 0, format.ResourceDirectoryFileOffsetPos+4))
 	if err != nil {
 		return nil, err
 	}
@@ -80,8 +81,8 @@ func (reader *Reader) View(id resource.ID) (retrievedResource resource.View, err
 		return nil, resource.ErrResourceDoesNotExist(id)
 	}
 	resourceType := entry.resourceType()
-	compressed := (resourceType & resourceTypeFlagCompressed) != 0
-	compound := (resourceType & resourceTypeFlagCompound) != 0
+	compressed := (resourceType & format.ResourceTypeFlagCompressed) != 0
+	compound := (resourceType & format.ResourceTypeFlagCompound) != 0
 	contentType := resource.ContentType(entry.contentType())
 
 	if compound {
@@ -97,15 +98,15 @@ func (reader *Reader) View(id resource.ID) (retrievedResource resource.View, err
 
 func readAndVerifyHeader(source io.ReadSeeker) (dirOffset uint32, err error) {
 	coder := serial.NewPositioningDecoder(source)
-	data := make([]byte, resourceDirectoryFileOffsetPos)
+	data := make([]byte, format.ResourceDirectoryFileOffsetPos)
 	coder.Code(data)
 	coder.Code(&dirOffset)
 
-	expected := make([]byte, len(headerString)+1)
-	for index, r := range headerString {
+	expected := make([]byte, len(format.HeaderString)+1)
+	for index, r := range format.HeaderString {
 		expected[index] = byte(r)
 	}
-	expected[len(headerString)] = commentTerminator
+	expected[len(format.HeaderString)] = format.CommentTerminator
 	if !bytes.Equal(data[:len(expected)], expected) {
 		return 0, ErrFormatMismatch
 	}
@@ -142,7 +143,7 @@ func (reader *Reader) findEntry(id uint16) (startOffset uint32, entry *resourceD
 			entry = cur
 		} else {
 			startOffset += cur.packedLength()
-			startOffset += (boundarySize - (startOffset % boundarySize)) % boundarySize
+			startOffset += (format.BoundarySize - (startOffset % format.BoundarySize)) % format.BoundarySize
 		}
 	}
 	return

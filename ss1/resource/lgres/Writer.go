@@ -7,6 +7,7 @@ import (
 
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/resource/lgres/internal/compression"
+	"github.com/inkyblackness/hacked/ss1/resource/lgres/internal/format"
 	"github.com/inkyblackness/hacked/ss1/serial"
 )
 
@@ -65,7 +66,7 @@ func (writer *Writer) CreateResource(id resource.ID, contentType resource.Conten
 	resourceType := byte(0x00)
 	if compressed {
 		compressor := compression.NewCompressor(targetWriter)
-		resourceType |= resourceTypeFlagCompressed
+		resourceType |= format.ResourceTypeFlagCompressed
 		targetWriter = compressor
 		targetFinisher = func() { compressor.Close() } // nolint: errcheck
 	}
@@ -88,9 +89,9 @@ func (writer *Writer) CreateCompoundResource(id resource.ID, contentType resourc
 		return nil, writer.encoder.FirstError()
 	}
 
-	resourceType := resourceTypeFlagCompound
+	resourceType := format.ResourceTypeFlagCompound
 	if compressed {
-		resourceType |= resourceTypeFlagCompressed
+		resourceType |= format.ResourceTypeFlagCompressed
 	}
 	resourceWriter := &CompoundResourceWriter{
 		target:          serial.NewPositioningEncoder(writer.encoder),
@@ -111,7 +112,7 @@ func (writer *Writer) Finish() (err error) {
 	writer.finishLastResource()
 
 	directoryOffset := writer.encoder.CurPos()
-	writer.encoder.SetCurPos(resourceDirectoryFileOffsetPos)
+	writer.encoder.SetCurPos(format.ResourceDirectoryFileOffsetPos)
 	writer.encoder.Code(directoryOffset)
 	writer.encoder.SetCurPos(directoryOffset)
 	writer.encoder.Code(uint16(len(writer.directory)))
@@ -127,11 +128,11 @@ func (writer *Writer) Finish() (err error) {
 }
 
 func (writer *Writer) writeHeader() {
-	header := make([]byte, resourceDirectoryFileOffsetPos)
-	for index, r := range headerString {
+	header := make([]byte, format.ResourceDirectoryFileOffsetPos)
+	for index, r := range format.HeaderString {
 		header[index] = byte(r)
 	}
-	header[len(headerString)] = commentTerminator
+	header[len(format.HeaderString)] = format.CommentTerminator
 	writer.encoder.Code(header)
 	writer.encoder.Code(uint32(math.MaxUint32))
 }
@@ -158,9 +159,9 @@ func (writer *Writer) finishLastResource() {
 }
 
 func (writer *Writer) alignToBoundary() {
-	extraBytes := writer.encoder.CurPos() % boundarySize
+	extraBytes := writer.encoder.CurPos() % format.BoundarySize
 	if extraBytes > 0 {
-		padding := make([]byte, boundarySize-extraBytes)
+		padding := make([]byte, format.BoundarySize-extraBytes)
 		writer.encoder.Code(padding)
 	}
 }

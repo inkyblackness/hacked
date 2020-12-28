@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/resource/lgres/internal/format"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,7 +39,7 @@ func TestReaderFromReturnsErrorOnInvalidHeaderString(t *testing.T) {
 
 func TestReaderFromReturnsErrorOnMissingCommentTerminator(t *testing.T) {
 	sourceData := emptyResourceFile()
-	sourceData[len(headerString)] = byte(0)
+	sourceData[len(format.HeaderString)] = byte(0)
 
 	_, err := ReaderFrom(bytes.NewReader(sourceData))
 
@@ -47,8 +48,8 @@ func TestReaderFromReturnsErrorOnMissingCommentTerminator(t *testing.T) {
 
 func TestReaderFromReturnsErrorOnInvalidDirectoryStart(t *testing.T) {
 	sourceData := emptyResourceFile()
-	sourceData[resourceDirectoryFileOffsetPos] = byte(0xFF)
-	sourceData[resourceDirectoryFileOffsetPos+1] = byte(0xFF)
+	sourceData[format.ResourceDirectoryFileOffsetPos] = byte(0xFF)
+	sourceData[format.ResourceDirectoryFileOffsetPos+1] = byte(0xFF)
 
 	_, err := ReaderFrom(bytes.NewReader(sourceData))
 
