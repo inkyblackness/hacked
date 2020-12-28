@@ -29,7 +29,7 @@ func (err BlockNotFoundError) Error() string {
 	return fmt.Sprintf("block index wrong: %v/%v", err.Index, err.Available)
 }
 
-// ErrResourceNotFound returns an error specifying the given index does not identify a valid block.
+// ErrBlockNotFound returns an error specifying the given index does not identify a valid block.
 func ErrBlockNotFound(index, available int) error {
 	return BlockNotFoundError{Index: index, Available: available}
 }
