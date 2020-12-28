@@ -1,10 +1,11 @@
-package lgres
+package lgres_test
 
 import (
 	"bytes"
 	"encoding/binary"
 
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/resource/lgres"
 	"github.com/inkyblackness/hacked/ss1/resource/lgres/internal/format"
 	"github.com/inkyblackness/hacked/ss1/serial"
 )
@@ -34,7 +35,7 @@ var exampleResourceIDCompoundResourceCompressed = resource.ID(0x5000)
 
 func exampleResourceFile() []byte {
 	store := serial.NewByteStore()
-	writer, _ := NewWriter(store)
+	writer, _ := lgres.NewWriter(store)
 
 	resource1, _ := writer.CreateResource(exampleResourceIDSingleBlockResource, resource.ContentType(0x01), false)
 	_, _ = resource1.Write([]byte{0x01, 0x01, 0x01})

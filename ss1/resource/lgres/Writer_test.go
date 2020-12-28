@@ -1,9 +1,10 @@
-package lgres
+package lgres_test
 
 import (
 	"testing"
 
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/resource/lgres"
 	"github.com/inkyblackness/hacked/ss1/resource/lgres/internal/format"
 	"github.com/inkyblackness/hacked/ss1/serial"
 
@@ -11,16 +12,16 @@ import (
 )
 
 func TestNewWriterReturnsErrorForNilTarget(t *testing.T) {
-	writer, err := NewWriter(nil)
+	writer, err := lgres.NewWriter(nil)
 
 	assert.Nil(t, writer, "writer should be nil")
-	assert.Equal(t, ErrTargetNil, err)
+	assert.Equal(t, lgres.ErrTargetNil, err)
 }
 
 func TestWriterFinishWithoutAddingResourcesCreatesValidFileWithoutResources(t *testing.T) {
 	emptyFileData := emptyResourceFile()
 	store := serial.NewByteStore()
-	writer, err := NewWriter(store)
+	writer, err := lgres.NewWriter(store)
 	assert.Nil(t, err, "no error expected creating writer")
 
 	err = writer.Finish()
@@ -29,19 +30,19 @@ func TestWriterFinishWithoutAddingResourcesCreatesValidFileWithoutResources(t *t
 }
 
 func TestWriterFinishReturnsErrorWhenAlreadyFinished(t *testing.T) {
-	writer, _ := NewWriter(serial.NewByteStore())
+	writer, _ := lgres.NewWriter(serial.NewByteStore())
 
 	err := writer.Finish()
 	assert.Nil(t, err, "no error expected finishing")
 
 	err = writer.Finish()
-	assert.Equal(t, errWriterFinished, err)
+	assert.Equal(t, lgres.ErrWriterFinished, err)
 }
 
 func TestWriterUncompressedSingleBlockResourceCanBeWritten(t *testing.T) {
 	data := []byte{0xAB, 0x01, 0xCD, 0x02, 0xEF}
 	store := serial.NewByteStore()
-	writer, _ := NewWriter(store)
+	writer, _ := lgres.NewWriter(store)
 	resourceWriter, err := writer.CreateResource(resource.ID(0x1234), resource.ContentType(0x0A), false)
 	assert.Nil(t, err, "no error expected creating resource")
 	_, err = resourceWriter.Write(data)
@@ -69,7 +70,7 @@ func TestWriterUncompressedCompoundResourceCanBeWritten(t *testing.T) {
 	blockData1 := []byte{0xAB, 0x01, 0xCD}
 	blockData2 := []byte{0x11, 0x22, 0x33, 0x44}
 	store := serial.NewByteStore()
-	writer, _ := NewWriter(store)
+	writer, _ := lgres.NewWriter(store)
 	resourceWriter, err := writer.CreateCompoundResource(resource.ID(0x5678), resource.ContentType(0x0B), false)
 	assert.Nil(t, err, "no error expected creating resource")
 	_, _ = resourceWriter.CreateBlock().Write(blockData1)
@@ -103,7 +104,7 @@ func TestWriterUncompressedCompoundResourceCanBeWrittenWithPaddingForSpecialID(t
 	blockData1 := []byte{0xAB, 0x01, 0xCD}
 	blockData2 := []byte{0x11, 0x22, 0x33, 0x44}
 	store := serial.NewByteStore()
-	writer, _ := NewWriter(store)
+	writer, _ := lgres.NewWriter(store)
 	resourceWriter, err := writer.CreateCompoundResource(resource.ID(0x08FD), resource.ContentType(0x0B), false)
 	assert.Nil(t, err, "no error expected creating resource")
 	_, _ = resourceWriter.CreateBlock().Write(blockData1)
@@ -137,7 +138,7 @@ func TestWriterUncompressedCompoundResourceCanBeWrittenWithPaddingForSpecialID(t
 func TestWriterCompressedSingleBlockResourceCanBeWritten(t *testing.T) {
 	data := []byte{0x01, 0x02, 0x01, 0x02}
 	store := serial.NewByteStore()
-	writer, _ := NewWriter(store)
+	writer, _ := lgres.NewWriter(store)
 	resourceWriter, err := writer.CreateResource(resource.ID(0x1122), resource.ContentType(0x0C), true)
 	assert.Nil(t, err, "no error expected creating resource")
 	_, _ = resourceWriter.Write(data)
@@ -165,7 +166,7 @@ func TestWriterCompressedCompoundResourceCanBeWritten(t *testing.T) {
 	blockData1 := []byte{0x01, 0x02, 0x01, 0x02}
 	blockData2 := []byte{0x01, 0x02, 0x01, 0x02}
 	store := serial.NewByteStore()
-	writer, _ := NewWriter(store)
+	writer, _ := lgres.NewWriter(store)
 	resourceWriter, err := writer.CreateCompoundResource(resource.ID(0x5544), resource.ContentType(0x09), true)
 	assert.Nil(t, err, "no error expected creating resource")
 	_, _ = resourceWriter.CreateBlock().Write(blockData1)

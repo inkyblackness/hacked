@@ -1,4 +1,4 @@
-package lgres
+package lgres_test
 
 import (
 	"bytes"
@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/inkyblackness/hacked/ss1/resource"
+	"github.com/inkyblackness/hacked/ss1/resource/lgres"
 	"github.com/inkyblackness/hacked/ss1/resource/lgres/internal/format"
 
 	"github.com/stretchr/testify/assert"
@@ -14,15 +15,15 @@ import (
 )
 
 func TestReaderFromReturnsErrorForNilSource(t *testing.T) {
-	reader, err := ReaderFrom(nil)
+	reader, err := lgres.ReaderFrom(nil)
 
 	assert.Nil(t, reader, "reader should be nil")
-	assert.Equal(t, ErrSourceNil, err)
+	assert.Equal(t, lgres.ErrSourceNil, err)
 }
 
 func TestReaderFromReturnsInstanceOnEmptySource(t *testing.T) {
 	source := bytes.NewReader(emptyResourceFile())
-	reader, err := ReaderFrom(source)
+	reader, err := lgres.ReaderFrom(source)
 
 	assert.Nil(t, err, "Error should be nil")
 	assert.NotNil(t, reader)
@@ -32,18 +33,18 @@ func TestReaderFromReturnsErrorOnInvalidHeaderString(t *testing.T) {
 	sourceData := emptyResourceFile()
 	sourceData[10] = "A"[0]
 
-	_, err := ReaderFrom(bytes.NewReader(sourceData))
+	_, err := lgres.ReaderFrom(bytes.NewReader(sourceData))
 
-	assert.Equal(t, ErrFormatMismatch, err)
+	assert.Equal(t, lgres.ErrFormatMismatch, err)
 }
 
 func TestReaderFromReturnsErrorOnMissingCommentTerminator(t *testing.T) {
 	sourceData := emptyResourceFile()
 	sourceData[len(format.HeaderString)] = byte(0)
 
-	_, err := ReaderFrom(bytes.NewReader(sourceData))
+	_, err := lgres.ReaderFrom(bytes.NewReader(sourceData))
 
-	assert.Equal(t, ErrFormatMismatch, err)
+	assert.Equal(t, lgres.ErrFormatMismatch, err)
 }
 
 func TestReaderFromReturnsErrorOnInvalidDirectoryStart(t *testing.T) {
@@ -51,39 +52,39 @@ func TestReaderFromReturnsErrorOnInvalidDirectoryStart(t *testing.T) {
 	sourceData[format.ResourceDirectoryFileOffsetPos] = byte(0xFF)
 	sourceData[format.ResourceDirectoryFileOffsetPos+1] = byte(0xFF)
 
-	_, err := ReaderFrom(bytes.NewReader(sourceData))
+	_, err := lgres.ReaderFrom(bytes.NewReader(sourceData))
 
 	assert.NotNil(t, err, "error expected")
 }
 
 func TestReaderFromCanDecodeExampleResourceFile(t *testing.T) {
-	_, err := ReaderFrom(bytes.NewReader(exampleResourceFile()))
+	_, err := lgres.ReaderFrom(bytes.NewReader(exampleResourceFile()))
 	assert.Nil(t, err, "no error expected")
 }
 
 func TestReaderIDsReturnsTheStoredResourceIDsInOrderFromFile(t *testing.T) {
-	reader, _ := ReaderFrom(bytes.NewReader(exampleResourceFile()))
+	reader, _ := lgres.ReaderFrom(bytes.NewReader(exampleResourceFile()))
 
 	assert.Equal(t, []resource.ID{exampleResourceIDSingleBlockResource, exampleResourceIDSingleBlockResourceCompressed,
 		exampleResourceIDCompoundResource, exampleResourceIDCompoundResourceCompressed}, reader.IDs())
 }
 
 func TestReaderResourceReturnsErrorForUnknownID(t *testing.T) {
-	reader, _ := ReaderFrom(bytes.NewReader(emptyResourceFile()))
+	reader, _ := lgres.ReaderFrom(bytes.NewReader(emptyResourceFile()))
 	resourceReader, err := reader.View(resource.ID(0x1111))
 	assert.Nil(t, resourceReader, "no reader expected")
 	assert.NotNil(t, err)
 }
 
 func TestReaderResourceReturnsAResourceReaderForKnownID(t *testing.T) {
-	reader, _ := ReaderFrom(bytes.NewReader(exampleResourceFile()))
+	reader, _ := lgres.ReaderFrom(bytes.NewReader(exampleResourceFile()))
 	resourceReader, err := reader.View(exampleResourceIDSingleBlockResource)
 	assert.Nil(t, err, "no error expected")
 	assert.NotNil(t, resourceReader)
 }
 
 func TestReaderResourceReturnsResourceWithMetaInformation(t *testing.T) {
-	reader, _ := ReaderFrom(bytes.NewReader(exampleResourceFile()))
+	reader, _ := lgres.ReaderFrom(bytes.NewReader(exampleResourceFile()))
 	info := func(resourceID resource.ID, name string, expected interface{}) string {
 		return fmt.Sprintf("Resource 0x%04X should have %v = %v", resourceID.Value(), name, expected)
 	}
@@ -100,7 +101,7 @@ func TestReaderResourceReturnsResourceWithMetaInformation(t *testing.T) {
 }
 
 func TestReaderResourceReturnsSameInstance(t *testing.T) {
-	reader, _ := ReaderFrom(bytes.NewReader(exampleResourceFile()))
+	reader, _ := lgres.ReaderFrom(bytes.NewReader(exampleResourceFile()))
 
 	c1, _ := reader.View(exampleResourceIDSingleBlockResource)
 	c2, _ := reader.View(exampleResourceIDSingleBlockResource)
@@ -109,7 +110,7 @@ func TestReaderResourceReturnsSameInstance(t *testing.T) {
 }
 
 func TestReaderResourceWithUncompressedSingleBlockContent(t *testing.T) {
-	reader, _ := ReaderFrom(bytes.NewReader(exampleResourceFile()))
+	reader, _ := lgres.ReaderFrom(bytes.NewReader(exampleResourceFile()))
 	resourceReader, _ := reader.View(exampleResourceIDSingleBlockResource)
 
 	assert.Equal(t, 1, resourceReader.BlockCount())
@@ -117,7 +118,7 @@ func TestReaderResourceWithUncompressedSingleBlockContent(t *testing.T) {
 }
 
 func TestReaderResourceWithCompressedSingleBlockContent(t *testing.T) {
-	reader, _ := ReaderFrom(bytes.NewReader(exampleResourceFile()))
+	reader, _ := lgres.ReaderFrom(bytes.NewReader(exampleResourceFile()))
 	resourceReader, _ := reader.View(exampleResourceIDSingleBlockResourceCompressed)
 
 	assert.Equal(t, 1, resourceReader.BlockCount())
@@ -125,7 +126,7 @@ func TestReaderResourceWithCompressedSingleBlockContent(t *testing.T) {
 }
 
 func TestReaderResourceWithUncompressedCompoundContent(t *testing.T) {
-	reader, _ := ReaderFrom(bytes.NewReader(exampleResourceFile()))
+	reader, _ := lgres.ReaderFrom(bytes.NewReader(exampleResourceFile()))
 	resourceReader, _ := reader.View(exampleResourceIDCompoundResource)
 
 	assert.Equal(t, 2, resourceReader.BlockCount())
@@ -134,7 +135,7 @@ func TestReaderResourceWithUncompressedCompoundContent(t *testing.T) {
 }
 
 func TestReaderResourceWithCompressedCompoundContent(t *testing.T) {
-	reader, _ := ReaderFrom(bytes.NewReader(exampleResourceFile()))
+	reader, _ := lgres.ReaderFrom(bytes.NewReader(exampleResourceFile()))
 	resourceReader, _ := reader.View(exampleResourceIDCompoundResourceCompressed)
 
 	assert.Equal(t, 3, resourceReader.BlockCount())

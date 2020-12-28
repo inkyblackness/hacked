@@ -46,14 +46,15 @@ func NewWriter(target io.WriteSeeker) (*Writer, error) {
 	return writer, writer.encoder.FirstError()
 }
 
-var errWriterFinished = errors.New("writer is finished")
+// ErrWriterFinished is returned if the writer was already finished.
+var ErrWriterFinished = errors.New("writer is finished")
 
 // CreateResource adds a new single-block resource to the current resource file.
 // This resource is closed by creating another resource, or by finishing the writer.
 func (writer *Writer) CreateResource(id resource.ID, contentType resource.ContentType,
 	compressed bool) (*BlockWriter, error) {
 	if writer.encoder == nil {
-		return nil, errWriterFinished
+		return nil, ErrWriterFinished
 	}
 
 	writer.finishLastResource()
@@ -81,7 +82,7 @@ func (writer *Writer) CreateResource(id resource.ID, contentType resource.Conten
 func (writer *Writer) CreateCompoundResource(id resource.ID, contentType resource.ContentType,
 	compressed bool) (*CompoundResourceWriter, error) {
 	if writer.encoder == nil {
-		return nil, errWriterFinished
+		return nil, ErrWriterFinished
 	}
 
 	writer.finishLastResource()
@@ -106,7 +107,7 @@ func (writer *Writer) CreateCompoundResource(id resource.ID, contentType resourc
 // writer becomes unusable.
 func (writer *Writer) Finish() (err error) {
 	if writer.encoder == nil {
-		return errWriterFinished
+		return ErrWriterFinished
 	}
 
 	writer.finishLastResource()
