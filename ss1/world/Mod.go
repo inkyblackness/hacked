@@ -2,7 +2,6 @@ package world
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -132,7 +131,7 @@ func (mod Mod) CreateBlockPatch(lang resource.Language, id resource.ID, index in
 	}
 	res := mod.modifiedResource(lang, id)
 	if res == nil {
-		return patch, false, errors.New("resource unknown")
+		return patch, false, resource.ErrNotFound(id)
 	}
 	oldData, err := res.BlockRaw(index)
 	if err != nil {

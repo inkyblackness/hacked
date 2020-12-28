@@ -1,7 +1,7 @@
 package textures
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
@@ -29,7 +29,7 @@ func (command setTextureBitmapCommand) Undo(modder world.Modder) error {
 func (command setTextureBitmapCommand) perform(modder world.Modder, data []byte) error {
 	info, existing := ids.Info(command.id)
 	if !existing {
-		return errors.New("unknown identifier")
+		panic(fmt.Sprintf("unknown identifier for bitmap resource: %v", command.id))
 	}
 	resourceID := command.id
 	blockIndex := command.textureIndex

@@ -1,17 +1,20 @@
 package citadel
 
-import "github.com/inkyblackness/hacked/ss1/content/archive"
+import (
+	"github.com/inkyblackness/hacked/ss1/content/archive"
+	"github.com/inkyblackness/hacked/ss1/world"
+)
 
 // DefaultGameState returns a new instance of a game state that the engine creates for a standard game.
 func DefaultGameState() *archive.GameState {
 	state := archive.DefaultGameState()
 
 	// location: medical level
-	state.Set("Current Level", 1)
+	state.Set("Current Level", world.StartingLevel)
 
 	// location: in the neurosurgery chamber, looking West
-	state.Set("Hacker Position X", (30<<16)+0x8000)
-	state.Set("Hacker Position Y", (22<<16)+0x8000)
+	state.Set("Hacker Position X", (world.StartingTileX<<16)+0x8000)
+	state.Set("Hacker Position Y", (world.StartingTileY<<16)+0x8000)
 	state.Set("Hacker Position Z", 0x01BD00)
 	state.Set("Hacker Yaw", 0x03243E)
 

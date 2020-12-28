@@ -1,7 +1,5 @@
 package compression
 
-import "errors"
-
 // MaskstreamWriter writes mask integers to a byte array.
 type MaskstreamWriter struct {
 	Buffer []byte
@@ -10,7 +8,7 @@ type MaskstreamWriter struct {
 // Write adds the given amount of bytes from the mask to the buffer.
 func (w *MaskstreamWriter) Write(byteCount uint, mask uint64) error {
 	if byteCount > 8 {
-		return errors.New("invalid byte count")
+		return errInvalidByteCount
 	}
 	if w.Buffer == nil {
 		w.Buffer = make([]byte, 0, 1024*32)

@@ -3,8 +3,13 @@ package wav
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"io"
+
+	"github.com/inkyblackness/hacked/ss1"
+)
+
+const (
+	errUnsupportedFormat ss1.StringError = "unsupported WAVE format"
 )
 
 func l8FromL8(input []byte) []byte {
@@ -114,7 +119,7 @@ func (loader *waveLoader) loadFormat(size uint32) {
 	if (header.base.FormatType != waveFormatTypePcm) ||
 		(header.base.Channels != 1) ||
 		((header.extension.BitsPerSample != 8) && (header.extension.BitsPerSample != 16)) {
-		loader.err = fmt.Errorf("unsupported WAVE format")
+		loader.err = errUnsupportedFormat
 	}
 }
 

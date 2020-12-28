@@ -1,7 +1,6 @@
 package compression
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -46,12 +45,12 @@ func (decoder *FrameDecoder) Decode(bitstreamData []byte, maskstreamData []byte)
 
 			if control.Type() == CtrlRepeatPrevious {
 				if hTile == 0 {
-					return errors.New("can't repeat word on first tile of row")
+					return errCannotRepeatWordOnFirstTileOfRow
 				}
 				control = lastControl
 			}
 			if control.Type() == CtrlUnknown {
-				return errors.New("found unknown control, can not proceed")
+				return errUnknownControl
 			}
 
 			if control.Type() == CtrlSkip {
@@ -87,7 +86,7 @@ func (decoder *FrameDecoder) readNextControlWord(bitstream *BitstreamReader) (Co
 		for control.IsLongOffset() {
 			longOffsetCount++
 			if longOffsetCount > 100 {
-				return ControlWordOf(0, CtrlUnknown, 0), errors.New("too many long offsets")
+				return ControlWordOf(0, CtrlUnknown, 0), errTooManyLongOffsets
 			}
 			bitstream.Advance(4)
 			offset := bitstream.Read(4)

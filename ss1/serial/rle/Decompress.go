@@ -1,8 +1,13 @@
 package rle
 
 import (
-	"errors"
 	"io"
+
+	"github.com/inkyblackness/hacked/ss1"
+)
+
+const (
+	errUndefinedCase ss1.StringError = "undefined case 80 nn C0"
 )
 
 // Decompress decompresses from the given reader and writes into the provided output buffer.
@@ -39,7 +44,7 @@ func Decompress(reader io.Reader, output []byte) (err error) {
 			case control < 0xC000:
 				outIndex += writeBytesOfValue(output[outIndex:outIndex+int(control&0x3FFF)], nextByte)
 			case (control & 0xFF00) == 0xC000:
-				err = errors.New("undefined case 80 nn C0")
+				err = errUndefinedCase
 			default:
 				zz := nextByte()
 

@@ -2,7 +2,6 @@ package compression
 
 import (
 	"context"
-	"errors"
 	"fmt"
 )
 
@@ -44,7 +43,7 @@ func NewSceneEncoder(width, height int) *SceneEncoder {
 // AddFrame registers a further frame to the scene.
 func (e *SceneEncoder) AddFrame(frame []byte) error {
 	if len(frame) != len(e.lastFrame) {
-		return errors.New("invalid frame size")
+		return errInvalidFrameSize
 	}
 	var delta frameDelta
 	isFirstFrame := len(e.deltas) == 0

@@ -1,9 +1,14 @@
 package compression
 
 import (
-	"errors"
 	"fmt"
 	"sort"
+
+	"github.com/inkyblackness/hacked/ss1"
+)
+
+const (
+	errTooHighOperationOffset ss1.StringError = "too high operation offset"
 )
 
 // TileColorOp describes one operation how a tile should be colored.
@@ -30,7 +35,7 @@ type ControlWordSequencer struct {
 // The offset of the entry must be a value less than or equal ControlWordParamLimit, otherwise the function returns an error.
 func (seq *ControlWordSequencer) Add(op TileColorOp) error {
 	if op.Offset > ControlWordParamLimit {
-		return errors.New("too high operation offset")
+		return errTooHighOperationOffset
 	}
 	if seq.ops == nil {
 		seq.ops = make(map[TileColorOp]uint32)

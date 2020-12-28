@@ -3,10 +3,9 @@ package movie
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
-	"fmt"
 	"io"
 
+	"github.com/inkyblackness/hacked/ss1"
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/content/movie/internal/compression"
 	"github.com/inkyblackness/hacked/ss1/content/movie/internal/format"
@@ -15,12 +14,18 @@ import (
 	"github.com/inkyblackness/hacked/ss1/serial"
 )
 
+const (
+	errSourceIsNil             ss1.StringError = "source is nil"
+	errInvalidFormat           ss1.StringError = "not a MOVI format"
+	errLowResVideoNotSupported ss1.StringError = "low-res video not supported"
+)
+
 // Read tries to extract a MOVI container from the provided reader.
 // On success the position of the reader is past the last data entry.
 // On failure the position of the reader is undefined.
 func Read(source io.ReadSeeker, cp text.Codepage) (Container, error) {
 	if source == nil {
-		return Container{}, fmt.Errorf("source is nil")
+		return Container{}, errSourceIsNil
 	}
 
 	var header format.Header
@@ -54,7 +59,7 @@ func Read(source io.ReadSeeker, cp text.Codepage) (Container, error) {
 
 func verifyAndExtractHeader(header *format.Header, container *Container) error {
 	if !bytes.Equal(header.Tag[:], bytes.NewBufferString(format.Tag).Bytes()) {
-		return errors.New("not a MOVI format")
+		return errInvalidFormat
 	}
 
 	container.Video.Height = header.VideoHeight
@@ -167,7 +172,7 @@ func parseEntries(entries []format.Entry, container *Container,
 			}
 		case format.LowResVideoEntryData:
 			// ignored for now
-			return fmt.Errorf("low-res video not supported")
+			return errLowResVideoNotSupported
 		case format.PaletteLookupEntryData:
 			sceneChanging = true
 			paletteLookup = data.List

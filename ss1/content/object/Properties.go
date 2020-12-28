@@ -1,9 +1,14 @@
 package object
 
 import (
-	"errors"
-
+	"github.com/inkyblackness/hacked/ss1"
 	"github.com/inkyblackness/hacked/ss1/serial"
+)
+
+const (
+	errInvalidClass    ss1.StringError = "invalid class"
+	errInvalidSubclass ss1.StringError = "invalid subclass"
+	errInvalidType     ss1.StringError = "invalid type"
 )
 
 // PropertiesTable is a collection of class-specific properties.
@@ -62,15 +67,15 @@ func NewPropertiesTable(desc Descriptors) PropertiesTable {
 // ForObject returns the object-specific properties by given triple.
 func (table PropertiesTable) ForObject(triple Triple) (*Properties, error) {
 	if int(triple.Class) >= len(table) {
-		return nil, errors.New("invalid class")
+		return nil, errInvalidClass
 	}
 	classEntry := table[triple.Class]
 	if int(triple.Subclass) >= len(classEntry) {
-		return nil, errors.New("invalid subclass")
+		return nil, errInvalidSubclass
 	}
 	subclassEntry := classEntry[triple.Subclass]
 	if int(triple.Type) >= len(subclassEntry) {
-		return nil, errors.New("invalid type")
+		return nil, errInvalidType
 	}
 	return &subclassEntry[triple.Type], nil
 }

@@ -1,8 +1,6 @@
 package world
 
 import (
-	"fmt"
-
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -25,7 +23,7 @@ func NewManifestEntryFrom(names []string) (*ManifestEntry, error) {
 	loaded := LoadFiles(true, names)
 
 	if len(loaded.Resources) == 0 {
-		return nil, fmt.Errorf("no resources found")
+		return nil, errNoResourcesFound
 	}
 
 	entry := &ManifestEntry{

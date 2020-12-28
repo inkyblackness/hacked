@@ -1,5 +1,7 @@
 package world
 
+import "github.com/inkyblackness/hacked/ss1"
+
 const (
 	// StartingLevel identifies the level a new game is started in by default.
 	StartingLevel = 1
@@ -19,4 +21,8 @@ const (
 
 	// ObjectPropertiesFilename specifies the lowercase name of the file containing object properties.
 	ObjectPropertiesFilename = "objprop.dat"
+)
+
+const (
+	errNoResourcesFound ss1.StringError = "resource unknown"
 )

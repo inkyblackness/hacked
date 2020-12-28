@@ -3,10 +3,17 @@ package bitmap
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"io"
 
+	"github.com/inkyblackness/hacked/ss1"
 	"github.com/inkyblackness/hacked/ss1/serial/rle"
+)
+
+const (
+	errReaderIsNil           ss1.StringError = "reader is nil"
+	errStrideNotValid        ss1.StringError = "stride not equal to width for compressed bitmap"
+	errDataCouldNotBeRead    ss1.StringError = "data could not be read"
+	errPaletteCouldNotBeRead ss1.StringError = "palette could not be read"
 )
 
 // Bitmap describes a palette based image.
@@ -29,7 +36,7 @@ func Decode(reader io.Reader) (*Bitmap, error) {
 // The returned byte array from the provider will be used as pixel buffer for the new bitmap.
 func DecodeReferenced(reader io.Reader, provider func(width, height int16) ([]byte, error)) (*Bitmap, error) {
 	if reader == nil {
-		return nil, errors.New("reader is nil")
+		return nil, errReaderIsNil
 	}
 
 	var bmp Bitmap
@@ -40,7 +47,7 @@ func DecodeReferenced(reader io.Reader, provider func(width, height int16) ([]by
 	}
 	if bmp.Header.Type == TypeCompressed8Bit {
 		if bmp.Header.Stride != uint16(bmp.Header.Width) {
-			return nil, errors.New("stride not equal to width for compressed bitmap")
+			return nil, errStrideNotValid
 		}
 		bmp.Pixels, err = provider(bmp.Header.Width, bmp.Header.Height)
 		if err != nil {
@@ -52,7 +59,7 @@ func DecodeReferenced(reader io.Reader, provider func(width, height int16) ([]by
 		_, err = reader.Read(bmp.Pixels)
 	}
 	if err != nil {
-		return nil, errors.New("data could not be read")
+		return nil, errDataCouldNotBeRead
 	}
 
 	if bmp.Header.PaletteOffset != 0 {
@@ -61,7 +68,7 @@ func DecodeReferenced(reader io.Reader, provider func(width, height int16) ([]by
 		bmp.Palette = new(Palette)
 		err = binary.Read(reader, binary.LittleEndian, bmp.Palette)
 		if err != nil {
-			return nil, errors.New("palette could not be read")
+			return nil, errPaletteCouldNotBeRead
 		}
 	}
 

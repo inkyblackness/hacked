@@ -16,7 +16,7 @@ func (buf *errorBuffer) check() (err error) {
 	buf.callCounter++
 	if buf.errorOnNextCall {
 		buf.errorOnNextCall = false
-		err = fmt.Errorf("errorBuffer on call number %v", buf.callCounter)
+		err = fmt.Errorf("errorBuffer on call number %v", buf.callCounter) // nolint: goerr113
 	}
 	return
 }

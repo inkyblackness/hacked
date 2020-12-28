@@ -1,7 +1,6 @@
 package level
 
 import (
-	"errors"
 	"math"
 )
 
@@ -27,7 +26,7 @@ func (shift HeightShift) ValueToObjectHeight(value float32) HeightUnit {
 
 func (shift HeightShift) valueFromScale(raw float32, scale float64) (float32, error) {
 	if (shift < 0) || (int(shift) >= len(tileHeights)) {
-		return 0.0, errors.New("invalid height shift")
+		return 0.0, errInvalidHeightShift
 	}
 	return float32((float64(raw) * tileHeights[int(shift)]) / scale), nil
 }

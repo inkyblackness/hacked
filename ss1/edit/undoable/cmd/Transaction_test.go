@@ -1,13 +1,13 @@
 package cmd_test
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/inkyblackness/hacked/ss1"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/world"
 )
@@ -81,7 +81,7 @@ func (suite *TransactionBuilderSuite) TestTransactionReturnsErrorWithNamedPath()
 		cmd.Named("main"),
 		cmd.Forward(suite.aTask("fa")),
 		cmd.Nested(func() error {
-			return suite.builder.Register(cmd.Named("nested"), cmd.Forward(suite.aTaskReturning(errors.New("fail"))))
+			return suite.builder.Register(cmd.Named("nested"), cmd.Forward(suite.aTaskReturning(ss1.StringError("fail"))))
 		}),
 		cmd.Forward(suite.aTask("fb")),
 	)

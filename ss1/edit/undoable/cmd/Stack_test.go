@@ -1,13 +1,13 @@
 package cmd_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/inkyblackness/hacked/ss1"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/world"
 )
@@ -78,7 +78,7 @@ func (suite *StackSuite) TestPerformIgnoresCommandIfItFails() {
 }
 
 func (suite *StackSuite) TestPerformReturnsErrorOfCommand() {
-	err := fmt.Errorf("fail first time")
+	err := ss1.StringError("fail first time")
 	suite.thenPerformShouldReturnError(suite.aCommandReturning(err), err)
 }
 
@@ -255,7 +255,7 @@ func (suite *StackSuite) givenRedoWasCalledTimes(times int) {
 }
 
 func (suite *StackSuite) givenCommandWillFail(name string) {
-	suite.pastCommand(name).pendingError = fmt.Errorf("failing")
+	suite.pastCommand(name).pendingError = ss1.StringError("failing")
 }
 
 func (suite *StackSuite) givenCommandExecutes(name string, task func()) {
@@ -329,7 +329,7 @@ func (suite *StackSuite) aCommandExecuting(name string, task func()) cmd.Command
 }
 
 func (suite *StackSuite) aCommandReturningError() cmd.Command {
-	return suite.aCommandReturning(fmt.Errorf("fail"))
+	return suite.aCommandReturning(ss1.StringError("fail"))
 }
 
 func (suite *StackSuite) aCommandReturning(err error) cmd.Command {

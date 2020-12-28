@@ -2,11 +2,11 @@ package edit
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/inkyblackness/hacked/ss1"
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
@@ -15,6 +15,11 @@ import (
 	"github.com/inkyblackness/hacked/ss1/serial"
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
+)
+
+const (
+	errNoResourcesFound     ss1.StringError = "no resources found"
+	errNoStorageLocationSet ss1.StringError = "no storage location set"
 )
 
 // ProjectSettings describe the properties of a project.
@@ -223,7 +228,7 @@ func (service *ProjectService) TryLoadModFrom(names []string) error {
 		isSavegame = true
 	}
 	if len(resourcesToTake) == 0 {
-		return fmt.Errorf("no resources found")
+		return errNoResourcesFound
 	}
 	var locs []*world.LocalizedResources
 	modPath := ""
@@ -293,7 +298,7 @@ func (service *ProjectService) setModPath(value string) {
 // SaveMod will store the currently active mod in its current path.
 func (service *ProjectService) SaveMod() error {
 	if !service.ModHasStorageLocation() {
-		return fmt.Errorf("no storage location set")
+		return errNoStorageLocationSet
 	}
 	return service.SaveModUnder(service.modPath)
 }

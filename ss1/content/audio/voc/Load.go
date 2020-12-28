@@ -5,13 +5,19 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/inkyblackness/hacked/ss1"
 	"github.com/inkyblackness/hacked/ss1/content/audio"
+)
+
+const (
+	errSourceIsNil  ss1.StringError = "source is nil"
+	errNoAudioFound ss1.StringError = "no audio found"
 )
 
 // Load reads from the provided source a Creative Voice Sound and returns the data.
 func Load(source io.Reader) (data audio.L8, err error) {
 	if source == nil {
-		return data, fmt.Errorf("source is nil")
+		return data, errSourceIsNil
 	}
 
 	err = readAndVerifyHeader(source)
@@ -97,7 +103,7 @@ func readSoundData(source io.Reader) (data audio.L8, err error) {
 	}
 
 	if len(samples) == 0 {
-		return data, fmt.Errorf("no audio found")
+		return data, errNoAudioFound
 	}
 
 	return audio.L8{

@@ -1,10 +1,10 @@
 package bitmap
 
 import (
-	"errors"
 	"fmt"
 	"io"
 
+	"github.com/inkyblackness/hacked/ss1"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/serial"
 )
@@ -14,6 +14,8 @@ const (
 	animationEndTagData = 0x01
 
 	animationEntryTag = 0x04
+
+	errEndTagDataWrong ss1.StringError = "end tag data wrong"
 )
 
 // Animation describes a sequence of bitmaps to form a small movie.
@@ -52,7 +54,7 @@ func ReadAnimation(reader io.Reader) (anim Animation, err error) {
 			var endTagData byte
 			decoder.Code(&endTagData)
 			if endTagData != animationEndTagData {
-				err = errors.New("end tag data wrong")
+				err = errEndTagDataWrong
 			}
 			done = true
 		default:

@@ -3,7 +3,6 @@ package level
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"io"
 	"io/ioutil"
 
@@ -197,17 +196,17 @@ func (lvl *Level) ForEachObject(handler func(ObjectID, ObjectMainEntry)) {
 // Returns 0 and an error if not possible.
 func (lvl *Level) NewObject(class object.Class) (ObjectID, error) {
 	if int(class) >= len(lvl.objectClassTables) {
-		return 0, errors.New("invalid class specified")
+		return 0, errInvalidClass
 	}
 	classTable := lvl.objectClassTables[class]
 	classIndex := classTable.Allocate()
 	if classIndex == 0 {
-		return 0, errors.New("no more room for class")
+		return 0, errNoMoreRoomForClass
 	}
 	id := lvl.objectMainTable.Allocate()
 	if id == 0 {
 		classTable.Release(classIndex)
-		return 0, errors.New("no more room for objects")
+		return 0, errNoMoreRoomForObjects
 	}
 	obj := &lvl.objectMainTable[id]
 	classEntry := &classTable[classIndex]
