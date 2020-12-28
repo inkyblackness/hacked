@@ -890,7 +890,7 @@ func (view *ObjectsView) patchLevel(lvl *level.Level, forwardObjectIDs []level.O
 }
 
 func (view *ObjectsView) setSelectedLevel(id int) {
-	view.eventListener.Event(LevelSelectionSetEvent{Id: id})
+	view.eventListener.Event(LevelSelectionSetEvent{ID: id})
 }
 
 func (view *ObjectsView) setSelectedObjects(objectIDs []level.ObjectID) {

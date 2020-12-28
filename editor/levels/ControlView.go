@@ -418,9 +418,9 @@ func (view *ControlView) patchLevelResources(lvl *level.Level, extraRestoreState
 }
 
 func (view *ControlView) setSelectedLevel(id int) {
-	view.eventListener.Event(LevelSelectionSetEvent{Id: id})
+	view.eventListener.Event(LevelSelectionSetEvent{ID: id})
 }
 
 func (view *ControlView) onLevelSelectionSetEvent(evt LevelSelectionSetEvent) {
-	view.model.selectedLevel = evt.Id
+	view.model.selectedLevel = evt.ID
 }

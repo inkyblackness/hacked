@@ -919,7 +919,7 @@ func (app *Application) restoreProjectState(state projectState, filename string)
 		(*state.ActiveLevelIndex < len(app.levels)) {
 		activeLevel = *state.ActiveLevelIndex
 	}
-	app.eventQueue.Event(levels.LevelSelectionSetEvent{Id: activeLevel})
+	app.eventQueue.Event(levels.LevelSelectionSetEvent{ID: activeLevel})
 
 	app.window.SetTitleSuffix(filename)
 }

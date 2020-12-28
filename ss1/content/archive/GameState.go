@@ -330,7 +330,7 @@ func (slot GeneralInventorySlot) ObjectID() level.ObjectID {
 }
 
 // SetObjectID updates the ID in this inventory slot.
-func (slot GeneralInventorySlot) SetObjectId(id level.ObjectID) {
+func (slot GeneralInventorySlot) SetObjectID(id level.ObjectID) {
 	raw := slot.rawID()
 	raw[0] = byte(id >> 0)
 	raw[1] = byte(id >> 8)

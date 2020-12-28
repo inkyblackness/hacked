@@ -586,7 +586,7 @@ func (view *TilesView) changeTiles(lvl *level.Level, positions []MapPosition, mo
 }
 
 func (view *TilesView) setSelectedLevel(id int) {
-	view.eventListener.Event(LevelSelectionSetEvent{Id: id})
+	view.eventListener.Event(LevelSelectionSetEvent{ID: id})
 }
 
 func (view *TilesView) setSelectedTiles(positions []MapPosition) {

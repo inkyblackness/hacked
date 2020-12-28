@@ -525,7 +525,7 @@ func (view *View) createGeneralInventoryControls(readOnly bool, slot archive.Gen
 			return "%d"
 		}, 0, 871, // TODO: get ID limit of current level
 		func(newValue int) {
-			slot.SetObjectId(level.ObjectID(newValue))
+			slot.SetObjectID(level.ObjectID(newValue))
 			onChange()
 		})
 }
