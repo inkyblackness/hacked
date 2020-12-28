@@ -1,6 +1,8 @@
 package opengl
 
-import "fmt"
+import (
+	"fmt"
+)
 
 var errorStrings = map[uint32]string{
 	NO_ERROR:                      "NO_ERROR",
@@ -23,4 +25,30 @@ func ErrorString(errorCode uint32) string {
 	}
 
 	return value
+}
+
+// ShaderError describes a problem with a log.
+type ShaderError struct {
+	Log string
+}
+
+// Error returns the log.
+func (err ShaderError) Error() string {
+	return err.Log
+}
+
+// NamedShaderError is an error with a name.
+type NamedShaderError struct {
+	Name   string
+	Nested error
+}
+
+// Error returns the name with the nested error information.
+func (err NamedShaderError) Error() string {
+	return fmt.Sprintf("%s failed: %v", err.Name, err.Nested)
+}
+
+// Unwrap returns the nested error.
+func (err NamedShaderError) Unwrap() error {
+	return err.Nested
 }

@@ -1,7 +1,6 @@
 package levels
 
 import (
-	"fmt"
 	"math"
 
 	mgl "github.com/go-gl/mathgl/mgl32"
@@ -95,9 +94,8 @@ func init() {
 func NewMapTextures(context *render.Context, textureQuery TextureQuery) *MapTextures {
 	gl := context.OpenGL
 	program, programErr := opengl.LinkNewStandardProgram(gl, mapTexturesVertexShaderSource, mapTexturesFragmentShaderSource)
-
 	if programErr != nil {
-		panic(fmt.Errorf("MapTextures shader failed: %v", programErr))
+		panic(opengl.NamedShaderError{Name: "MapTexturesShader", Nested: programErr})
 	}
 	renderable := &MapTextures{
 		context: context,

@@ -1,7 +1,5 @@
 package opengl
 
-import "fmt"
-
 // CompileNewShader creates a shader of given type and compiles the provided source.
 func CompileNewShader(gl OpenGL, shaderType uint32, source string) (shader uint32, err error) {
 	shader = gl.CreateShader(shaderType)
@@ -11,7 +9,7 @@ func CompileNewShader(gl OpenGL, shaderType uint32, source string) (shader uint3
 
 	compileStatus := gl.GetShaderParameter(shader, COMPILE_STATUS)
 	if compileStatus == 0 {
-		err = fmt.Errorf("%s", gl.GetShaderInfoLog(shader))
+		err = ShaderError{Log: gl.GetShaderInfoLog(shader)}
 		gl.DeleteShader(shader)
 		shader = 0
 	}

@@ -1,8 +1,6 @@
 package levels
 
 import (
-	"fmt"
-
 	mgl "github.com/go-gl/mathgl/mgl32"
 
 	"github.com/inkyblackness/hacked/editor/render"
@@ -65,9 +63,8 @@ type MapGrid struct {
 func NewMapGrid(context *render.Context) *MapGrid {
 	gl := context.OpenGL
 	program, programErr := opengl.LinkNewStandardProgram(gl, mapTileGridVertexShaderSource, mapTileGridFragmentShaderSource)
-
 	if programErr != nil {
-		panic(fmt.Errorf("MapGrid shader failed: %v", programErr))
+		panic(opengl.NamedShaderError{Name: "MapGrid", Nested: programErr})
 	}
 	grid := &MapGrid{
 		context:                 context,

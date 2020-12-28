@@ -1,8 +1,6 @@
 package levels
 
 import (
-	"fmt"
-
 	mgl "github.com/go-gl/mathgl/mgl32"
 
 	"github.com/inkyblackness/hacked/editor/graphics"
@@ -80,7 +78,7 @@ func NewMapIcons(context *render.Context) *MapIcons {
 	program, programErr := opengl.LinkNewStandardProgram(gl, mapIconsVertexShaderSource, mapIconsFragmentShaderSource)
 
 	if programErr != nil {
-		panic(fmt.Errorf("MapIcons shader failed: %v", programErr))
+		panic(opengl.NamedShaderError{Name: "MapIconsShader", Nested: programErr})
 	}
 	renderable := &MapIcons{
 		context: context,

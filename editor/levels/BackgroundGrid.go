@@ -1,8 +1,6 @@
 package levels
 
 import (
-	"fmt"
-
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/ui/opengl"
 )
@@ -89,9 +87,8 @@ type BackgroundGrid struct {
 func NewBackgroundGrid(context *render.Context) *BackgroundGrid {
 	gl := context.OpenGL
 	program, programErr := opengl.LinkNewStandardProgram(gl, gridVertexShaderSource, gridFragmentShaderSource)
-
 	if programErr != nil {
-		panic(fmt.Errorf("BackgroundGrid shader failed: %v", programErr))
+		panic(opengl.NamedShaderError{Name: "BackgroundGridShader", Nested: programErr})
 	}
 	grid := &BackgroundGrid{
 		context:                 context,

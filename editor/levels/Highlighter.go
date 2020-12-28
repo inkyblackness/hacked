@@ -1,8 +1,6 @@
 package levels
 
 import (
-	"fmt"
-
 	mgl "github.com/go-gl/mathgl/mgl32"
 
 	"github.com/inkyblackness/hacked/editor/render"
@@ -56,7 +54,7 @@ func NewHighlighter(context *render.Context) *Highlighter {
 	program, programErr := opengl.LinkNewStandardProgram(gl, highlighterVertexShaderSource, highlighterFragmentShaderSource)
 
 	if programErr != nil {
-		panic(fmt.Errorf("highlighter shader failed: %v", programErr))
+		panic(opengl.NamedShaderError{Name: "HighlighterShader", Nested: programErr})
 	}
 	highlighter := &Highlighter{
 		context: context,

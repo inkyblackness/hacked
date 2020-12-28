@@ -1,8 +1,6 @@
 package levels
 
 import (
-	"fmt"
-
 	mgl "github.com/go-gl/mathgl/mgl32"
 
 	"github.com/inkyblackness/hacked/editor/render"
@@ -69,7 +67,7 @@ func NewMapColors(context *render.Context) *MapColors {
 	program, programErr := opengl.LinkNewStandardProgram(gl, mapColorsVertexShaderSource, mapColorsFragmentShaderSource)
 
 	if programErr != nil {
-		panic(fmt.Errorf("MapColors shader failed: %v", programErr))
+		panic(opengl.NamedShaderError{Name: "MapColorsShader", Nested: programErr})
 	}
 	renderable := &MapColors{
 		context:                 context,
