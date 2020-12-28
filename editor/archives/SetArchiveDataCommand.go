@@ -30,6 +30,7 @@ func (command setArchiveDataCommand) delResources(modder world.Modder, data map[
 	}
 }
 
+// nolint: interfacer
 func (command setArchiveDataCommand) perform(modder world.Modder, data map[resource.ID][]byte) error {
 	for id, blockData := range data {
 		if len(blockData) > 0 {
