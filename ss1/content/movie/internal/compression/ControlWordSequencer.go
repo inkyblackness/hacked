@@ -1,7 +1,6 @@
 package compression
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/inkyblackness/hacked/ss1"
@@ -85,8 +84,11 @@ func (seq ControlWordSequencer) Sequence() (ControlWordSequence, error) {
 	if totalOps > maximumDirect {
 		requiredExtensions = (totalOps - maximumDirect + 15) / 16
 		if requiredExtensions > (bitstreamIndexLimit - maximumDirect) {
-			return result, fmt.Errorf("too many words: total=%v, maxDirect=%v, indexLimit=%v",
-				totalOps, maximumDirect, bitstreamIndexLimit)
+			return result, tooManyWordsError{
+				Total:               totalOps,
+				MaximumDirect:       maximumDirect,
+				BitstreamIndexLimit: bitstreamIndexLimit,
+			}
 		}
 	}
 	extensionStart := maximumDirect + requiredExtensions

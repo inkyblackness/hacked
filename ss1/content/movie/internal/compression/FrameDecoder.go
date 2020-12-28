@@ -1,9 +1,5 @@
 package compression
 
-import (
-	"fmt"
-)
-
 // FrameDecoder is for decoding compressed frames with the help of data streams.
 // A new instance of a decoder is created with a FrameDecoderBuilder.
 type FrameDecoder struct {
@@ -76,7 +72,10 @@ func (decoder *FrameDecoder) readNextControlWord(bitstream *BitstreamReader) (Co
 	controlIndex := bitstream.Read(12)
 	if controlIndex > availableWords {
 		return ControlWordOf(0, CtrlUnknown, 0),
-			fmt.Errorf("control word index out of range: %v/%v", controlIndex, availableWords)
+			wordIndexOutOfRangeError{
+				Index:     controlIndex,
+				Available: availableWords,
+			}
 	}
 
 	control := decoder.controlWords[controlIndex]
@@ -93,7 +92,10 @@ func (decoder *FrameDecoder) readNextControlWord(bitstream *BitstreamReader) (Co
 			controlIndex = control.LongOffset() + offset
 			if controlIndex > availableWords {
 				return ControlWordOf(0, CtrlUnknown, 0),
-					fmt.Errorf("control word index out of range: %v/%v", controlIndex, availableWords)
+					wordIndexOutOfRangeError{
+						Index:     controlIndex,
+						Available: availableWords,
+					}
 			}
 			control = decoder.controlWords[controlIndex]
 		}

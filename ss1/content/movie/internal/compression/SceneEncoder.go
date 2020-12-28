@@ -2,7 +2,6 @@ package compression
 
 import (
 	"context"
-	"fmt"
 )
 
 // EncodedFrame contains the streams of one compressed frame.
@@ -87,7 +86,7 @@ func (e *SceneEncoder) Encode(ctx context.Context) (
 
 	paletteLookupBuffer = paletteLookup.Buffer()
 	if len(paletteLookupBuffer) > 0x1FFFF {
-		err = fmt.Errorf("palette lookup is too big: %vB", len(paletteLookupBuffer))
+		err = paletteLookupTooBigError{Size: len(paletteLookupBuffer)}
 		return
 	}
 

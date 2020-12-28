@@ -7,6 +7,15 @@ import (
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
+type resourceInconsistentError struct {
+	ID         resource.ID
+	BlockCount int
+}
+
+func (err resourceInconsistentError) Error() string {
+	return fmt.Sprintf("simple resource %v has invalid number of blocks: %d", err.ID, err.BlockCount)
+}
+
 // Write serializes the resources from given source into the target.
 // It is a convenience function for using Writer.
 func Write(target io.WriteSeeker, source resource.Viewer) error {
@@ -41,7 +50,7 @@ func Write(target io.WriteSeeker, source resource.Viewer) error {
 				return copyErr
 			}
 		default:
-			return fmt.Errorf("simple resource %v has wrong number of blocks", id)
+			return resourceInconsistentError{ID: id, BlockCount: entry.BlockCount()}
 		}
 	}
 
