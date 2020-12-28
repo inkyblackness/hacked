@@ -2,20 +2,20 @@ package resource
 
 import "fmt"
 
-// ResourceNotFoundError indicates the unknown ID.
-type ResourceNotFoundError struct {
+// NotFoundError indicates the unknown ID.
+type NotFoundError struct {
 	ID ID
 }
 
 // Error implements the error interface.
-func (err ResourceNotFoundError) Error() string {
+func (err NotFoundError) Error() string {
 	return fmt.Sprintf("resource with ID %v does not exist", err.ID)
 }
 
 // ErrResourceNotFound returns an error specifying the given ID doesn't
 // have an associated resource.
 func ErrResourceNotFound(id ID) error {
-	return ResourceNotFoundError{ID: id}
+	return NotFoundError{ID: id}
 }
 
 // BlockNotFoundError indicates the unknown block index.
