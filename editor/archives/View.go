@@ -810,7 +810,8 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 				onChange()
 			}
 
-			if archive.IsRandomIntegerVariable(varIndex) {
+			switch {
+			case archive.IsRandomIntegerVariable(varIndex):
 				values.RenderUnifiedSliderInt(readOnly, false, varName, varUnifier,
 					func(u values.Unifier) int { return int(numbers.FromBinaryCodedDecimal(uint16(intConverter(u)))) },
 					func(value int) string { return "%03d" },
@@ -818,7 +819,7 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 					func(newValue int) {
 						changeHandler(int(numbers.ToBinaryCodedDecimal(uint16(newValue))))
 					})
-			} else if len(info.ValueNames) > 0 {
+			case len(info.ValueNames) > 0:
 				var max int16
 				for key := range info.ValueNames {
 					if key > max {
@@ -835,7 +836,7 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 					},
 					int(max+1),
 					changeHandler)
-			} else {
+			default:
 				min := math.MinInt16
 				max := math.MaxInt16
 				if info.Limits != nil {
