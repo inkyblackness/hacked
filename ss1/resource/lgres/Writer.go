@@ -6,7 +6,7 @@ import (
 	"math"
 
 	"github.com/inkyblackness/hacked/ss1/resource"
-	"github.com/inkyblackness/hacked/ss1/resource/lgres/compression"
+	"github.com/inkyblackness/hacked/ss1/resource/lgres/internal/compression"
 	"github.com/inkyblackness/hacked/ss1/serial"
 )
 

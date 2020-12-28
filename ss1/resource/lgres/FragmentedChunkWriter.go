@@ -3,7 +3,7 @@ package lgres
 import (
 	"io"
 
-	"github.com/inkyblackness/hacked/ss1/resource/lgres/compression"
+	"github.com/inkyblackness/hacked/ss1/resource/lgres/internal/compression"
 	"github.com/inkyblackness/hacked/ss1/serial"
 )
 
