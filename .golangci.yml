@@ -17,6 +17,8 @@ linters:
     - unparam
     - wsl
     - funlen
+    - gocyclo # disabled for UI code
+    - nestif # disabled for UI code
     - gocognit
     - stylecheck # enable again for doing all the package documentation.
     - gomnd # too many false positives with constants themselves.
