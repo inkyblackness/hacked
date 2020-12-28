@@ -18,6 +18,14 @@ const (
 	errEndTagDataWrong ss1.StringError = "end tag data wrong"
 )
 
+type unknownEntryTagError struct {
+	tag byte
+}
+
+func (err unknownEntryTagError) Error() string {
+	return fmt.Sprintf("unknown entry tag 0x%02X", int(err.tag))
+}
+
 // Animation describes a sequence of bitmaps to form a small movie.
 type Animation struct {
 	Width      int16
@@ -59,7 +67,7 @@ func ReadAnimation(reader io.Reader) (anim Animation, err error) {
 			done = true
 		default:
 			if err == nil {
-				err = fmt.Errorf("unknown entry tag 0x%02X", int(tag))
+				err = unknownEntryTagError{tag: tag}
 			}
 		}
 	}
