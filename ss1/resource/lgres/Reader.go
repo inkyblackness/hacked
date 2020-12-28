@@ -3,10 +3,10 @@ package lgres
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"io"
 	"io/ioutil"
 
+	"github.com/inkyblackness/hacked/ss1"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/resource/lgres/internal/compression"
 	"github.com/inkyblackness/hacked/ss1/resource/lgres/internal/format"
@@ -24,11 +24,13 @@ type Reader struct {
 	cache map[uint16]resource.View
 }
 
-// ErrSourceNil is returned if the source is not valid.
-var ErrSourceNil = errors.New("source is nil")
+const (
+	// ErrSourceNil is returned if the source is not valid.
+	ErrSourceNil ss1.StringError = "source is nil"
 
-// ErrFormatMismatch is returned if the format is unknown.
-var ErrFormatMismatch = errors.New("format mismatch")
+	// ErrFormatMismatch is returned if the format is unknown.
+	ErrFormatMismatch ss1.StringError = "format mismatch"
+)
 
 // ReaderFrom accesses the provided source and creates a new Reader instance
 // from it.

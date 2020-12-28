@@ -26,4 +26,6 @@ const (
 const (
 	errNoResourcesFound    ss1.StringError = "resource unknown"
 	errBlockLengthMismatch ss1.StringError = "block length mismatch"
+	errIndexOutOfBounds    ss1.StringError = "index is out of bounds"
+	errEntryIsNil          ss1.StringError = "entry is nil"
 )

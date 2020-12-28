@@ -3,6 +3,8 @@ package serial_test
 import (
 	"fmt"
 	"io"
+
+	"github.com/inkyblackness/hacked/ss1"
 )
 
 type errorBuffer struct {
@@ -16,7 +18,7 @@ func (buf *errorBuffer) check() (err error) {
 	buf.callCounter++
 	if buf.errorOnNextCall {
 		buf.errorOnNextCall = false
-		err = fmt.Errorf("errorBuffer on call number %v", buf.callCounter) // nolint: goerr113
+		err = ss1.StringError(fmt.Sprintf("errorBuffer on call number %v", buf.callCounter))
 	}
 	return
 }

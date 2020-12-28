@@ -1,8 +1,6 @@
 package world
 
 import (
-	"errors"
-
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/texture"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -23,9 +21,6 @@ func NewManifest(modified resource.ModificationCallback) *Manifest {
 
 	return &manifest
 }
-
-var errIndexOutOfBounds = errors.New("index is out of bounds")
-var errEntryIsNil = errors.New("entry is nil")
 
 // EntryCount returns the number of entries currently in the manifest.
 func (manifest Manifest) EntryCount() int {

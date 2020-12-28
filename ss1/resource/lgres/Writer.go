@@ -1,10 +1,10 @@
 package lgres
 
 import (
-	"errors"
 	"io"
 	"math"
 
+	"github.com/inkyblackness/hacked/ss1"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/resource/lgres/internal/compression"
 	"github.com/inkyblackness/hacked/ss1/resource/lgres/internal/format"
@@ -25,7 +25,7 @@ type Writer struct {
 }
 
 // ErrTargetNil is returned if the target cannot be used.
-var ErrTargetNil = errors.New("target is nil")
+const ErrTargetNil ss1.StringError = "target is nil"
 
 // NewWriter returns a new Writer instance prepared to add resources.
 // To finalize the created file, call Finish().
@@ -47,7 +47,7 @@ func NewWriter(target io.WriteSeeker) (*Writer, error) {
 }
 
 // ErrWriterFinished is returned if the writer was already finished.
-var ErrWriterFinished = errors.New("writer is finished")
+const ErrWriterFinished ss1.StringError = "writer is finished"
 
 // CreateResource adds a new single-block resource to the current resource file.
 // This resource is closed by creating another resource, or by finishing the writer.

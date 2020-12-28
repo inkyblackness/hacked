@@ -1,8 +1,9 @@
 package serial
 
 import (
-	"errors"
 	"io"
+
+	"github.com/inkyblackness/hacked/ss1"
 )
 
 // PositioningEncoder is an Encoder with positioning capabilities.
@@ -30,8 +31,10 @@ func (coder *PositioningEncoder) SetCurPos(offset uint32) {
 	coder.offset = offset
 }
 
-var errInvalidWhence = errors.New("seek: invalid whence")
-var errSeekBeforeStart = errors.New("seek: seeking before start")
+const (
+	errInvalidWhence   ss1.StringError = "seek: invalid whence"
+	errSeekBeforeStart ss1.StringError = "seek: seeking before start"
+)
 
 // Seek repositions the current encoding offset.
 // This implementation does not support a whence value of io.SeekEnd.
