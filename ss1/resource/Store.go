@@ -23,7 +23,7 @@ func (store Store) IDs() []ID {
 func (store Store) Resource(id ID) (*Resource, error) {
 	res, existing := store.resources[id]
 	if !existing {
-		return nil, ErrResourceNotFound(id)
+		return nil, ErrNotFound(id)
 	}
 	return res, nil
 }

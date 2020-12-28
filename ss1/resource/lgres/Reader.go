@@ -77,7 +77,7 @@ func (reader *Reader) View(id resource.ID) (retrievedResource resource.View, err
 	}
 	resourceStartOffset, entry := reader.findEntry(id.Value())
 	if entry == nil {
-		return nil, resource.ErrResourceNotFound(id)
+		return nil, resource.ErrNotFound(id)
 	}
 	resourceType := entry.resourceType()
 	compressed := (resourceType & format.ResourceTypeFlagCompressed) != 0

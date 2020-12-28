@@ -1,7 +1,6 @@
 package text
 
 import (
-	"errors"
 	"io/ioutil"
 
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -50,7 +49,7 @@ func readLine(selector resource.Selector, key resource.Key, cp Codepage) (string
 		return "", err
 	}
 	if view.ContentType() != resource.Text {
-		return "", errors.New("resource is not a text")
+		return "", resource.ErrWrongType(key, resource.Text)
 	}
 	reader, err := view.Block(key.Index)
 	if err != nil {
@@ -69,7 +68,7 @@ func readPage(selector resource.Selector, key resource.Key, cp Codepage) (string
 		return "", err
 	}
 	if view.ContentType() != resource.Text {
-		return "", errors.New("resource is not a text")
+		return "", resource.ErrWrongType(key, resource.Text)
 	}
 	blockCount := view.BlockCount()
 	value := ""

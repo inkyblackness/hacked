@@ -2,7 +2,6 @@ package movie
 
 import (
 	"bytes"
-	"errors"
 	"io/ioutil"
 
 	"github.com/inkyblackness/hacked/ss1/content/audio"
@@ -65,10 +64,10 @@ func (cache *Cache) cached(key resource.Key) (*cachedMovie, error) {
 	selector := cache.localizer.LocalizedResources(key.Lang)
 	view, err := selector.Select(key.ID.Plus(key.Index))
 	if err != nil {
-		return nil, errors.New("no movie found")
+		return nil, err
 	}
 	if (view.ContentType() != resource.Movie) || view.Compound() || (view.BlockCount() != 1) {
-		return nil, errors.New("invalid resource type")
+		return nil, resource.ErrWrongType(key, resource.Movie)
 	}
 	reader, err := view.Block(0)
 	if err != nil {

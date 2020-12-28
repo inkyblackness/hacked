@@ -1,8 +1,6 @@
 package sound
 
 import (
-	"errors"
-
 	"github.com/inkyblackness/hacked/ss1/content/audio"
 	"github.com/inkyblackness/hacked/ss1/content/audio/voc"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -45,10 +43,10 @@ func (cache *EffectCache) cached(key resource.Key) (audio.L8, error) {
 	selector := cache.localizer.LocalizedResources(key.Lang)
 	view, err := selector.Select(key.ID.Plus(key.Index))
 	if err != nil {
-		return audio.L8{}, errors.New("no sound found")
+		return audio.L8{}, err
 	}
 	if view.ContentType() != resource.Sound {
-		return audio.L8{}, errors.New("invalid resource type")
+		return audio.L8{}, resource.ErrWrongType(key, resource.Sound)
 	}
 	reader, err := view.Block(0)
 	if err != nil {

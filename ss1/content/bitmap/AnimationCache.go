@@ -1,8 +1,6 @@
 package bitmap
 
 import (
-	"errors"
-
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
@@ -45,7 +43,7 @@ func (cache *AnimationCache) Animation(key resource.Key) (anim Animation, err er
 		return
 	}
 	if (view.ContentType() != resource.Animation) || (view.BlockCount() != 1) {
-		return anim, errors.New("resource is not an animation")
+		return anim, resource.ErrWrongType(key, resource.Animation)
 	}
 	reader, err := view.Block(0)
 	if err != nil {

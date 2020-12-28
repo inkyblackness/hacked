@@ -1,8 +1,6 @@
 package text
 
 import (
-	"errors"
-
 	"github.com/inkyblackness/hacked/ss1/resource"
 )
 
@@ -46,10 +44,10 @@ func (cache *ElectronicMessageCache) Message(key resource.Key) (ElectronicMessag
 	selector := cache.localizer.LocalizedResources(key.Lang)
 	view, err := selector.Select(cacheKey.ID)
 	if err != nil {
-		return EmptyElectronicMessage(), errors.New("no message found")
+		return EmptyElectronicMessage(), err
 	}
 	if (view.ContentType() != resource.Text) || !view.Compound() {
-		return EmptyElectronicMessage(), errors.New("invalid resource type")
+		return EmptyElectronicMessage(), resource.ErrWrongType(key, resource.Text)
 	}
 	value, err = DecodeElectronicMessage(cache.cp, view)
 	if err != nil {

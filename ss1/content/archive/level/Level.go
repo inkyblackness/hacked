@@ -560,15 +560,13 @@ func (lvl *Level) clearTileMap() {
 }
 
 func (lvl *Level) reader(block int) (io.Reader, error) {
-	res, err := lvl.localizer.LocalizedResources(resource.LangAny).Select(lvl.resStart.Plus(block))
+	resID := lvl.resStart.Plus(block)
+	res, err := lvl.localizer.LocalizedResources(resource.LangAny).Select(resID)
 	if err != nil {
 		return nil, err
 	}
-	if res.ContentType() != resource.Archive {
-		return nil, errors.New("resource is not for archive")
-	}
-	if res.BlockCount() != 1 {
-		return nil, errors.New("resource has invalid block count")
+	if (res.ContentType() != resource.Archive) || (res.BlockCount() != 1) {
+		return nil, resource.ErrWrongType(resource.KeyOf(resID, resource.LangAny, 0), resource.Archive)
 	}
 	return res.Block(0)
 }

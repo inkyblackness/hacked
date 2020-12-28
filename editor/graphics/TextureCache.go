@@ -57,7 +57,7 @@ func (cache *TextureCache) TextureReferenced(key resource.Key, reference *resour
 		return nil, err
 	}
 	if view.ContentType() != resource.Bitmap {
-		return nil, errors.New("resource not a bitmap")
+		return nil, resource.ErrWrongType(key, resource.Bitmap)
 	}
 	reader, err := view.Block(key.Index)
 	if err != nil {

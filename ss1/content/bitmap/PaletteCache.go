@@ -1,8 +1,6 @@
 package bitmap
 
 import (
-	"errors"
-
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/serial"
 )
@@ -53,7 +51,7 @@ func (cache *PaletteCache) Palette(key resource.Key) (pal Palette, err error) {
 		return cache.defaultPalette, err
 	}
 	if (view.ContentType() != resource.Palette) || (view.BlockCount() != 1) {
-		return cache.defaultPalette, errors.New("resource is not a palette")
+		return cache.defaultPalette, resource.ErrWrongType(key, resource.Palette)
 	}
 	reader, err := view.Block(0)
 	if err != nil {

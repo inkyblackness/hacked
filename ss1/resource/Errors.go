@@ -12,9 +12,9 @@ func (err NotFoundError) Error() string {
 	return fmt.Sprintf("resource with ID %v does not exist", err.ID)
 }
 
-// ErrResourceNotFound returns an error specifying the given ID doesn't
+// ErrNotFound returns an error specifying the given ID doesn't
 // have an associated resource.
-func ErrResourceNotFound(id ID) error {
+func ErrNotFound(id ID) error {
 	return NotFoundError{ID: id}
 }
 
@@ -32,4 +32,20 @@ func (err BlockNotFoundError) Error() string {
 // ErrBlockNotFound returns an error specifying the given index does not identify a valid block.
 func ErrBlockNotFound(index, available int) error {
 	return BlockNotFoundError{Index: index, Available: available}
+}
+
+// WrongTypeError indicates a resource of unexpected type.
+type WrongTypeError struct {
+	Key      Key
+	Expected ContentType
+}
+
+// Error implements the error interface.
+func (err WrongTypeError) Error() string {
+	return fmt.Sprintf("resource %v does not have expected type %v", err.Key, err.Expected)
+}
+
+// ErrWrongType returns an error specifying a resource was of unexpected type.
+func ErrWrongType(key Key, expected ContentType) error {
+	return WrongTypeError{Key: key, Expected: expected}
 }

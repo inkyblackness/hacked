@@ -2,7 +2,6 @@ package graphics
 
 import (
 	"encoding/binary"
-	"errors"
 
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/resource"
@@ -53,7 +52,7 @@ func (cache *PaletteCache) Palette(index int) (*PaletteTexture, error) {
 		return nil, err
 	}
 	if view.ContentType() != resource.Palette {
-		return nil, errors.New("resource not a palette")
+		return nil, resource.ErrWrongType(key, resource.Palette)
 	}
 	reader, err := view.Block(key.Index)
 	if err != nil {
