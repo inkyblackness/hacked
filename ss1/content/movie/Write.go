@@ -10,8 +10,6 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/text"
 )
 
-const indexHeaderSizeIncrement = 0x0400
-
 // Write encodes the provided container into the given writer.
 func Write(dest io.Writer, container Container, cp text.Codepage) error {
 	var indexEntries []format.IndexTableEntry
@@ -75,7 +73,7 @@ func Write(dest io.Writer, container Container, cp text.Codepage) error {
 		indexEntries = append(indexEntries, indexEntry)
 	}
 	// calculate size fields
-	header.IndexSize = int32(indexTableSizeFor(len(indexEntries) + 1))
+	header.IndexSize = int32(format.IndexTableSizeFor(len(indexEntries) + 1))
 	dataStartOffset := format.HeaderSize + int32(len(palette)) + header.IndexSize
 	for i := range indexEntries {
 		indexEntries[i].DataOffset += dataStartOffset
@@ -142,15 +140,4 @@ func paletteDataFromContainer(container Container) []byte {
 	buf := bytes.NewBuffer(nil)
 	_ = binary.Write(buf, binary.LittleEndian, &palette)
 	return buf.Bytes()
-}
-
-func indexTableSizeFor(entryCount int) int {
-	size := indexHeaderSizeIncrement
-	requiredSize := entryCount * format.IndexTableEntrySize
-
-	if requiredSize > size {
-		size *= requiredSize/size + 2
-	}
-
-	return size
 }
