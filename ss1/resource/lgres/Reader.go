@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 
@@ -78,7 +77,7 @@ func (reader *Reader) View(id resource.ID) (retrievedResource resource.View, err
 	}
 	resourceStartOffset, entry := reader.findEntry(id.Value())
 	if entry == nil {
-		return nil, resource.ErrResourceDoesNotExist(id)
+		return nil, resource.ErrResourceNotFound(id)
 	}
 	resourceType := entry.resourceType()
 	compressed := (resourceType & format.ResourceTypeFlagCompressed) != 0
@@ -172,7 +171,7 @@ func (reader *Reader) newCompoundResourceReader(entry *resourceDirectoryEntry,
 
 	blockFunc := func(index int) (io.Reader, error) {
 		if (index < 0) || (index >= blockCount) {
-			return nil, fmt.Errorf("block index wrong: %v/%v", index, blockCount)
+			return nil, resource.ErrBlockNotFound(index, blockCount)
 		}
 
 		if compressed && (uncompressedReader == nil) {
@@ -221,7 +220,7 @@ func (reader *Reader) newSingleBlockResourceReader(entry *resourceDirectoryEntry
 	contentType resource.ContentType, compressed bool, resourceStartOffset uint32) (resource.View, error) {
 	blockFunc := func(index int) (io.Reader, error) {
 		if index != 0 {
-			return nil, fmt.Errorf("block index wrong: %v/%v", index, 1)
+			return nil, resource.ErrBlockNotFound(index, 1)
 		}
 		resourceSize := entry.packedLength()
 		// The following check is a hack to re-create the behaviour of the engine.

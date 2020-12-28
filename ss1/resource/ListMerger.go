@@ -2,7 +2,6 @@ package resource
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 )
 
@@ -43,7 +42,7 @@ func (view listMerger) BlockCount() (max int) {
 func (view listMerger) Block(index int) (reader io.Reader, err error) {
 	blockCount := view.BlockCount()
 	if (index < 0) || (index >= blockCount) {
-		return nil, fmt.Errorf("block index wrong: %v/%v", index, blockCount)
+		return nil, ErrBlockNotFound(index, blockCount)
 	}
 
 	for layer := len(view.list) - 1; (layer >= 0) && (reader == nil); layer-- {

@@ -22,7 +22,7 @@ type Selector struct {
 func (merger Selector) Select(id ID) (view View, err error) {
 	list := merger.From.Filter(merger.Lang, id)
 	if len(list) == 0 {
-		return nil, ErrResourceDoesNotExist(id)
+		return nil, ErrResourceNotFound(id)
 	}
 	if (merger.As == nil) || !merger.As.IsCompoundList(id) {
 		view = list[len(list)-1]

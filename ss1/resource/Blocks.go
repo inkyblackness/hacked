@@ -2,7 +2,6 @@ package resource
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 )
 
@@ -29,7 +28,7 @@ func (blocks Blocks) BlockCount() int {
 func (blocks Blocks) BlockRaw(index int) ([]byte, error) {
 	available := len(blocks.data)
 	if (index < 0) || (index >= available) {
-		return nil, fmt.Errorf("block index wrong: %v/%v", index, available)
+		return nil, ErrBlockNotFound(index, available)
 	}
 	return blocks.data[index], nil
 }
