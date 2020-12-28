@@ -1,6 +1,6 @@
 package gui
 
-import "github.com/inkyblackness/imgui-go/v2"
+import "github.com/inkyblackness/imgui-go/v3"
 
 // ImageType is an identifier how an image is to be rendered.
 type ImageType byte

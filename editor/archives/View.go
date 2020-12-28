@@ -5,7 +5,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/inkyblackness/imgui-go/v2"
+	"github.com/inkyblackness/imgui-go/v3"
 
 	"github.com/inkyblackness/hacked/editor/values"
 	"github.com/inkyblackness/hacked/ss1/content/archive"

@@ -20,8 +20,8 @@ github.com/go-gl/mathgl v0.0.0-20180804195959-cdf14b6b8f8a h1:2n5w2v3knlspzjJWyQ
 github.com/go-gl/mathgl v0.0.0-20180804195959-cdf14b6b8f8a/go.mod h1:dvrdneKbyWbK2skTda0nM4B9zSlS2GZSnjX7itr/skQ=
 github.com/gotk3/gotk3 v0.0.0-20190302104302-a9edcaa2ef15 h1:cgSsMMac0GmffsIs12/R2T4Up7YEONmFwAXhZ1uXI+U=
 github.com/gotk3/gotk3 v0.0.0-20190302104302-a9edcaa2ef15/go.mod h1:Eew3QBwAOBTrfFFDmsDE5wZWbcagBL1NUslj1GhRveo=
-github.com/inkyblackness/imgui-go/v2 v2.7.0 h1:nP5WDlfO3hiyR4nqB0k/JoSxzmCw9K5peAGvVXg+WNk=
-github.com/inkyblackness/imgui-go/v2 v2.7.0/go.mod h1:cwQKd6U2onyuT5qwSC3DKCRsUE1SQ58TSVVpLoW/pDs=
+github.com/inkyblackness/imgui-go/v3 v3.0.0 h1:+gOBA/xlr528SOGDteKQS+q7QkyBcOi+znhn18BMs/8=
+github.com/inkyblackness/imgui-go/v3 v3.0.0/go.mod h1:WdM5LZHuTrjd1d+yd2fA19t3mG538kJ6zOLB2sAXF6U=
 github.com/lucasb-eyer/go-colorful v1.0.3 h1:QIbQXiugsb+q10B+MI+7DI1oQLdmnep86tWFlaaUAac=
 github.com/lucasb-eyer/go-colorful v1.0.3/go.mod h1:R4dSotOR9KMtayYi1e77YzuveK+i7ruzyGqttikkLy0=
 github.com/mattn/go-gtk v0.0.0-20180216084204-5a311a1830ab/go.mod h1:PwzwfeB5syFHXORC3MtPylVcjIoTDT/9cvkKpEndGVI=

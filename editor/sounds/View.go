@@ -3,7 +3,7 @@ package sounds
 import (
 	"fmt"
 
-	"github.com/inkyblackness/imgui-go/v2"
+	"github.com/inkyblackness/imgui-go/v3"
 
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/ss1/content/audio"
