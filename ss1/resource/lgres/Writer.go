@@ -23,7 +23,8 @@ type Writer struct {
 	directory []*resourceDirectoryEntry
 }
 
-var errTargetNil = errors.New("target is nil")
+// ErrTargetNil is returned if the target cannot be used.
+var ErrTargetNil = errors.New("target is nil")
 
 // NewWriter returns a new Writer instance prepared to add resources.
 // To finalize the created file, call Finish().
@@ -33,7 +34,7 @@ var errTargetNil = errors.New("target is nil")
 // will produce invalid results and the state of the target is undefined.
 func NewWriter(target io.WriteSeeker) (*Writer, error) {
 	if target == nil {
-		return nil, errTargetNil
+		return nil, ErrTargetNil
 	}
 
 	encoder := serial.NewPositioningEncoder(target)

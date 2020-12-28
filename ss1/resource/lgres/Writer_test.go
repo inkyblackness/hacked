@@ -13,7 +13,7 @@ func TestNewWriterReturnsErrorForNilTarget(t *testing.T) {
 	writer, err := NewWriter(nil)
 
 	assert.Nil(t, writer, "writer should be nil")
-	assert.Equal(t, errTargetNil, err)
+	assert.Equal(t, ErrTargetNil, err)
 }
 
 func TestWriterFinishWithoutAddingResourcesCreatesValidFileWithoutResources(t *testing.T) {

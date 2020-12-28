@@ -24,8 +24,11 @@ type Reader struct {
 	cache map[uint16]resource.View
 }
 
-var errSourceNil = errors.New("source is nil")
-var errFormatMismatch = errors.New("format mismatch")
+// ErrSourceNil is returned if the source is not valid.
+var ErrSourceNil = errors.New("source is nil")
+
+// ErrFormatMismatch is returned if the format is unknown.
+var ErrFormatMismatch = errors.New("format mismatch")
 
 // ReaderFrom accesses the provided source and creates a new Reader instance
 // from it.
@@ -33,7 +36,7 @@ var errFormatMismatch = errors.New("format mismatch")
 // is returned.
 func ReaderFrom(source io.ReaderAt) (reader *Reader, err error) {
 	if source == nil {
-		return nil, errSourceNil
+		return nil, ErrSourceNil
 	}
 
 	var dirOffset uint32
@@ -104,7 +107,7 @@ func readAndVerifyHeader(source io.ReadSeeker) (dirOffset uint32, err error) {
 	}
 	expected[len(headerString)] = commentTerminator
 	if !bytes.Equal(data[:len(expected)], expected) {
-		return 0, errFormatMismatch
+		return 0, ErrFormatMismatch
 	}
 
 	return dirOffset, coder.FirstError()

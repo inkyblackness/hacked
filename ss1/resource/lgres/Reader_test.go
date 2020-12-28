@@ -16,7 +16,7 @@ func TestReaderFromReturnsErrorForNilSource(t *testing.T) {
 	reader, err := ReaderFrom(nil)
 
 	assert.Nil(t, reader, "reader should be nil")
-	assert.Equal(t, errSourceNil, err)
+	assert.Equal(t, ErrSourceNil, err)
 }
 
 func TestReaderFromReturnsInstanceOnEmptySource(t *testing.T) {
@@ -33,7 +33,7 @@ func TestReaderFromReturnsErrorOnInvalidHeaderString(t *testing.T) {
 
 	_, err := ReaderFrom(bytes.NewReader(sourceData))
 
-	assert.Equal(t, errFormatMismatch, err)
+	assert.Equal(t, ErrFormatMismatch, err)
 }
 
 func TestReaderFromReturnsErrorOnMissingCommentTerminator(t *testing.T) {
@@ -42,7 +42,7 @@ func TestReaderFromReturnsErrorOnMissingCommentTerminator(t *testing.T) {
 
 	_, err := ReaderFrom(bytes.NewReader(sourceData))
 
-	assert.Equal(t, errFormatMismatch, err)
+	assert.Equal(t, ErrFormatMismatch, err)
 }
 
 func TestReaderFromReturnsErrorOnInvalidDirectoryStart(t *testing.T) {
