@@ -144,7 +144,7 @@ func (lvl *Level) Tile(x, y int) *TileMapEntry {
 
 // MapGridInfo returns the information necessary to draw a 2D map.
 func (lvl *Level) MapGridInfo(x, y int) (TileType, TileSlopeControl, WallHeights) {
-	tile := lvl.tileMap.Tile(x, y)
+	tile := lvl.Tile(x, y)
 	if tile == nil {
 		return TileTypeSolid, TileSlopeControlCeilingInverted, WallHeights{}
 	}
