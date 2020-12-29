@@ -153,22 +153,24 @@ func (renderable *MapTextures) Render(columns, rows int, tileTextureQuery TileTe
 		for y := 0; y < rows; y++ {
 			for x := 0; x < columns; x++ {
 				tileType, textureIndex, textureRotations := tileTextureQuery(x, y)
-				if tileType != level.TileTypeSolid {
-					texture, _ := renderable.textureQuery(textureIndex)
-					if texture != nil {
-						modelMatrix := mgl.Translate3D(float32(x)*fineCoordinatesPerTileSide, float32(y)*fineCoordinatesPerTileSide, 0.0).
-							Mul4(scaling)
-
-						uvMatrix := uvRotations[textureRotations]
-						renderable.uvMatrixUniform.Set(gl, uvMatrix)
-						renderable.modelMatrixUniform.Set(gl, &modelMatrix)
-						vertexCount := renderable.ensureTileType(tileType)
-						gl.BindTexture(opengl.TEXTURE_2D, texture.Handle())
-						gl.Uniform1i(renderable.bitmapUniform, textureUnit)
-
-						gl.DrawArrays(opengl.TRIANGLES, 0, int32(vertexCount))
-					}
+				if tileType == level.TileTypeSolid {
+					continue
 				}
+				texture, _ := renderable.textureQuery(textureIndex)
+				if texture == nil {
+					continue
+				}
+
+				modelMatrix := mgl.Translate3D(float32(x)*fineCoordinatesPerTileSide, float32(y)*fineCoordinatesPerTileSide, 0.0).
+					Mul4(scaling)
+
+				uvMatrix := uvRotations[textureRotations]
+				renderable.uvMatrixUniform.Set(gl, uvMatrix)
+				renderable.modelMatrixUniform.Set(gl, &modelMatrix)
+				gl.BindTexture(opengl.TEXTURE_2D, texture.Handle())
+				gl.Uniform1i(renderable.bitmapUniform, textureUnit)
+
+				renderable.renderTileType(tileType)
 			}
 		}
 
@@ -176,10 +178,10 @@ func (renderable *MapTextures) Render(columns, rows int, tileTextureQuery TileTe
 	})
 }
 
-func (renderable *MapTextures) ensureTileType(tileType level.TileType) (vertexCount int) {
+func (renderable *MapTextures) renderTileType(tileType level.TileType) {
 	displayedType := level.TileTypeOpen
+	vertexCount := 6
 
-	vertexCount = 6
 	if tileType == level.TileTypeDiagonalOpenNorthEast || tileType == level.TileTypeDiagonalOpenNorthWest ||
 		tileType == level.TileTypeDiagonalOpenSouthEast || tileType == level.TileTypeDiagonalOpenSouthWest {
 		displayedType = tileType
@@ -228,5 +230,5 @@ func (renderable *MapTextures) ensureTileType(tileType level.TileType) (vertexCo
 		renderable.lastTileType = displayedType
 	}
 
-	return
+	renderable.context.OpenGL.DrawArrays(opengl.TRIANGLES, 0, int32(vertexCount))
 }
