@@ -114,12 +114,12 @@ func NewBackgroundGrid(context *render.Context) *BackgroundGrid {
 func (grid *BackgroundGrid) Render(columns, rows int) {
 	gl := grid.context.OpenGL
 
-	grid.setGridSize(rows, columns)
+	grid.setGridSize(columns, rows)
 
 	grid.vao.OnShader(func() {
 		grid.viewMatrixUniform.Set(gl, grid.context.ViewMatrix)
 		grid.projectionMatrixUniform.Set(gl, &grid.context.ProjectionMatrix)
-		grid.gridSizeUniform.Set(gl, &[4]float32{float32(rows), float32(columns), 0, 0})
+		grid.gridSizeUniform.Set(gl, &[4]float32{float32(columns), float32(rows), 0, 0})
 
 		gl.DrawArrays(opengl.TRIANGLES, 0, 6)
 	})
