@@ -77,16 +77,79 @@ type MapTextures struct {
 	lastTileType level.TileType
 }
 
-var uvRotations map[int]*mgl.Mat4
+type tileTypeVertices struct {
+	vertices       []float32
+	equivalentType level.TileType
+}
+
+var tileTypeVerticesLookup []tileTypeVertices
+var uvRotations [4]*mgl.Mat4
 
 func init() {
-	uvRotations = make(map[int]*mgl.Mat4)
 	for i := 0; i < 4; i++ {
 		matrix := mgl.Translate3D(0.5, 0.5, 0.0).
 			Mul4(mgl.HomogRotate3DZ(math.Pi * float32(i) / -2.0)).
 			Mul4(mgl.Translate3D(-0.5, -0.5, 0.0)).
 			Mul4(mgl.Scale3D(1.0, -1.0, 1.0))
 		uvRotations[i] = &matrix
+	}
+
+	for _, tileType := range level.TileTypes() {
+		for int(tileType) >= len(tileTypeVerticesLookup) {
+			tileTypeVerticesLookup = append(tileTypeVerticesLookup, tileTypeVertices{equivalentType: level.TileTypeSolid})
+		}
+		switch tileType {
+		case level.TileTypeSolid:
+		case level.TileTypeDiagonalOpenNorthEast:
+			tileTypeVerticesLookup[int(tileType)] = tileTypeVertices{
+				vertices: []float32{
+					0.0, 1.0, 0.0,
+					1.0, 1.0, 0.0,
+					1.0, 0.0, 0.0,
+				},
+				equivalentType: level.TileTypeDiagonalOpenNorthEast,
+			}
+		case level.TileTypeDiagonalOpenNorthWest:
+			tileTypeVerticesLookup[int(tileType)] = tileTypeVertices{
+				vertices: []float32{
+					0.0, 1.0, 0.0,
+					1.0, 1.0, 0.0,
+					0.0, 0.0, 0.0,
+				},
+				equivalentType: level.TileTypeDiagonalOpenNorthWest,
+			}
+		case level.TileTypeDiagonalOpenSouthEast:
+			tileTypeVerticesLookup[int(tileType)] = tileTypeVertices{
+				vertices: []float32{
+					1.0, 1.0, 0.0,
+					1.0, 0.0, 0.0,
+					0.0, 0.0, 0.0,
+				},
+				equivalentType: level.TileTypeDiagonalOpenSouthEast,
+			}
+		case level.TileTypeDiagonalOpenSouthWest:
+			tileTypeVerticesLookup[int(tileType)] = tileTypeVertices{
+				vertices: []float32{
+					0.0, 1.0, 0.0,
+					1.0, 0.0, 0.0,
+					0.0, 0.0, 0.0,
+				},
+				equivalentType: level.TileTypeDiagonalOpenSouthWest,
+			}
+		default:
+			tileTypeVerticesLookup[int(tileType)] = tileTypeVertices{
+				vertices: []float32{
+					0.0, 0.0, 0.0,
+					1.0, 0.0, 0.0,
+					1.0, 1.0, 0.0,
+
+					1.0, 1.0, 0.0,
+					0.0, 1.0, 0.0,
+					0.0, 0.0, 0.0,
+				},
+				equivalentType: level.TileTypeOpen,
+			}
+		}
 	}
 }
 
@@ -148,6 +211,7 @@ func (renderable *MapTextures) Render(columns, rows int, tileTextureQuery TileTe
 
 		textureUnit = 1
 		gl.ActiveTexture(opengl.TEXTURE0 + uint32(textureUnit))
+		gl.Uniform1i(renderable.bitmapUniform, textureUnit)
 
 		scaling := mgl.Scale3D(fineCoordinatesPerTileSide, fineCoordinatesPerTileSide, 1.0)
 		for y := 0; y < rows; y++ {
@@ -168,8 +232,6 @@ func (renderable *MapTextures) Render(columns, rows int, tileTextureQuery TileTe
 				renderable.uvMatrixUniform.Set(gl, uvMatrix)
 				renderable.modelMatrixUniform.Set(gl, &modelMatrix)
 				gl.BindTexture(opengl.TEXTURE_2D, texture.Handle())
-				gl.Uniform1i(renderable.bitmapUniform, textureUnit)
-
 				renderable.renderTileType(tileType)
 			}
 		}
@@ -179,56 +241,15 @@ func (renderable *MapTextures) Render(columns, rows int, tileTextureQuery TileTe
 }
 
 func (renderable *MapTextures) renderTileType(tileType level.TileType) {
-	displayedType := level.TileTypeOpen
-	vertexCount := 6
+	info := tileTypeVerticesLookup[int(tileType)]
+	vertexCount := len(info.vertices) / 3
+	gl := renderable.context.OpenGL
+	if info.equivalentType != renderable.lastTileType {
+		renderable.lastTileType = info.equivalentType
 
-	if tileType == level.TileTypeDiagonalOpenNorthEast || tileType == level.TileTypeDiagonalOpenNorthWest ||
-		tileType == level.TileTypeDiagonalOpenSouthEast || tileType == level.TileTypeDiagonalOpenSouthWest {
-		displayedType = tileType
-		vertexCount = 3
-	}
-	if renderable.lastTileType != displayedType {
-		gl := renderable.context.OpenGL
-		var vertices []float32
-		limit := float32(1.0)
-
-		switch displayedType {
-		case level.TileTypeDiagonalOpenNorthEast:
-			vertices = []float32{
-				0.0, limit, 0.0,
-				limit, limit, 0.0,
-				limit, 0.0, 0.0}
-		case level.TileTypeDiagonalOpenNorthWest:
-			vertices = []float32{
-				0.0, limit, 0.0,
-				limit, limit, 0.0,
-				0.0, 0.0, 0.0}
-		case level.TileTypeDiagonalOpenSouthEast:
-			vertices = []float32{
-				limit, limit, 0.0,
-				limit, 0.0, 0.0,
-				0.0, 0.0, 0.0}
-		case level.TileTypeDiagonalOpenSouthWest:
-			vertices = []float32{
-				0.0, limit, 0.0,
-				limit, 0.0, 0.0,
-				0.0, 0.0, 0.0}
-		case level.TileTypeOpen:
-			vertices = []float32{
-				0.0, 0.0, 0.0,
-				limit, 0.0, 0.0,
-				limit, limit, 0.0,
-
-				limit, limit, 0.0,
-				0.0, limit, 0.0,
-				0.0, 0.0, 0.0}
-		}
 		gl.BindBuffer(opengl.ARRAY_BUFFER, renderable.vertexPositionBuffer)
-		gl.BufferData(opengl.ARRAY_BUFFER, len(vertices)*4, vertices, opengl.STATIC_DRAW)
+		gl.BufferData(opengl.ARRAY_BUFFER, len(info.vertices)*4, info.vertices, opengl.STATIC_DRAW)
 		gl.BindBuffer(opengl.ARRAY_BUFFER, 0)
-
-		renderable.lastTileType = displayedType
 	}
-
-	renderable.context.OpenGL.DrawArrays(opengl.TRIANGLES, 0, int32(vertexCount))
+	gl.DrawArrays(opengl.TRIANGLES, 0, int32(vertexCount))
 }
