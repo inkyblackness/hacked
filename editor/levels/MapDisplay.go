@@ -181,7 +181,7 @@ func (display *MapDisplay) Render(properties object.PropertiesTable, lvl *level.
 			display.colors.Render(columns, rows, colorQuery)
 		}
 	}
-	display.mapGrid.Render(lvl)
+	display.mapGrid.Render(columns, rows, lvl)
 	if display.positionValid {
 		if len(display.availableHoverItems) == 0 {
 			display.availableHoverItems = display.nearestHoverItems(lvl, display.position)

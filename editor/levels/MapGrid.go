@@ -128,7 +128,7 @@ func (grid *MapGrid) calculateTickVertices() []float32 {
 }
 
 // Render renders the grid.
-func (grid *MapGrid) Render(mapper TileMapper) {
+func (grid *MapGrid) Render(columns, rows int, mapper TileMapper) {
 	gl := grid.context.OpenGL
 
 	var slopeTicksByType = [][]int{
@@ -182,8 +182,8 @@ func (grid *MapGrid) Render(mapper TileMapper) {
 			1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
 		}
 		var vertexBuffer [((4 * 3) + 2) * 2 * 3]float32
-		for y := 0; y < 64; y++ {
-			for x := 0; x < 64; x++ {
+		for y := 0; y < rows; y++ {
+			for x := 0; x < columns; x++ {
 				modelMatrix = mgl.Ident4().
 					Mul4(mgl.Translate3D((float32(x)+0.5)*fineCoordinatesPerTileSide, (float32(y)+0.5)*fineCoordinatesPerTileSide, 0.0)).
 					Mul4(mgl.Scale3D(fineCoordinatesPerTileSide, fineCoordinatesPerTileSide, 1.0))
