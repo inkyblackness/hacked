@@ -160,7 +160,7 @@ func (lvl *Level) ObjectLimit() ObjectID {
 	return ObjectID(size - 1)
 }
 
-// ObjectClassStats returns the number of used and totoal possible entries of given class.
+// ObjectClassStats returns the number of used and total possible entries of given class.
 func (lvl *Level) ObjectClassStats(class object.Class) (active, limit int) {
 	if int(class) >= len(lvl.objectClassTables) {
 		return 0, 0
