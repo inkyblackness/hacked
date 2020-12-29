@@ -1,8 +1,8 @@
 package level
 
 const (
-	defaultMapSideLength  = 64
-	defaultMapSideShift   = 6
+	defaultMapXShift      = 6
+	defaultMapYShift      = 6
 	defaultMapHeightShift = 3
 )
 
@@ -12,9 +12,9 @@ type BaseInfo struct {
 	XSize int32
 	// YSize is the vertical extent of the map (South to North).
 	YSize int32
-	// XShift is the base value of XSize (XSize == 1 << XShift).
+	// XShift is the base value of XSize (XSize <= 1 << XShift).
 	XShift int32
-	// YShift is the base value of YSize (YSize == 1 << YShift).
+	// YShift is the base value of YSize (YSize <= 1 << YShift).
 	YShift int32
 	// ZShift is the base value of the height of the map.
 	ZShift HeightShift
@@ -29,10 +29,10 @@ type BaseInfo struct {
 // DefaultBaseInfo returns an initialized instance.
 func DefaultBaseInfo(cyberspace bool) BaseInfo {
 	info := BaseInfo{
-		XSize:     defaultMapSideLength,
-		YSize:     defaultMapSideLength,
-		XShift:    defaultMapSideShift,
-		YShift:    defaultMapSideShift,
+		XSize:     1 << defaultMapXShift,
+		YSize:     1 << defaultMapYShift,
+		XShift:    defaultMapXShift,
+		YShift:    defaultMapYShift,
 		ZShift:    defaultMapHeightShift,
 		Scheduler: DefaultSchedulerInfo(),
 	}
