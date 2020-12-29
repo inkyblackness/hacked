@@ -13,8 +13,8 @@ type EmptyLevelParameters struct {
 	// Cyberspace indicates whether the level should be marked as cyberspace.
 	Cyberspace bool
 	// MapModifier is called to make initial changes to the map before serializing.
-	// Can be used to empty out starter tile on level 1.
-	MapModifier func(TileMap)
+	// This can be used to empty out starter tile on starter level.
+	MapModifier func(x, y int, entry *TileMapEntry)
 }
 
 // EmptyLevelData returns an array of serialized data for an empty level.
@@ -27,7 +27,13 @@ func EmptyLevelData(param EmptyLevelParameters) [lvlids.PerLevel][]byte {
 	levelData[lvlids.Information] = encode(&baseInfo)
 
 	tileMap := NewTileMap(int(baseInfo.XSize), int(baseInfo.YSize))
-	param.MapModifier(tileMap)
+	if param.MapModifier != nil {
+		for y := 0; y < int(baseInfo.YSize); y++ {
+			for x := 0; x < int(baseInfo.XSize); x++ {
+				param.MapModifier(x, y, tileMap.Tile(x, y))
+			}
+		}
+	}
 	levelData[lvlids.TileMap] = encode(tileMap)
 
 	levelData[lvlids.Schedules] = encode(make([]byte, baseInfo.Scheduler.ElementSize*1))

@@ -275,14 +275,15 @@ func (view *View) requestClearLevel(id int) {
 		}
 
 		param := level.EmptyLevelParameters{
-			Cyberspace:  world.IsConsideredCyberspaceByDefault(id),
-			MapModifier: func(level.TileMap) {},
+			Cyberspace: world.IsConsideredCyberspaceByDefault(id),
 		}
 		effectiveGameState := view.effectiveGameState()
 		if id == effectiveGameState.CurrentLevel() {
 			posX, posY := effectiveGameState.HackerMapPosition()
-			param.MapModifier = func(m level.TileMap) {
-				m.Tile(int(posX.Tile()), int(posY.Tile())).Type = level.TileTypeOpen
+			param.MapModifier = func(x, y int, entry *level.TileMapEntry) {
+				if (x == int(posX.Tile())) && (y == int(posY.Tile())) {
+					entry.Type = level.TileTypeOpen
+				}
 			}
 		}
 
