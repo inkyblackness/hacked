@@ -566,11 +566,18 @@ func (display *MapDisplay) MouseScrolled(mouseX, mouseY float32, deltaX, deltaY 
 
 func (display *MapDisplay) updateMouseWorldPosition(mouseX, mouseY float32) {
 	worldX, worldY := display.unprojectPixel(mouseX, mouseY)
-
-	display.positionValid = (worldX >= 0.0) && (worldX < (64.0 * fineCoordinatesPerTileSide)) &&
-		(worldY >= 0.0) && (worldY < (64.0 * fineCoordinatesPerTileSide))
+	var worldWidth float32
+	var worldHeight float32
+	if display.activeLevel != nil {
+		width, height, _ := display.activeLevel.Size()
+		worldWidth = float32(width) * fineCoordinatesPerTileSide
+		worldHeight = float32(height) * fineCoordinatesPerTileSide
+	}
+	display.positionValid = (worldX >= 0.0) && (worldX < worldWidth) && (worldY >= 0.0) && (worldY < worldHeight)
 	if display.positionValid {
 		display.position = MapPosition{X: level.Coordinate(worldX + 0.5), Y: level.Coordinate(worldY + 0.5)}
+	} else {
+		display.position = MapPosition{}
 	}
 }
 
