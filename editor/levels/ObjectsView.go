@@ -105,7 +105,7 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 		if obj != nil {
 			objectIDUnifier.Add(id)
 			classUnifier.Add(object.TripleFrom(int(obj.Class), 0, 0))
-			typeUnifier.Add(object.TripleFrom(int(obj.Class), int(obj.Subclass), int(obj.Type)))
+			typeUnifier.Add(obj.Triple())
 			zUnifier.Add(obj.Z)
 			tileXUnifier.Add(obj.X.Tile())
 			fineXUnifier.Add(obj.X.Fine())

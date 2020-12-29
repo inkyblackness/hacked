@@ -344,7 +344,7 @@ func (display *MapDisplay) renderPositionOverlay(lvl *level.Level) {
 				_, _, heightShift := lvl.Size()
 				obj := lvl.Object(objectItem.id)
 				if obj != nil {
-					typeString = fmt.Sprintf("%3d = %v", objectItem.id, object.TripleFrom(int(obj.Class), int(obj.Subclass), int(obj.Type)))
+					typeString = fmt.Sprintf("%3d = %v", objectItem.id, obj.Triple())
 					heightInTiles, err := heightShift.ValueFromObjectHeight(obj.Z)
 					if err == nil {
 						floorString = fmt.Sprintf("%2.3f", heightInTiles)
