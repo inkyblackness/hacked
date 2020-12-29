@@ -42,9 +42,8 @@ func NewLevel(resourceBase resource.ID, id int, localizer resource.Localizer) *L
 
 		localizer: localizer,
 
-		resStart:       resourceBase.Plus(lvlids.PerLevel * id),
-		tileMap:        NewTileMap(1<<defaultMapXShift, 1<<defaultMapYShift),
-		wallHeightsMap: NewWallHeightsMap(1<<defaultMapXShift, 1<<defaultMapYShift),
+		resStart: resourceBase.Plus(lvlids.PerLevel * id),
+		tileMap:  NewTileMap(1<<defaultMapXShift, 1<<defaultMapYShift),
 	}
 	lvl.resEnd = lvl.resStart.Plus(lvlids.PerLevel)
 
@@ -434,6 +433,7 @@ func (lvl *Level) reloadTileMap() {
 	if err != nil {
 		lvl.clearTileMap()
 	}
+	lvl.wallHeightsMap = NewWallHeightsMap(int(lvl.baseInfo.XSize), int(lvl.baseInfo.YSize))
 	lvl.wallHeightsMap.CalculateFrom(lvl)
 }
 
