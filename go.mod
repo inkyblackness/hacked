@@ -1,6 +1,6 @@
 module github.com/inkyblackness/hacked
 
-go 1.12
+go 1.14
 
 require (
 	github.com/asticode/go-astisub v0.2.0
