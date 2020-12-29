@@ -131,11 +131,11 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			gameOfLightStateUnifier.Add(tile.Flags.ForCyberspace().GameOfLifeState())
 		} else {
 			flags := tile.Flags.ForRealWorld()
-			floorTextureIndexUnifier.Add(tile.TextureInfo.FloorTextureIndex())
+			floorTextureIndexUnifier.Add(int(tile.TextureInfo.FloorTextureIndex()))
 			floorTextureRotationsUnifier.Add(tile.Floor.TextureRotations())
-			ceilingTextureIndexUnifier.Add(tile.TextureInfo.CeilingTextureIndex())
+			ceilingTextureIndexUnifier.Add(int(tile.TextureInfo.CeilingTextureIndex()))
 			ceilingTextureRotationsUnifier.Add(tile.Ceiling.TextureRotations())
-			wallTextureIndexUnifier.Add(tile.TextureInfo.WallTextureIndex())
+			wallTextureIndexUnifier.Add(int(tile.TextureInfo.WallTextureIndex()))
 			wallTextureOffsetUnifier.Add(flags.WallTextureOffset())
 			useAdjacentWallTextureUnifier.Add(flags.UseAdjacentWallTexture())
 			wallTexturePatternUnifier.Add(flags.WallTexturePattern())
@@ -300,7 +300,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 		values.RenderUnifiedSliderInt(readOnly, multiple, "Wall Texture (atlas index)", wallTextureIndexUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
-			0, level.DefaultTextureAtlasSize-1,
+			0, len(atlas)-1,
 			func(newValue int) {
 				view.requestWallTextureIndex(lvl, view.model.selectedTiles.list, newValue)
 			})
@@ -454,7 +454,7 @@ func (view *TilesView) requestMusicIndex(lvl *level.Level, positions []MapPositi
 
 func (view *TilesView) requestFloorTextureIndex(lvl *level.Level, positions []MapPosition, value int) {
 	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
-		tile.TextureInfo = tile.TextureInfo.WithFloorTextureIndex(value)
+		tile.TextureInfo = tile.TextureInfo.WithFloorTextureIndex(level.AtlasIndex(value))
 	})
 }
 
@@ -466,7 +466,7 @@ func (view *TilesView) requestFloorTextureRotations(lvl *level.Level, positions 
 
 func (view *TilesView) requestCeilingTextureIndex(lvl *level.Level, positions []MapPosition, value int) {
 	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
-		tile.TextureInfo = tile.TextureInfo.WithCeilingTextureIndex(value)
+		tile.TextureInfo = tile.TextureInfo.WithCeilingTextureIndex(level.AtlasIndex(value))
 	})
 }
 
@@ -478,7 +478,7 @@ func (view *TilesView) requestCeilingTextureRotations(lvl *level.Level, position
 
 func (view *TilesView) requestWallTextureIndex(lvl *level.Level, positions []MapPosition, value int) {
 	view.changeTiles(lvl, positions, func(tile *level.TileMapEntry) {
-		tile.TextureInfo = tile.TextureInfo.WithWallTextureIndex(value)
+		tile.TextureInfo = tile.TextureInfo.WithWallTextureIndex(level.AtlasIndex(value))
 	})
 }
 

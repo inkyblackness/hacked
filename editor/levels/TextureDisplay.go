@@ -36,20 +36,20 @@ func TextureDisplays() []TextureDisplay {
 }
 
 // TextureDisplayFunc is one that resolves texture properties.
-type TextureDisplayFunc func(*level.TileMapEntry) (atlasIndex int, textureRotations int)
+type TextureDisplayFunc func(*level.TileMapEntry) (atlasIndex level.AtlasIndex, textureRotations int)
 
 // FloorTexture returns the properties for the floor.
-func FloorTexture(tile *level.TileMapEntry) (atlasIndex int, textureRotations int) {
+func FloorTexture(tile *level.TileMapEntry) (atlasIndex level.AtlasIndex, textureRotations int) {
 	return tile.TextureInfo.FloorTextureIndex(), tile.Floor.TextureRotations()
 }
 
 // CeilingTexture returns the properties for the ceiling.
-func CeilingTexture(tile *level.TileMapEntry) (atlasIndex int, textureRotations int) {
+func CeilingTexture(tile *level.TileMapEntry) (atlasIndex level.AtlasIndex, textureRotations int) {
 	return tile.TextureInfo.CeilingTextureIndex(), tile.Ceiling.TextureRotations()
 }
 
 // WallTexture returns the properties for the floor.
-func WallTexture(tile *level.TileMapEntry) (atlasIndex int, textureRotations int) {
+func WallTexture(tile *level.TileMapEntry) (atlasIndex level.AtlasIndex, textureRotations int) {
 	return tile.TextureInfo.WallTextureIndex(), 0
 }
 

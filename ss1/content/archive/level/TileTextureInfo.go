@@ -6,13 +6,13 @@ type TileTextureInfo uint16
 // WallTextureIndex returns the texture index into the texture atlas for the walls.
 // Valid range [0..63].
 // This property is only valid in real world.
-func (info TileTextureInfo) WallTextureIndex() int {
-	return int(info & 0x003F)
+func (info TileTextureInfo) WallTextureIndex() AtlasIndex {
+	return AtlasIndex(info & 0x003F)
 }
 
 // WithWallTextureIndex returns an info with given index set.
 // Values outside valid range are ignored.
-func (info TileTextureInfo) WithWallTextureIndex(value int) TileTextureInfo {
+func (info TileTextureInfo) WithWallTextureIndex(value AtlasIndex) TileTextureInfo {
 	if (value < 0) || (value >= 64) {
 		return info
 	}
@@ -22,13 +22,13 @@ func (info TileTextureInfo) WithWallTextureIndex(value int) TileTextureInfo {
 // CeilingTextureIndex returns the texture index into the texture atlas for the ceiling.
 // Valid range [0..31].
 // This property is only valid in real world.
-func (info TileTextureInfo) CeilingTextureIndex() int {
-	return int(info&0x07C0) >> 6
+func (info TileTextureInfo) CeilingTextureIndex() AtlasIndex {
+	return AtlasIndex((info & 0x07C0) >> 6)
 }
 
 // WithCeilingTextureIndex returns an info with given index set.
 // Values outside valid range are ignored.
-func (info TileTextureInfo) WithCeilingTextureIndex(value int) TileTextureInfo {
+func (info TileTextureInfo) WithCeilingTextureIndex(value AtlasIndex) TileTextureInfo {
 	if (value < 0) || (value >= FloorCeilingTextureLimit) {
 		return info
 	}
@@ -38,13 +38,13 @@ func (info TileTextureInfo) WithCeilingTextureIndex(value int) TileTextureInfo {
 // FloorTextureIndex returns the texture index into the texture atlas for the floor.
 // Valid range [0..31].
 // This property is only valid in real world.
-func (info TileTextureInfo) FloorTextureIndex() int {
-	return int(info&0xF800) >> 11
+func (info TileTextureInfo) FloorTextureIndex() AtlasIndex {
+	return AtlasIndex((info & 0xF800) >> 11)
 }
 
 // WithFloorTextureIndex returns an info with given index set.
 // Values outside valid range are ignored.
-func (info TileTextureInfo) WithFloorTextureIndex(value int) TileTextureInfo {
+func (info TileTextureInfo) WithFloorTextureIndex(value AtlasIndex) TileTextureInfo {
 	if (value < 0) || (value >= FloorCeilingTextureLimit) {
 		return info
 	}

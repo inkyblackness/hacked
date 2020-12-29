@@ -51,10 +51,10 @@ void main(void) {
 
 // TextureQuery is a getter function to retrieve the texture for the given
 // level texture index.
-type TextureQuery func(index int) (*graphics.BitmapTexture, error)
+type TextureQuery func(index level.TextureIndex) (*graphics.BitmapTexture, error)
 
 // TileTextureQuery is a getter function to retrieve properties for rendering a texture of a tile.
-type TileTextureQuery func(x, y int) (tileType level.TileType, textureIndex int, textureRotations int)
+type TileTextureQuery func(x, y int) (tileType level.TileType, textureIndex level.TextureIndex, textureRotations int)
 
 // MapTextures is a renderable for textures.
 type MapTextures struct {

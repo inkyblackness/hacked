@@ -315,8 +315,8 @@ func (app *Application) initGui() (err error) {
 	return
 }
 
-func (app *Application) gameTexture(index int) (*graphics.BitmapTexture, error) {
-	key := resource.KeyOf(ids.LargeTextures.Plus(index), resource.LangAny, 0)
+func (app *Application) gameTexture(index level.TextureIndex) (*graphics.BitmapTexture, error) {
+	key := resource.KeyOf(ids.LargeTextures.Plus(int(index)), resource.LangAny, 0)
 	return app.textureCache.Texture(key)
 }
 

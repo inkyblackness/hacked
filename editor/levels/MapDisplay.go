@@ -152,16 +152,16 @@ func (display *MapDisplay) Render(properties object.PropertiesTable, lvl *level.
 		}
 	} else {
 		if paletteTexture != nil {
-			display.textures.Render(columns, rows, func(x, y int) (level.TileType, int, int) {
+			display.textures.Render(columns, rows, func(x, y int) (level.TileType, level.TextureIndex, int) {
 				tile := lvl.Tile(x, y)
 				if tile == nil {
 					return level.TileTypeSolid, 0, 0
 				}
 				atlasIndex, textureRotations := textureDisplay.Func()(tile)
 				atlas := lvl.TextureAtlas()
-				textureIndex := -1
-				if (atlasIndex >= 0) && (atlasIndex < len(atlas)) {
-					textureIndex = int(atlas[atlasIndex])
+				textureIndex := level.TextureIndex(-1)
+				if (int(atlasIndex) >= 0) && (int(atlasIndex) < len(atlas)) {
+					textureIndex = atlas[atlasIndex]
 				}
 				return tile.Type, textureIndex, textureRotations
 			}, paletteTexture)
