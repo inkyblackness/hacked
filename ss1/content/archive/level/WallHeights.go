@@ -44,15 +44,15 @@ func (m *WallHeightsMap) CalculateFrom(tileMap TileMap) {
 		for x := 0; x < len(row); x++ {
 			tile := tileMap.Tile(x, y)
 			heights := &row[x]
-			heights.North = m.calculateWallHeight(tile, DirNorth, tileMap.Tile(x, y+1), DirSouth)
-			heights.East = m.calculateWallHeight(tile, DirEast, tileMap.Tile(x+1, y), DirWest)
-			heights.South = m.calculateWallHeight(tile, DirSouth, tileMap.Tile(x, y-1), DirNorth)
-			heights.West = m.calculateWallHeight(tile, DirWest, tileMap.Tile(x-1, y), DirEast)
+			heights.North = calculateWallHeight(tile, DirNorth, tileMap.Tile(x, y+1), DirSouth)
+			heights.East = calculateWallHeight(tile, DirEast, tileMap.Tile(x+1, y), DirWest)
+			heights.South = calculateWallHeight(tile, DirSouth, tileMap.Tile(x, y-1), DirNorth)
+			heights.West = calculateWallHeight(tile, DirWest, tileMap.Tile(x-1, y), DirEast)
 		}
 	}
 }
 
-func (m *WallHeightsMap) calculateWallHeight(entry *TileMapEntry, entrySide Direction, other *TileMapEntry, otherSide Direction) [3]float32 {
+func calculateWallHeight(entry *TileMapEntry, entrySide Direction, other *TileMapEntry, otherSide Direction) [3]float32 {
 	var result [3]float32
 	baseHeights := func(tile *TileMapEntry, side Direction) (floor TileHeightUnit, slope TileHeightUnit, ceiling TileHeightUnit) {
 		floor = TileHeightUnitMax
