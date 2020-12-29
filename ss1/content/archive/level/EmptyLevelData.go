@@ -26,11 +26,11 @@ func EmptyLevelData(param EmptyLevelParameters) [lvlids.PerLevel][]byte {
 	levelData[lvlids.ObjectVersionNumber] = encode(objectVersionValue)
 	levelData[lvlids.Information] = encode(&baseInfo)
 
-	tileMap := NewTileMap(int(baseInfo.XSize), int(baseInfo.YSize))
+	tileMap := NewTileMap(1<<baseInfo.XShift, 1<<baseInfo.YShift)
 	if param.MapModifier != nil {
 		for y := 0; y < int(baseInfo.YSize); y++ {
 			for x := 0; x < int(baseInfo.XSize); x++ {
-				param.MapModifier(x, y, tileMap.Tile(x, y))
+				param.MapModifier(x, y, tileMap.Tile(x, y, int(baseInfo.XShift)))
 			}
 		}
 	}

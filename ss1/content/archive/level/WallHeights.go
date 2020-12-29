@@ -39,10 +39,13 @@ func (m WallHeightsMap) Tile(x, y int) *WallHeights {
 }
 
 // CalculateFrom updates all the wall heights according to the specified map.
-func (m *WallHeightsMap) CalculateFrom(tileMap TileMap) {
+func (m *WallHeightsMap) CalculateFrom(tileMap interface{ Tile(x, y int) *TileMapEntry }) {
 	for y, row := range *m {
 		for x := 0; x < len(row); x++ {
 			tile := tileMap.Tile(x, y)
+			if tile == nil {
+				continue
+			}
 			heights := &row[x]
 			heights.North = calculateWallHeight(tile, DirNorth, tileMap.Tile(x, y+1), DirSouth)
 			heights.East = calculateWallHeight(tile, DirEast, tileMap.Tile(x+1, y), DirWest)

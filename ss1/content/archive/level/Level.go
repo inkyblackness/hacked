@@ -43,8 +43,8 @@ func NewLevel(resourceBase resource.ID, id int, localizer resource.Localizer) *L
 		localizer: localizer,
 
 		resStart:       resourceBase.Plus(lvlids.PerLevel * id),
-		tileMap:        NewTileMap(64, 64),
-		wallHeightsMap: NewWallHeightsMap(64, 64),
+		tileMap:        NewTileMap(1<<defaultMapXShift, 1<<defaultMapYShift),
+		wallHeightsMap: NewWallHeightsMap(1<<defaultMapXShift, 1<<defaultMapYShift),
 	}
 	lvl.resEnd = lvl.resStart.Plus(lvlids.PerLevel)
 
@@ -139,7 +139,7 @@ func (lvl *Level) SetTextureAtlasEntry(index int, textureIndex TextureIndex) {
 
 // Tile returns the tile entry at given position.
 func (lvl *Level) Tile(x, y int) *TileMapEntry {
-	return lvl.tileMap.Tile(x, y)
+	return lvl.tileMap.Tile(x, y, int(lvl.baseInfo.XShift))
 }
 
 // MapGridInfo returns the information necessary to draw a 2D map.
@@ -434,7 +434,7 @@ func (lvl *Level) reloadTileMap() {
 	if err != nil {
 		lvl.clearTileMap()
 	}
-	lvl.wallHeightsMap.CalculateFrom(lvl.tileMap)
+	lvl.wallHeightsMap.CalculateFrom(lvl)
 }
 
 func (lvl *Level) reloadObjectMainTable() {
@@ -551,10 +551,8 @@ func (lvl *Level) reloadParameters() {
 }
 
 func (lvl *Level) clearTileMap() {
-	for _, row := range lvl.tileMap {
-		for i := 0; i < len(row); i++ {
-			row[i].Reset()
-		}
+	for i := 0; i < len(lvl.tileMap.entries); i++ {
+		lvl.tileMap.entries[i].Reset()
 	}
 }
 

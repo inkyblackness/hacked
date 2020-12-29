@@ -25,7 +25,7 @@ func TestWallHeightsSuite(t *testing.T) {
 }
 
 func (suite *WallHeightsSuite) SetupTest() {
-	suite.tileMap = level.NewTileMap(3, 3)
+	suite.tileMap = level.NewTileMap(4, 4)
 	suite.heightsMap = level.NewWallHeightsMap(3, 3)
 	suite.tile = nil
 }
@@ -111,7 +111,7 @@ func (suite *WallHeightsSuite) TestCalculateFromWithSameSlopes() {
 }
 
 func (suite *WallHeightsSuite) givenTile(x, y int) *WallHeightsSuite {
-	suite.tile = suite.tileMap.Tile(x, y)
+	suite.tile = suite.Tile(x, y)
 	return suite
 }
 
@@ -163,7 +163,7 @@ func (suite *WallHeightsSuite) givenARandomHeightsMap() {
 }
 
 func (suite *WallHeightsSuite) whenHeightsAreCalculatedFromMap() {
-	suite.heightsMap.CalculateFrom(suite.tileMap)
+	suite.heightsMap.CalculateFrom(suite)
 }
 
 func (suite *WallHeightsSuite) thenHeightsShouldBeForTile(x int, y int, expected float32) {
@@ -201,4 +201,8 @@ func (suite *WallHeightsSuite) thenHeightShouldBeForTileAt(x int, y int, side le
 	assert.Equal(suite.T(), expectedLeft, values[0], "left mismatch")
 	assert.Equal(suite.T(), expectedCenter, values[1], "center mismatch")
 	assert.Equal(suite.T(), expectedRight, values[2], "right mismatch")
+}
+
+func (suite *WallHeightsSuite) Tile(x, y int) *level.TileMapEntry {
+	return suite.tileMap.Tile(x, y, 2)
 }
