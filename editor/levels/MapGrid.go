@@ -156,8 +156,8 @@ func (grid *MapGrid) Render(columns, rows int, mapper TileMapper) {
 		{1},
 	}
 
-	floorTickStarts := []int32{0, 6, 12, 18}
-	ceilingTickStarts := []int32{3, 9, 15, 21}
+	floorTickStarts := [4]int32{0, 6, 12, 18}
+	ceilingTickStarts := [4]int32{3, 9, 15, 21}
 
 	grid.vao.OnShader(func() {
 		modelMatrix := mgl.Ident4()
