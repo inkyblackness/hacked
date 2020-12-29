@@ -2,6 +2,7 @@ package level
 
 import (
 	"bytes"
+	"math/bits"
 
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
 	"github.com/inkyblackness/hacked/ss1/content/object"
@@ -10,6 +11,10 @@ import (
 
 // EmptyLevelParameters contain the values to create an empty level.
 type EmptyLevelParameters struct {
+	// XSize specifies the expected width, in tiles. 0 (or less) will default.
+	XSize int32
+	// YSize specifies the expected height, in tiles. 0 (or less) will default.
+	YSize int32
 	// Cyberspace indicates whether the level should be marked as cyberspace.
 	Cyberspace bool
 	// MapModifier is called to make initial changes to the map before serializing.
@@ -21,6 +26,20 @@ type EmptyLevelParameters struct {
 func EmptyLevelData(param EmptyLevelParameters) [lvlids.PerLevel][]byte {
 	var levelData [lvlids.PerLevel][]byte
 	baseInfo := DefaultBaseInfo(param.Cyberspace)
+	if param.XSize > 0 {
+		baseInfo.XSize = param.XSize
+		baseInfo.XShift = int32(bits.Len32(uint32(param.XSize)))
+		if (1 << (baseInfo.XShift - 1)) == baseInfo.XSize {
+			baseInfo.XShift--
+		}
+	}
+	if param.YSize > 0 {
+		baseInfo.YSize = param.YSize
+		baseInfo.YShift = int32(bits.Len32(uint32(param.YSize)))
+		if (1 << (baseInfo.YShift - 1)) == baseInfo.YSize {
+			baseInfo.YShift--
+		}
+	}
 
 	levelData[lvlids.MapVersionNumber] = encode(mapVersionValue)
 	levelData[lvlids.ObjectVersionNumber] = encode(objectVersionValue)

@@ -10,9 +10,7 @@ import (
 )
 
 func TestEmptyLevelDataSizesForDefault(t *testing.T) {
-	param := level.EmptyLevelParameters{
-		Cyberspace: false,
-	}
+	param := level.EmptyLevelParameters{}
 	levelData := level.EmptyLevelData(param)
 
 	// For now all the expected length values are deliberately written as numbers and not from the constants.
@@ -49,4 +47,44 @@ func TestEmptyLevelDataSizesForDefault(t *testing.T) {
 	assert.Equal(t, 2, len(levelData[lvlids.Unknown52]), "Unknown52")
 
 	assert.Equal(t, 0x40, len(levelData[lvlids.HeightSemaphores]), "HeightSemaphores")
+}
+
+func TestEmptyLevelDataSizeOfMapForDifferentDimension_A(t *testing.T) {
+	param := level.EmptyLevelParameters{
+		XSize: 33, // will scale to 64
+		YSize: 3,  // will scale to 4
+	}
+	levelData := level.EmptyLevelData(param)
+
+	assert.Equal(t, 64*4*16, len(levelData[lvlids.TileMap]), "TileMap")
+}
+
+func TestEmptyLevelDataSizeOfMapForDifferentDimension_B(t *testing.T) {
+	param := level.EmptyLevelParameters{
+		XSize: 64,
+		YSize: 64,
+	}
+	levelData := level.EmptyLevelData(param)
+
+	assert.Equal(t, 64*64*16, len(levelData[lvlids.TileMap]), "TileMap")
+}
+
+func TestEmptyLevelDataSizeOfMapForDifferentDimension_C(t *testing.T) {
+	param := level.EmptyLevelParameters{
+		XSize: 256,
+		YSize: 16,
+	}
+	levelData := level.EmptyLevelData(param)
+
+	assert.Equal(t, 256*16*16, len(levelData[lvlids.TileMap]), "TileMap")
+}
+
+func TestEmptyLevelDataSizeOfMapForDifferentDimension_D(t *testing.T) {
+	param := level.EmptyLevelParameters{
+		XSize: 1,
+		YSize: 1,
+	}
+	levelData := level.EmptyLevelData(param)
+
+	assert.Equal(t, 1*1*16, len(levelData[lvlids.TileMap]), "TileMap")
 }
