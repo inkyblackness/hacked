@@ -11,8 +11,7 @@ import (
 
 func TestEmptyLevelDataSizesForDefault(t *testing.T) {
 	param := level.EmptyLevelParameters{
-		Cyberspace:  false,
-		MapModifier: func(level.TileMap) {},
+		Cyberspace: false,
 	}
 	levelData := level.EmptyLevelData(param)
 
