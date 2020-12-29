@@ -115,7 +115,6 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 	floorHazardUnifier := values.NewUnifier()
 	ceilingHazardUnifier := values.NewUnifier()
 
-	multiple := len(view.model.selectedTiles.list) > 1
 	for _, pos := range view.model.selectedTiles.list {
 		tile := lvl.Tile(int(pos.X.Tile()), int(pos.Y.Tile()))
 		tileTypeUnifier.Add(tile.Type)
@@ -153,28 +152,28 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 	tileHeightFormatter := tileHeightFormatterFor(levelHeight)
 
 	tileTypes := level.TileTypes()
-	values.RenderUnifiedCombo(readOnly, multiple, "Tile Type", tileTypeUnifier,
+	values.RenderUnifiedCombo(readOnly, "Tile Type", tileTypeUnifier,
 		func(u values.Unifier) int { return int(u.Unified().(level.TileType)) },
 		func(value int) string { return tileTypes[value].String() },
 		len(tileTypes),
 		func(newValue int) {
 			view.requestSetTileType(lvl, view.model.selectedTiles.list, level.TileType(newValue))
 		})
-	values.RenderUnifiedSliderInt(readOnly, multiple, "Floor Height", floorHeightUnifier,
+	values.RenderUnifiedSliderInt(readOnly, "Floor Height", floorHeightUnifier,
 		func(u values.Unifier) int { return int(u.Unified().(level.TileHeightUnit)) },
 		tileHeightFormatter,
 		0, int(level.TileHeightUnitMax)-1,
 		func(newValue int) {
 			view.requestSetFloorHeight(lvl, view.model.selectedTiles.list, level.TileHeightUnit(newValue))
 		})
-	values.RenderUnifiedSliderInt(readOnly, multiple, "Ceiling Height (abs)", ceilingHeightUnifier,
+	values.RenderUnifiedSliderInt(readOnly, "Ceiling Height (abs)", ceilingHeightUnifier,
 		func(u values.Unifier) int { return int(u.Unified().(level.TileHeightUnit)) },
 		tileHeightFormatter,
 		1, int(level.TileHeightUnitMax),
 		func(newValue int) {
 			view.requestSetCeilingHeight(lvl, view.model.selectedTiles.list, level.TileHeightUnit(newValue))
 		})
-	values.RenderUnifiedSliderInt(readOnly, multiple, "Slope Height", slopeHeightUnifier,
+	values.RenderUnifiedSliderInt(readOnly, "Slope Height", slopeHeightUnifier,
 		func(u values.Unifier) int { return int(u.Unified().(level.TileHeightUnit)) },
 		tileHeightFormatter,
 		0, int(level.TileHeightUnitMax)-1,
@@ -182,14 +181,14 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			view.requestSetSlopeHeight(lvl, view.model.selectedTiles.list, level.TileHeightUnit(newValue))
 		})
 	slopeControls := level.TileSlopeControls()
-	values.RenderUnifiedCombo(readOnly, multiple, "Slope Control", slopeControlUnifier,
+	values.RenderUnifiedCombo(readOnly, "Slope Control", slopeControlUnifier,
 		func(u values.Unifier) int { return int(u.Unified().(level.TileSlopeControl)) },
 		func(value int) string { return slopeControls[value].String() },
 		len(slopeControls),
 		func(newValue int) {
 			view.requestSetSlopeControl(lvl, view.model.selectedTiles.list, slopeControls[newValue])
 		})
-	values.RenderUnifiedSliderInt(readOnly, multiple, "Music Index", musicIndexUnifier,
+	values.RenderUnifiedSliderInt(readOnly, "Music Index", musicIndexUnifier,
 		func(u values.Unifier) int { return u.Unified().(int) },
 		func(value int) string { return "%d" },
 		0, 15,
@@ -212,14 +211,14 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			imgui.EndCombo()
 		}
 
-		values.RenderUnifiedSliderInt(readOnly, multiple, "Floor Color", floorPaletteIndexUnifier,
+		values.RenderUnifiedSliderInt(readOnly, "Floor Color", floorPaletteIndexUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(byte)) },
 			func(value int) string { return "%d" },
 			0, 255,
 			func(newValue int) {
 				view.requestFloorPaletteIndex(lvl, view.model.selectedTiles.list, newValue)
 			})
-		values.RenderUnifiedSliderInt(readOnly, multiple, "Ceiling Color", ceilingPaletteIndexUnifier,
+		values.RenderUnifiedSliderInt(readOnly, "Ceiling Color", ceilingPaletteIndexUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(byte)) },
 			func(value int) string { return "%d" },
 			0, 255,
@@ -230,14 +229,14 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 		imgui.Separator()
 
 		flightPulls := level.CyberspaceFlightPulls()
-		values.RenderUnifiedCombo(readOnly, multiple, "Flight Pull Type", flightPullTypeUnifier,
+		values.RenderUnifiedCombo(readOnly, "Flight Pull Type", flightPullTypeUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(level.CyberspaceFlightPull)) },
 			func(value int) string { return flightPulls[value].String() },
 			len(flightPulls),
 			func(newValue int) {
 				view.requestFlightPullType(lvl, view.model.selectedTiles.list, flightPulls[newValue])
 			})
-		values.RenderUnifiedSliderInt(readOnly, multiple, "Game Of Life State", gameOfLightStateUnifier,
+		values.RenderUnifiedSliderInt(readOnly, "Game Of Life State", gameOfLightStateUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
 			0, 3,
@@ -259,18 +258,18 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			imgui.EndCombo()
 		}
 
-		values.RenderUnifiedSliderInt(readOnly, multiple, "Floor Texture (atlas index)", floorTextureIndexUnifier,
+		values.RenderUnifiedSliderInt(readOnly, "Floor Texture (atlas index)", floorTextureIndexUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
 			0, level.FloorCeilingTextureLimit-1,
 			func(newValue int) {
 				view.requestFloorTextureIndex(lvl, view.model.selectedTiles.list, newValue)
 			})
-		view.renderTextureSelector(readOnly, multiple, "Floor Texture", floorTextureIndexUnifier, atlas, 0, level.FloorCeilingTextureLimit-1,
+		view.renderTextureSelector(readOnly, "Floor Texture", floorTextureIndexUnifier, atlas, 0, level.FloorCeilingTextureLimit-1,
 			func(newValue int) {
 				view.requestFloorTextureIndex(lvl, view.model.selectedTiles.list, newValue)
 			})
-		values.RenderUnifiedSliderInt(readOnly, multiple, "Floor Texture Rotations", floorTextureRotationsUnifier,
+		values.RenderUnifiedSliderInt(readOnly, "Floor Texture Rotations", floorTextureRotationsUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
 			0, 3,
@@ -278,18 +277,18 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 				view.requestFloorTextureRotations(lvl, view.model.selectedTiles.list, newValue)
 			})
 
-		values.RenderUnifiedSliderInt(readOnly, multiple, "Ceiling Texture (atlas index)", ceilingTextureIndexUnifier,
+		values.RenderUnifiedSliderInt(readOnly, "Ceiling Texture (atlas index)", ceilingTextureIndexUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
 			0, level.FloorCeilingTextureLimit-1,
 			func(newValue int) {
 				view.requestCeilingTextureIndex(lvl, view.model.selectedTiles.list, newValue)
 			})
-		view.renderTextureSelector(readOnly, multiple, "Ceiling Texture", ceilingTextureIndexUnifier, atlas, 0, level.FloorCeilingTextureLimit-1,
+		view.renderTextureSelector(readOnly, "Ceiling Texture", ceilingTextureIndexUnifier, atlas, 0, level.FloorCeilingTextureLimit-1,
 			func(newValue int) {
 				view.requestCeilingTextureIndex(lvl, view.model.selectedTiles.list, newValue)
 			})
-		values.RenderUnifiedSliderInt(readOnly, multiple, "Ceiling Texture Rotations", ceilingTextureRotationsUnifier,
+		values.RenderUnifiedSliderInt(readOnly, "Ceiling Texture Rotations", ceilingTextureRotationsUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
 			0, 3,
@@ -297,18 +296,18 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 				view.requestCeilingTextureRotations(lvl, view.model.selectedTiles.list, newValue)
 			})
 
-		values.RenderUnifiedSliderInt(readOnly, multiple, "Wall Texture (atlas index)", wallTextureIndexUnifier,
+		values.RenderUnifiedSliderInt(readOnly, "Wall Texture (atlas index)", wallTextureIndexUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
 			0, len(atlas)-1,
 			func(newValue int) {
 				view.requestWallTextureIndex(lvl, view.model.selectedTiles.list, newValue)
 			})
-		view.renderTextureSelector(readOnly, multiple, "Wall Texture", wallTextureIndexUnifier, atlas, 0, len(atlas)-1,
+		view.renderTextureSelector(readOnly, "Wall Texture", wallTextureIndexUnifier, atlas, 0, len(atlas)-1,
 			func(newValue int) {
 				view.requestWallTextureIndex(lvl, view.model.selectedTiles.list, newValue)
 			})
-		values.RenderUnifiedSliderInt(readOnly, multiple, "Wall Texture Offset", wallTextureOffsetUnifier,
+		values.RenderUnifiedSliderInt(readOnly, "Wall Texture Offset", wallTextureOffsetUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(level.TileHeightUnit)) },
 			tileHeightFormatter,
 			0, int(level.TileHeightUnitMax)-1,
@@ -316,12 +315,12 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 				view.requestWallTextureOffset(lvl, view.model.selectedTiles.list, level.TileHeightUnit(newValue))
 			})
 
-		values.RenderUnifiedCheckboxCombo(readOnly, multiple, "Use Adjacent Wall Texture", useAdjacentWallTextureUnifier,
+		values.RenderUnifiedCheckboxCombo(readOnly, "Use Adjacent Wall Texture", useAdjacentWallTextureUnifier,
 			func(newValue bool) {
 				view.requestUseAdjacentWallTexture(lvl, view.model.selectedTiles.list, newValue)
 			})
 		wallTexturePatterns := level.WallTexturePatterns()
-		values.RenderUnifiedCombo(readOnly, multiple, "Wall Texture Pattern", wallTexturePatternUnifier,
+		values.RenderUnifiedCombo(readOnly, "Wall Texture Pattern", wallTexturePatternUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(level.WallTexturePattern)) },
 			func(value int) string { return wallTexturePatterns[value].String() },
 			len(wallTexturePatterns),
@@ -343,14 +342,14 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			imgui.EndCombo()
 		}
 
-		values.RenderUnifiedSliderInt(readOnly, multiple, "Floor Light", floorLightUnifier,
+		values.RenderUnifiedSliderInt(readOnly, "Floor Light", floorLightUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
 			0, 15,
 			func(newValue int) {
 				view.requestFloorLight(lvl, view.model.selectedTiles.list, newValue)
 			})
-		values.RenderUnifiedSliderInt(readOnly, multiple, "Ceiling Light", ceilingLightUnifier,
+		values.RenderUnifiedSliderInt(readOnly, "Ceiling Light", ceilingLightUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
 			0, 15,
@@ -360,15 +359,15 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 
 		imgui.Separator()
 
-		values.RenderUnifiedCheckboxCombo(readOnly, multiple, "Deconstructed", deconstructedUnifier,
+		values.RenderUnifiedCheckboxCombo(readOnly, "Deconstructed", deconstructedUnifier,
 			func(newValue bool) {
 				view.requestDeconstructed(lvl, view.model.selectedTiles.list, newValue)
 			})
-		values.RenderUnifiedCheckboxCombo(readOnly, multiple, "Floor Hazard", floorHazardUnifier,
+		values.RenderUnifiedCheckboxCombo(readOnly, "Floor Hazard", floorHazardUnifier,
 			func(newValue bool) {
 				view.requestFloorHazard(lvl, view.model.selectedTiles.list, newValue)
 			})
-		values.RenderUnifiedCheckboxCombo(readOnly, multiple, "Ceiling Hazard", ceilingHazardUnifier,
+		values.RenderUnifiedCheckboxCombo(readOnly, "Ceiling Hazard", ceilingHazardUnifier,
 			func(newValue bool) {
 				view.requestCeilingHazard(lvl, view.model.selectedTiles.list, newValue)
 			})
@@ -377,7 +376,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 	imgui.PopItemWidth()
 }
 
-func (view *TilesView) renderTextureSelector(readOnly, multiple bool, label string, unifier values.Unifier,
+func (view *TilesView) renderTextureSelector(readOnly bool, label string, unifier values.Unifier,
 	atlas level.TextureAtlas, minIndex, maxIndex int, changeHandler func(int)) {
 	selectedIndex := -1
 	if unifier.IsUnique() {

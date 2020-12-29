@@ -68,7 +68,7 @@ func (dialog *editIntegerVariableDialog) close() {
 
 func (dialog *editIntegerVariableDialog) renderControls() {
 	imgui.PushItemWidth(-150 * dialog.view.guiScale)
-	values.RenderUnifiedCheckboxCombo(false, false, "Override", values.UnifierFor(dialog.varOverride), func(newValue bool) {
+	values.RenderUnifiedCheckboxCombo(false, "Override", values.UnifierFor(dialog.varOverride), func(newValue bool) {
 		dialog.varOverride = newValue
 	})
 
@@ -116,7 +116,7 @@ func (dialog *editIntegerVariableDialog) renderControls() {
 		enumEntries := toEnumEntries(dialog.info.ValueNames)
 		linearInitIndex := linearIndex(enumEntries, resetValue)
 		initUnifier := values.UnifierFor(linearInitIndex)
-		values.RenderUnifiedCombo(dialog.info.Hardcoded || !dialog.varOverride, false, "Reset Value", initUnifier,
+		values.RenderUnifiedCombo(dialog.info.Hardcoded || !dialog.varOverride, "Reset Value", initUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string {
 				if value < 0 {

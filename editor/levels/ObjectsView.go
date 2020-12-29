@@ -178,7 +178,7 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 		Meta:      view.mod.ObjectProperties(),
 		TextCache: view.textCache,
 	}
-	objTypeRenderer.Render(readOnly, multiple, "Object Type", classUnifier, typeUnifier,
+	objTypeRenderer.Render(readOnly, "Object Type", classUnifier, typeUnifier,
 		func(u values.Unifier) object.Triple { return u.Unified().(object.Triple) },
 		func(newValue object.Triple) {
 			view.requestBaseChange(lvl, func(entry *level.ObjectMainEntry) {
@@ -188,56 +188,56 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 		})
 
 	if imgui.TreeNodeV("Base Properties", imgui.TreeNodeFlagsDefaultOpen|imgui.TreeNodeFlagsFramed) {
-		values.RenderUnifiedSliderInt(readOnly, multiple, "Z", zUnifier,
+		values.RenderUnifiedSliderInt(readOnly, "Z", zUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(level.HeightUnit)) },
 			objectHeightFormatter,
 			0, 0xFF,
 			func(newValue int) {
 				view.requestBaseChange(lvl, func(entry *level.ObjectMainEntry) { entry.Z = level.HeightUnit(newValue) })
 			})
-		values.RenderUnifiedSliderInt(readOnly, multiple, "Tile X", tileXUnifier,
+		values.RenderUnifiedSliderInt(readOnly, "Tile X", tileXUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(byte)) },
 			func(value int) string { return "%d" },
 			0, columns-1,
 			func(newValue int) {
 				view.requestBaseChange(lvl, func(entry *level.ObjectMainEntry) { entry.X = level.CoordinateAt(byte(newValue), entry.X.Fine()) })
 			})
-		values.RenderUnifiedSliderInt(readOnly, multiple, "Fine X", fineXUnifier,
+		values.RenderUnifiedSliderInt(readOnly, "Fine X", fineXUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(byte)) },
 			func(value int) string { return "%d" },
 			0, 0xFF,
 			func(newValue int) {
 				view.requestBaseChange(lvl, func(entry *level.ObjectMainEntry) { entry.X = level.CoordinateAt(entry.X.Tile(), byte(newValue)) })
 			})
-		values.RenderUnifiedSliderInt(readOnly, multiple, "Tile Y", tileYUnifier,
+		values.RenderUnifiedSliderInt(readOnly, "Tile Y", tileYUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(byte)) },
 			func(value int) string { return "%d" },
 			0, rows-1,
 			func(newValue int) {
 				view.requestBaseChange(lvl, func(entry *level.ObjectMainEntry) { entry.Y = level.CoordinateAt(byte(newValue), entry.Y.Fine()) })
 			})
-		values.RenderUnifiedSliderInt(readOnly, multiple, "Fine Y", fineYUnifier,
+		values.RenderUnifiedSliderInt(readOnly, "Fine Y", fineYUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(byte)) },
 			func(value int) string { return "%d" },
 			0, 0xFF,
 			func(newValue int) {
 				view.requestBaseChange(lvl, func(entry *level.ObjectMainEntry) { entry.Y = level.CoordinateAt(entry.Y.Tile(), byte(newValue)) })
 			})
-		values.RenderUnifiedSliderInt(readOnly, multiple, "Rotation X", rotationXUnifier,
+		values.RenderUnifiedSliderInt(readOnly, "Rotation X", rotationXUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(level.RotationUnit)) },
 			rotationFormatter,
 			0, 0xFF,
 			func(newValue int) {
 				view.requestBaseChange(lvl, func(entry *level.ObjectMainEntry) { entry.XRotation = level.RotationUnit(newValue) })
 			})
-		values.RenderUnifiedSliderInt(readOnly, multiple, "Rotation Y", rotationYUnifier,
+		values.RenderUnifiedSliderInt(readOnly, "Rotation Y", rotationYUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(level.RotationUnit)) },
 			rotationFormatter,
 			0, 0xFF,
 			func(newValue int) {
 				view.requestBaseChange(lvl, func(entry *level.ObjectMainEntry) { entry.YRotation = level.RotationUnit(newValue) })
 			})
-		values.RenderUnifiedSliderInt(readOnly, multiple, "Rotation Z", rotationZUnifier,
+		values.RenderUnifiedSliderInt(readOnly, "Rotation Z", rotationZUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(level.RotationUnit)) },
 			rotationFormatter,
 			0, 0xFF,
@@ -245,7 +245,7 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 				view.requestBaseChange(lvl, func(entry *level.ObjectMainEntry) { entry.ZRotation = level.RotationUnit(newValue) })
 			})
 
-		values.RenderUnifiedSliderInt(readOnly, multiple, "Hitpoints", hitpointsUnifier,
+		values.RenderUnifiedSliderInt(readOnly, "Hitpoints", hitpointsUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(int16)) },
 			func(value int) string { return "%d" },
 			0, 10000,
@@ -325,7 +325,6 @@ func (view *ObjectsView) renderProperties(lvl *level.Level, readOnly bool,
 		}
 	}
 
-	multiple := len(view.model.selectedObjects.list) > 1
 	lastTitle := ""
 	for _, key := range propertyOrder {
 		if unifier, existing := propertyUnifier[key]; existing {
@@ -339,7 +338,7 @@ func (view *ObjectsView) renderProperties(lvl *level.Level, readOnly bool,
 				imgui.Text(baseKey + ":")
 				lastTitle = baseKey
 			}
-			view.renderPropertyControl(lvl, readOnly, multiple, key, *unifier, propertyDescribers[key],
+			view.renderPropertyControl(lvl, readOnly, key, *unifier, propertyDescribers[key],
 				func(modifier func(uint32) uint32) {
 					view.requestPropertiesChange(lvl, dataRetriever, interpreterFactory, key, modifier) // nolint: scopelint
 				})
@@ -347,7 +346,7 @@ func (view *ObjectsView) renderProperties(lvl *level.Level, readOnly bool,
 	}
 }
 
-func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, multiple bool,
+func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool,
 	fullKey string, unifier values.Unifier, describer func(*interpreters.Simplifier),
 	updater func(func(uint32) uint32)) {
 	keys := strings.Split(fullKey, ".")
@@ -362,10 +361,10 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 		Meta:      view.mod.ObjectProperties(),
 		TextCache: view.textCache,
 	}
-	simplifier := values.StandardSimplifier(readOnly, multiple, fullKey, unifier, updater, objTypeRenderer)
+	simplifier := values.StandardSimplifier(readOnly, fullKey, unifier, updater, objTypeRenderer)
 
 	simplifier.SetObjectIDHandler(func() {
-		values.RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
+		values.RenderUnifiedSliderInt(readOnly, label, unifier,
 			func(u values.Unifier) int { return int(u.Unified().(int32)) },
 			func(value int) string { return "%d" },
 			0, int(lvl.ObjectLimit()),
@@ -379,7 +378,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 		typeMask := 0x1000
 
 		typeLabel := key + "-Type###" + fullKey + "-Type"
-		values.RenderUnifiedCombo(readOnly, multiple, typeLabel, unifier,
+		values.RenderUnifiedCombo(readOnly, typeLabel, unifier,
 			func(u values.Unifier) int {
 				value := u.Unified().(int32)
 				result := 0
@@ -409,7 +408,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 			if isIntegerVar {
 				limit = archive.IntegerVarCount
 			}
-			values.RenderUnifiedSliderInt(readOnly, multiple, valueLabel, unifier,
+			values.RenderUnifiedSliderInt(readOnly, valueLabel, unifier,
 				func(u values.Unifier) int { return int(u.Unified().(int32)) & 0x1FF },
 				func(value int) string {
 					if isIntegerVar {
@@ -426,7 +425,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 					})
 				})
 
-		case multiple:
+		case !unifier.IsUnique():
 			imgui.LabelText(valueLabel, "(multiple)")
 		default:
 			imgui.LabelText(valueLabel, "")
@@ -448,7 +447,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 
 		comboLabel := key + "-Check###" + fullKey + "-Value"
 
-		values.RenderUnifiedCombo(readOnly, multiple, comboLabel, unifier,
+		values.RenderUnifiedCombo(readOnly, comboLabel, unifier,
 			func(u values.Unifier) int {
 				key := unifier.Unified().(int32)
 				return int((key >> 13) & 0x7)
@@ -465,7 +464,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 	})
 
 	simplifier.SetSpecialHandler("BinaryCodedDecimal", func() {
-		values.RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
+		values.RenderUnifiedSliderInt(readOnly, label, unifier,
 			func(u values.Unifier) int { return int(numbers.FromBinaryCodedDecimal(uint16(u.Unified().(int32)))) },
 			func(value int) string { return "%03d" },
 			0, 999,
@@ -481,7 +480,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 			selectedIndex = int(unifier.Unified().(int32))
 		}
 
-		values.RenderUnifiedSliderInt(readOnly, multiple, key+" (atlas index)###"+fullKey+"-atlas", unifier,
+		values.RenderUnifiedSliderInt(readOnly, key+" (atlas index)###"+fullKey+"-atlas", unifier,
 			func(u values.Unifier) int { return int(u.Unified().(int32)) },
 			func(value int) string { return "%d" },
 			0, len(atlas)-1,
@@ -510,7 +509,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 			selectedIndex = value & 0x7F
 		}
 
-		values.RenderUnifiedCombo(readOnly, multiple, key+"###"+fullKey+"-Type", unifier,
+		values.RenderUnifiedCombo(readOnly, key+"###"+fullKey+"-Type", unifier,
 			func(u values.Unifier) int { return selectedType },
 			func(index int) string { return types[index] },
 			len(types),
@@ -554,7 +553,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 	})
 
 	simplifier.SetSpecialHandler("TileHeight", func() {
-		values.RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
+		values.RenderUnifiedSliderInt(readOnly, label, unifier,
 			func(u values.Unifier) int { return int(u.Unified().(int32)) },
 			tileHeightFormatter,
 			0, int(level.TileHeightUnitMax-1),
@@ -563,7 +562,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 			})
 	})
 	simplifier.SetSpecialHandler("ObjectHeight", func() {
-		values.RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
+		values.RenderUnifiedSliderInt(readOnly, label, unifier,
 			func(u values.Unifier) int { return int(u.Unified().(int32)) },
 			objectHeightFormatter,
 			0, 255,
@@ -572,7 +571,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 			})
 	})
 	simplifier.SetSpecialHandler("MoveTileHeight", func() {
-		values.RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
+		values.RenderUnifiedSliderInt(readOnly, label, unifier,
 			func(u values.Unifier) int { return int(u.Unified().(int32)) },
 			moveTileHeightFormatter,
 			0, 0x0FFF,
@@ -582,7 +581,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool, 
 	})
 
 	simplifier.SetSpecialHandler("TileType", func() {
-		values.RenderUnifiedCombo(readOnly, multiple, label, unifier,
+		values.RenderUnifiedCombo(readOnly, label, unifier,
 			func(u values.Unifier) int { return int(u.Unified().(int32)) },
 			func(index int) string { return level.TileType(index).String() },
 			len(level.TileTypes()),

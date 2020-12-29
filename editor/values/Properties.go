@@ -15,7 +15,7 @@ const (
 )
 
 // RenderUnifiedSliderInt renders a control for an unified integer value.
-func RenderUnifiedSliderInt(readOnly, multiple bool, label string, unifier Unifier,
+func RenderUnifiedSliderInt(readOnly bool, label string, unifier Unifier,
 	intConverter func(Unifier) int, formatter func(int) string, min, max int, changeHandler func(int)) {
 	var labelValue string
 	var selectedString string
@@ -24,7 +24,7 @@ func RenderUnifiedSliderInt(readOnly, multiple bool, label string, unifier Unifi
 		selectedValue = intConverter(unifier)
 		selectedString = formatter(selectedValue)
 		labelValue = fmt.Sprintf(selectedString, selectedValue)
-	} else if multiple {
+	} else if !unifier.IsEmpty() {
 		selectedString = hintMultiple
 		labelValue = selectedString
 	}
@@ -36,14 +36,14 @@ func RenderUnifiedSliderInt(readOnly, multiple bool, label string, unifier Unifi
 }
 
 // RenderUnifiedCombo renders a control for a unified enumeration value.
-func RenderUnifiedCombo(readOnly, multiple bool, label string, unifier Unifier,
+func RenderUnifiedCombo(readOnly bool, label string, unifier Unifier,
 	intConverter func(Unifier) int, formatter func(int) string, count int, changeHandler func(int)) {
 	var selectedString string
 	selectedIndex := -1
 	if unifier.IsUnique() {
 		selectedIndex = intConverter(unifier)
 		selectedString = formatter(selectedIndex)
-	} else if multiple {
+	} else if !unifier.IsEmpty() {
 		selectedString = hintMultiple
 	}
 	if readOnly {
@@ -61,7 +61,7 @@ func RenderUnifiedCombo(readOnly, multiple bool, label string, unifier Unifier,
 }
 
 // RenderUnifiedCheckboxCombo renders a control for a unified boolean value.
-func RenderUnifiedCheckboxCombo(readOnly, multiple bool, label string, unifier Unifier, changeHandler func(bool)) {
+func RenderUnifiedCheckboxCombo(readOnly bool, label string, unifier Unifier, changeHandler func(bool)) {
 	selectedString := ""
 	if unifier.IsUnique() {
 		selectedValue := unifier.Unified().(bool)
@@ -70,7 +70,7 @@ func RenderUnifiedCheckboxCombo(readOnly, multiple bool, label string, unifier U
 		} else {
 			selectedString = hintNo
 		}
-	} else if multiple {
+	} else if !unifier.IsEmpty() {
 		selectedString = hintMultiple
 	}
 	if readOnly {

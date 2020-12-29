@@ -259,7 +259,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 		renderFlag := func(flag object.CommonFlag) {
 			flagUnifier := values.NewUnifier()
 			flagUnifier.Add(properties.Common.Flags.Has(flag))
-			values.RenderUnifiedCheckboxCombo(readOnly, false, flag.String(), flagUnifier, func(newValue bool) {
+			values.RenderUnifiedCheckboxCombo(readOnly, flag.String(), flagUnifier, func(newValue bool) {
 				view.requestSetObjectProperties(func(prop *object.Properties) {
 					if newValue {
 						prop.Common.Flags = prop.Common.Flags.With(flag)
@@ -279,7 +279,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 	lightTypes := object.LightTypes()
 	lightTypeUnifier := values.NewUnifier()
 	lightTypeUnifier.Add(int(properties.Common.Flags.LightType()))
-	values.RenderUnifiedCombo(readOnly, false, "LightType", lightTypeUnifier, intIdentity,
+	values.RenderUnifiedCombo(readOnly, "LightType", lightTypeUnifier, intIdentity,
 		func(value int) string {
 			return object.LightType(value).String()
 		}, len(lightTypes), func(newValue int) {
@@ -290,7 +290,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 
 	useModeUnifier := values.NewUnifier()
 	useModeUnifier.Add(int(properties.Common.Flags.UseMode()))
-	values.RenderUnifiedCombo(readOnly, false, "UseMode", useModeUnifier, intIdentity,
+	values.RenderUnifiedCombo(readOnly, "UseMode", useModeUnifier, intIdentity,
 		func(value int) string {
 			return object.UseMode(value).String()
 		}, 4, func(newValue int) {
@@ -301,7 +301,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 
 	massUnifier := values.NewUnifier()
 	massUnifier.Add(int(properties.Common.Mass))
-	values.RenderUnifiedSliderInt(readOnly, false, "Mass", massUnifier, intIdentity, intFormat, -1, 5000,
+	values.RenderUnifiedSliderInt(readOnly, "Mass", massUnifier, intIdentity, intFormat, -1, 5000,
 		func(newValue int) {
 			view.requestSetObjectProperties(func(prop *object.Properties) {
 				prop.Common.Mass = int32(newValue)
@@ -310,7 +310,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 
 	hitpointsUnifier := values.NewUnifier()
 	hitpointsUnifier.Add(int(properties.Common.Hitpoints))
-	values.RenderUnifiedSliderInt(readOnly, false, "Hitpoints", hitpointsUnifier, intIdentity, intFormat, 0, 10000,
+	values.RenderUnifiedSliderInt(readOnly, "Hitpoints", hitpointsUnifier, intIdentity, intFormat, 0, 10000,
 		func(newValue int) {
 			view.requestSetObjectProperties(func(prop *object.Properties) {
 				prop.Common.Hitpoints = int16(newValue)
@@ -319,7 +319,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 
 	armorUnifier := values.NewUnifier()
 	armorUnifier.Add(int(properties.Common.Armor))
-	values.RenderUnifiedSliderInt(readOnly, false, "Armor", armorUnifier, intIdentity, intFormat, 0, 255,
+	values.RenderUnifiedSliderInt(readOnly, "Armor", armorUnifier, intIdentity, intFormat, 0, 255,
 		func(newValue int) {
 			view.requestSetObjectProperties(func(prop *object.Properties) {
 				prop.Common.Armor = byte(newValue)
@@ -328,7 +328,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 
 	renderTypeUnifier := values.NewUnifier()
 	renderTypeUnifier.Add(int(properties.Common.RenderType))
-	values.RenderUnifiedCombo(readOnly, false, "Render Type", renderTypeUnifier, intIdentity,
+	values.RenderUnifiedCombo(readOnly, "Render Type", renderTypeUnifier, intIdentity,
 		func(value int) string { return object.RenderType(value).String() },
 		len(object.RenderTypes()), func(newValue int) {
 			view.requestSetObjectProperties(func(prop *object.Properties) {
@@ -338,7 +338,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 
 	physicsModelUnifier := values.NewUnifier()
 	physicsModelUnifier.Add(int(properties.Common.PhysicsModel))
-	values.RenderUnifiedCombo(readOnly, false, "Physics Model", physicsModelUnifier, intIdentity,
+	values.RenderUnifiedCombo(readOnly, "Physics Model", physicsModelUnifier, intIdentity,
 		func(value int) string { return object.PhysicsModel(value).String() },
 		len(object.PhysicsModels()), func(newValue int) {
 			view.requestSetObjectProperties(func(prop *object.Properties) {
@@ -348,7 +348,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 
 	hardnessUnifier := values.NewUnifier()
 	hardnessUnifier.Add(int(properties.Common.Hardness))
-	values.RenderUnifiedSliderInt(readOnly, false, "Hardness", hardnessUnifier, intIdentity, intFormat, 0, object.HardnessLimit,
+	values.RenderUnifiedSliderInt(readOnly, "Hardness", hardnessUnifier, intIdentity, intFormat, 0, object.HardnessLimit,
 		func(newValue int) {
 			view.requestSetObjectProperties(func(prop *object.Properties) {
 				prop.Common.Hardness = byte(newValue)
@@ -357,7 +357,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 
 	physicsXRUnifier := values.NewUnifier()
 	physicsXRUnifier.Add(int(properties.Common.PhysicsXR))
-	values.RenderUnifiedSliderInt(readOnly, false, "Physics XR", physicsXRUnifier, intIdentity, intFormat, 0, object.PhysicsXRLimit,
+	values.RenderUnifiedSliderInt(readOnly, "Physics XR", physicsXRUnifier, intIdentity, intFormat, 0, object.PhysicsXRLimit,
 		func(newValue int) {
 			view.requestSetObjectProperties(func(prop *object.Properties) {
 				prop.Common.PhysicsXR = byte(newValue)
@@ -366,7 +366,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 
 	physicsZUnifier := values.NewUnifier()
 	physicsZUnifier.Add(int(properties.Common.PhysicsZ))
-	values.RenderUnifiedSliderInt(readOnly, false, "Physics Z", physicsZUnifier, intIdentity, intFormat, 0, 255,
+	values.RenderUnifiedSliderInt(readOnly, "Physics Z", physicsZUnifier, intIdentity, intFormat, 0, 255,
 		func(newValue int) {
 			view.requestSetObjectProperties(func(prop *object.Properties) {
 				prop.Common.PhysicsZ = byte(newValue)
@@ -377,7 +377,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 		renderVulnerability := func(damageType object.DamageType) {
 			damageUnifier := values.NewUnifier()
 			damageUnifier.Add(properties.Common.Vulnerabilities.Has(damageType))
-			values.RenderUnifiedCheckboxCombo(readOnly, false, damageType.String(), damageUnifier, func(newValue bool) {
+			values.RenderUnifiedCheckboxCombo(readOnly, damageType.String(), damageUnifier, func(newValue bool) {
 				view.requestSetObjectProperties(func(prop *object.Properties) {
 					if newValue {
 						prop.Common.Vulnerabilities = prop.Common.Vulnerabilities.With(damageType)
@@ -393,7 +393,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 
 		primaryUnifier := values.NewUnifier()
 		primaryUnifier.Add(properties.Common.SpecialVulnerabilities.PrimaryValue())
-		values.RenderUnifiedSliderInt(readOnly, false, "Primary (double dmg)", primaryUnifier, intIdentity, intFormat, 0, object.SpecialDamageTypeLimit,
+		values.RenderUnifiedSliderInt(readOnly, "Primary (double dmg)", primaryUnifier, intIdentity, intFormat, 0, object.SpecialDamageTypeLimit,
 			func(newValue int) {
 				view.requestSetObjectProperties(func(prop *object.Properties) {
 					prop.Common.SpecialVulnerabilities = prop.Common.SpecialVulnerabilities.WithPrimaryValue(newValue)
@@ -402,7 +402,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 
 		superUnifier := values.NewUnifier()
 		superUnifier.Add(properties.Common.SpecialVulnerabilities.SuperValue())
-		values.RenderUnifiedSliderInt(readOnly, false, "Super (quad dmg)", superUnifier, intIdentity, intFormat, 0, object.SpecialDamageTypeLimit,
+		values.RenderUnifiedSliderInt(readOnly, "Super (quad dmg)", superUnifier, intIdentity, intFormat, 0, object.SpecialDamageTypeLimit,
 			func(newValue int) {
 				view.requestSetObjectProperties(func(prop *object.Properties) {
 					prop.Common.SpecialVulnerabilities = prop.Common.SpecialVulnerabilities.WithSuperValue(newValue)
@@ -414,7 +414,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 
 	defenseUnifier := values.NewUnifier()
 	defenseUnifier.Add(int(properties.Common.Defense))
-	values.RenderUnifiedSliderInt(readOnly, false, "Defense", defenseUnifier, intIdentity,
+	values.RenderUnifiedSliderInt(readOnly, "Defense", defenseUnifier, intIdentity,
 		func(value int) string {
 			if value == object.DefenseNoCriticals {
 				return "%d - (no criticals)"
@@ -429,7 +429,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 
 	toughnessUnifier := values.NewUnifier()
 	toughnessUnifier.Add(int(properties.Common.Toughness))
-	values.RenderUnifiedSliderInt(readOnly, false, "Toughness", toughnessUnifier, intIdentity,
+	values.RenderUnifiedSliderInt(readOnly, "Toughness", toughnessUnifier, intIdentity,
 		func(value int) string {
 			if value == object.ToughnessNoDamage {
 				return "(no damage) -- raw: %d"
@@ -445,7 +445,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 
 	mfdOrMeshIDUnifier := values.NewUnifier()
 	mfdOrMeshIDUnifier.Add(int(properties.Common.MfdOrMeshID))
-	values.RenderUnifiedSliderInt(readOnly, false, "MFD/Mesh ID", mfdOrMeshIDUnifier, intIdentity, intFormat, 0, 1000,
+	values.RenderUnifiedSliderInt(readOnly, "MFD/Mesh ID", mfdOrMeshIDUnifier, intIdentity, intFormat, 0, 1000,
 		func(newValue int) {
 			view.requestSetObjectProperties(func(prop *object.Properties) {
 				prop.Common.MfdOrMeshID = uint16(newValue)
@@ -454,7 +454,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 
 	bitmap3DBitmapNumUnifier := values.NewUnifier()
 	bitmap3DBitmapNumUnifier.Add(int(properties.Common.Bitmap3D.BitmapNumber()))
-	values.RenderUnifiedSliderInt(readOnly, false, "Bitmap Number", bitmap3DBitmapNumUnifier, intIdentity, intFormat, 0, int(object.Bitmap3DBitmapNumberLimit),
+	values.RenderUnifiedSliderInt(readOnly, "Bitmap Number", bitmap3DBitmapNumUnifier, intIdentity, intFormat, 0, int(object.Bitmap3DBitmapNumberLimit),
 		func(newValue int) {
 			view.requestSetObjectProperties(func(prop *object.Properties) {
 				prop.Common.Bitmap3D = prop.Common.Bitmap3D.WithBitmapNumber(uint16(newValue))
@@ -462,7 +462,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 		})
 	bitmap3DFrameNumUnifier := values.NewUnifier()
 	bitmap3DFrameNumUnifier.Add(int(properties.Common.Bitmap3D.FrameNumber()))
-	values.RenderUnifiedSliderInt(readOnly, false, "Frame Number", bitmap3DFrameNumUnifier, intIdentity, intFormat, 0, int(object.Bitmap3DFrameNumberLimit),
+	values.RenderUnifiedSliderInt(readOnly, "Frame Number", bitmap3DFrameNumUnifier, intIdentity, intFormat, 0, int(object.Bitmap3DFrameNumberLimit),
 		func(newValue int) {
 			view.requestSetObjectProperties(func(prop *object.Properties) {
 				prop.Common.Bitmap3D = prop.Common.Bitmap3D.WithFrameNumber(uint16(newValue))
@@ -470,7 +470,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 		})
 	bitmap3DAnimUnifier := values.NewUnifier()
 	bitmap3DAnimUnifier.Add(properties.Common.Bitmap3D.Animation())
-	values.RenderUnifiedCheckboxCombo(readOnly, false, "Animation", bitmap3DAnimUnifier,
+	values.RenderUnifiedCheckboxCombo(readOnly, "Animation", bitmap3DAnimUnifier,
 		func(newValue bool) {
 			view.requestSetObjectProperties(func(prop *object.Properties) {
 				prop.Common.Bitmap3D = prop.Common.Bitmap3D.WithAnimation(newValue)
@@ -478,7 +478,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 		})
 	bitmap3DRepeatUnifier := values.NewUnifier()
 	bitmap3DRepeatUnifier.Add(properties.Common.Bitmap3D.Repeat())
-	values.RenderUnifiedCheckboxCombo(readOnly, false, "Repeat", bitmap3DRepeatUnifier,
+	values.RenderUnifiedCheckboxCombo(readOnly, "Repeat", bitmap3DRepeatUnifier,
 		func(newValue bool) {
 			view.requestSetObjectProperties(func(prop *object.Properties) {
 				prop.Common.Bitmap3D = prop.Common.Bitmap3D.WithRepeat(newValue)
@@ -487,7 +487,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 
 	destroyEffectValueUnifier := values.NewUnifier()
 	destroyEffectValueUnifier.Add(int(properties.Common.DestroyEffect.Value()))
-	values.RenderUnifiedSliderInt(readOnly, false, "DestroyEffect Value", destroyEffectValueUnifier,
+	values.RenderUnifiedSliderInt(readOnly, "DestroyEffect Value", destroyEffectValueUnifier,
 		intIdentity, intFormat, 0, int(object.DestroyEffectValueLimit),
 		func(newValue int) {
 			view.requestSetObjectProperties(func(prop *object.Properties) {
@@ -496,7 +496,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 		})
 	destroyEffectPlaySoundUnifier := values.NewUnifier()
 	destroyEffectPlaySoundUnifier.Add(properties.Common.DestroyEffect.PlaySound())
-	values.RenderUnifiedCheckboxCombo(readOnly, false, "DestroyEffect PlaySound", destroyEffectPlaySoundUnifier,
+	values.RenderUnifiedCheckboxCombo(readOnly, "DestroyEffect PlaySound", destroyEffectPlaySoundUnifier,
 		func(newValue bool) {
 			view.requestSetObjectProperties(func(prop *object.Properties) {
 				prop.Common.DestroyEffect = prop.Common.DestroyEffect.WithSound(newValue)
@@ -504,7 +504,7 @@ func (view *View) renderCommonProperties(readOnly bool, properties *object.Prope
 		})
 	destroyEffectShowExplosionUnifier := values.NewUnifier()
 	destroyEffectShowExplosionUnifier.Add(properties.Common.DestroyEffect.ShowExplosion())
-	values.RenderUnifiedCheckboxCombo(readOnly, false, "DestroyEffect ShowExplosion", destroyEffectShowExplosionUnifier,
+	values.RenderUnifiedCheckboxCombo(readOnly, "DestroyEffect ShowExplosion", destroyEffectShowExplosionUnifier,
 		func(newValue bool) {
 			view.requestSetObjectProperties(func(prop *object.Properties) {
 				prop.Common.DestroyEffect = prop.Common.DestroyEffect.WithExplosion(newValue)
@@ -545,7 +545,7 @@ func (view *View) createPropertyControls(readOnly bool, rootInterpreter *interpr
 			fullKey := path + key
 			unifier := values.NewUnifier()
 			unifier.Add(int32(interpreter.Get(key)))
-			simplifier := values.StandardSimplifier(readOnly, false, fullKey, unifier,
+			simplifier := values.StandardSimplifier(readOnly, fullKey, unifier,
 				func(modifier func(uint32) uint32) {
 					updater(fullKey, modifier)
 				}, objTypeRenderer)

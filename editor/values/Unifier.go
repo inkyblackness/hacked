@@ -35,10 +35,16 @@ func (u Unifier) IsUnique() bool {
 	return u.state.isUnique()
 }
 
+// IsEmpty returns true if the unifier has not received any value.
+func (u Unifier) IsEmpty() bool {
+	return (u.state == nil) || u.state.isEmpty()
+}
+
 type unifierState interface {
 	add(value interface{}) unifierState
 	unified() interface{}
 	isUnique() bool
+	isEmpty() bool
 }
 
 type unifierInitState struct{}
@@ -53,6 +59,10 @@ func (state unifierInitState) unified() interface{} {
 
 func (state unifierInitState) isUnique() bool {
 	return false
+}
+
+func (state unifierInitState) isEmpty() bool {
+	return true
 }
 
 type unifierMatchedState struct {
@@ -74,6 +84,10 @@ func (state unifierMatchedState) isUnique() bool {
 	return true
 }
 
+func (state unifierMatchedState) isEmpty() bool {
+	return false
+}
+
 type unifierMismatchedState struct{}
 
 func (state unifierMismatchedState) add(value interface{}) unifierState {
@@ -85,5 +99,9 @@ func (state unifierMismatchedState) unified() interface{} {
 }
 
 func (state unifierMismatchedState) isUnique() bool {
+	return false
+}
+
+func (state unifierMismatchedState) isEmpty() bool {
 	return false
 }

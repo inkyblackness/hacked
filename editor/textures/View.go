@@ -168,7 +168,7 @@ func (view *View) renderTextureProperties(readOnly bool) {
 		animationIndexUnifier.Add(int(properties.AnimationIndex))
 	}
 
-	values.RenderUnifiedSliderInt(readOnly, false, "Distance Modifier", distanceUnifier,
+	values.RenderUnifiedSliderInt(readOnly, "Distance Modifier", distanceUnifier,
 		func(u values.Unifier) int { return u.Unified().(int) },
 		func(value int) string { return "%d" },
 		math.MinInt16, math.MaxInt16,
@@ -178,7 +178,7 @@ func (view *View) renderTextureProperties(readOnly bool) {
 			})
 		})
 
-	values.RenderUnifiedCheckboxCombo(readOnly, false, "Climbable", climbableUnifier,
+	values.RenderUnifiedCheckboxCombo(readOnly, "Climbable", climbableUnifier,
 		func(newValue bool) {
 			view.requestChangeProperties(func(prop *texture.Properties) {
 				prop.Climbable = 0
@@ -188,7 +188,7 @@ func (view *View) renderTextureProperties(readOnly bool) {
 			})
 		})
 
-	values.RenderUnifiedCombo(readOnly, false, "Transparency Control", transparencyControlUnifier,
+	values.RenderUnifiedCombo(readOnly, "Transparency Control", transparencyControlUnifier,
 		func(u values.Unifier) int { return u.Unified().(int) },
 		func(index int) string { return texture.TransparencyControl(index).String() },
 		len(texture.TransparencyControls()),
@@ -198,7 +198,7 @@ func (view *View) renderTextureProperties(readOnly bool) {
 			})
 		})
 
-	values.RenderUnifiedSliderInt(readOnly, false, "Animation Group", animationGroupUnifier,
+	values.RenderUnifiedSliderInt(readOnly, "Animation Group", animationGroupUnifier,
 		func(u values.Unifier) int { return u.Unified().(int) },
 		func(value int) string { return "%d" },
 		0, 3,
@@ -207,7 +207,7 @@ func (view *View) renderTextureProperties(readOnly bool) {
 				prop.AnimationGroup = byte(newValue)
 			})
 		})
-	values.RenderUnifiedSliderInt(readOnly, false, "Animation Index", animationIndexUnifier,
+	values.RenderUnifiedSliderInt(readOnly, "Animation Index", animationIndexUnifier,
 		func(u values.Unifier) int { return u.Unified().(int) },
 		func(value int) string { return "%d" },
 		0, 3,

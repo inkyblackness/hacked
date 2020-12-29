@@ -18,7 +18,7 @@ type ObjectTypeControlRenderer struct {
 }
 
 // Render creates the controls according to the given parameters.
-func (renderer ObjectTypeControlRenderer) Render(readOnly, multiple bool, label string,
+func (renderer ObjectTypeControlRenderer) Render(readOnly bool, label string,
 	classUnifier Unifier, typeUnifier Unifier,
 	tripleResolver func(Unifier) object.Triple,
 	changeHandler func(object.Triple)) {
@@ -39,7 +39,7 @@ func (renderer ObjectTypeControlRenderer) Render(readOnly, multiple bool, label 
 				triples = append(triples, triple)
 			}
 		}
-		RenderUnifiedCombo(readOnly, multiple, label, typeUnifier,
+		RenderUnifiedCombo(readOnly, label, typeUnifier,
 			func(u Unifier) int { return selectedIndex },
 			func(value int) string {
 				triple := triples[value]
@@ -50,7 +50,7 @@ func (renderer ObjectTypeControlRenderer) Render(readOnly, multiple bool, label 
 				triple := triples[newValue]
 				changeHandler(triple)
 			})
-	case multiple:
+	case !classUnifier.IsEmpty():
 		imgui.LabelText(label, "(multiple classes)")
 	default:
 		imgui.LabelText(label, "")

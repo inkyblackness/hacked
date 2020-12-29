@@ -14,14 +14,14 @@ import (
 )
 
 // StandardSimplifier returns a simplifier with common property controls.
-func StandardSimplifier(readOnly bool, multiple bool, fullKey string, unifier Unifier,
+func StandardSimplifier(readOnly bool, fullKey string, unifier Unifier,
 	updater func(func(uint32) uint32), objTypeRenderer ObjectTypeControlRenderer) *interpreters.Simplifier {
 	keys := strings.Split(fullKey, ".")
 	key := keys[len(keys)-1]
 	label := key + "###" + fullKey
 
 	simplifier := interpreters.NewSimplifier(func(minValue, maxValue int64, formatter interpreters.RawValueFormatter) {
-		RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
+		RenderUnifiedSliderInt(readOnly, label, unifier,
 			func(u Unifier) int {
 				unifiedValue := u.Unified().(int32)
 				if (minValue == -1) && (maxValue == 0x7FFF) {
@@ -51,7 +51,7 @@ func StandardSimplifier(readOnly bool, multiple bool, fullKey string, unifier Un
 		}
 		sort.Slice(valueKeys, func(indexA, indexB int) bool { return valueKeys[indexA] < valueKeys[indexB] })
 
-		RenderUnifiedCombo(readOnly, multiple, label, unifier,
+		RenderUnifiedCombo(readOnly, label, unifier,
 			func(u Unifier) int {
 				unifiedValue := uint32(u.Unified().(int32))
 				for index, valueKey := range valueKeys {
@@ -95,7 +95,7 @@ func StandardSimplifier(readOnly bool, multiple bool, fullKey string, unifier Un
 				if unifier.IsUnique() {
 					booleanUnifier.Add((uint32(unifier.Unified().(int32)) & mask) != 0)
 				}
-				RenderUnifiedCheckboxCombo(readOnly, multiple, maskedLabel, booleanUnifier,
+				RenderUnifiedCheckboxCombo(readOnly, maskedLabel, booleanUnifier,
 					func(newValue bool) {
 						updater(func(oldValue uint32) uint32 {
 							result := oldValue & ^mask
@@ -106,7 +106,7 @@ func StandardSimplifier(readOnly bool, multiple bool, fullKey string, unifier Un
 						})
 					})
 			} else {
-				RenderUnifiedSliderInt(readOnly, multiple, maskedLabel, unifier,
+				RenderUnifiedSliderInt(readOnly, maskedLabel, unifier,
 					func(u Unifier) int { return int((uint32(u.Unified().(int32)) & mask) >> uint32(shift)) },
 					func(value int) string { return "%d" },
 					0, int(maxValue),
@@ -128,7 +128,7 @@ func StandardSimplifier(readOnly bool, multiple bool, fullKey string, unifier Un
 			valueRange := (maxValue - minValue) + 1
 			return float64(value) / float64(valueRange)
 		}
-		RenderUnifiedSliderInt(readOnly, multiple, label, unifier,
+		RenderUnifiedSliderInt(readOnly, label, unifier,
 			func(u Unifier) int {
 				unifiedValue := u.Unified().(int32)
 				return int(unifiedValue)
@@ -174,7 +174,7 @@ func StandardSimplifier(readOnly bool, multiple bool, fullKey string, unifier Un
 			classNames[index] = class.String()
 		}
 		tripleResolver := func(u Unifier) object.Triple { return object.TripleFromInt(int(u.Unified().(int32))) }
-		RenderUnifiedCombo(readOnly, multiple, key+"-Class###"+fullKey+"-Class", unifier,
+		RenderUnifiedCombo(readOnly, key+"-Class###"+fullKey+"-Class", unifier,
 			func(u Unifier) int {
 				triple := tripleResolver(u)
 				return int(triple.Class)
@@ -186,7 +186,7 @@ func StandardSimplifier(readOnly bool, multiple bool, fullKey string, unifier Un
 				updater(func(oldValue uint32) uint32 { return uint32(triple.Int()) })
 			})
 
-		objTypeRenderer.Render(readOnly, multiple, key+"###"+fullKey+"-Type", unifier, unifier,
+		objTypeRenderer.Render(readOnly, key+"###"+fullKey+"-Type", unifier, unifier,
 			tripleResolver,
 			func(newValue object.Triple) {
 				updater(func(oldValue uint32) uint32 { return uint32(newValue.Int()) })

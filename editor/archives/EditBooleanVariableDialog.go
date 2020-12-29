@@ -63,7 +63,7 @@ func (dialog *editBooleanVariableDialog) close() {
 
 func (dialog *editBooleanVariableDialog) renderControls() {
 	imgui.PushItemWidth(-150 * dialog.view.guiScale)
-	values.RenderUnifiedCheckboxCombo(false, false, "Override", values.UnifierFor(dialog.varOverride), func(newValue bool) {
+	values.RenderUnifiedCheckboxCombo(false, "Override", values.UnifierFor(dialog.varOverride), func(newValue bool) {
 		dialog.varOverride = newValue
 	})
 
@@ -106,7 +106,7 @@ func (dialog *editBooleanVariableDialog) renderControls() {
 	}
 
 	initUnifier := values.UnifierFor(dialog.info.ResetValueInt())
-	values.RenderUnifiedCombo(dialog.info.Hardcoded || !dialog.varOverride, false, "Reset Value", initUnifier,
+	values.RenderUnifiedCombo(dialog.info.Hardcoded || !dialog.varOverride, "Reset Value", initUnifier,
 		func(u values.Unifier) int { return int(u.Unified().(int16)) },
 		func(value int) string {
 			name, found := dialog.info.ValueNames[int16(value)]

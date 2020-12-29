@@ -356,7 +356,7 @@ func (view *View) createPropertyControls(readOnly bool, rootInterpreter *interpr
 			fullKey := path + key
 			unifier := values.NewUnifier()
 			unifier.Add(int32(interpreter.Get(key)))
-			simplifier := values.StandardSimplifier(readOnly, false, fullKey, unifier,
+			simplifier := values.StandardSimplifier(readOnly, fullKey, unifier,
 				func(modifier func(uint32) uint32) {
 					updater(fullKey, modifier)
 				}, objTypeRenderer)
@@ -467,7 +467,7 @@ func (view *View) createWareControls(readOnly bool, gameState *archive.GameState
 }
 
 func (view *View) createHardwareControls(readOnly bool, state archive.HardwareState, onChange func()) {
-	values.RenderUnifiedSliderInt(readOnly, false,
+	values.RenderUnifiedSliderInt(readOnly,
 		fmt.Sprintf("Version (%s)", view.indexedName(object.ClassHardware, state.Index)),
 		values.UnifierFor(state.Version()),
 		func(u values.Unifier) int {
@@ -480,14 +480,14 @@ func (view *View) createHardwareControls(readOnly bool, state archive.HardwareSt
 			onChange()
 		})
 
-	values.RenderUnifiedCheckboxCombo(readOnly, false, "Is Active", values.UnifierFor(state.IsActive()), func(newActive bool) {
+	values.RenderUnifiedCheckboxCombo(readOnly, "Is Active", values.UnifierFor(state.IsActive()), func(newActive bool) {
 		state.SetActive(newActive)
 		onChange()
 	})
 }
 
 func (view *View) createVersionedSoftwareControls(readOnly bool, sw archive.VersionedSoftwareState, subclass int, onChange func()) {
-	values.RenderUnifiedSliderInt(readOnly, false,
+	values.RenderUnifiedSliderInt(readOnly,
 		fmt.Sprintf("Version (%s)", view.tripleName(object.TripleFrom(int(object.ClassSoftware), subclass, sw.Index))),
 		values.UnifierFor(sw.Version()),
 		func(u values.Unifier) int {
@@ -502,7 +502,7 @@ func (view *View) createVersionedSoftwareControls(readOnly bool, sw archive.Vers
 }
 
 func (view *View) createCountedSoftwareControls(readOnly bool, sw archive.CountedSoftwareState, subclass int, onChange func()) {
-	values.RenderUnifiedSliderInt(readOnly, false,
+	values.RenderUnifiedSliderInt(readOnly,
 		fmt.Sprintf("Count (%s)", view.tripleName(object.TripleFrom(int(object.ClassSoftware), subclass, sw.Index))),
 		values.UnifierFor(sw.Count()),
 		func(u values.Unifier) int {
@@ -517,7 +517,7 @@ func (view *View) createCountedSoftwareControls(readOnly bool, sw archive.Counte
 }
 
 func (view *View) createGeneralInventoryControls(readOnly bool, slot archive.GeneralInventorySlot, onChange func()) {
-	values.RenderUnifiedSliderInt(readOnly, false,
+	values.RenderUnifiedSliderInt(readOnly,
 		fmt.Sprintf("ObjectIndex (Slot %d)", slot.Index+1),
 		values.UnifierFor(slot.ObjectID()),
 		func(u values.Unifier) int {
@@ -532,7 +532,7 @@ func (view *View) createGeneralInventoryControls(readOnly bool, slot archive.Gen
 }
 
 func (view *View) createPatchStateControls(readOnly bool, patch archive.PatchState, onChange func()) {
-	values.RenderUnifiedSliderInt(readOnly, false,
+	values.RenderUnifiedSliderInt(readOnly,
 		fmt.Sprintf("Patch Count (%s)", view.indexedName(object.ClassDrug, patch.Index)),
 		values.UnifierFor(patch.Count()),
 		func(u values.Unifier) int {
@@ -547,7 +547,7 @@ func (view *View) createPatchStateControls(readOnly bool, patch archive.PatchSta
 }
 
 func (view *View) createInventoryGrenadeControls(readOnly bool, grenade archive.InventoryGrenade, onChange func()) {
-	values.RenderUnifiedSliderInt(readOnly, false,
+	values.RenderUnifiedSliderInt(readOnly,
 		fmt.Sprintf("Grenade Count (%s)", view.indexedName(object.ClassGrenade, grenade.Index)),
 		values.UnifierFor(grenade.Count()),
 		func(u values.Unifier) int {
@@ -560,7 +560,7 @@ func (view *View) createInventoryGrenadeControls(readOnly bool, grenade archive.
 			onChange()
 		})
 
-	values.RenderUnifiedSliderInt(readOnly, false, "Timer", values.UnifierFor(grenade.TimerSetting()),
+	values.RenderUnifiedSliderInt(readOnly, "Timer", values.UnifierFor(grenade.TimerSetting()),
 		func(u values.Unifier) int {
 			return int(u.Unified().(archive.GrenadeTimerSetting))
 		}, func(value int) string {
@@ -574,7 +574,7 @@ func (view *View) createInventoryGrenadeControls(readOnly bool, grenade archive.
 }
 
 func (view *View) createInventoryAmmoControls(readOnly bool, ammo archive.InventoryAmmo, onChange func()) {
-	values.RenderUnifiedSliderInt(readOnly, false,
+	values.RenderUnifiedSliderInt(readOnly,
 		fmt.Sprintf("Clip Count (%s)", view.indexedName(object.ClassAmmo, ammo.Index)),
 		values.UnifierFor(ammo.FullClipCount()),
 		func(u values.Unifier) int {
@@ -586,7 +586,7 @@ func (view *View) createInventoryAmmoControls(readOnly bool, ammo archive.Invent
 			ammo.SetFullClipCount(newValue)
 			onChange()
 		})
-	values.RenderUnifiedSliderInt(readOnly, false,
+	values.RenderUnifiedSliderInt(readOnly,
 		"Extra rounds",
 		values.UnifierFor(ammo.ExtraRoundsCount()),
 		func(u values.Unifier) int {
@@ -604,7 +604,7 @@ func (view *View) createInventoryWeaponSlotControls(readOnly bool, slot archive.
 	isInUse := slot.IsInUse()
 	inUseName := fmt.Sprintf("Weapon %d In Use", slot.Index+1)
 
-	values.RenderUnifiedCheckboxCombo(readOnly, false, inUseName, values.UnifierFor(isInUse), func(newUse bool) {
+	values.RenderUnifiedCheckboxCombo(readOnly, inUseName, values.UnifierFor(isInUse), func(newUse bool) {
 		if newUse {
 			slot.SetInUse(0, 0)
 		} else {
@@ -630,7 +630,7 @@ func (view *View) createInventoryWeaponSlotControls(readOnly bool, slot archive.
 	isEnergyWeapon := currentWeaponTriple.Subclass >= 4
 	if isEnergyWeapon {
 		temperature, chargeAndOverload := slot.WeaponState()
-		values.RenderUnifiedSliderInt(readOnly, false, "Temperature", values.UnifierFor(int(temperature)),
+		values.RenderUnifiedSliderInt(readOnly, "Temperature", values.UnifierFor(int(temperature)),
 			func(u values.Unifier) int {
 				return u.Unified().(int)
 			}, func(value int) string {
@@ -643,7 +643,7 @@ func (view *View) createInventoryWeaponSlotControls(readOnly bool, slot archive.
 
 		overloadState := chargeAndOverload & 0x80
 		charge := chargeAndOverload & 0x7F
-		values.RenderUnifiedCheckboxCombo(readOnly, false, "Overload", values.UnifierFor(overloadState != 0), func(newOverload bool) {
+		values.RenderUnifiedCheckboxCombo(readOnly, "Overload", values.UnifierFor(overloadState != 0), func(newOverload bool) {
 			if newOverload {
 				slot.SetWeaponState(temperature, 0x80|charge)
 			} else {
@@ -651,7 +651,7 @@ func (view *View) createInventoryWeaponSlotControls(readOnly bool, slot archive.
 			}
 			onChange()
 		})
-		values.RenderUnifiedSliderInt(readOnly, false, "Charge", values.UnifierFor(int(charge)),
+		values.RenderUnifiedSliderInt(readOnly, "Charge", values.UnifierFor(int(charge)),
 			func(u values.Unifier) int {
 				return u.Unified().(int)
 			}, func(value int) string {
@@ -663,7 +663,7 @@ func (view *View) createInventoryWeaponSlotControls(readOnly bool, slot archive.
 			})
 	} else {
 		rounds, ammoType := slot.WeaponState()
-		values.RenderUnifiedSliderInt(readOnly, false, "Rounds", values.UnifierFor(int(rounds)),
+		values.RenderUnifiedSliderInt(readOnly, "Rounds", values.UnifierFor(int(rounds)),
 			func(u values.Unifier) int {
 				return u.Unified().(int)
 			}, func(value int) string {
@@ -673,7 +673,7 @@ func (view *View) createInventoryWeaponSlotControls(readOnly bool, slot archive.
 				slot.SetWeaponState(byte(newValue), ammoType)
 				onChange()
 			})
-		values.RenderUnifiedCombo(readOnly, false, "Ammo Type", values.UnifierFor(int(ammoType)),
+		values.RenderUnifiedCombo(readOnly, "Ammo Type", values.UnifierFor(int(ammoType)),
 			func(u values.Unifier) int {
 				return u.Unified().(int)
 			},
@@ -757,7 +757,7 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 			varName := fmt.Sprintf("Var%03d: %s", varIndex, info.Name)
 			varUnifier := values.UnifierFor(gameState.BooleanVar(varIndex))
 
-			values.RenderUnifiedCombo(varReadOnly, false, varName, varUnifier, intConverter,
+			values.RenderUnifiedCombo(varReadOnly, varName, varUnifier, intConverter,
 				func(value int) string {
 					name, found := info.ValueNames[int16(value)]
 					if found {
@@ -813,7 +813,7 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 
 			switch {
 			case archive.IsRandomIntegerVariable(varIndex):
-				values.RenderUnifiedSliderInt(readOnly, false, varName, varUnifier,
+				values.RenderUnifiedSliderInt(readOnly, varName, varUnifier,
 					func(u values.Unifier) int { return int(numbers.FromBinaryCodedDecimal(uint16(intConverter(u)))) },
 					func(value int) string { return "%03d" },
 					0, 999,
@@ -827,7 +827,7 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 						max = key
 					}
 				}
-				values.RenderUnifiedCombo(varReadOnly, false, varName, varUnifier, intConverter,
+				values.RenderUnifiedCombo(varReadOnly, varName, varUnifier, intConverter,
 					func(value int) string {
 						name, found := info.ValueNames[int16(value)]
 						if found {
@@ -845,7 +845,7 @@ func (view *View) createVariableControls(readOnly bool, gameState *archive.GameS
 					max = int(info.Limits.Maximum)
 				}
 
-				values.RenderUnifiedSliderInt(varReadOnly, false, varName, varUnifier, intConverter,
+				values.RenderUnifiedSliderInt(varReadOnly, varName, varUnifier, intConverter,
 					func(value int) string {
 						return "%d"
 					},
@@ -891,12 +891,12 @@ func (view *View) createMessageControlsFor(readOnly bool, name string, index *in
 	imgui.PushID(name)
 	gui.StepSliderInt(name+" Index", index, 0, limit-1)
 	messageState := retriever(*index)
-	values.RenderUnifiedCheckboxCombo(readOnly, false, "Received", values.UnifierFor(messageState.Received()),
+	values.RenderUnifiedCheckboxCombo(readOnly, "Received", values.UnifierFor(messageState.Received()),
 		func(newState bool) {
 			messageState.SetReceived(newState)
 			onChange()
 		})
-	values.RenderUnifiedCheckboxCombo(readOnly, false, "Read", values.UnifierFor(messageState.Read()),
+	values.RenderUnifiedCheckboxCombo(readOnly, "Read", values.UnifierFor(messageState.Read()),
 		func(newState bool) {
 			messageState.SetRead(newState)
 			onChange()

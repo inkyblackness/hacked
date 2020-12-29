@@ -192,7 +192,7 @@ func (view *View) renderContent() {
 		})
 		nextMessageIndex := values.NewUnifier()
 		nextMessageIndex.Add(message.NextMessage)
-		values.RenderUnifiedSliderInt(false, false, "Next Message Index", nextMessageIndex,
+		values.RenderUnifiedSliderInt(false, "Next Message Index", nextMessageIndex,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(int) string { return "%d" },
 			-1, 255,
@@ -202,14 +202,14 @@ func (view *View) renderContent() {
 
 		isInterrupt := values.NewUnifier()
 		isInterrupt.Add(message.IsInterrupt)
-		values.RenderUnifiedCheckboxCombo(false, false, "Is Interrupt", isInterrupt,
+		values.RenderUnifiedCheckboxCombo(false, "Is Interrupt", isInterrupt,
 			func(newValue bool) {
 				view.requestPropertyChange(func(msg *text.ElectronicMessage) { msg.IsInterrupt = newValue })
 			})
 
 		colorIndex := values.NewUnifier()
 		colorIndex.Add(message.ColorIndex)
-		values.RenderUnifiedSliderInt(false, false, "Color Index", colorIndex,
+		values.RenderUnifiedSliderInt(false, "Color Index", colorIndex,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(int) string { return "%d" },
 			-1, 255,
@@ -356,7 +356,7 @@ func (view *View) renderDisplayGallery(readOnly bool, label string, index, avail
 	changeCallback func(int)) {
 	unifier := values.NewUnifier()
 	unifier.Add(index)
-	values.RenderUnifiedSliderInt(readOnly, false, label, unifier,
+	values.RenderUnifiedSliderInt(readOnly, label, unifier,
 		func(u values.Unifier) int { return u.Unified().(int) },
 		func(int) string { return "%d" },
 		-1, availableDisplays-1,
