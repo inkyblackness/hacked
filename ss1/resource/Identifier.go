@@ -1,6 +1,9 @@
 package resource
 
-import "fmt"
+import (
+	"fmt"
+	"sort"
+)
 
 // ID represents an integer key of resources.
 type ID uint16
@@ -39,5 +42,6 @@ func (marker IDMarkerMap) ToList() []ID {
 	for id := range marker.ids {
 		result = append(result, id)
 	}
+	sort.Slice(result, func(a, b int) bool { return result[a] < result[b] })
 	return result
 }
