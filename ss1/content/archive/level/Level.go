@@ -43,7 +43,6 @@ func NewLevel(resourceBase resource.ID, id int, localizer resource.Localizer) *L
 		localizer: localizer,
 
 		resStart: resourceBase.Plus(lvlids.PerLevel * id),
-		tileMap:  NewTileMap(1<<defaultMapXShift, 1<<defaultMapYShift),
 	}
 	lvl.resEnd = lvl.resStart.Plus(lvlids.PerLevel)
 
@@ -424,6 +423,7 @@ func (lvl *Level) reloadTextureAtlas() {
 }
 
 func (lvl *Level) reloadTileMap() {
+	lvl.tileMap = NewTileMap(1<<lvl.baseInfo.XShift, 1<<lvl.baseInfo.YShift)
 	reader, err := lvl.reader(lvlids.TileMap)
 	if err == nil {
 		coder := serial.NewDecoder(reader)
