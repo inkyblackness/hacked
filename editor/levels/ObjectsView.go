@@ -163,7 +163,7 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 			imgui.EndCombo()
 		}
 		if imgui.Button("Delete Selected") {
-			view.requestDeleteObjects(lvl, view.model.selectedObjects.list)
+			view.requestDeleteObjects(lvl)
 		}
 		imgui.Separator()
 	}
@@ -664,7 +664,7 @@ func (view *ObjectsView) renderBlockPuzzleControl(lvl *level.Level, readOnly boo
 							if (clickRow >= 0) && (clickRow < blockHeight) && (clickCol >= 0) && (clickCol < blockWidth) {
 								oldValue := state.CellValue(clickRow, clickCol)
 								state.SetCellValue(clickRow, clickCol, (8+oldValue+1)%8)
-								view.patchLevel(lvl, view.model.selectedObjects.list, view.model.selectedObjects.list)
+								view.patchLevel(lvl, view.model.selectedObjects.list)
 							}
 						}
 					} else {
@@ -699,7 +699,7 @@ func (view *ObjectsView) requestBaseChange(lvl *level.Level, modifier func(*leve
 		}
 	}
 
-	view.patchLevel(lvl, objectIDs, objectIDs)
+	view.patchLevel(lvl, objectIDs)
 }
 
 func (view *ObjectsView) extraInterpreterFactory(lvl *level.Level) lvlobj.InterpreterFactory {
@@ -739,7 +739,7 @@ func (view *ObjectsView) requestPropertiesChange(lvl *level.Level,
 		}
 	}
 
-	view.patchLevel(lvl, objectIDs, objectIDs)
+	view.patchLevel(lvl, objectIDs)
 }
 
 // RequestCreateObject requests to create a new object of the currently selected type.
@@ -772,7 +772,7 @@ func (view *ObjectsView) requestCreateObject(lvl *level.Level, triple object.Tri
 	obj.Subclass = triple.Subclass
 	obj.Type = triple.Type
 	lvl.UpdateObjectLocation(id)
-	view.patchLevel(lvl, []level.ObjectID{id}, view.model.selectedObjects.list)
+	view.patchLevel(lvl, []level.ObjectID{id})
 }
 
 func (view *ObjectsView) floorHeightAtFine(tile *level.TileMapEntry, pos MapPosition, height level.HeightShift) float32 {
@@ -852,16 +852,18 @@ func (view *ObjectsView) slopeFactorAtFine(tileType level.TileType, pos MapPosit
 	return 0.0
 }
 
-func (view *ObjectsView) requestDeleteObjects(lvl *level.Level, objectIDs []level.ObjectID) {
+func (view *ObjectsView) requestDeleteObjects(lvl *level.Level) {
+	objectIDs := view.model.selectedObjects.list
 	if len(objectIDs) > 0 {
 		for _, id := range objectIDs {
 			lvl.DelObject(id)
 		}
-		view.patchLevel(lvl, nil, objectIDs)
+		view.patchLevel(lvl, nil)
 	}
 }
 
-func (view *ObjectsView) patchLevel(lvl *level.Level, forwardObjectIDs []level.ObjectID, reverseObjectIDs []level.ObjectID) {
+func (view *ObjectsView) patchLevel(lvl *level.Level, forwardObjectIDs []level.ObjectID) {
+	reverseObjectIDs := view.model.selectedObjects.list
 	command := patchLevelDataCommand{
 		restoreState: func(forward bool) {
 			view.model.restoreFocus = true
