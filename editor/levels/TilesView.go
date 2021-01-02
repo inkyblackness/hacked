@@ -579,7 +579,6 @@ func (view *TilesView) changeTiles(lvl *level.Level, positions []MapPosition, mo
 	if err != nil {
 		panic(err)
 	}
-	return
 }
 
 func (view *TilesView) restoreFocusTask() cmd.Task {
