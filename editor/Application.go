@@ -26,7 +26,6 @@ import (
 	"github.com/inkyblackness/hacked/editor/texts"
 	"github.com/inkyblackness/hacked/editor/textures"
 	"github.com/inkyblackness/hacked/ss1"
-	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/content/movie"
@@ -149,7 +148,7 @@ type Application struct {
 
 	mapDisplay *levels.MapDisplay
 
-	levels [archive.MaxLevels]*level.Level
+	levels *edit.EditableLevels
 
 	projectService   *edit.ProjectService
 	gameStateService *edit.GameStateService
@@ -240,7 +239,7 @@ func (app *Application) render() {
 	app.updateAutoSave()
 
 	app.archiveView.Render()
-	activeLevel := app.levels[app.levelControlView.SelectedLevel()]
+	activeLevel := app.levels.Level(app.levelControlView.SelectedLevel())
 	app.levelControlView.Render(activeLevel)
 	app.levelTilesView.Render(activeLevel)
 	app.levelObjectsView.Render(activeLevel)
@@ -419,7 +418,7 @@ func (app *Application) onChar(char rune) {
 		return
 	}
 
-	activeLevel := app.levels[app.levelControlView.SelectedLevel()]
+	activeLevel := app.levels.Level(app.levelControlView.SelectedLevel())
 	switch char {
 	case 'v':
 		app.levelObjectsView.PlaceSelectedObjectsOnFloor(activeLevel)
@@ -586,9 +585,7 @@ func (app *Application) initModel() {
 	app.movieCache = movie.NewCache(app.cp, app.mod)
 	app.soundEffectCache = sound.NewEffectCache(app.mod)
 
-	for i := 0; i < archive.MaxLevels; i++ {
-		app.levels[i] = level.NewLevel(ids.LevelResourcesStart, i, app.mod)
-	}
+	app.levels = edit.NewEditableLevels(app.mod)
 
 	app.paletteCache = graphics.NewPaletteCache(app.gl, app.mod)
 	app.textureCache = graphics.NewTextureCache(app.gl, app.mod)
@@ -602,9 +599,7 @@ func (app *Application) resourcesChanged(modifiedIDs []resource.ID, failedIDs []
 	app.messagesCache.InvalidateResources(modifiedIDs)
 	app.movieCache.InvalidateResources(modifiedIDs)
 	app.soundEffectCache.InvalidateResources(modifiedIDs)
-	for _, lvl := range app.levels {
-		lvl.InvalidateResources(modifiedIDs)
-	}
+	app.levels.InvalidateResources(modifiedIDs)
 	app.paletteCache.InvalidateResources(modifiedIDs)
 	app.textureCache.InvalidateResources(modifiedIDs)
 	app.animationCache.InvalidateResources(modifiedIDs)
@@ -672,7 +667,7 @@ func (app *Application) onFailure(source string, details string, err error) {
 }
 
 func (app *Application) onLevelObjectRequestCreateEvent(evt levels.ObjectRequestCreateEvent) {
-	lvl := app.levels[app.levelControlView.SelectedLevel()]
+	lvl := app.levels.Level(app.levelControlView.SelectedLevel())
 	app.levelObjectsView.RequestCreateObject(lvl, evt.Pos)
 }
 
@@ -919,9 +914,7 @@ func (app *Application) restoreProjectState(state projectState, filename string)
 	}
 
 	activeLevel := world.StartingLevel
-	if (state.ActiveLevelIndex != nil) &&
-		(*state.ActiveLevelIndex >= 0) &&
-		(*state.ActiveLevelIndex < len(app.levels)) {
+	if (state.ActiveLevelIndex != nil) && app.levels.IsLevelAvailable(*state.ActiveLevelIndex) {
 		activeLevel = *state.ActiveLevelIndex
 	}
 	app.eventQueue.Event(levels.LevelSelectionSetEvent{ID: activeLevel})
