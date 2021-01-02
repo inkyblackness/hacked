@@ -21,30 +21,32 @@ import (
 
 // TilesView is for tile properties.
 type TilesView struct {
+	levels         *edit.EditableLevels
 	levelSelection *edit.LevelSelectionService
 	mod            *world.Mod
 	textCache      *text.Cache
 	textureCache   *graphics.TextureCache
 
 	guiScale      float32
-	commander     cmd.Commander
+	registry      cmd.Registry
 	eventListener event.Listener
 
 	model tilesViewModel
 }
 
 // NewTilesView returns a new instance.
-func NewTilesView(levelSelection *edit.LevelSelectionService, mod *world.Mod,
+func NewTilesView(levels *edit.EditableLevels, levelSelection *edit.LevelSelectionService, mod *world.Mod,
 	guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
-	commander cmd.Commander, eventListener event.Listener, eventRegistry event.Registry) *TilesView {
+	registry cmd.Registry, eventListener event.Listener, eventRegistry event.Registry) *TilesView {
 	view := &TilesView{
+		levels:         levels,
 		levelSelection: levelSelection,
 		mod:            mod,
 		textCache:      textCache,
 		textureCache:   textureCache,
 
 		guiScale:      guiScale,
-		commander:     commander,
+		registry:      registry,
 		eventListener: eventListener,
 		model:         freshTilesViewModel(),
 	}
@@ -563,28 +565,37 @@ func (view *TilesView) changeTiles(lvl *level.Level, positions []MapPosition, mo
 		modifier(tile)
 	}
 
-	command := patchLevelDataCommand{
-		restoreState: func(bool) {
-			view.model.restoreFocus = true
-			view.levelSelection.SetCurrentLevelID(lvl.ID())
-			view.setSelectedTiles(positions)
-		},
-	}
+	oldLevelID := view.levelSelection.CurrentLevelID()
 
-	newDataSet := lvl.EncodeState()
-	for id, newData := range &newDataSet {
-		if len(newData) > 0 {
-			resourceID := ids.LevelResourcesStart.Plus(lvlids.PerLevel*lvl.ID() + id)
-			patch, changed, err := view.mod.CreateBlockPatch(resource.LangAny, resourceID, 0, newData)
-			if err != nil {
-				panic(err)
-			} else if changed {
-				command.patches = append(command.patches, patch)
-			}
-		}
+	// TODO: second pass on proper sequence of forward/reverse tasks. should reverse be after nested?
+	err := view.registry.Register(cmd.Named("PatchLevel"),
+		cmd.Forward(view.restoreFocusTask()),
+		cmd.Forward(view.levelSelection.SetCurrentLevelIDTask(lvl.ID())),
+		cmd.Forward(view.setSelectedTilesTask(positions)),
+		cmd.Nested(func() error { return view.levels.CommitLevelChanges(lvl.ID()) }),
+		cmd.Reverse(view.setSelectedTilesTask(positions)), // TODO: retrieve from level selection (?)
+		cmd.Reverse(view.levelSelection.SetCurrentLevelIDTask(oldLevelID)),
+		cmd.Reverse(view.restoreFocusTask()))
+	if err != nil {
+		panic(err)
 	}
+	return
+}
 
-	view.commander.Queue(command)
+func (view *TilesView) restoreFocusTask() cmd.Task {
+	return func(modder world.Modder) error {
+		view.model.restoreFocus = true
+		return nil
+	}
+}
+
+func (view *TilesView) setSelectedTilesTask(positions []MapPosition) cmd.Task {
+	return func(modder world.Modder) error {
+		view.setSelectedTiles(positions)
+		// TODO replace with level selection
+		// view.levelSelection.SetCurrentSelectedTiles(positions)
+		return nil
+	}
 }
 
 func (view *TilesView) setSelectedTiles(positions []MapPosition) {

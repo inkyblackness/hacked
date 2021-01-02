@@ -27,6 +27,7 @@ import (
 
 // ObjectsView is for object properties.
 type ObjectsView struct {
+	levels          *edit.EditableLevels
 	levelSelection  *edit.LevelSelectionService
 	varInfoProvider archive.GameVariableInfoProvider
 	mod             *world.Mod
@@ -34,25 +35,27 @@ type ObjectsView struct {
 	textureCache    *graphics.TextureCache
 
 	guiScale      float32
-	commander     cmd.Commander
+	registry      cmd.Registry
 	eventListener event.Listener
 
 	model objectsViewModel
 }
 
 // NewObjectsView returns a new instance.
-func NewObjectsView(levelSelection *edit.LevelSelectionService, varInfoProvider archive.GameVariableInfoProvider,
+func NewObjectsView(levels *edit.EditableLevels, levelSelection *edit.LevelSelectionService,
+	varInfoProvider archive.GameVariableInfoProvider,
 	mod *world.Mod, guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
-	commander cmd.Commander, eventListener event.Listener, eventRegistry event.Registry) *ObjectsView {
+	registry cmd.Registry, eventListener event.Listener, eventRegistry event.Registry) *ObjectsView {
 	view := &ObjectsView{
 		levelSelection:  levelSelection,
+		levels:          levels,
 		varInfoProvider: varInfoProvider,
 		mod:             mod,
 		textCache:       textCache,
 		textureCache:    textureCache,
 
 		guiScale:      guiScale,
-		commander:     commander,
+		registry:      registry,
 		eventListener: eventListener,
 
 		model: freshObjectsViewModel(),
@@ -863,33 +866,35 @@ func (view *ObjectsView) requestDeleteObjects(lvl *level.Level) {
 }
 
 func (view *ObjectsView) patchLevel(lvl *level.Level, forwardObjectIDs []level.ObjectID) {
+	oldLevelID := view.levelSelection.CurrentLevelID()
 	reverseObjectIDs := view.model.selectedObjects.list
-	command := patchLevelDataCommand{
-		restoreState: func(forward bool) {
-			view.model.restoreFocus = true
-			view.levelSelection.SetCurrentLevelID(lvl.ID())
-			if forward {
-				view.setSelectedObjects(forwardObjectIDs)
-			} else {
-				view.setSelectedObjects(reverseObjectIDs)
-			}
-		},
-	}
 
-	newDataSet := lvl.EncodeState()
-	for id, newData := range &newDataSet {
-		if len(newData) > 0 {
-			resourceID := ids.LevelResourcesStart.Plus(lvlids.PerLevel*lvl.ID() + id)
-			patch, changed, err := view.mod.CreateBlockPatch(resource.LangAny, resourceID, 0, newData)
-			if err != nil {
-				panic(err)
-			} else if changed {
-				command.patches = append(command.patches, patch)
-			}
-		}
+	err := view.registry.Register(cmd.Named("PatchLevel"),
+		cmd.Forward(view.restoreFocusTask()),
+		cmd.Forward(view.levelSelection.SetCurrentLevelIDTask(lvl.ID())),
+		cmd.Forward(view.setSelectedObjectsTask(forwardObjectIDs)),
+		cmd.Nested(func() error { return view.levels.CommitLevelChanges(lvl.ID()) }),
+		cmd.Reverse(view.setSelectedObjectsTask(reverseObjectIDs)),
+		cmd.Reverse(view.levelSelection.SetCurrentLevelIDTask(oldLevelID)),
+		cmd.Reverse(view.restoreFocusTask()))
+	if err != nil {
+		panic(err)
 	}
+}
 
-	view.commander.Queue(command)
+func (view *ObjectsView) restoreFocusTask() cmd.Task {
+	return func(modder world.Modder) error {
+		view.model.restoreFocus = true
+		return nil
+	}
+}
+
+func (view *ObjectsView) setSelectedObjectsTask(ids []level.ObjectID) cmd.Task {
+	return func(modder world.Modder) error {
+		view.setSelectedObjects(ids)
+		view.levelSelection.SetCurrentSelectedObjects(ids)
+		return nil
+	}
 }
 
 func (view *ObjectsView) setSelectedObjects(objectIDs []level.ObjectID) {

@@ -590,7 +590,7 @@ func (app *Application) initModel() {
 	app.movieCache = movie.NewCache(app.cp, app.mod)
 	app.soundEffectCache = sound.NewEffectCache(app.mod)
 
-	app.levels = edit.NewEditableLevels(app.mod)
+	app.levels = edit.NewEditableLevels(&app.txnBuilder, app.mod)
 	app.levelSelection = edit.NewLevelSelectionService(app.levels)
 
 	app.paletteCache = graphics.NewPaletteCache(app.gl, app.mod)
@@ -634,9 +634,9 @@ func (app *Application) initView() {
 
 	app.projectView = project.NewView(app.projectService, &app.modalState, app.GuiScale, &app.txnBuilder)
 	app.archiveView = archives.NewArchiveView(&app.txnBuilder, app.gameStateService, app.mod, app.textLineCache, app.cp, &app.modalState, app.GuiScale, app)
-	app.levelControlView = levels.NewControlView(app.levelSelection, app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue)
-	app.levelTilesView = levels.NewTilesView(app.levelSelection, app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
-	app.levelObjectsView = levels.NewObjectsView(app.levelSelection, app.gameStateService, app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
+	app.levelControlView = levels.NewControlView(app.levels, app.levelSelection, app.mod, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder, &app.eventQueue)
+	app.levelTilesView = levels.NewTilesView(app.levels, app.levelSelection, app.mod, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder, &app.eventQueue, app.eventDispatcher)
+	app.levelObjectsView = levels.NewObjectsView(app.levels, app.levelSelection, app.gameStateService, app.mod, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder, &app.eventQueue, app.eventDispatcher)
 	app.messagesView = messages.NewMessagesView(app.mod, app.messagesCache, app.cp, app.movieCache, app.textureCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.textsView = texts.NewTextsView(augmentedTextService, &app.modalState, app.clipboard, app.GuiScale)
 	app.bitmapsView = bitmaps.NewBitmapsView(app.mod, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)

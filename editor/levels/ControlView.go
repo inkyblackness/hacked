@@ -22,11 +22,12 @@ import (
 
 // ControlView is the core view for level editing.
 type ControlView struct {
-	selection *edit.LevelSelectionService
-	mod       *world.Mod
+	levels         *edit.EditableLevels
+	levelSelection *edit.LevelSelectionService
+	mod            *world.Mod
 
 	guiScale      float32
-	commander     cmd.Commander
+	registry      cmd.Registry
 	eventListener event.Listener
 
 	textCache    *text.Cache
@@ -36,18 +37,19 @@ type ControlView struct {
 }
 
 // NewControlView returns a new instance.
-func NewControlView(selection *edit.LevelSelectionService, mod *world.Mod,
+func NewControlView(levels *edit.EditableLevels, levelSelection *edit.LevelSelectionService, mod *world.Mod,
 	guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
-	commander cmd.Commander, eventListener event.Listener) *ControlView {
+	registry cmd.Registry, eventListener event.Listener) *ControlView {
 	view := &ControlView{
-		selection:     selection,
-		mod:           mod,
-		guiScale:      guiScale,
-		commander:     commander,
-		eventListener: eventListener,
-		textCache:     textCache,
-		textureCache:  textureCache,
-		model:         freshControlViewModel(),
+		levels:         levels,
+		levelSelection: levelSelection,
+		mod:            mod,
+		guiScale:       guiScale,
+		registry:       registry,
+		eventListener:  eventListener,
+		textCache:      textCache,
+		textureCache:   textureCache,
+		model:          freshControlViewModel(),
 	}
 	return view
 }
@@ -91,10 +93,10 @@ var levelHeights = []string{
 
 func (view *ControlView) renderContent(lvl *level.Level, readOnly bool) {
 	imgui.PushItemWidth(-200 * view.guiScale)
-	selectedLevel := view.selection.CurrentLevelID()
+	selectedLevel := view.levelSelection.CurrentLevelID()
 	if gui.StepSliderInt("Active Level", &selectedLevel, 0, archive.MaxLevels-1) {
 		view.eventListener.Event(ObjectSelectionSetEvent{})
-		view.selection.SetCurrentLevelID(selectedLevel)
+		view.levelSelection.SetCurrentLevelID(selectedLevel)
 	}
 	imgui.Separator()
 	levelType := "Real World"
@@ -389,26 +391,29 @@ func (view *ControlView) requestSetTextureAnimationType(lvl *level.Level, index 
 }
 
 func (view *ControlView) patchLevelResources(lvl *level.Level, extraRestoreState func()) {
-	command := patchLevelDataCommand{
-		restoreState: func(bool) {
-			view.model.restoreFocus = true
-			view.selection.SetCurrentLevelID(lvl.ID())
-			extraRestoreState()
-		},
+	oldLevelID := view.levelSelection.CurrentLevelID()
+	extraTask := func(world.Modder) error {
+		extraRestoreState()
+		return nil
 	}
 
-	newDataSet := lvl.EncodeState()
-	for id, newData := range &newDataSet {
-		if len(newData) > 0 {
-			resourceID := ids.LevelResourcesStart.Plus(lvlids.PerLevel*lvl.ID() + id)
-			patch, changed, err := view.mod.CreateBlockPatch(resource.LangAny, resourceID, 0, newData)
-			if err != nil {
-				panic(err)
-			} else if changed {
-				command.patches = append(command.patches, patch)
-			}
-		}
+	// TODO: second pass on proper sequence of forward/reverse tasks. should reverse be after nested?
+	err := view.registry.Register(cmd.Named("PatchLevel"),
+		cmd.Forward(view.restoreFocusTask()),
+		cmd.Forward(view.levelSelection.SetCurrentLevelIDTask(lvl.ID())),
+		cmd.Forward(extraTask),
+		cmd.Nested(func() error { return view.levels.CommitLevelChanges(lvl.ID()) }),
+		cmd.Reverse(extraTask),
+		cmd.Reverse(view.levelSelection.SetCurrentLevelIDTask(oldLevelID)),
+		cmd.Reverse(view.restoreFocusTask()))
+	if err != nil {
+		panic(err)
 	}
+}
 
-	view.commander.Queue(command)
+func (view *ControlView) restoreFocusTask() cmd.Task {
+	return func(modder world.Modder) error {
+		view.model.restoreFocus = true
+		return nil
+	}
 }

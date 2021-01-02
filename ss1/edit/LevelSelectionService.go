@@ -4,6 +4,8 @@ import (
 	"sort"
 
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
+	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
+	"github.com/inkyblackness/hacked/ss1/world"
 )
 
 type levelSelection struct {
@@ -56,6 +58,14 @@ func (service *LevelSelectionService) CurrentLevelID() int {
 // SetCurrentLevelID sets the currently selected level.
 func (service *LevelSelectionService) SetCurrentLevelID(index int) {
 	service.currentLevel = index
+}
+
+// SetCurrentLevelIDTask returns a command task that will set the current level.
+func (service *LevelSelectionService) SetCurrentLevelIDTask(index int) cmd.Task {
+	return func(modder world.Modder) error {
+		service.SetCurrentLevelID(index)
+		return nil
+	}
 }
 
 func (service *LevelSelectionService) currentSelection() levelSelection {
