@@ -12,6 +12,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
 	"github.com/inkyblackness/hacked/ss1/content/text"
+	"github.com/inkyblackness/hacked/ss1/edit"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
@@ -20,9 +21,10 @@ import (
 
 // TilesView is for tile properties.
 type TilesView struct {
-	mod          *world.Mod
-	textCache    *text.Cache
-	textureCache *graphics.TextureCache
+	levelSelection *edit.LevelSelectionService
+	mod            *world.Mod
+	textCache      *text.Cache
+	textureCache   *graphics.TextureCache
 
 	guiScale      float32
 	commander     cmd.Commander
@@ -32,12 +34,14 @@ type TilesView struct {
 }
 
 // NewTilesView returns a new instance.
-func NewTilesView(mod *world.Mod, guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
+func NewTilesView(levelSelection *edit.LevelSelectionService, mod *world.Mod,
+	guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
 	commander cmd.Commander, eventListener event.Listener, eventRegistry event.Registry) *TilesView {
 	view := &TilesView{
-		mod:          mod,
-		textCache:    textCache,
-		textureCache: textureCache,
+		levelSelection: levelSelection,
+		mod:            mod,
+		textCache:      textCache,
+		textureCache:   textureCache,
 
 		guiScale:      guiScale,
 		commander:     commander,
@@ -562,7 +566,7 @@ func (view *TilesView) changeTiles(lvl *level.Level, positions []MapPosition, mo
 	command := patchLevelDataCommand{
 		restoreState: func(bool) {
 			view.model.restoreFocus = true
-			view.setSelectedLevel(lvl.ID())
+			view.levelSelection.SetCurrentLevelID(lvl.ID())
 			view.setSelectedTiles(positions)
 		},
 	}
@@ -581,10 +585,6 @@ func (view *TilesView) changeTiles(lvl *level.Level, positions []MapPosition, mo
 	}
 
 	view.commander.Queue(command)
-}
-
-func (view *TilesView) setSelectedLevel(id int) {
-	view.eventListener.Event(LevelSelectionSetEvent{ID: id})
 }
 
 func (view *TilesView) setSelectedTiles(positions []MapPosition) {

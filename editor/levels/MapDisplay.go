@@ -116,7 +116,6 @@ func NewMapDisplay(gl opengl.OpenGL, guiScale float32,
 
 	display.selectedTiles.registerAt(eventRegistry)
 	display.selectedObjects.registerAt(eventRegistry)
-	eventRegistry.RegisterHandler(display.onLevelSelectionSetEvent)
 
 	return display
 }
@@ -129,7 +128,7 @@ func (display *MapDisplay) Render(properties object.PropertiesTable, lvl *level.
 
 	display.selectedObjects.filterInvalid(lvl)
 
-	display.activeLevel = lvl
+	display.setActiveLevel(lvl)
 	display.background.Render(columns, rows)
 	if lvl.IsCyberspace() {
 		if paletteTexture != nil {
@@ -581,12 +580,18 @@ func (display *MapDisplay) updateMouseWorldPosition(mouseX, mouseY float32) {
 	}
 }
 
+func (display *MapDisplay) setActiveLevel(lvl *level.Level) {
+	oldIsNil := display.activeLevel == nil
+	newIsNil := lvl == nil
+	isChanged := (oldIsNil != newIsNil) || (!oldIsNil && !newIsNil && display.activeLevel.ID() != lvl.ID())
+	if isChanged {
+		display.activeLevel = lvl
+		display.resetHoverItems()
+	}
+}
+
 func (display *MapDisplay) resetHoverItems() {
 	display.availableHoverItems = nil
 	display.activeHoverIndex = 0
 	display.activeHoverItem = nil
-}
-
-func (display *MapDisplay) onLevelSelectionSetEvent(evt LevelSelectionSetEvent) {
-	display.resetHoverItems()
 }

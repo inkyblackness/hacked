@@ -12,6 +12,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
 	"github.com/inkyblackness/hacked/ss1/content/text"
+	"github.com/inkyblackness/hacked/ss1/edit"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
@@ -21,7 +22,8 @@ import (
 
 // ControlView is the core view for level editing.
 type ControlView struct {
-	mod *world.Mod
+	selection *edit.LevelSelectionService
+	mod       *world.Mod
 
 	guiScale      float32
 	commander     cmd.Commander
@@ -34,9 +36,11 @@ type ControlView struct {
 }
 
 // NewControlView returns a new instance.
-func NewControlView(mod *world.Mod, guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
-	commander cmd.Commander, eventListener event.Listener, eventRegistry event.Registry) *ControlView {
+func NewControlView(selection *edit.LevelSelectionService, mod *world.Mod,
+	guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
+	commander cmd.Commander, eventListener event.Listener) *ControlView {
 	view := &ControlView{
+		selection:     selection,
 		mod:           mod,
 		guiScale:      guiScale,
 		commander:     commander,
@@ -45,19 +49,12 @@ func NewControlView(mod *world.Mod, guiScale float32, textCache *text.Cache, tex
 		textureCache:  textureCache,
 		model:         freshControlViewModel(),
 	}
-	eventRegistry.RegisterHandler(view.onLevelSelectionSetEvent)
-	view.setSelectedLevel(view.model.selectedLevel)
 	return view
 }
 
 // WindowOpen returns the flag address, to be used with the main menu.
 func (view *ControlView) WindowOpen() *bool {
 	return &view.model.windowOpen
-}
-
-// SelectedLevel returns the currently selected level.
-func (view *ControlView) SelectedLevel() int {
-	return view.model.selectedLevel
 }
 
 // Render renders the view.
@@ -94,10 +91,10 @@ var levelHeights = []string{
 
 func (view *ControlView) renderContent(lvl *level.Level, readOnly bool) {
 	imgui.PushItemWidth(-200 * view.guiScale)
-	selectedLevel := view.model.selectedLevel
+	selectedLevel := view.selection.CurrentLevelID()
 	if gui.StepSliderInt("Active Level", &selectedLevel, 0, archive.MaxLevels-1) {
 		view.eventListener.Event(ObjectSelectionSetEvent{})
-		view.setSelectedLevel(selectedLevel)
+		view.selection.SetCurrentLevelID(selectedLevel)
 	}
 	imgui.Separator()
 	levelType := "Real World"
@@ -395,7 +392,7 @@ func (view *ControlView) patchLevelResources(lvl *level.Level, extraRestoreState
 	command := patchLevelDataCommand{
 		restoreState: func(bool) {
 			view.model.restoreFocus = true
-			view.setSelectedLevel(lvl.ID())
+			view.selection.SetCurrentLevelID(lvl.ID())
 			extraRestoreState()
 		},
 	}
@@ -414,12 +411,4 @@ func (view *ControlView) patchLevelResources(lvl *level.Level, extraRestoreState
 	}
 
 	view.commander.Queue(command)
-}
-
-func (view *ControlView) setSelectedLevel(id int) {
-	view.eventListener.Event(LevelSelectionSetEvent{ID: id})
-}
-
-func (view *ControlView) onLevelSelectionSetEvent(evt LevelSelectionSetEvent) {
-	view.model.selectedLevel = evt.ID
 }

@@ -148,7 +148,8 @@ type Application struct {
 
 	mapDisplay *levels.MapDisplay
 
-	levels *edit.EditableLevels
+	levels         *edit.EditableLevels
+	levelSelection *edit.LevelSelectionService
 
 	projectService   *edit.ProjectService
 	gameStateService *edit.GameStateService
@@ -239,7 +240,7 @@ func (app *Application) render() {
 	app.updateAutoSave()
 
 	app.archiveView.Render()
-	activeLevel := app.levels.Level(app.levelControlView.SelectedLevel())
+	activeLevel := app.activeLevel()
 	app.levelControlView.Render(activeLevel)
 	app.levelTilesView.Render(activeLevel)
 	app.levelObjectsView.Render(activeLevel)
@@ -312,6 +313,10 @@ func (app *Application) initGui() (err error) {
 		&app.eventQueue, app.eventDispatcher)
 
 	return
+}
+
+func (app *Application) activeLevel() *level.Level {
+	return app.levels.Level(app.levelSelection.CurrentLevelID())
 }
 
 func (app *Application) gameTexture(index level.TextureIndex) (*graphics.BitmapTexture, error) {
@@ -418,7 +423,7 @@ func (app *Application) onChar(char rune) {
 		return
 	}
 
-	activeLevel := app.levels.Level(app.levelControlView.SelectedLevel())
+	activeLevel := app.activeLevel()
 	switch char {
 	case 'v':
 		app.levelObjectsView.PlaceSelectedObjectsOnFloor(activeLevel)
@@ -586,6 +591,7 @@ func (app *Application) initModel() {
 	app.soundEffectCache = sound.NewEffectCache(app.mod)
 
 	app.levels = edit.NewEditableLevels(app.mod)
+	app.levelSelection = edit.NewLevelSelectionService(app.levels)
 
 	app.paletteCache = graphics.NewPaletteCache(app.gl, app.mod)
 	app.textureCache = graphics.NewTextureCache(app.gl, app.mod)
@@ -628,9 +634,9 @@ func (app *Application) initView() {
 
 	app.projectView = project.NewView(app.projectService, &app.modalState, app.GuiScale, &app.txnBuilder)
 	app.archiveView = archives.NewArchiveView(&app.txnBuilder, app.gameStateService, app.mod, app.textLineCache, app.cp, &app.modalState, app.GuiScale, app)
-	app.levelControlView = levels.NewControlView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
-	app.levelTilesView = levels.NewTilesView(app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
-	app.levelObjectsView = levels.NewObjectsView(app.gameStateService, app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
+	app.levelControlView = levels.NewControlView(app.levelSelection, app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue)
+	app.levelTilesView = levels.NewTilesView(app.levelSelection, app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
+	app.levelObjectsView = levels.NewObjectsView(app.levelSelection, app.gameStateService, app.mod, app.GuiScale, app.textLineCache, app.textureCache, app, &app.eventQueue, app.eventDispatcher)
 	app.messagesView = messages.NewMessagesView(app.mod, app.messagesCache, app.cp, app.movieCache, app.textureCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.textsView = texts.NewTextsView(augmentedTextService, &app.modalState, app.clipboard, app.GuiScale)
 	app.bitmapsView = bitmaps.NewBitmapsView(app.mod, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
@@ -667,8 +673,7 @@ func (app *Application) onFailure(source string, details string, err error) {
 }
 
 func (app *Application) onLevelObjectRequestCreateEvent(evt levels.ObjectRequestCreateEvent) {
-	lvl := app.levels.Level(app.levelControlView.SelectedLevel())
-	app.levelObjectsView.RequestCreateObject(lvl, evt.Pos)
+	app.levelObjectsView.RequestCreateObject(app.activeLevel(), evt.Pos)
 }
 
 func (app *Application) renderMainMenu() {
@@ -842,7 +847,7 @@ func (app *Application) currentProjectState() projectState {
 			openWindows = append(openWindows, key)
 		}
 	}
-	activeLevelIndex := app.levelControlView.SelectedLevel()
+	activeLevelIndex := app.levelSelection.CurrentLevelID()
 	return projectState{
 		ProjectSettings:   &projectSettings,
 		GameStateSettings: &gameStateSettings,
@@ -917,7 +922,7 @@ func (app *Application) restoreProjectState(state projectState, filename string)
 	if (state.ActiveLevelIndex != nil) && app.levels.IsLevelAvailable(*state.ActiveLevelIndex) {
 		activeLevel = *state.ActiveLevelIndex
 	}
-	app.eventQueue.Event(levels.LevelSelectionSetEvent{ID: activeLevel})
+	app.levelSelection.SetCurrentLevelID(activeLevel)
 
 	app.window.SetTitleSuffix(filename)
 }

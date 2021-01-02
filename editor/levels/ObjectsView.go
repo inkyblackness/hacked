@@ -18,6 +18,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/content/numbers"
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/content/text"
+	"github.com/inkyblackness/hacked/ss1/edit"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world"
@@ -26,6 +27,7 @@ import (
 
 // ObjectsView is for object properties.
 type ObjectsView struct {
+	levelSelection  *edit.LevelSelectionService
 	varInfoProvider archive.GameVariableInfoProvider
 	mod             *world.Mod
 	textCache       *text.Cache
@@ -39,10 +41,11 @@ type ObjectsView struct {
 }
 
 // NewObjectsView returns a new instance.
-func NewObjectsView(varInfoProvider archive.GameVariableInfoProvider,
+func NewObjectsView(levelSelection *edit.LevelSelectionService, varInfoProvider archive.GameVariableInfoProvider,
 	mod *world.Mod, guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
 	commander cmd.Commander, eventListener event.Listener, eventRegistry event.Registry) *ObjectsView {
 	view := &ObjectsView{
+		levelSelection:  levelSelection,
 		varInfoProvider: varInfoProvider,
 		mod:             mod,
 		textCache:       textCache,
@@ -862,7 +865,7 @@ func (view *ObjectsView) patchLevel(lvl *level.Level, forwardObjectIDs []level.O
 	command := patchLevelDataCommand{
 		restoreState: func(forward bool) {
 			view.model.restoreFocus = true
-			view.setSelectedLevel(lvl.ID())
+			view.levelSelection.SetCurrentLevelID(lvl.ID())
 			if forward {
 				view.setSelectedObjects(forwardObjectIDs)
 			} else {
@@ -885,10 +888,6 @@ func (view *ObjectsView) patchLevel(lvl *level.Level, forwardObjectIDs []level.O
 	}
 
 	view.commander.Queue(command)
-}
-
-func (view *ObjectsView) setSelectedLevel(id int) {
-	view.eventListener.Event(LevelSelectionSetEvent{ID: id})
 }
 
 func (view *ObjectsView) setSelectedObjects(objectIDs []level.ObjectID) {
