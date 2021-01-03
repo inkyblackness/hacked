@@ -40,7 +40,7 @@ void main(void) {
 
 // TileMapper returns basic information to draw a 2D map.
 type TileMapper interface {
-	MapGridInfo(x, y int) (level.TileType, level.TileSlopeControl, level.WallHeights)
+	MapGridInfo(pos level.TilePosition) (level.TileType, level.TileSlopeControl, level.WallHeights)
 }
 
 // MapGrid renders the grid of the map, based on calculated wall heights.
@@ -190,7 +190,7 @@ func (grid *MapGrid) Render(columns, rows int, mapper TileMapper) {
 				grid.modelMatrixUniform.Set(gl, &modelMatrix)
 
 				vertices := vertexBuffer[0:0]
-				tileType, slopeControl, wallHeights := mapper.MapGridInfo(x, y)
+				tileType, slopeControl, wallHeights := mapper.MapGridInfo(level.TilePosition{X: byte(x), Y: byte(y)})
 
 				left := float32(-0.5)
 				right := float32(0.5)

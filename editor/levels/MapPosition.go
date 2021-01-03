@@ -7,3 +7,8 @@ type MapPosition struct {
 	X level.Coordinate
 	Y level.Coordinate
 }
+
+// Tile returns the tile position of the exact position.
+func (pos MapPosition) Tile() level.TilePosition {
+	return level.TilePosition{X: pos.X.Tile(), Y: pos.Y.Tile()}
+}

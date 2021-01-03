@@ -7,6 +7,10 @@ const (
 	defaultObjectCrossReferenceEntryCount = 1600
 )
 
+func offMapReferencePosition() TilePosition {
+	return TilePosition{X: 0xFF, Y: 0}
+}
+
 // ObjectCrossReferenceEntry links objects and tiles.
 type ObjectCrossReferenceEntry struct {
 	TileX int16
@@ -15,6 +19,25 @@ type ObjectCrossReferenceEntry struct {
 	ObjectID       ObjectID
 	NextInTile     int16
 	NextTileForObj int16
+}
+
+// TilePosition returns the position for that entry.
+func (entry ObjectCrossReferenceEntry) TilePosition() TilePosition {
+	return TilePosition{
+		X: byte(entry.TileX),
+		Y: byte(entry.TileY),
+	}
+}
+
+// SetTilePosition sets the position for that entry.
+func (entry *ObjectCrossReferenceEntry) SetTilePosition(pos TilePosition) {
+	if pos == offMapReferencePosition() {
+		entry.TileX = -1
+		entry.TileY = 0
+	} else {
+		entry.TileX = int16(pos.X)
+		entry.TileY = int16(pos.Y)
+	}
 }
 
 // Reset clears the members of the entry.

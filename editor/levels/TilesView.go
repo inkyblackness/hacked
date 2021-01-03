@@ -122,7 +122,7 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 	ceilingHazardUnifier := values.NewUnifier()
 
 	for _, pos := range view.model.selectedTiles.list {
-		tile := lvl.Tile(int(pos.X.Tile()), int(pos.Y.Tile()))
+		tile := lvl.Tile(pos.Tile())
 		tileTypeUnifier.Add(tile.Type)
 		floorHeightUnifier.Add(tile.Floor.AbsoluteHeight())
 		ceilingHeightUnifier.Add(tile.Ceiling.AbsoluteHeight())
@@ -562,7 +562,7 @@ func (view *TilesView) requestGameOfLightState(lvl *level.Level, value int) {
 func (view *TilesView) changeTiles(lvl *level.Level, modifier func(*level.TileMapEntry)) {
 	positions := view.model.selectedTiles.list
 	for _, pos := range positions {
-		tile := lvl.Tile(int(pos.X.Tile()), int(pos.Y.Tile()))
+		tile := lvl.Tile(pos.Tile())
 		modifier(tile)
 	}
 

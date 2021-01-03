@@ -151,8 +151,8 @@ func (display *MapDisplay) Render(properties object.PropertiesTable, lvl *level.
 		}
 	} else {
 		if paletteTexture != nil {
-			display.textures.Render(columns, rows, func(x, y int) (level.TileType, level.TextureIndex, int) {
-				tile := lvl.Tile(x, y)
+			display.textures.Render(columns, rows, func(pos level.TilePosition) (level.TileType, level.TextureIndex, int) {
+				tile := lvl.Tile(pos)
 				if tile == nil {
 					return level.TileTypeSolid, 0, 0
 				}
@@ -288,9 +288,9 @@ func (display *MapDisplay) nearestHoverItems(lvl *level.Level, ref MapPosition) 
 	return items
 }
 
-func (display *MapDisplay) colorQueryFor(lvl *level.Level, tileToColor func(*level.TileMapEntry) [4]float32) func(int, int) [4]float32 {
-	return func(x, y int) [4]float32 {
-		tile := lvl.Tile(x, y)
+func (display *MapDisplay) colorQueryFor(lvl *level.Level, tileToColor func(*level.TileMapEntry) [4]float32) func(level.TilePosition) [4]float32 {
+	return func(pos level.TilePosition) [4]float32 {
+		tile := lvl.Tile(pos)
 		if tile == nil {
 			return [4]float32{}
 		}
@@ -321,7 +321,7 @@ func (display *MapDisplay) renderPositionOverlay(lvl *level.Level) {
 			if _, isTileItem := display.activeHoverItem.(tileHoverItem); isTileItem {
 				pos = display.position // use raw cursor position for this display
 				typeString = "Tile"
-				tile := lvl.Tile(int(pos.X.Tile()), int(pos.Y.Tile()))
+				tile := lvl.Tile(pos.Tile())
 				if (tile != nil) && (tile.Type != level.TileTypeSolid) {
 					_, _, heightShift := lvl.Size()
 					floorHeight := tile.Floor.AbsoluteHeight()

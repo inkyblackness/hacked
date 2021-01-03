@@ -34,23 +34,28 @@ func NewWallHeightsMap(width, height int) WallHeightsMap {
 }
 
 // Tile returns a pointer to the tile within the map for given position.
-func (m WallHeightsMap) Tile(x, y int) *WallHeights {
-	return &m[y][x]
+func (m WallHeightsMap) Tile(pos TilePosition) *WallHeights {
+	return &m[pos.Y][pos.X]
 }
 
 // CalculateFrom updates all the wall heights according to the specified map.
-func (m *WallHeightsMap) CalculateFrom(tileMap interface{ Tile(x, y int) *TileMapEntry }) {
+func (m *WallHeightsMap) CalculateFrom(tileMap interface {
+	Tile(pos TilePosition) *TileMapEntry
+}) {
+	posAt := func(x, y int) TilePosition {
+		return TilePosition{X: byte(x), Y: byte(y)}
+	}
 	for y, row := range *m {
 		for x := 0; x < len(row); x++ {
-			tile := tileMap.Tile(x, y)
+			tile := tileMap.Tile(posAt(x, y))
 			if tile == nil {
 				continue
 			}
 			heights := &row[x]
-			heights.North = calculateWallHeight(tile, DirNorth, tileMap.Tile(x, y+1), DirSouth)
-			heights.East = calculateWallHeight(tile, DirEast, tileMap.Tile(x+1, y), DirWest)
-			heights.South = calculateWallHeight(tile, DirSouth, tileMap.Tile(x, y-1), DirNorth)
-			heights.West = calculateWallHeight(tile, DirWest, tileMap.Tile(x-1, y), DirEast)
+			heights.North = calculateWallHeight(tile, DirNorth, tileMap.Tile(posAt(x, y+1)), DirSouth)
+			heights.East = calculateWallHeight(tile, DirEast, tileMap.Tile(posAt(x+1, y)), DirWest)
+			heights.South = calculateWallHeight(tile, DirSouth, tileMap.Tile(posAt(x, y-1)), DirNorth)
+			heights.West = calculateWallHeight(tile, DirWest, tileMap.Tile(posAt(x-1, y)), DirEast)
 		}
 	}
 }

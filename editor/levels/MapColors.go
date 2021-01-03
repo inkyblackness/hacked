@@ -4,6 +4,7 @@ import (
 	mgl "github.com/go-gl/mathgl/mgl32"
 
 	"github.com/inkyblackness/hacked/editor/render"
+	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ui/opengl"
 )
 
@@ -40,7 +41,7 @@ void main(void) {
 `
 
 // ColorQuery returns the color for the specified tile.
-type ColorQuery func(x, y int) [4]float32
+type ColorQuery func(level.TilePosition) [4]float32
 
 // MapColors is a renderable for the tile colorings.
 type MapColors struct {
@@ -138,7 +139,7 @@ func (renderable *MapColors) Render(columnCount, rowCount int, query ColorQuery)
 	}
 	for y, row := range renderable.lastColorGrid {
 		for x := 0; x < columnCount; x++ {
-			row[x] = query(x, y)
+			row[x] = query(level.TilePosition{X: byte(x), Y: byte(y)})
 		}
 	}
 

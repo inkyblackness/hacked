@@ -50,9 +50,9 @@ func NewTileMap(width, height int) TileMap {
 
 // Tile returns a pointer to the tile within the map for given position.
 // Nil is returned for a coordinate outside the boundaries.
-func (m TileMap) Tile(x, y int, xShift int) *TileMapEntry {
-	index := x + (y << xShift)
-	if (x < 0) || (x >= (1 << xShift)) || (y < 0) || (index >= len(m.entries)) {
+func (m TileMap) Tile(pos TilePosition, xShift int) *TileMapEntry {
+	index := int(pos.X) + (int(pos.Y) << xShift)
+	if (pos.X < 0) || (int(pos.X) >= (1 << xShift)) || (pos.Y < 0) || (index >= len(m.entries)) {
 		return nil
 	}
 	return &m.entries[index]

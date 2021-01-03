@@ -54,7 +54,7 @@ void main(void) {
 type TextureQuery func(index level.TextureIndex) (*graphics.BitmapTexture, error)
 
 // TileTextureQuery is a getter function to retrieve properties for rendering a texture of a tile.
-type TileTextureQuery func(x, y int) (tileType level.TileType, textureIndex level.TextureIndex, textureRotations int)
+type TileTextureQuery func(pos level.TilePosition) (tileType level.TileType, textureIndex level.TextureIndex, textureRotations int)
 
 // MapTextures is a renderable for textures.
 type MapTextures struct {
@@ -216,7 +216,7 @@ func (renderable *MapTextures) Render(columns, rows int, tileTextureQuery TileTe
 		scaling := mgl.Scale3D(fineCoordinatesPerTileSide, fineCoordinatesPerTileSide, 1.0)
 		for y := 0; y < rows; y++ {
 			for x := 0; x < columns; x++ {
-				tileType, textureIndex, textureRotations := tileTextureQuery(x, y)
+				tileType, textureIndex, textureRotations := tileTextureQuery(level.TilePosition{X: byte(x), Y: byte(y)})
 				if tileType == level.TileTypeSolid {
 					continue
 				}

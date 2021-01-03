@@ -764,7 +764,7 @@ func (view *ObjectsView) requestCreateObject(lvl *level.Level, triple object.Tri
 	}
 	obj.X = pos.X
 	obj.Y = pos.Y
-	tile := lvl.Tile(int(pos.X.Tile()), int(pos.Y.Tile()))
+	tile := lvl.Tile(pos.Tile())
 	if tile != nil {
 		_, _, height := lvl.Size()
 		floorHeight := view.floorHeightAtFine(tile, pos, height)
@@ -952,7 +952,8 @@ func (view *ObjectsView) placeSelectedObjects(lvl *level.Level,
 		if err == nil {
 			objPivot = object.Pivot(prop.Common)
 		}
-		tile := lvl.Tile(int(obj.X.Tile()), int(obj.Y.Tile()))
+		tilePos := obj.TilePosition()
+		tile := lvl.Tile(tilePos)
 		if tile != nil {
 			obj.Z = atHeight(tile, MapPosition{X: obj.X, Y: obj.Y}, objPivot)
 		}

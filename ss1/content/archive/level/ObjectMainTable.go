@@ -42,6 +42,11 @@ func (entry ObjectMainEntry) Triple() object.Triple {
 	return object.TripleFrom(int(entry.Class), int(entry.Subclass), int(entry.Type))
 }
 
+// TilePosition returns the tile coordinates of the object.
+func (entry ObjectMainEntry) TilePosition() TilePosition {
+	return TilePosition{X: entry.X.Tile(), Y: entry.Y.Tile()}
+}
+
 // Reset clears the entry and resets all members.
 func (entry *ObjectMainEntry) Reset() {
 	*entry = ObjectMainEntry{}

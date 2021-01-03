@@ -111,7 +111,7 @@ func (suite *WallHeightsSuite) TestCalculateFromWithSameSlopes() {
 }
 
 func (suite *WallHeightsSuite) givenTile(x, y int) *WallHeightsSuite {
-	suite.tile = suite.Tile(x, y)
+	suite.tile = suite.Tile(level.TilePosition{X: byte(x), Y: byte(y)})
 	return suite
 }
 
@@ -167,7 +167,7 @@ func (suite *WallHeightsSuite) whenHeightsAreCalculatedFromMap() {
 }
 
 func (suite *WallHeightsSuite) thenHeightsShouldBeForTile(x int, y int, expected float32) {
-	tile := suite.heightsMap.Tile(x, y)
+	tile := suite.heightsMap.Tile(level.TilePosition{X: byte(x), Y: byte(y)})
 
 	verifySide := func(name string, values [3]float32) {
 		for i := 0; i < len(values); i++ {
@@ -182,7 +182,7 @@ func (suite *WallHeightsSuite) thenHeightsShouldBeForTile(x int, y int, expected
 
 func (suite *WallHeightsSuite) thenHeightShouldBeForTileAt(x int, y int, side level.Direction,
 	expectedLeft float32, expectedCenter float32, expectedRight float32) {
-	tile := suite.heightsMap.Tile(x, y)
+	tile := suite.heightsMap.Tile(level.TilePosition{X: byte(x), Y: byte(y)})
 	var values [3]float32
 
 	switch side {
@@ -203,6 +203,6 @@ func (suite *WallHeightsSuite) thenHeightShouldBeForTileAt(x int, y int, side le
 	assert.Equal(suite.T(), expectedRight, values[2], "right mismatch")
 }
 
-func (suite *WallHeightsSuite) Tile(x, y int) *level.TileMapEntry {
-	return suite.tileMap.Tile(x, y, 2)
+func (suite *WallHeightsSuite) Tile(pos level.TilePosition) *level.TileMapEntry {
+	return suite.tileMap.Tile(pos, 2)
 }

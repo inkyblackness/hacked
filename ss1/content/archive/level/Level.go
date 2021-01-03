@@ -136,17 +136,17 @@ func (lvl *Level) SetTextureAtlasEntry(index int, textureIndex TextureIndex) {
 }
 
 // Tile returns the tile entry at given position.
-func (lvl *Level) Tile(x, y int) *TileMapEntry {
-	return lvl.tileMap.Tile(x, y, int(lvl.baseInfo.XShift))
+func (lvl *Level) Tile(pos TilePosition) *TileMapEntry {
+	return lvl.tileMap.Tile(pos, int(lvl.baseInfo.XShift))
 }
 
 // MapGridInfo returns the information necessary to draw a 2D map.
-func (lvl *Level) MapGridInfo(x, y int) (TileType, TileSlopeControl, WallHeights) {
-	tile := lvl.Tile(x, y)
+func (lvl *Level) MapGridInfo(pos TilePosition) (TileType, TileSlopeControl, WallHeights) {
+	tile := lvl.Tile(pos)
 	if tile == nil {
 		return TileTypeSolid, TileSlopeControlCeilingInverted, WallHeights{}
 	}
-	return tile.Type, tile.Flags.SlopeControl(), *lvl.wallHeightsMap.Tile(x, y)
+	return tile.Type, tile.Flags.SlopeControl(), *lvl.wallHeightsMap.Tile(pos)
 }
 
 // ObjectLimit returns the highest object ID that can be stored in this level.
@@ -212,7 +212,7 @@ func (lvl *Level) NewObject(class object.Class) (ObjectID, error) {
 	obj.ClassTableIndex = int16(classIndex)
 	obj.Class = class
 
-	lvl.addCrossReferenceTo(id, obj, -1, 0)
+	lvl.addCrossReferenceTo(id, obj, offMapReferencePosition())
 
 	return id, nil
 }
@@ -224,7 +224,7 @@ func (lvl *Level) UpdateObjectLocation(id ObjectID) {
 		return
 	}
 	lvl.removeCrossReferences(int(obj.CrossReferenceTableIndex), func(entry ObjectCrossReferenceEntry) int { return int(entry.NextTileForObj) })
-	lvl.addCrossReferenceTo(id, obj, int16(obj.X.Tile()), int16(obj.Y.Tile()))
+	lvl.addCrossReferenceTo(id, obj, obj.TilePosition())
 }
 
 // DelObject removes the identified object from the level.
@@ -240,17 +240,16 @@ func (lvl *Level) DelObject(id ObjectID) {
 	lvl.objectMainTable.Release(id)
 }
 
-func (lvl *Level) addCrossReferenceTo(id ObjectID, obj *ObjectMainEntry, x, y int16) {
+func (lvl *Level) addCrossReferenceTo(id ObjectID, obj *ObjectMainEntry, pos TilePosition) {
 	newIndex := lvl.objectCrossRefTable.Allocate()
 	if newIndex == 0 {
 		return
 	}
 	entry := &lvl.objectCrossRefTable[newIndex]
 	entry.ObjectID = id
-	entry.TileX = x
-	entry.TileY = y
+	entry.SetTilePosition(pos)
 
-	tile := lvl.Tile(int(x), int(y))
+	tile := lvl.Tile(pos)
 	if tile != nil {
 		entry.NextInTile = tile.FirstObjectIndex
 		tile.FirstObjectIndex = int16(newIndex)
@@ -273,7 +272,7 @@ func (lvl *Level) removeCrossReferences(start int, next func(ObjectCrossReferenc
 	for (index != 0) && (index < len(lvl.objectCrossRefTable)) {
 		entry := lvl.objectCrossRefTable[index]
 
-		tile := lvl.Tile(int(entry.TileX), int(entry.TileY))
+		tile := lvl.Tile(entry.TilePosition())
 		if tile != nil {
 			if tile.FirstObjectIndex == int16(index) {
 				tile.FirstObjectIndex = entry.NextInTile

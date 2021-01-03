@@ -49,7 +49,7 @@ func EmptyLevelData(param EmptyLevelParameters) [lvlids.PerLevel][]byte {
 	if param.MapModifier != nil {
 		for y := 0; y < int(baseInfo.YSize); y++ {
 			for x := 0; x < int(baseInfo.XSize); x++ {
-				param.MapModifier(x, y, tileMap.Tile(x, y, int(baseInfo.XShift)))
+				param.MapModifier(x, y, tileMap.Tile(TilePosition{X: byte(x), Y: byte(y)}, int(baseInfo.XShift)))
 			}
 		}
 	}
