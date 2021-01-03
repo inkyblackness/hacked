@@ -286,8 +286,8 @@ func (display *MapDisplay) nearestHoverItems(lvl *level.Level, ref MapPosition) 
 		}
 	})
 	items = append(items, tileHoverItem{pos: MapPosition{
-		X: level.CoordinateAt(ref.X.Tile(), 128),
-		Y: level.CoordinateAt(ref.Y.Tile(), 128),
+		X: level.CoordinateAt(ref.X.Tile(), fineCoordinatesPerTileSide/2),
+		Y: level.CoordinateAt(ref.Y.Tile(), fineCoordinatesPerTileSide/2),
 	}})
 	distances = append(distances, fineCoordinatesPerTileSide)
 
