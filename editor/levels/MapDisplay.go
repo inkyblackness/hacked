@@ -73,8 +73,7 @@ type MapDisplay struct {
 	positionValid    bool
 	position         MapPosition
 
-	selectedTiles   tileCoordinates
-	selectedObjects objectIDs
+	selectedTiles tileCoordinates
 
 	activeLevel         *level.Level
 	availableHoverItems []hoverItem
@@ -119,7 +118,6 @@ func NewMapDisplay(levelSelection *edit.LevelSelectionService, gl opengl.OpenGL,
 	display.camera.MoveTo(centerX, centerY)
 
 	display.selectedTiles.registerAt(eventRegistry)
-	display.selectedObjects.registerAt(eventRegistry)
 
 	return display
 }
@@ -129,8 +127,6 @@ func (display *MapDisplay) Render(properties object.PropertiesTable, lvl *level.
 	paletteTexture *graphics.PaletteTexture, textureRetriever func(resource.Key) (*graphics.BitmapTexture, error),
 	textureDisplay TextureDisplay, colorDisplay ColorDisplay) {
 	columns, rows, _ := lvl.Size()
-
-	display.selectedObjects.filterInvalid(lvl)
 
 	display.setActiveLevel(lvl)
 	display.background.Render(columns, rows)
@@ -249,8 +245,9 @@ func (display *MapDisplay) Render(properties object.PropertiesTable, lvl *level.
 		display.icons.Render(paletteTexture, fineCoordinatesPerTileSide/4, icons)
 	}
 	{
-		selectedObjectHighlights := make([]MapPosition, 0, len(display.selectedObjects.list))
-		for _, entry := range display.selectedObjects.list {
+		selectedObjects := display.levelSelection.CurrentSelectedObjects()
+		selectedObjectHighlights := make([]MapPosition, 0, len(selectedObjects))
+		for _, entry := range selectedObjects {
 			obj := lvl.Object(entry)
 			if obj != nil {
 				objPos := MapPosition{X: obj.X, Y: obj.Y}
@@ -446,7 +443,7 @@ func (display *MapDisplay) MouseButtonUp(mouseX, mouseY float32, button uint32, 
 					}
 				}
 				display.eventListener.Event(TileSelectionSetEvent{tiles: newList})
-				display.eventListener.Event(ObjectSelectionSetEvent{objects: display.objectsInTiles(newList)})
+				display.levelSelection.SetCurrentSelectedObjects(display.objectsInTiles(newList))
 			default:
 				display.setSelectionByActiveHoverItem()
 			}
@@ -485,9 +482,9 @@ func (display *MapDisplay) setSelectionByActiveHoverItem() {
 	}
 	display.eventListener.Event(TileSelectionSetEvent{tiles: tiles})
 	if len(tiles) > 0 {
-		display.eventListener.Event(ObjectSelectionSetEvent{objects: display.objectsInTiles(tiles)})
+		display.levelSelection.SetCurrentSelectedObjects(display.objectsInTiles(tiles))
 	} else {
-		display.eventListener.Event(ObjectSelectionSetEvent{objects: objects})
+		display.levelSelection.SetCurrentSelectedObjects(objects)
 	}
 }
 
@@ -498,18 +495,13 @@ func (display *MapDisplay) toggleSelectionAtActiveHoverItem() {
 			tiles := []MapPosition{tileItem.pos}
 			if wasSelected {
 				display.eventListener.Event(TileSelectionRemoveEvent{tiles: tiles})
-				display.eventListener.Event(ObjectSelectionRemoveEvent{objects: display.objectsInTiles(tiles)})
+				display.levelSelection.RemoveCurrentSelectedObjects(display.objectsInTiles(tiles))
 			} else {
 				display.eventListener.Event(TileSelectionAddEvent{tiles: tiles})
-				display.eventListener.Event(ObjectSelectionAddEvent{objects: display.objectsInTiles(tiles)})
+				display.levelSelection.AddCurrentSelectedObjects(display.objectsInTiles(tiles))
 			}
 		} else if objectItem, isObject := display.activeHoverItem.(objectHoverItem); isObject {
-			wasSelected := display.selectedObjects.contains(objectItem.id)
-			if wasSelected {
-				display.eventListener.Event(ObjectSelectionRemoveEvent{objects: []level.ObjectID{objectItem.id}})
-			} else {
-				display.eventListener.Event(ObjectSelectionAddEvent{objects: []level.ObjectID{objectItem.id}})
-			}
+			display.levelSelection.ToggleObjectSelection([]level.ObjectID{objectItem.id})
 		}
 	}
 }

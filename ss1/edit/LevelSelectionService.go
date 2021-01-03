@@ -100,6 +100,11 @@ func (service *LevelSelectionService) cleanSelection(levelIndex int, selection *
 	return selection
 }
 
+// NumberOfSelectedObjects returns the number of currently selected objects in the current level.
+func (service *LevelSelectionService) NumberOfSelectedObjects() int {
+	return len(service.currentSelection().objects)
+}
+
 // CurrentSelectedObjects returns the list of currently selected objects in the current level.
 func (service *LevelSelectionService) CurrentSelectedObjects() []level.ObjectID {
 	return service.currentSelection().objectList()
@@ -129,5 +134,17 @@ func (service *LevelSelectionService) RemoveCurrentSelectedObjects(ids []level.O
 	selection := service.modifiableSelection()
 	for _, id := range ids {
 		delete(selection.objects, id)
+	}
+}
+
+// ToggleObjectSelection toggles the selection of the given object IDs in the current level.
+func (service *LevelSelectionService) ToggleObjectSelection(ids []level.ObjectID) {
+	selection := service.modifiableSelection()
+	for _, id := range ids {
+		if _, selected := selection.objects[id]; selected {
+			delete(selection.objects, id)
+		} else {
+			selection.objects[id] = struct{}{}
+		}
 	}
 }

@@ -95,7 +95,6 @@ func (view *ControlView) renderContent(lvl *level.Level, readOnly bool) {
 	imgui.PushItemWidth(-200 * view.guiScale)
 	selectedLevel := view.levelSelection.CurrentLevelID()
 	if gui.StepSliderInt("Active Level", &selectedLevel, 0, archive.MaxLevels-1) {
-		view.eventListener.Event(ObjectSelectionSetEvent{})
 		view.levelSelection.SetCurrentLevelID(selectedLevel)
 	}
 	imgui.Separator()

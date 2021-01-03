@@ -45,7 +45,7 @@ type ObjectsView struct {
 func NewObjectsView(levels *edit.EditableLevels, levelSelection *edit.LevelSelectionService,
 	varInfoProvider archive.GameVariableInfoProvider,
 	mod *world.Mod, guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
-	registry cmd.Registry, eventListener event.Listener, eventRegistry event.Registry) *ObjectsView {
+	registry cmd.Registry, eventListener event.Listener) *ObjectsView {
 	view := &ObjectsView{
 		levelSelection:  levelSelection,
 		levels:          levels,
@@ -60,7 +60,6 @@ func NewObjectsView(levels *edit.EditableLevels, levelSelection *edit.LevelSelec
 
 		model: freshObjectsViewModel(),
 	}
-	view.model.selectedObjects.registerAt(eventRegistry)
 	return view
 }
 
@@ -77,10 +76,8 @@ func (view *ObjectsView) Render(lvl *level.Level) {
 		view.model.windowOpen = true
 	}
 	if view.model.windowOpen {
-		view.model.selectedObjects.filterInvalid(lvl)
-
 		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 500 * view.guiScale}, imgui.ConditionFirstUseEver)
-		title := fmt.Sprintf("Level Objects, %d selected", len(view.model.selectedObjects.list))
+		title := fmt.Sprintf("Level Objects, %d selected", view.levelSelection.NumberOfSelectedObjects())
 		readOnly := !view.editingAllowed(lvl.ID())
 		if readOnly {
 			title += hintReadOnly
@@ -106,7 +103,8 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 	rotationZUnifier := values.NewUnifier()
 	hitpointsUnifier := values.NewUnifier()
 
-	for _, id := range view.model.selectedObjects.list {
+	selectedObjectIDs := view.levelSelection.CurrentSelectedObjects()
+	for _, id := range selectedObjectIDs {
 		obj := lvl.Object(id)
 		if obj != nil {
 			objectIDUnifier.Add(id)
@@ -125,7 +123,6 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 	}
 
 	imgui.PushItemWidth(-150 * view.guiScale)
-	multiple := len(view.model.selectedObjects.list) > 1
 	columns, rows, levelHeight := lvl.Size()
 
 	objectHeightFormatter := objectHeightFormatterFor(levelHeight)
@@ -172,10 +169,10 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 	}
 
 	switch {
-	case multiple:
-		imgui.LabelText("ID", "(multiple)")
 	case objectIDUnifier.IsUnique():
 		imgui.LabelText("ID", fmt.Sprintf("%3d", int(objectIDUnifier.Unified().(level.ObjectID))))
+	case !objectIDUnifier.IsEmpty():
+		imgui.LabelText("ID", "(multiple)")
 	default:
 		imgui.LabelText("ID", "")
 	}
@@ -309,7 +306,7 @@ func (view *ObjectsView) renderProperties(lvl *level.Level, readOnly bool,
 		}
 	}
 
-	for index, id := range view.model.selectedObjects.list {
+	for index, id := range view.levelSelection.CurrentSelectedObjects() {
 		obj := lvl.Object(id)
 		if obj != nil {
 			data := dataRetriever(id, obj)
@@ -602,8 +599,9 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool,
 func (view *ObjectsView) renderBlockPuzzleControl(lvl *level.Level, readOnly bool) {
 	var blockPuzzleData *interpreters.Instance
 
-	if len(view.model.selectedObjects.list) == 1 {
-		id := view.model.selectedObjects.list[0]
+	selectedObjectIDs := view.levelSelection.CurrentSelectedObjects()
+	if len(selectedObjectIDs) == 1 {
+		id := selectedObjectIDs[0]
 		obj := lvl.Object(id)
 		if (obj != nil) && (obj.InUse != 0) {
 			triple := obj.Triple()
@@ -667,7 +665,7 @@ func (view *ObjectsView) renderBlockPuzzleControl(lvl *level.Level, readOnly boo
 							if (clickRow >= 0) && (clickRow < blockHeight) && (clickCol >= 0) && (clickCol < blockWidth) {
 								oldValue := state.CellValue(clickRow, clickCol)
 								state.SetCellValue(clickRow, clickCol, (8+oldValue+1)%8)
-								view.patchLevel(lvl, view.model.selectedObjects.list)
+								view.patchLevel(lvl, view.levelSelection.CurrentSelectedObjects())
 							}
 						}
 					} else {
@@ -690,7 +688,7 @@ func (view *ObjectsView) editingAllowed(id int) bool {
 }
 
 func (view *ObjectsView) requestBaseChange(lvl *level.Level, modifier func(*level.ObjectMainEntry)) {
-	objectIDs := view.model.selectedObjects.list
+	objectIDs := view.levelSelection.CurrentSelectedObjects()
 	for _, id := range objectIDs {
 		obj := lvl.Object(id)
 		if obj != nil {
@@ -725,7 +723,7 @@ func (view *ObjectsView) requestPropertiesChange(lvl *level.Level,
 	dataRetriever func(level.ObjectID, *level.ObjectMainEntry) []byte,
 	interpreterFactory lvlobj.InterpreterFactory,
 	key string, modifier func(uint32) uint32) {
-	objectIDs := view.model.selectedObjects.list
+	objectIDs := view.levelSelection.CurrentSelectedObjects()
 	subKeys := strings.Split(key, ".")
 	valueIndex := len(subKeys) - 1
 
@@ -856,7 +854,7 @@ func (view *ObjectsView) slopeFactorAtFine(tileType level.TileType, pos MapPosit
 }
 
 func (view *ObjectsView) requestDeleteObjects(lvl *level.Level) {
-	objectIDs := view.model.selectedObjects.list
+	objectIDs := view.levelSelection.CurrentSelectedObjects()
 	if len(objectIDs) > 0 {
 		for _, id := range objectIDs {
 			lvl.DelObject(id)
@@ -867,7 +865,7 @@ func (view *ObjectsView) requestDeleteObjects(lvl *level.Level) {
 
 func (view *ObjectsView) patchLevel(lvl *level.Level, forwardObjectIDs []level.ObjectID) {
 	oldLevelID := view.levelSelection.CurrentLevelID()
-	reverseObjectIDs := view.model.selectedObjects.list
+	reverseObjectIDs := view.levelSelection.CurrentSelectedObjects()
 
 	err := view.registry.Register(cmd.Named("PatchLevel"),
 		cmd.Forward(view.restoreFocusTask()),
@@ -891,14 +889,9 @@ func (view *ObjectsView) restoreFocusTask() cmd.Task {
 
 func (view *ObjectsView) setSelectedObjectsTask(ids []level.ObjectID) cmd.Task {
 	return func(modder world.Modder) error {
-		view.setSelectedObjects(ids)
 		view.levelSelection.SetCurrentSelectedObjects(ids)
 		return nil
 	}
-}
-
-func (view *ObjectsView) setSelectedObjects(objectIDs []level.ObjectID) {
-	view.eventListener.Event(ObjectSelectionSetEvent{objects: objectIDs})
 }
 
 func (view *ObjectsView) tripleName(triple object.Triple) string {
