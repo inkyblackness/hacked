@@ -59,7 +59,7 @@ func (levels *EditableLevels) IsObjectInUse(levelIndex int, id level.ObjectID) b
 }
 
 // IsTileOnMap returns true if the given tile position points to a valid tile in the given level.
-func (levels *EditableLevels) IsTileOnMap(levelIndex int, x, y int) bool {
+func (levels *EditableLevels) IsTileOnMap(levelIndex int, pos level.TilePosition) bool {
 	// TODO: implement
 	return false
 }

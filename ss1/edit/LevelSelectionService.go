@@ -9,8 +9,21 @@ import (
 )
 
 type levelSelection struct {
-	//tiles []
+	tiles   map[level.TilePosition]struct{}
 	objects map[level.ObjectID]struct{}
+}
+
+func (selection levelSelection) tileList() []level.TilePosition {
+	list := make([]level.TilePosition, 0, len(selection.tiles))
+	for pos := range selection.tiles {
+		list = append(list, pos)
+	}
+	sort.Slice(list, func(a, b int) bool {
+		posA := list[a]
+		posB := list[b]
+		return (posA.Y < posB.Y) || ((posA.Y == posB.Y) && (posA.X < posB.X))
+	})
+	return list
 }
 
 func (selection levelSelection) objectList() []level.ObjectID {
@@ -26,7 +39,7 @@ func (selection levelSelection) objectList() []level.ObjectID {
 type LevelInfoProvider interface {
 	IsLevelAvailable(index int) bool
 	IsObjectInUse(levelIndex int, id level.ObjectID) bool
-	IsTileOnMap(levelIndex int, x, y int) bool
+	IsTileOnMap(levelIndex int, pos level.TilePosition) bool
 }
 
 // LevelSelectionService keeps track of selections related to levels.
@@ -80,6 +93,7 @@ func (service *LevelSelectionService) modifiableSelection() *levelSelection {
 	selection, ok := service.levels[service.currentLevel]
 	if !ok {
 		selection = &levelSelection{
+			tiles:   make(map[level.TilePosition]struct{}),
 			objects: make(map[level.ObjectID]struct{}),
 		}
 		service.levels[service.currentLevel] = selection
@@ -88,6 +102,23 @@ func (service *LevelSelectionService) modifiableSelection() *levelSelection {
 }
 
 func (service *LevelSelectionService) cleanSelection(levelIndex int, selection *levelSelection) *levelSelection {
+	return service.cleanSelectionTiles(levelIndex, service.cleanSelectionObjects(levelIndex, selection))
+}
+
+func (service *LevelSelectionService) cleanSelectionTiles(levelIndex int, selection *levelSelection) *levelSelection {
+	var toDelete []level.TilePosition
+	for pos := range selection.tiles {
+		if !service.provider.IsTileOnMap(levelIndex, pos) {
+			toDelete = append(toDelete, pos)
+		}
+	}
+	for _, pos := range toDelete {
+		delete(selection.tiles, pos)
+	}
+	return selection
+}
+
+func (service *LevelSelectionService) cleanSelectionObjects(levelIndex int, selection *levelSelection) *levelSelection {
 	var toDelete []level.ObjectID
 	for id := range selection.objects {
 		if !service.provider.IsObjectInUse(levelIndex, id) {
@@ -98,6 +129,55 @@ func (service *LevelSelectionService) cleanSelection(levelIndex int, selection *
 		delete(selection.objects, id)
 	}
 	return selection
+}
+
+// NumberOfSelectedTiles returns the number of currently selected tiles in the current level.
+func (service *LevelSelectionService) NumberOfSelectedTiles() int {
+	return len(service.currentSelection().tiles)
+}
+
+// CurrentSelectedTiles returns the list of currently selected tiles in the current level.
+func (service *LevelSelectionService) CurrentSelectedTiles() []level.TilePosition {
+	return service.currentSelection().tileList()
+}
+
+// SetCurrentSelectedTiles sets the list of currently selected tiles in the current level.
+func (service *LevelSelectionService) SetCurrentSelectedTiles(list []level.TilePosition) {
+	selection := service.modifiableSelection()
+	for pos := range selection.tiles {
+		delete(selection.tiles, pos)
+	}
+	for _, pos := range list {
+		selection.tiles[pos] = struct{}{}
+	}
+}
+
+// AddCurrentSelectedTiles adds the given tile IDs to the list of currently selected in the current level.
+func (service *LevelSelectionService) AddCurrentSelectedTiles(list []level.TilePosition) {
+	selection := service.modifiableSelection()
+	for _, pos := range list {
+		selection.tiles[pos] = struct{}{}
+	}
+}
+
+// RemoveCurrentSelectedTiles removes the given tile IDs from the list of currently selected in the current level.
+func (service *LevelSelectionService) RemoveCurrentSelectedTiles(list []level.TilePosition) {
+	selection := service.modifiableSelection()
+	for _, pos := range list {
+		delete(selection.tiles, pos)
+	}
+}
+
+// ToggleTileSelection toggles the selection of the given tile IDs in the current level.
+func (service *LevelSelectionService) ToggleTileSelection(list []level.TilePosition) {
+	selection := service.modifiableSelection()
+	for _, pos := range list {
+		if _, selected := selection.tiles[pos]; selected {
+			delete(selection.tiles, pos)
+		} else {
+			selection.tiles[pos] = struct{}{}
+		}
+	}
 }
 
 // NumberOfSelectedObjects returns the number of currently selected objects in the current level.
