@@ -50,11 +50,17 @@ func (levels *EditableLevels) IsLevelAvailable(index int) bool {
 
 // IsObjectInUse returns true if the given object ID is in use in given level.
 func (levels *EditableLevels) IsObjectInUse(levelIndex int, id level.ObjectID) bool {
-	return false
+	if !levels.IsLevelAvailable(levelIndex) {
+		return false
+	}
+	lvl := levels.list[levelIndex]
+	obj := lvl.Object(id)
+	return (obj != nil) && (obj.InUse != 0)
 }
 
 // IsTileOnMap returns true if the given tile position points to a valid tile in the given level.
 func (levels *EditableLevels) IsTileOnMap(levelIndex int, x, y int) bool {
+	// TODO: implement
 	return false
 }
 

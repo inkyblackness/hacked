@@ -73,7 +73,7 @@ func (service *LevelSelectionService) currentSelection() levelSelection {
 	if !ok {
 		return levelSelection{}
 	}
-	return *selection
+	return *service.cleanSelection(service.currentLevel, selection)
 }
 
 func (service *LevelSelectionService) modifiableSelection() *levelSelection {
@@ -84,14 +84,28 @@ func (service *LevelSelectionService) modifiableSelection() *levelSelection {
 		}
 		service.levels[service.currentLevel] = selection
 	}
+	return service.cleanSelection(service.currentLevel, selection)
+}
+
+func (service *LevelSelectionService) cleanSelection(levelIndex int, selection *levelSelection) *levelSelection {
+	var toDelete []level.ObjectID
+	for id := range selection.objects {
+		if !service.provider.IsObjectInUse(levelIndex, id) {
+			toDelete = append(toDelete, id)
+		}
+	}
+	for _, id := range toDelete {
+		delete(selection.objects, id)
+	}
 	return selection
 }
 
+// CurrentSelectedObjects returns the list of currently selected objects in the current level.
 func (service *LevelSelectionService) CurrentSelectedObjects() []level.ObjectID {
-	// TODO: filter via provider
 	return service.currentSelection().objectList()
 }
 
+// SetCurrentSelectedObjects sets the list of currently selected objects in the current level.
 func (service *LevelSelectionService) SetCurrentSelectedObjects(ids []level.ObjectID) {
 	selection := service.modifiableSelection()
 	for _, id := range ids {
