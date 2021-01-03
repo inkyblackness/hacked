@@ -397,7 +397,6 @@ func (view *ControlView) patchLevelResources(lvl *level.Level, extraRestoreState
 		return nil
 	}
 
-	// TODO: second pass on proper sequence of forward/reverse tasks. should reverse be after nested?
 	err := view.registry.Register(cmd.Named("PatchLevel"),
 		cmd.Forward(view.restoreFocusTask()),
 		cmd.Forward(view.levelSelection.SetCurrentLevelIDTask(lvl.ID())),

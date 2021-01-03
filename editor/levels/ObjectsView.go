@@ -872,9 +872,9 @@ func (view *ObjectsView) patchLevel(lvl *level.Level, forwardObjectIDs []level.O
 	err := view.registry.Register(cmd.Named("PatchLevel"),
 		cmd.Forward(view.restoreFocusTask()),
 		cmd.Forward(view.levelSelection.SetCurrentLevelIDTask(lvl.ID())),
-		cmd.Forward(view.setSelectedObjectsTask(forwardObjectIDs)),
-		cmd.Nested(func() error { return view.levels.CommitLevelChanges(lvl.ID()) }),
 		cmd.Reverse(view.setSelectedObjectsTask(reverseObjectIDs)),
+		cmd.Nested(func() error { return view.levels.CommitLevelChanges(lvl.ID()) }),
+		cmd.Forward(view.setSelectedObjectsTask(forwardObjectIDs)),
 		cmd.Reverse(view.levelSelection.SetCurrentLevelIDTask(oldLevelID)),
 		cmd.Reverse(view.restoreFocusTask()))
 	if err != nil {
