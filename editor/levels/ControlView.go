@@ -5,7 +5,6 @@ import (
 
 	"github.com/inkyblackness/imgui-go/v3"
 
-	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
@@ -26,9 +25,8 @@ type ControlView struct {
 	levelSelection *edit.LevelSelectionService
 	mod            *world.Mod
 
-	guiScale      float32
-	registry      cmd.Registry
-	eventListener event.Listener
+	guiScale float32
+	registry cmd.Registry
 
 	textCache    *text.Cache
 	textureCache *graphics.TextureCache
@@ -39,14 +37,13 @@ type ControlView struct {
 // NewControlView returns a new instance.
 func NewControlView(levels *edit.EditableLevels, levelSelection *edit.LevelSelectionService, mod *world.Mod,
 	guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
-	registry cmd.Registry, eventListener event.Listener) *ControlView {
+	registry cmd.Registry) *ControlView {
 	view := &ControlView{
 		levels:         levels,
 		levelSelection: levelSelection,
 		mod:            mod,
 		guiScale:       guiScale,
 		registry:       registry,
-		eventListener:  eventListener,
 		textCache:      textCache,
 		textureCache:   textureCache,
 		model:          freshControlViewModel(),

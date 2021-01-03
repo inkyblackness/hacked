@@ -73,7 +73,7 @@ type MapDisplay struct {
 	positionValid    bool
 	position         MapPosition
 
-	selectedTiles tileCoordinates
+	selectionReference *level.TilePosition
 
 	activeLevel         *level.Level
 	availableHoverItems []hoverItem
@@ -84,7 +84,7 @@ type MapDisplay struct {
 // NewMapDisplay returns a new instance.
 func NewMapDisplay(levelSelection *edit.LevelSelectionService, gl opengl.OpenGL, guiScale float32,
 	textureQuery TextureQuery,
-	eventListener event.Listener, eventRegistry event.Registry) *MapDisplay {
+	eventListener event.Listener) *MapDisplay {
 	tilesPerMapSide := float32(64)
 
 	tileBaseLength := float32(fineCoordinatesPerTileSide)
@@ -116,8 +116,6 @@ func NewMapDisplay(levelSelection *edit.LevelSelectionService, gl opengl.OpenGL,
 	centerX, centerY := (tilesPerMapSide*tileBaseLength)/-2.0, (tilesPerMapSide*tileBaseLength)/-2.0
 	display.camera.ZoomAt(-3+zoomShift, centerX, centerY)
 	display.camera.MoveTo(centerX, centerY)
-
-	display.selectedTiles.registerAt(eventRegistry)
 
 	return display
 }
@@ -188,7 +186,17 @@ func (display *MapDisplay) Render(properties object.PropertiesTable, lvl *level.
 			display.activeHoverItem = display.availableHoverItems[0]
 		}
 	}
-	display.highlighter.Render(display.selectedTiles.list, fineCoordinatesPerTileSide, [4]float32{0.0, 0.8, 0.2, 0.5})
+	{
+		selectedTiles := display.levelSelection.CurrentSelectedTiles()
+		tileMapPositions := make([]MapPosition, 0, len(selectedTiles))
+		for _, pos := range selectedTiles {
+			tileMapPositions = append(tileMapPositions, MapPosition{
+				X: level.CoordinateAt(pos.X, fineCoordinatesPerTileSide/2),
+				Y: level.CoordinateAt(pos.Y, fineCoordinatesPerTileSide/2),
+			})
+		}
+		display.highlighter.Render(tileMapPositions, fineCoordinatesPerTileSide, [4]float32{0.0, 0.8, 0.2, 0.5})
+	}
 	{
 		var objects []MapPosition
 		lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMainEntry) {
@@ -419,11 +427,11 @@ func (display *MapDisplay) MouseButtonUp(mouseX, mouseY float32, button uint32, 
 			switch {
 			case modifier.Has(input.ModControl):
 				display.toggleSelectionAtActiveHoverItem()
-			case modifier.Has(input.ModShift) && (len(display.selectedTiles.list) > 0):
-				firstPos := display.selectedTiles.list[0]
+			case modifier.Has(input.ModShift) && (display.selectionReference != nil):
+				firstPos := *display.selectionReference
 
-				fromX := int(firstPos.X.Tile())
-				fromY := int(firstPos.Y.Tile())
+				fromX := int(firstPos.X)
+				fromY := int(firstPos.Y)
 				toX := int(display.position.X.Tile())
 				toY := int(display.position.Y.Tile())
 				xIncrement := 1
@@ -436,13 +444,13 @@ func (display *MapDisplay) MouseButtonUp(mouseX, mouseY float32, button uint32, 
 				}
 				toX += xIncrement
 				toY += yIncrement
-				var newList []MapPosition
+				var newList []level.TilePosition
 				for y := fromY; y != toY; y += yIncrement {
 					for x := fromX; x != toX; x += xIncrement {
-						newList = append(newList, MapPosition{X: level.CoordinateAt(byte(x), 128), Y: level.CoordinateAt(byte(y), 128)})
+						newList = append(newList, level.TilePosition{X: byte(x), Y: byte(y)})
 					}
 				}
-				display.eventListener.Event(TileSelectionSetEvent{tiles: newList})
+				display.levelSelection.SetCurrentSelectedTiles(newList)
 				display.levelSelection.SetCurrentSelectedObjects(display.objectsInTiles(newList))
 			default:
 				display.setSelectionByActiveHoverItem()
@@ -471,17 +479,18 @@ func (display *MapDisplay) MouseButtonUp(mouseX, mouseY float32, button uint32, 
 }
 
 func (display *MapDisplay) setSelectionByActiveHoverItem() {
-	var tiles []MapPosition
+	var tiles []level.TilePosition
 	var objects []level.ObjectID
 	if display.activeHoverItem != nil {
 		if tileItem, isTile := display.activeHoverItem.(tileHoverItem); isTile {
-			tiles = append(tiles, tileItem.pos)
+			tiles = append(tiles, tileItem.pos.Tile())
 		} else if objectItem, isObject := display.activeHoverItem.(objectHoverItem); isObject {
 			objects = append(objects, objectItem.id)
 		}
 	}
-	display.eventListener.Event(TileSelectionSetEvent{tiles: tiles})
+	display.levelSelection.SetCurrentSelectedTiles(tiles)
 	if len(tiles) > 0 {
+		display.selectionReference = &tiles[0]
 		display.levelSelection.SetCurrentSelectedObjects(display.objectsInTiles(tiles))
 	} else {
 		display.levelSelection.SetCurrentSelectedObjects(objects)
@@ -491,13 +500,13 @@ func (display *MapDisplay) setSelectionByActiveHoverItem() {
 func (display *MapDisplay) toggleSelectionAtActiveHoverItem() {
 	if display.activeHoverItem != nil {
 		if tileItem, isTile := display.activeHoverItem.(tileHoverItem); isTile {
-			wasSelected := display.selectedTiles.contains(tileItem.pos)
-			tiles := []MapPosition{tileItem.pos}
+			wasSelected := display.levelSelection.IsTileSelected(tileItem.pos.Tile())
+			tiles := []level.TilePosition{tileItem.pos.Tile()}
 			if wasSelected {
-				display.eventListener.Event(TileSelectionRemoveEvent{tiles: tiles})
+				display.levelSelection.RemoveCurrentSelectedTiles(tiles)
 				display.levelSelection.RemoveCurrentSelectedObjects(display.objectsInTiles(tiles))
 			} else {
-				display.eventListener.Event(TileSelectionAddEvent{tiles: tiles})
+				display.levelSelection.AddCurrentSelectedTiles(tiles)
 				display.levelSelection.AddCurrentSelectedObjects(display.objectsInTiles(tiles))
 			}
 		} else if objectItem, isObject := display.activeHoverItem.(objectHoverItem); isObject {
@@ -506,8 +515,8 @@ func (display *MapDisplay) toggleSelectionAtActiveHoverItem() {
 	}
 }
 
-func (display *MapDisplay) objectsInTiles(tiles []MapPosition) []level.ObjectID {
-	tilesContain := func(pos MapPosition) bool {
+func (display *MapDisplay) objectsInTiles(tiles []level.TilePosition) []level.ObjectID {
+	tilesContain := func(pos level.TilePosition) bool {
 		for _, entry := range tiles {
 			if entry == pos {
 				return true
@@ -519,8 +528,7 @@ func (display *MapDisplay) objectsInTiles(tiles []MapPosition) []level.ObjectID 
 	var objects []level.ObjectID
 	if display.activeLevel != nil {
 		display.activeLevel.ForEachObject(func(id level.ObjectID, entry level.ObjectMainEntry) {
-			tilePos := MapPosition{X: level.CoordinateAt(entry.X.Tile(), 128), Y: level.CoordinateAt(entry.Y.Tile(), 128)}
-			if tilesContain(tilePos) {
+			if tilesContain(entry.TilePosition()) {
 				objects = append(objects, id)
 			}
 		})

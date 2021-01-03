@@ -5,7 +5,6 @@ import (
 
 	"github.com/inkyblackness/imgui-go/v3"
 
-	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
@@ -27,9 +26,8 @@ type TilesView struct {
 	textCache      *text.Cache
 	textureCache   *graphics.TextureCache
 
-	guiScale      float32
-	registry      cmd.Registry
-	eventListener event.Listener
+	guiScale float32
+	registry cmd.Registry
 
 	model tilesViewModel
 }
@@ -37,7 +35,7 @@ type TilesView struct {
 // NewTilesView returns a new instance.
 func NewTilesView(levels *edit.EditableLevels, levelSelection *edit.LevelSelectionService, mod *world.Mod,
 	guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
-	registry cmd.Registry, eventListener event.Listener, eventRegistry event.Registry) *TilesView {
+	registry cmd.Registry) *TilesView {
 	view := &TilesView{
 		levels:         levels,
 		levelSelection: levelSelection,
@@ -45,12 +43,10 @@ func NewTilesView(levels *edit.EditableLevels, levelSelection *edit.LevelSelecti
 		textCache:      textCache,
 		textureCache:   textureCache,
 
-		guiScale:      guiScale,
-		registry:      registry,
-		eventListener: eventListener,
-		model:         freshTilesViewModel(),
+		guiScale: guiScale,
+		registry: registry,
+		model:    freshTilesViewModel(),
 	}
-	view.model.selectedTiles.registerAt(eventRegistry)
 	return view
 }
 
@@ -81,7 +77,7 @@ func (view *TilesView) Render(lvl *level.Level) {
 	}
 	if view.model.windowOpen {
 		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 500 * view.guiScale}, imgui.ConditionFirstUseEver)
-		title := fmt.Sprintf("Level Tiles, %d selected", len(view.model.selectedTiles.list))
+		title := fmt.Sprintf("Level Tiles, %d selected", view.levelSelection.NumberOfSelectedTiles())
 		readOnly := !view.editingAllowed(lvl.ID())
 		if readOnly {
 			title += hintReadOnly
@@ -121,8 +117,8 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 	floorHazardUnifier := values.NewUnifier()
 	ceilingHazardUnifier := values.NewUnifier()
 
-	for _, pos := range view.model.selectedTiles.list {
-		tile := lvl.Tile(pos.Tile())
+	for _, pos := range view.levelSelection.CurrentSelectedTiles() {
+		tile := lvl.Tile(pos)
 		tileTypeUnifier.Add(tile.Type)
 		floorHeightUnifier.Add(tile.Floor.AbsoluteHeight())
 		ceilingHeightUnifier.Add(tile.Ceiling.AbsoluteHeight())
@@ -560,9 +556,9 @@ func (view *TilesView) requestGameOfLightState(lvl *level.Level, value int) {
 }
 
 func (view *TilesView) changeTiles(lvl *level.Level, modifier func(*level.TileMapEntry)) {
-	positions := view.model.selectedTiles.list
+	positions := view.levelSelection.CurrentSelectedTiles()
 	for _, pos := range positions {
-		tile := lvl.Tile(pos.Tile())
+		tile := lvl.Tile(pos)
 		modifier(tile)
 	}
 
@@ -588,15 +584,9 @@ func (view *TilesView) restoreFocusTask() cmd.Task {
 	}
 }
 
-func (view *TilesView) setSelectedTilesTask(positions []MapPosition) cmd.Task {
+func (view *TilesView) setSelectedTilesTask(positions []level.TilePosition) cmd.Task {
 	return func(modder world.Modder) error {
-		view.setSelectedTiles(positions)
-		// TODO replace with level selection
-		// view.levelSelection.SetCurrentSelectedTiles(positions)
+		view.levelSelection.SetCurrentSelectedTiles(positions)
 		return nil
 	}
-}
-
-func (view *TilesView) setSelectedTiles(positions []MapPosition) {
-	view.eventListener.Event(TileSelectionSetEvent{tiles: positions})
 }

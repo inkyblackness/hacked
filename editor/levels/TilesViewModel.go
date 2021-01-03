@@ -1,7 +1,6 @@
 package levels
 
 type tilesViewModel struct {
-	selectedTiles     tileCoordinates
 	textureDisplay    TextureDisplay
 	shadowDisplay     ColorDisplay
 	cyberColorDisplay ColorDisplay

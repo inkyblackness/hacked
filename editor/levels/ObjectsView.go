@@ -6,7 +6,6 @@ import (
 
 	"github.com/inkyblackness/imgui-go/v3"
 
-	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
@@ -34,9 +33,8 @@ type ObjectsView struct {
 	textCache       *text.Cache
 	textureCache    *graphics.TextureCache
 
-	guiScale      float32
-	registry      cmd.Registry
-	eventListener event.Listener
+	guiScale float32
+	registry cmd.Registry
 
 	model objectsViewModel
 }
@@ -45,7 +43,7 @@ type ObjectsView struct {
 func NewObjectsView(levels *edit.EditableLevels, levelSelection *edit.LevelSelectionService,
 	varInfoProvider archive.GameVariableInfoProvider,
 	mod *world.Mod, guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
-	registry cmd.Registry, eventListener event.Listener) *ObjectsView {
+	registry cmd.Registry) *ObjectsView {
 	view := &ObjectsView{
 		levelSelection:  levelSelection,
 		levels:          levels,
@@ -54,9 +52,8 @@ func NewObjectsView(levels *edit.EditableLevels, levelSelection *edit.LevelSelec
 		textCache:       textCache,
 		textureCache:    textureCache,
 
-		guiScale:      guiScale,
-		registry:      registry,
-		eventListener: eventListener,
+		guiScale: guiScale,
+		registry: registry,
 
 		model: freshObjectsViewModel(),
 	}
