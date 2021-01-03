@@ -187,12 +187,12 @@ func (app *Application) InitializeWindow(window opengl.Window) (err error) {
 	app.initSignalling()
 	app.initWindowCallbacks()
 	app.initOpenGL()
+
+	app.initModel()
 	err = app.initGui()
 	if err != nil {
 		return
 	}
-
-	app.initModel()
 	app.initView()
 	app.restoreWorkspace()
 
@@ -308,7 +308,8 @@ func (app *Application) initGui() (err error) {
 
 	app.initGuiStyle()
 
-	app.mapDisplay = levels.NewMapDisplay(app.gl, app.GuiScale,
+	app.mapDisplay = levels.NewMapDisplay(app.levelSelection,
+		app.gl, app.GuiScale,
 		app.gameTexture,
 		&app.eventQueue, app.eventDispatcher)
 

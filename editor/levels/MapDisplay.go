@@ -12,6 +12,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ss1/content/object"
+	"github.com/inkyblackness/hacked/ss1/edit"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 	"github.com/inkyblackness/hacked/ui/input"
@@ -50,6 +51,8 @@ func (item objectHoverItem) Size() float32 {
 
 // MapDisplay renders a level map.
 type MapDisplay struct {
+	levelSelection *edit.LevelSelectionService
+
 	context  render.Context
 	camera   *LimitedCamera
 	guiScale float32
@@ -80,7 +83,7 @@ type MapDisplay struct {
 }
 
 // NewMapDisplay returns a new instance.
-func NewMapDisplay(gl opengl.OpenGL, guiScale float32,
+func NewMapDisplay(levelSelection *edit.LevelSelectionService, gl opengl.OpenGL, guiScale float32,
 	textureQuery TextureQuery,
 	eventListener event.Listener, eventRegistry event.Registry) *MapDisplay {
 	tilesPerMapSide := float32(64)
@@ -93,6 +96,7 @@ func NewMapDisplay(gl opengl.OpenGL, guiScale float32,
 	zoomLevelMax := float32(1) + zoomShift
 
 	display := &MapDisplay{
+		levelSelection: levelSelection,
 		context: render.Context{
 			OpenGL:           gl,
 			ProjectionMatrix: mgl.Ident4(),
