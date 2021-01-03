@@ -108,7 +108,26 @@ func (service *LevelSelectionService) CurrentSelectedObjects() []level.ObjectID 
 // SetCurrentSelectedObjects sets the list of currently selected objects in the current level.
 func (service *LevelSelectionService) SetCurrentSelectedObjects(ids []level.ObjectID) {
 	selection := service.modifiableSelection()
+	for id := range selection.objects {
+		delete(selection.objects, id)
+	}
 	for _, id := range ids {
 		selection.objects[id] = struct{}{}
+	}
+}
+
+// AddCurrentSelectedObjects adds the given object IDs to the list of currently selected in the current level.
+func (service *LevelSelectionService) AddCurrentSelectedObjects(ids []level.ObjectID) {
+	selection := service.modifiableSelection()
+	for _, id := range ids {
+		selection.objects[id] = struct{}{}
+	}
+}
+
+// RemoveCurrentSelectedObjects removes the given object IDs from the list of currently selected in the current level.
+func (service *LevelSelectionService) RemoveCurrentSelectedObjects(ids []level.ObjectID) {
+	selection := service.modifiableSelection()
+	for _, id := range ids {
+		delete(selection.objects, id)
 	}
 }
