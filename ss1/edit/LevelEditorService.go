@@ -6,6 +6,7 @@ import (
 	"github.com/inkyblackness/hacked/ss1/world"
 )
 
+// LevelEditorService provides level editing functionality based on the currently selected level and content.
 type LevelEditorService struct {
 	registry cmd.Registry
 
@@ -13,6 +14,7 @@ type LevelEditorService struct {
 	levelSelection *LevelSelectionService
 }
 
+// NewLevelEditorService returns a new instance.
 func NewLevelEditorService(registry cmd.Registry, levels *EditableLevels, levelSelection *LevelSelectionService) *LevelEditorService {
 	return &LevelEditorService{
 		registry:       registry,
@@ -21,14 +23,17 @@ func NewLevelEditorService(registry cmd.Registry, levels *EditableLevels, levelS
 	}
 }
 
+// IsReadOnly returns true if the currently selected level cannot be modified.
 func (service *LevelEditorService) IsReadOnly() bool {
 	return service.levels.IsLevelReadOnly(service.levelSelection.CurrentLevelID())
 }
 
+// Level returns the currently selected level.
 func (service *LevelEditorService) Level() *level.Level {
 	return service.levels.Level(service.levelSelection.CurrentLevelID())
 }
 
+// Tiles returns the list of currently selected tiles of the current level.
 func (service *LevelEditorService) Tiles() []*level.TileMapEntry {
 	lvl := service.Level()
 	positions := service.levelSelection.CurrentSelectedTiles()
@@ -39,6 +44,7 @@ func (service *LevelEditorService) Tiles() []*level.TileMapEntry {
 	return tiles
 }
 
+// ChangeTiles performs a modification on all currently selected tiles and commits these changes to the repository.
 func (service *LevelEditorService) ChangeTiles(modifier func(*level.TileMapEntry)) error {
 	lvl := service.Level()
 	positions := service.levelSelection.CurrentSelectedTiles()
