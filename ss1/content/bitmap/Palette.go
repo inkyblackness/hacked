@@ -24,9 +24,12 @@ func (col RGB) Color(alpha byte) color.Color {
 	}
 }
 
+// PaletteSize indicates how many colors a palette can hold with a byte index.
+const PaletteSize = 256
+
 // Palette describes a list of colors to be used by bitmaps.
 // It is an array of 256 RGB values.
-type Palette [256]RGB
+type Palette [PaletteSize]RGB
 
 // ColorPalette returns a palette usable for the image packages.
 func (pal Palette) ColorPalette(firstIndexTransparent bool) color.Palette {

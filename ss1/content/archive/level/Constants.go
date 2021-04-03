@@ -10,6 +10,9 @@ const (
 
 	// InventorySize specifies how many items the inventory could hold.
 	InventorySize int = 20
+
+	// GradesOfShadow is the number of how much shadow (light) is possible.
+	GradesOfShadow = 16
 )
 
 var mapVersionValue = MapVersion

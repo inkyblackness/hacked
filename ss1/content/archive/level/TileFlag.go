@@ -95,27 +95,27 @@ func (flag RealWorldFlag) WithDeconstructed(value bool) RealWorldFlag {
 	return RealWorldFlag(uint32(flag&^0x00000200) | valueFlag)
 }
 
-// FloorShadow returns the floor shadow value. Range: [0..15].
+// FloorShadow returns the floor shadow value. Range: [0..GradesOfShadow].
 func (flag RealWorldFlag) FloorShadow() int {
 	return int((flag & 0x000F0000) >> 16)
 }
 
 // WithFloorShadow returns a new flag value with the given floor shadow set. Values beyond allowed range are ignored.
 func (flag RealWorldFlag) WithFloorShadow(value int) RealWorldFlag {
-	if (value < 0) || (value > 15) {
+	if (value < 0) || (value >= GradesOfShadow) {
 		return flag
 	}
 	return RealWorldFlag(uint32(flag&^0x000F0000) | (uint32(value) << 16))
 }
 
-// CeilingShadow returns the ceiling shadow value. Range: [0..15].
+// CeilingShadow returns the ceiling shadow value. Range: [0..GradesOfShadow].
 func (flag RealWorldFlag) CeilingShadow() int {
 	return int((flag & 0x0F000000) >> 24)
 }
 
 // WithCeilingShadow returns a new flag value with the given ceiling shadow set. Values beyond allowed range are ignored.
 func (flag RealWorldFlag) WithCeilingShadow(value int) RealWorldFlag {
-	if (value < 0) || (value > 15) {
+	if (value < 0) || (value >= GradesOfShadow) {
 		return flag
 	}
 	return RealWorldFlag(uint32(flag&^0x0F000000) | (uint32(value) << 24))

@@ -9,6 +9,7 @@ import (
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
+	"github.com/inkyblackness/hacked/ss1/content/bitmap"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/edit"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
@@ -138,8 +139,8 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 			wallTextureOffsetUnifier.Add(flags.WallTextureOffset())
 			useAdjacentWallTextureUnifier.Add(flags.UseAdjacentWallTexture())
 			wallTexturePatternUnifier.Add(flags.WallTexturePattern())
-			floorLightUnifier.Add(15 - flags.FloorShadow())
-			ceilingLightUnifier.Add(15 - flags.CeilingShadow())
+			floorLightUnifier.Add(level.GradesOfShadow - 1 - flags.FloorShadow())
+			ceilingLightUnifier.Add(level.GradesOfShadow - 1 - flags.CeilingShadow())
 			deconstructedUnifier.Add(flags.Deconstructed())
 			floorHazardUnifier.Add(tile.Floor.HasHazard())
 			ceilingHazardUnifier.Add(tile.Ceiling.HasHazard())
@@ -206,12 +207,12 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 		values.RenderUnifiedSliderInt(readOnly, "Floor Color", floorPaletteIndexUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(byte)) },
 			func(value int) string { return "%d" },
-			0, 255,
+			0, bitmap.PaletteSize-1,
 			func(newValue int) { request(setFloorPaletteIndexTo(newValue)) })
 		values.RenderUnifiedSliderInt(readOnly, "Ceiling Color", ceilingPaletteIndexUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(byte)) },
 			func(value int) string { return "%d" },
-			0, 255,
+			0, bitmap.PaletteSize-1,
 			func(newValue int) { request(setCeilingPaletteIndexTo(newValue)) })
 
 		imgui.Separator()
@@ -307,12 +308,12 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 		values.RenderUnifiedSliderInt(readOnly, "Floor Light", floorLightUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
-			0, 15,
+			0, level.GradesOfShadow-1,
 			func(newValue int) { request(setFloorLightTo(newValue)) })
 		values.RenderUnifiedSliderInt(readOnly, "Ceiling Light", ceilingLightUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
-			0, 15,
+			0, level.GradesOfShadow-1,
 			func(newValue int) { request(setCeilingLightTo(newValue)) })
 
 		imgui.Separator()
@@ -448,13 +449,13 @@ func setWallTexturePatternTo(value level.WallTexturePattern) tileMapEntryModifie
 
 func setFloorLightTo(value int) tileMapEntryModifier {
 	return func(tile *level.TileMapEntry) {
-		tile.Flags = tile.Flags.ForRealWorld().WithFloorShadow(15 - value).AsTileFlag()
+		tile.Flags = tile.Flags.ForRealWorld().WithFloorShadow(level.GradesOfShadow - 1 - value).AsTileFlag()
 	}
 }
 
 func setCeilingLightTo(value int) tileMapEntryModifier {
 	return func(tile *level.TileMapEntry) {
-		tile.Flags = tile.Flags.ForRealWorld().WithCeilingShadow(15 - value).AsTileFlag()
+		tile.Flags = tile.Flags.ForRealWorld().WithCeilingShadow(level.GradesOfShadow - 1 - value).AsTileFlag()
 	}
 }
 
