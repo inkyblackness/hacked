@@ -237,7 +237,7 @@ func (app *Application) render() {
 	app.archiveView.Render()
 	activeLevel := app.activeLevel()
 	app.levelControlView.Render(activeLevel)
-	app.levelTilesView.Render(activeLevel)
+	app.levelTilesView.Render()
 	app.levelObjectsView.Render(activeLevel)
 	app.messagesView.Render()
 	app.textsView.Render()

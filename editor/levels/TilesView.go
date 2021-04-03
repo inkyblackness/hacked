@@ -67,27 +67,29 @@ func (view TilesView) ColorDisplay(lvl *level.Level) ColorDisplay {
 }
 
 // Render renders the view.
-func (view *TilesView) Render(lvl *level.Level) {
+func (view *TilesView) Render() {
 	if view.model.restoreFocus {
 		imgui.SetNextWindowFocus()
 		view.model.restoreFocus = false
 		view.model.windowOpen = true
 	}
 	if view.model.windowOpen {
-		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 500 * view.guiScale}, imgui.ConditionFirstUseEver)
-		title := fmt.Sprintf("Level Tiles, %d selected", view.levelSelection.NumberOfSelectedTiles())
+		lvl := view.levels.Level(view.levelSelection.CurrentLevelID())
+		tilePositions := view.levelSelection.CurrentSelectedTiles()
+		title := fmt.Sprintf("Level Tiles, %d selected", len(tilePositions))
 		readOnly := view.levels.IsLevelReadOnly(lvl.ID())
 		if readOnly {
 			title += hintReadOnly
 		}
+		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 500 * view.guiScale}, imgui.ConditionFirstUseEver)
 		if imgui.BeginV(title+"###Level Tiles", view.WindowOpen(), 0) {
-			view.renderContent(lvl, readOnly)
+			view.renderContent(lvl, tilePositions, readOnly)
 		}
 		imgui.End()
 	}
 }
 
-func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
+func (view *TilesView) renderContent(lvl *level.Level, tilePositions []level.TilePosition, readOnly bool) {
 	isCyberspace := lvl.IsCyberspace()
 	tileTypeUnifier := values.NewUnifier()
 	floorHeightUnifier := values.NewUnifier()
@@ -115,7 +117,6 @@ func (view *TilesView) renderContent(lvl *level.Level, readOnly bool) {
 	floorHazardUnifier := values.NewUnifier()
 	ceilingHazardUnifier := values.NewUnifier()
 
-	tilePositions := view.levelSelection.CurrentSelectedTiles()
 	for _, pos := range tilePositions {
 		tile := lvl.Tile(pos)
 		tileTypeUnifier.Add(tile.Type)

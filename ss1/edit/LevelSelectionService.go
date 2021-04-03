@@ -131,11 +131,6 @@ func (service *LevelSelectionService) cleanSelectionObjects(levelIndex int, sele
 	return selection
 }
 
-// NumberOfSelectedTiles returns the number of currently selected tiles in the current level.
-func (service *LevelSelectionService) NumberOfSelectedTiles() int {
-	return len(service.currentSelection().tiles)
-}
-
 // IsTileSelected returns true if the given tile is currently selected.
 func (service *LevelSelectionService) IsTileSelected(pos level.TilePosition) bool {
 	_, selected := service.currentSelection().tiles[pos]
