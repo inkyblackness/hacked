@@ -9,7 +9,6 @@ import (
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/editor/values"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
-	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/edit"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
@@ -22,7 +21,6 @@ import (
 type TilesView struct {
 	levels         *edit.EditableLevels
 	levelSelection *edit.LevelSelectionService
-	mod            *world.Mod
 	textCache      *text.Cache
 	textureCache   *graphics.TextureCache
 
@@ -33,13 +31,12 @@ type TilesView struct {
 }
 
 // NewTilesView returns a new instance.
-func NewTilesView(levels *edit.EditableLevels, levelSelection *edit.LevelSelectionService, mod *world.Mod,
+func NewTilesView(levels *edit.EditableLevels, levelSelection *edit.LevelSelectionService,
 	guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
 	registry cmd.Registry) *TilesView {
 	view := &TilesView{
 		levels:         levels,
 		levelSelection: levelSelection,
-		mod:            mod,
 		textCache:      textCache,
 		textureCache:   textureCache,
 
@@ -78,7 +75,7 @@ func (view *TilesView) Render(lvl *level.Level) {
 	if view.model.windowOpen {
 		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 500 * view.guiScale}, imgui.ConditionFirstUseEver)
 		title := fmt.Sprintf("Level Tiles, %d selected", view.levelSelection.NumberOfSelectedTiles())
-		readOnly := !view.editingAllowed(lvl.ID())
+		readOnly := view.levels.IsLevelReadOnly(lvl.ID())
 		if readOnly {
 			title += hintReadOnly
 		}
@@ -410,11 +407,6 @@ func (view *TilesView) textureName(index int) string {
 		suffix = ": " + name
 	}
 	return fmt.Sprintf("%3d", index) + suffix
-}
-
-func (view *TilesView) editingAllowed(id int) bool {
-	moddedLevel := len(view.mod.ModifiedBlocks(resource.LangAny, ids.LevelResourcesStart.Plus(lvlids.PerLevel*id+lvlids.FirstUsed))) > 0
-	return moddedLevel
 }
 
 func (view *TilesView) requestSetTileType(lvl *level.Level, tileType level.TileType) {

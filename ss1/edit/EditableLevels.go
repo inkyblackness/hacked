@@ -43,6 +43,12 @@ func (levels *EditableLevels) Level(index int) *level.Level {
 	return levels.list[index]
 }
 
+// IsLevelReadOnly returns true if the identified level cannot be modified.
+func (levels *EditableLevels) IsLevelReadOnly(index int) bool {
+	isInMod := len(levels.mod.ModifiedBlocks(resource.LangAny, ids.LevelResourcesStart.Plus(lvlids.PerLevel*index+lvlids.FirstUsed))) > 0
+	return !levels.IsLevelAvailable(index) || !isInMod
+}
+
 // IsLevelAvailable returns true if the given index is a valid level.
 func (levels *EditableLevels) IsLevelAvailable(index int) bool {
 	return (index >= 0) && (index < len(levels.list))

@@ -630,7 +630,7 @@ func (app *Application) initView() {
 	app.projectView = project.NewView(app.projectService, &app.modalState, app.GuiScale, &app.txnBuilder)
 	app.archiveView = archives.NewArchiveView(&app.txnBuilder, app.gameStateService, app.mod, app.textLineCache, app.cp, &app.modalState, app.GuiScale, app)
 	app.levelControlView = levels.NewControlView(app.levels, app.levelSelection, app.mod, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
-	app.levelTilesView = levels.NewTilesView(app.levels, app.levelSelection, app.mod, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
+	app.levelTilesView = levels.NewTilesView(app.levels, app.levelSelection, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
 	app.levelObjectsView = levels.NewObjectsView(app.levels, app.levelSelection, app.gameStateService, app.mod, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
 	app.messagesView = messages.NewMessagesView(app.mod, app.messagesCache, app.cp, app.movieCache, app.textureCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.textsView = texts.NewTextsView(augmentedTextService, &app.modalState, app.clipboard, app.GuiScale)
