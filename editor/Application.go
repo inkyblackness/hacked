@@ -13,7 +13,6 @@ import (
 	"github.com/inkyblackness/hacked/editor/animations"
 	"github.com/inkyblackness/hacked/editor/archives"
 	"github.com/inkyblackness/hacked/editor/bitmaps"
-	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/external"
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/levels"
@@ -129,9 +128,6 @@ type Application struct {
 	lastMouseX   float32
 	lastMouseY   float32
 
-	eventQueue      event.Queue
-	eventDispatcher *event.Dispatcher
-
 	txnBuilder       cmd.TransactionBuilder
 	cmdStack         *cmd.Stack
 	mod              *world.Mod
@@ -229,7 +225,6 @@ func (app *Application) initWindowCallbacks() {
 }
 
 func (app *Application) render() {
-	app.dispatchEvents()
 	app.guiContext.NewFrame()
 
 	app.gl.Clear(opengl.COLOR_BUFFER_BIT)
@@ -576,7 +571,6 @@ func (app *Application) initGuiStyle() {
 }
 
 func (app *Application) initSignalling() {
-	app.eventDispatcher = event.NewDispatcher()
 	app.cmdStack = new(cmd.Stack)
 	app.txnBuilder.Commander = app
 }
@@ -657,12 +651,6 @@ func (app *Application) Queue(command cmd.Command) {
 	})
 	if err != nil {
 		app.onFailure("command", "", err)
-	}
-}
-
-func (app *Application) dispatchEvents() {
-	for iteration := 0; (iteration < 100) && !app.eventQueue.IsEmpty(); iteration++ {
-		app.eventQueue.ForwardTo(app.eventDispatcher)
 	}
 }
 
