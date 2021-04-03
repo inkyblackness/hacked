@@ -311,7 +311,7 @@ func (app *Application) initGui() (err error) {
 	app.mapDisplay = levels.NewMapDisplay(app.levelSelection,
 		app.gl, app.GuiScale,
 		app.gameTexture,
-		&app.eventQueue)
+		app)
 
 	return
 }
@@ -648,8 +648,6 @@ func (app *Application) initView() {
 	app.objectsView = objects.NewView(app.mod, app.textLineCache, app.cp, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.aboutView = about.NewView(app.clipboard, app.GuiScale, app.Version)
 	app.licensesView = about.NewLicensesView(app.GuiScale)
-
-	app.eventDispatcher.RegisterHandler(app.onLevelObjectRequestCreateEvent)
 }
 
 // Queue requests to perform the given command.
@@ -673,8 +671,9 @@ func (app *Application) onFailure(source string, details string, err error) {
 	app.failureMessage = fmt.Sprintf("Source: %v\nDetails: %v\nError: %v", source, details, err)
 }
 
-func (app *Application) onLevelObjectRequestCreateEvent(evt levels.ObjectRequestCreateEvent) {
-	app.levelObjectsView.RequestCreateObject(app.activeLevel(), evt.Pos)
+// CreateNewObjectAt can be used to create a new object at the given position.
+func (app *Application) CreateNewObjectAt(pos levels.MapPosition) {
+	app.levelObjectsView.RequestCreateObject(app.activeLevel(), pos)
 }
 
 func (app *Application) renderMainMenu() {

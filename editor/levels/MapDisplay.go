@@ -7,7 +7,6 @@ import (
 	mgl "github.com/go-gl/mathgl/mgl32"
 	"github.com/inkyblackness/imgui-go/v3"
 
-	"github.com/inkyblackness/hacked/editor/event"
 	"github.com/inkyblackness/hacked/editor/graphics"
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
@@ -49,6 +48,11 @@ func (item objectHoverItem) Size() float32 {
 	return fineCoordinatesPerTileSide / 4
 }
 
+// ObjectCreator assists in creating a new object at a position.
+type ObjectCreator interface {
+	CreateNewObjectAt(pos MapPosition)
+}
+
 // MapDisplay renders a level map.
 type MapDisplay struct {
 	levelSelection *edit.LevelSelectionService
@@ -57,7 +61,7 @@ type MapDisplay struct {
 	camera   *LimitedCamera
 	guiScale float32
 
-	eventListener event.Listener
+	objectCreator ObjectCreator
 
 	background  *BackgroundGrid
 	textures    *MapTextures
@@ -84,7 +88,7 @@ type MapDisplay struct {
 // NewMapDisplay returns a new instance.
 func NewMapDisplay(levelSelection *edit.LevelSelectionService, gl opengl.OpenGL, guiScale float32,
 	textureQuery TextureQuery,
-	eventListener event.Listener) *MapDisplay {
+	objectCreator ObjectCreator) *MapDisplay {
 	tilesPerMapSide := float32(64)
 
 	tileBaseLength := float32(fineCoordinatesPerTileSide)
@@ -102,7 +106,7 @@ func NewMapDisplay(levelSelection *edit.LevelSelectionService, gl opengl.OpenGL,
 		},
 		camera:        NewLimitedCamera(zoomLevelMin, zoomLevelMax, -tileBaseHalf, camLimit),
 		guiScale:      guiScale,
-		eventListener: eventListener,
+		objectCreator: objectCreator,
 		moveCapture:   func(float32, float32) {},
 	}
 	display.context.ViewMatrix = display.camera.ViewMatrix()
@@ -458,7 +462,7 @@ func (display *MapDisplay) MouseButtonUp(mouseX, mouseY float32, button uint32, 
 		}
 	} else if button == input.MouseSecondary {
 		if display.positionValid {
-			evt := ObjectRequestCreateEvent{Pos: display.position}
+			pos := display.position
 			if modifier.Has(input.ModShift) {
 				toGrid := func(value byte) byte {
 					switch {
@@ -470,10 +474,10 @@ func (display *MapDisplay) MouseButtonUp(mouseX, mouseY float32, button uint32, 
 						return 0x80
 					}
 				}
-				evt.Pos.X = level.CoordinateAt(evt.Pos.X.Tile(), toGrid(evt.Pos.X.Fine()))
-				evt.Pos.Y = level.CoordinateAt(evt.Pos.Y.Tile(), toGrid(evt.Pos.Y.Fine()))
+				pos.X = level.CoordinateAt(pos.X.Tile(), toGrid(pos.X.Fine()))
+				pos.Y = level.CoordinateAt(pos.Y.Tile(), toGrid(pos.Y.Fine()))
 			}
-			display.eventListener.Event(evt)
+			display.objectCreator.CreateNewObjectAt(pos)
 		}
 	}
 }
