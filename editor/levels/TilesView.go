@@ -554,15 +554,15 @@ func (view *TilesView) changeTiles(lvl *level.Level, modifier func(*level.TileMa
 		modifier(tile)
 	}
 
-	oldLevelID := view.levelSelection.CurrentLevelID()
+	levelID := lvl.ID()
 
 	err := view.registry.Register(cmd.Named("PatchLevel"),
 		cmd.Forward(view.restoreFocusTask()),
-		cmd.Forward(view.levelSelection.SetCurrentLevelIDTask(lvl.ID())),
+		cmd.Forward(view.levelSelection.SetCurrentLevelIDTask(levelID)),
 		cmd.Forward(view.setSelectedTilesTask(positions)),
-		cmd.Nested(func() error { return view.levels.CommitLevelChanges(lvl.ID()) }),
+		cmd.Nested(func() error { return view.levels.CommitLevelChanges(levelID) }),
 		cmd.Reverse(view.setSelectedTilesTask(positions)),
-		cmd.Reverse(view.levelSelection.SetCurrentLevelIDTask(oldLevelID)),
+		cmd.Reverse(view.levelSelection.SetCurrentLevelIDTask(levelID)),
 		cmd.Reverse(view.restoreFocusTask()))
 	if err != nil {
 		panic(err)
