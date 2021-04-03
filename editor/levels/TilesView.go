@@ -20,10 +20,9 @@ import (
 
 // TilesView is for tile properties.
 type TilesView struct {
-	levels         *edit.EditableLevels
-	levelSelection *edit.LevelSelectionService
-	textCache      *text.Cache
-	textureCache   *graphics.TextureCache
+	editor       *edit.LevelEditorService
+	textCache    *text.Cache
+	textureCache *graphics.TextureCache
 
 	guiScale float32
 	registry cmd.Registry
@@ -36,10 +35,9 @@ func NewTilesView(levels *edit.EditableLevels, levelSelection *edit.LevelSelecti
 	guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
 	registry cmd.Registry) *TilesView {
 	view := &TilesView{
-		levels:         levels,
-		levelSelection: levelSelection,
-		textCache:      textCache,
-		textureCache:   textureCache,
+		editor:       edit.NewLevelEditorService(registry, levels, levelSelection),
+		textCache:    textCache,
+		textureCache: textureCache,
 
 		guiScale: guiScale,
 		registry: registry,
@@ -74,22 +72,22 @@ func (view *TilesView) Render() {
 		view.model.windowOpen = true
 	}
 	if view.model.windowOpen {
-		lvl := view.levels.Level(view.levelSelection.CurrentLevelID())
-		tilePositions := view.levelSelection.CurrentSelectedTiles()
-		title := fmt.Sprintf("Level Tiles, %d selected", len(tilePositions))
-		readOnly := view.levels.IsLevelReadOnly(lvl.ID())
+		lvl := view.editor.Level()
+		tiles := view.editor.Tiles()
+		readOnly := view.editor.IsReadOnly()
+		title := fmt.Sprintf("Level Tiles, %d selected", len(tiles))
 		if readOnly {
 			title += hintReadOnly
 		}
 		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 500 * view.guiScale}, imgui.ConditionFirstUseEver)
 		if imgui.BeginV(title+"###Level Tiles", view.WindowOpen(), 0) {
-			view.renderContent(lvl, tilePositions, readOnly)
+			view.renderContent(lvl, tiles, readOnly)
 		}
 		imgui.End()
 	}
 }
 
-func (view *TilesView) renderContent(lvl *level.Level, tilePositions []level.TilePosition, readOnly bool) {
+func (view *TilesView) renderContent(lvl *level.Level, tiles []*level.TileMapEntry, readOnly bool) {
 	isCyberspace := lvl.IsCyberspace()
 	tileTypeUnifier := values.NewUnifier()
 	floorHeightUnifier := values.NewUnifier()
@@ -117,8 +115,7 @@ func (view *TilesView) renderContent(lvl *level.Level, tilePositions []level.Til
 	floorHazardUnifier := values.NewUnifier()
 	ceilingHazardUnifier := values.NewUnifier()
 
-	for _, pos := range tilePositions {
-		tile := lvl.Tile(pos)
+	for _, tile := range tiles {
 		tileTypeUnifier.Add(tile.Type)
 		floorHeightUnifier.Add(tile.Floor.AbsoluteHeight())
 		ceilingHeightUnifier.Add(tile.Ceiling.AbsoluteHeight())
@@ -151,7 +148,7 @@ func (view *TilesView) renderContent(lvl *level.Level, tilePositions []level.Til
 	imgui.PushItemWidth(-250 * view.guiScale)
 
 	request := func(modifier tileMapEntryModifier) {
-		view.requestChangeTiles(lvl, tilePositions, modifier)
+		view.changeTiles(modifier)
 	}
 
 	_, _, levelHeight := lvl.Size()
@@ -504,20 +501,10 @@ func setGameOfLightStateTo(value int) tileMapEntryModifier {
 
 type tileMapEntryModifier func(*level.TileMapEntry)
 
-func (view *TilesView) requestChangeTiles(lvl *level.Level, positions []level.TilePosition, modifier tileMapEntryModifier) {
-	for _, pos := range positions {
-		tile := lvl.Tile(pos)
-		modifier(tile)
-	}
-
-	levelID := lvl.ID()
-	err := view.registry.Register(cmd.Named("PatchLevel"),
+func (view *TilesView) changeTiles(modifier tileMapEntryModifier) {
+	err := view.registry.Register(cmd.Named("ChangeTiles"),
 		cmd.Forward(view.restoreFocusTask()),
-		cmd.Forward(view.levelSelection.SetCurrentLevelIDTask(levelID)),
-		cmd.Forward(view.setSelectedTilesTask(positions)),
-		cmd.Nested(func() error { return view.levels.CommitLevelChanges(levelID) }),
-		cmd.Reverse(view.setSelectedTilesTask(positions)),
-		cmd.Reverse(view.levelSelection.SetCurrentLevelIDTask(levelID)),
+		cmd.Nested(func() error { return view.editor.ChangeTiles(modifier) }),
 		cmd.Reverse(view.restoreFocusTask()))
 	if err != nil {
 		panic(err)
@@ -527,13 +514,6 @@ func (view *TilesView) requestChangeTiles(lvl *level.Level, positions []level.Ti
 func (view *TilesView) restoreFocusTask() cmd.Task {
 	return func(modder world.Modder) error {
 		view.model.restoreFocus = true
-		return nil
-	}
-}
-
-func (view *TilesView) setSelectedTilesTask(positions []level.TilePosition) cmd.Task {
-	return func(modder world.Modder) error {
-		view.levelSelection.SetCurrentSelectedTiles(positions)
 		return nil
 	}
 }
