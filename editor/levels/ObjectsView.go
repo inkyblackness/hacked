@@ -131,18 +131,18 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 
 	if !readOnly {
 		classString := func(class object.Class) string {
-			active, limit := lvl.ObjectClassStats(class)
+			active, capacity := lvl.ObjectClassStats(class)
 			if class == object.ClassSmallStuff {
 				// The engine backs up inventory items in the level during a level transition.
 				// For this it requires space. If there is none, bugs do appear.
 				// This limit could apply for several classes, yet only small stuff is being used.
 				practicalLimit := 0
-				if limit > level.InventorySize {
-					practicalLimit = limit - level.InventorySize
+				if capacity > level.InventorySize {
+					practicalLimit = capacity - level.InventorySize
 				}
-				return fmt.Sprintf("%2d: %v -- %d/%d (%d)", int(class), class, active, practicalLimit, limit)
+				return fmt.Sprintf("%2d: %v -- %d/%d (%d)", int(class), class, active, practicalLimit, capacity)
 			}
-			return fmt.Sprintf("%2d: %v -- %d/%d", int(class), class, active, limit)
+			return fmt.Sprintf("%2d: %v -- %d/%d", int(class), class, active, capacity)
 		}
 		if imgui.BeginCombo("New Object Class", classString(view.model.newObjectTriple.Class)) {
 			for _, class := range object.Classes() {
@@ -369,7 +369,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool,
 		values.RenderUnifiedSliderInt(readOnly, label, unifier,
 			func(u values.Unifier) int { return int(u.Unified().(int32)) },
 			func(value int) string { return "%d" },
-			0, int(lvl.ObjectLimit()),
+			0, lvl.ObjectCapacity(),
 			func(newValue int) {
 				updater(func(oldValue uint32) uint32 { return uint32(newValue) })
 			})

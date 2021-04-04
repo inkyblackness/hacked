@@ -149,31 +149,18 @@ func (lvl *Level) MapGridInfo(pos TilePosition) (TileType, TileSlopeControl, Wal
 	return tile.Type, tile.Flags.SlopeControl(), *lvl.wallHeightsMap.Tile(pos)
 }
 
-// ObjectLimit returns the highest object ID that can be stored in this level.
-func (lvl *Level) ObjectLimit() ObjectID {
-	size := len(lvl.objectMainTable)
-	if size == 0 {
-		return 0
-	}
-	return ObjectID(size - 1)
+// ObjectCapacity returns the number of objects that can be stored in this level.
+func (lvl *Level) ObjectCapacity() int {
+	return lvl.objectMainTable.Capacity()
 }
 
 // ObjectClassStats returns the number of used and total possible entries of given class.
-func (lvl *Level) ObjectClassStats(class object.Class) (active, limit int) {
+func (lvl *Level) ObjectClassStats(class object.Class) (active, capacity int) {
 	if int(class) >= len(lvl.objectClassTables) {
 		return 0, 0
 	}
 	objectClassTable := lvl.objectClassTables[class]
-	size := len(objectClassTable)
-	if size < 2 {
-		return 0, 0
-	}
-	index := int(objectClassTable[0].ObjectID)
-	for index != 0 {
-		active++
-		index = int(objectClassTable[index].Next)
-	}
-	return active, size - 1
+	return objectClassTable.AllocatedCount(), objectClassTable.Capacity()
 }
 
 // ForEachObject iterates over all active objects and calls the given handler.

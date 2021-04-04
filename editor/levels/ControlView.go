@@ -192,17 +192,17 @@ func (view *ControlView) renderSurveillanceObjects(lvl *level.Level, readOnly bo
 	}
 	sources := lvl.SurveillanceSources()
 	surrogates := lvl.SurveillanceSurrogates()
-	limit := lvl.ObjectLimit()
+	capacity := lvl.ObjectCapacity()
 
 	view.renderSliderInt(readOnly, "Surveillance Source", int(sources[view.model.selectedSurveillanceObjectIndex]),
 		func(int) string { return "%d" },
-		0, int(limit),
+		0, capacity,
 		func(newValue int) {
 			view.requestSetSurveillanceSource(lvl, view.model.selectedSurveillanceObjectIndex, level.ObjectID(newValue))
 		})
 	view.renderSliderInt(readOnly, "Surveillance Surrogate", int(surrogates[view.model.selectedSurveillanceObjectIndex]),
 		func(int) string { return "%d" },
-		0, int(limit),
+		0, capacity,
 		func(newValue int) {
 			view.requestSetSurveillanceSurrogate(lvl, view.model.selectedSurveillanceObjectIndex, level.ObjectID(newValue))
 		})
