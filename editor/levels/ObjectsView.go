@@ -262,13 +262,13 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 	}
 	if imgui.TreeNodeV("Extra Properties", imgui.TreeNodeFlagsFramed) {
 		view.renderProperties(lvl, readOnly,
-			func(id level.ObjectID, entry *level.ObjectMainEntry) []byte { return entry.Extra[:] },
+			func(obj *level.ObjectMainEntry) []byte { return obj.Extra[:] },
 			view.extraInterpreterFactory(lvl))
 		imgui.TreePop()
 	}
 	if imgui.TreeNodeV("Class Properties", imgui.TreeNodeFlagsFramed) {
 		view.renderProperties(lvl, readOnly,
-			func(id level.ObjectID, entry *level.ObjectMainEntry) []byte { return lvl.ObjectClassData(id) },
+			func(obj *level.ObjectMainEntry) []byte { return lvl.ObjectClassData(obj) },
 			view.classInterpreterFactory(lvl))
 		view.renderBlockPuzzleControl(lvl, readOnly)
 		imgui.TreePop()
@@ -278,7 +278,7 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 }
 
 func (view *ObjectsView) renderProperties(lvl *level.Level, readOnly bool,
-	dataRetriever func(level.ObjectID, *level.ObjectMainEntry) []byte,
+	dataRetriever func(*level.ObjectMainEntry) []byte,
 	interpreterFactory lvlobj.InterpreterFactory) {
 	propertyUnifier := make(map[string]*values.Unifier)
 	propertyDescribers := make(map[string]func(*interpreters.Simplifier))
@@ -311,7 +311,7 @@ func (view *ObjectsView) renderProperties(lvl *level.Level, readOnly bool,
 	for index, id := range view.levelSelection.CurrentSelectedObjects() {
 		obj := lvl.Object(id)
 		if obj != nil {
-			data := dataRetriever(id, obj)
+			data := dataRetriever(obj)
 			interpreter := interpreterFactory(obj.Triple(), data)
 
 			thisKeys := make(map[string]bool)
@@ -607,7 +607,7 @@ func (view *ObjectsView) renderBlockPuzzleControl(lvl *level.Level, readOnly boo
 		obj := lvl.Object(id)
 		if (obj != nil) && (obj.InUse != 0) {
 			triple := obj.Triple()
-			classData := lvl.ObjectClassData(id)
+			classData := lvl.ObjectClassData(obj)
 			interpreter := view.classInterpreterFactory(lvl)(triple, classData)
 			isBlockPuzzle := interpreter.Refined("Puzzle").Get("Type") == 0x10
 			if isBlockPuzzle {
@@ -617,8 +617,8 @@ func (view *ObjectsView) renderBlockPuzzleControl(lvl *level.Level, readOnly boo
 	}
 	if blockPuzzleData != nil {
 		blockPuzzleDataID := level.ObjectID(blockPuzzleData.Get("StateStoreObjectID"))
-		blockPuzzleDataState := lvl.ObjectClassData(blockPuzzleDataID)
 		dataObj := lvl.Object(blockPuzzleDataID)
+		blockPuzzleDataState := lvl.ObjectClassData(dataObj)
 		expectedTriple := object.TripleFrom(int(object.ClassTrap), 0, 1)
 
 		imgui.Separator()
@@ -707,7 +707,7 @@ func (view *ObjectsView) classInterpreterFactory(lvl *level.Level) lvlobj.Interp
 }
 
 func (view *ObjectsView) requestPropertiesChange(lvl *level.Level,
-	dataRetriever func(level.ObjectID, *level.ObjectMainEntry) []byte,
+	dataRetriever func(*level.ObjectMainEntry) []byte,
 	interpreterFactory lvlobj.InterpreterFactory,
 	key string, modifier func(uint32) uint32) {
 	objectIDs := view.levelSelection.CurrentSelectedObjects()
@@ -717,7 +717,7 @@ func (view *ObjectsView) requestPropertiesChange(lvl *level.Level,
 	for _, id := range objectIDs {
 		obj := lvl.Object(id)
 		if obj != nil {
-			data := dataRetriever(id, obj)
+			data := dataRetriever(obj)
 			interpreter := interpreterFactory(obj.Triple(), data)
 			for subIndex := 0; subIndex < valueIndex; subIndex++ {
 				interpreter = interpreter.Refined(subKeys[subIndex])

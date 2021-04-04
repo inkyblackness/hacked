@@ -321,8 +321,7 @@ func (lvl *Level) Object(id ObjectID) *ObjectMainEntry {
 }
 
 // ObjectClassData returns the raw class data for the given object.
-func (lvl *Level) ObjectClassData(id ObjectID) []byte {
-	obj := lvl.Object(id)
+func (lvl *Level) ObjectClassData(obj *ObjectMainEntry) []byte {
 	if (obj == nil) || (obj.InUse == 0) {
 		return nil
 	}
