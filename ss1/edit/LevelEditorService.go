@@ -2,6 +2,7 @@ package edit
 
 import (
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
+	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
 	"github.com/inkyblackness/hacked/ss1/world"
 )
@@ -62,6 +63,21 @@ func (service *LevelEditorService) ChangeTiles(modifier func(*level.TileMapEntry
 		cmd.Reverse(service.setSelectedTilesTask(positions)),
 		cmd.Reverse(service.levelSelection.SetCurrentLevelIDTask(levelID)),
 	)
+}
+
+// NewObject adds a new object to the level.
+func (service *LevelEditorService) NewObject(triple object.Triple, modifier func(*level.ObjectMainEntry)) error {
+	lvl := service.Level()
+	id, err := lvl.NewObject(triple.Class)
+	if err != nil {
+		return err
+	}
+	obj := lvl.Object(id)
+	obj.Subclass = triple.Subclass
+	obj.Type = triple.Type
+	modifier(obj)
+	lvl.UpdateObjectLocation(id)
+	return service.patchLevelObjects(lvl, service.levelSelection.CurrentSelectedObjects(), []level.ObjectID{id})
 }
 
 // ChangeObjects modifies the basic properties of objects.
