@@ -65,6 +65,30 @@ func DefaultObjectMainTable() ObjectMainTable {
 	return table
 }
 
+// Capacity returns the number of how many objects the table can hold.
+func (table ObjectMainTable) Capacity() int {
+	size := len(table)
+	if size < 2 {
+		return 0
+	}
+	return size - 1
+}
+
+// AllocatedCount returns the number of how many objects are currently allocated in the table.
+func (table ObjectMainTable) AllocatedCount() int {
+	capacity := table.Capacity()
+	if capacity == 0 {
+		return 0
+	}
+	index := int(table[0].CrossReferenceTableIndex)
+	count := 0
+	for (index != 0) && (count < capacity) {
+		count++
+		index = int(table[index].Next)
+	}
+	return count
+}
+
 // Reset wipes the entire table and initializes all links.
 func (table ObjectMainTable) Reset() {
 	tableLen := len(table)

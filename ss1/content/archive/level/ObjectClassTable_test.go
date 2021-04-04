@@ -81,10 +81,16 @@ func TestObjectClassTableAllocate(t *testing.T) {
 		table.Reset()
 		possible := tc - 1
 
+		if possible < 0 {
+			possible = 0
+		}
+		assert.Equal(t, possible, table.Capacity(), "table should have proper capacity")
 		for attempt := 0; attempt < possible; attempt++ {
+			assert.Equal(t, attempt, table.AllocatedCount(), "table should have proper allocation count")
 			index := table.Allocate()
 			assert.NotEqual(t, 0, index, "could not allocate at attempt %d for size %d", attempt, tc)
 		}
+		assert.Equal(t, possible, table.AllocatedCount(), "table should be full")
 		last := table.Allocate()
 		assert.Equal(t, 0, last, "table was not exhausted although it should be")
 	}

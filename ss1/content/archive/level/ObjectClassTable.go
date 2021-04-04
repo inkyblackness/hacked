@@ -88,6 +88,30 @@ func (table ObjectClassTable) Code(coder serial.Coder) {
 	}
 }
 
+// Capacity returns the number of how many objects the table can hold.
+func (table ObjectClassTable) Capacity() int {
+	size := len(table)
+	if size < 2 {
+		return 0
+	}
+	return size - 1
+}
+
+// AllocatedCount returns the number of how many objects are currently allocated in the table.
+func (table ObjectClassTable) AllocatedCount() int {
+	capacity := table.Capacity()
+	if capacity == 0 {
+		return 0
+	}
+	index := int(table[0].ObjectID)
+	count := 0
+	for (index != 0) && (count < capacity) {
+		count++
+		index = int(table[index].Next)
+	}
+	return count
+}
+
 // Allocate attempts to reserve an entry in the table and returns the corresponding index.
 // returns 0 if exhausted.
 func (table ObjectClassTable) Allocate() int {
