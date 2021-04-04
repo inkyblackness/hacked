@@ -108,7 +108,7 @@ func (service *LevelEditorService) PlaceObjectsOnCeiling() error {
 	return service.ChangeObjects(func(obj *level.ObjectMainEntry) { service.placeObject(lvl, obj, atHeight) })
 }
 
-// ChangeObjects modifies the basic properties of objects.
+// ChangeObjects modifies properties of selected objects. The modifier is called for each selected object.
 func (service *LevelEditorService) ChangeObjects(modifier level.ObjectMainEntryModifier) error {
 	objectIDs := service.levelSelection.CurrentSelectedObjects()
 	if len(objectIDs) == 0 {

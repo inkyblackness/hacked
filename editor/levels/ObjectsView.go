@@ -345,7 +345,7 @@ func (view *ObjectsView) renderProperties(lvl *level.Level, readOnly bool,
 			}
 			view.renderPropertyControl(lvl, readOnly, key, *unifier, propertyDescribers[key],
 				func(modifier func(uint32) uint32) {
-					view.requestPropertiesChange(lvl, dataRetriever, interpreterFactory, key, modifier) // nolint: scopelint
+					view.requestPropertiesChange(dataRetriever, interpreterFactory, key, modifier) // nolint: scopelint
 				})
 		}
 	}
@@ -667,7 +667,13 @@ func (view *ObjectsView) renderBlockPuzzleControl(lvl *level.Level, readOnly boo
 							if (clickRow >= 0) && (clickRow < blockHeight) && (clickCol >= 0) && (clickCol < blockWidth) {
 								oldValue := state.CellValue(clickRow, clickCol)
 								state.SetCellValue(clickRow, clickCol, (8+oldValue+1)%8)
-								view.patchLevel(lvl, view.levelSelection.CurrentSelectedObjects())
+
+								// The following seems to do nothing, yet the data is still synchronized.
+								// This appears to be a bad design - maybe find a better way to design the concept
+								// of block puzzle references...
+								view.requestAction("ChangeBlockPuzzle", func() error {
+									return view.editor.ChangeObjects(func(entry *level.ObjectMainEntry) {})
+								})
 							}
 						}
 					} else {
@@ -706,17 +712,14 @@ func (view *ObjectsView) classInterpreterFactory(lvl *level.Level) lvlobj.Interp
 	return interpreterFactory
 }
 
-func (view *ObjectsView) requestPropertiesChange(lvl *level.Level,
-	dataRetriever func(*level.ObjectMainEntry) []byte,
+func (view *ObjectsView) requestPropertiesChange(dataRetriever func(*level.ObjectMainEntry) []byte,
 	interpreterFactory lvlobj.InterpreterFactory,
 	key string, modifier func(uint32) uint32) {
-	objectIDs := view.levelSelection.CurrentSelectedObjects()
 	subKeys := strings.Split(key, ".")
 	valueIndex := len(subKeys) - 1
 
-	for _, id := range objectIDs {
-		obj := lvl.Object(id)
-		if obj != nil {
+	view.requestAction("ChangeProperties", func() error {
+		return view.editor.ChangeObjects(func(obj *level.ObjectMainEntry) {
 			data := dataRetriever(obj)
 			interpreter := interpreterFactory(obj.Triple(), data)
 			for subIndex := 0; subIndex < valueIndex; subIndex++ {
@@ -724,10 +727,8 @@ func (view *ObjectsView) requestPropertiesChange(lvl *level.Level,
 			}
 			subKey := subKeys[valueIndex]
 			interpreter.Set(subKey, modifier(interpreter.Get(subKey)))
-		}
-	}
-
-	view.patchLevel(lvl, objectIDs)
+		})
+	})
 }
 
 // RequestCreateObject requests to create a new object of the currently selected type.
@@ -764,33 +765,9 @@ func (view *ObjectsView) requestAction(name string, nested func() error) {
 	}
 }
 
-func (view *ObjectsView) patchLevel(lvl *level.Level, forwardObjectIDs []level.ObjectID) {
-	oldLevelID := view.levelSelection.CurrentLevelID()
-	reverseObjectIDs := view.levelSelection.CurrentSelectedObjects()
-
-	err := view.registry.Register(cmd.Named("PatchLevel"),
-		cmd.Forward(view.restoreFocusTask()),
-		cmd.Forward(view.levelSelection.SetCurrentLevelIDTask(lvl.ID())),
-		cmd.Reverse(view.setSelectedObjectsTask(reverseObjectIDs)),
-		cmd.Nested(func() error { return view.levels.CommitLevelChanges(lvl.ID()) }),
-		cmd.Forward(view.setSelectedObjectsTask(forwardObjectIDs)),
-		cmd.Reverse(view.levelSelection.SetCurrentLevelIDTask(oldLevelID)),
-		cmd.Reverse(view.restoreFocusTask()))
-	if err != nil {
-		panic(err)
-	}
-}
-
 func (view *ObjectsView) restoreFocusTask() cmd.Task {
 	return func(modder world.Modder) error {
 		view.model.restoreFocus = true
-		return nil
-	}
-}
-
-func (view *ObjectsView) setSelectedObjectsTask(ids []level.ObjectID) cmd.Task {
-	return func(modder world.Modder) error {
-		view.levelSelection.SetCurrentSelectedObjects(ids)
 		return nil
 	}
 }
