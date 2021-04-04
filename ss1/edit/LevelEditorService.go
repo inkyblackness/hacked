@@ -64,6 +64,24 @@ func (service *LevelEditorService) ChangeTiles(modifier func(*level.TileMapEntry
 	)
 }
 
+// ChangeObjects modifies the basic properties of objects.
+func (service *LevelEditorService) ChangeObjects(modifier func(*level.ObjectMainEntry)) error {
+	objectIDs := service.levelSelection.CurrentSelectedObjects()
+	if len(objectIDs) == 0 {
+		return nil
+	}
+	lvl := service.Level()
+	for _, id := range objectIDs {
+		obj := lvl.Object(id)
+		oldPosition := obj.TilePosition()
+		modifier(obj)
+		if oldPosition != obj.TilePosition() {
+			lvl.UpdateObjectLocation(id)
+		}
+	}
+	return service.patchLevelObjects(lvl, objectIDs, objectIDs)
+}
+
 // DeleteObjects deletes all currently selected objects, clearing the selection afterwards.
 func (service *LevelEditorService) DeleteObjects() error {
 	objectIDs := service.levelSelection.CurrentSelectedObjects()
