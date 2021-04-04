@@ -9,7 +9,6 @@ import (
 	"github.com/inkyblackness/hacked/editor/render"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
-	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
 	"github.com/inkyblackness/hacked/ss1/content/text"
 	"github.com/inkyblackness/hacked/ss1/edit"
 	"github.com/inkyblackness/hacked/ss1/edit/undoable/cmd"
@@ -23,7 +22,7 @@ import (
 type ControlView struct {
 	levels         *edit.EditableLevels
 	levelSelection *edit.LevelSelectionService
-	mod            *world.Mod
+	editor         *edit.LevelEditorService
 
 	guiScale float32
 	registry cmd.Registry
@@ -35,18 +34,19 @@ type ControlView struct {
 }
 
 // NewControlView returns a new instance.
-func NewControlView(levels *edit.EditableLevels, levelSelection *edit.LevelSelectionService, mod *world.Mod,
+func NewControlView(levels *edit.EditableLevels, levelSelection *edit.LevelSelectionService, editor *edit.LevelEditorService,
 	guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
 	registry cmd.Registry) *ControlView {
 	view := &ControlView{
 		levels:         levels,
 		levelSelection: levelSelection,
-		mod:            mod,
-		guiScale:       guiScale,
-		registry:       registry,
-		textCache:      textCache,
-		textureCache:   textureCache,
-		model:          freshControlViewModel(),
+		editor:         editor,
+
+		guiScale:     guiScale,
+		registry:     registry,
+		textCache:    textCache,
+		textureCache: textureCache,
+		model:        freshControlViewModel(),
 	}
 	return view
 }
@@ -57,7 +57,7 @@ func (view *ControlView) WindowOpen() *bool {
 }
 
 // Render renders the view.
-func (view *ControlView) Render(lvl *level.Level) {
+func (view *ControlView) Render() {
 	if view.model.restoreFocus {
 		imgui.SetNextWindowFocus()
 		view.model.restoreFocus = false
@@ -66,12 +66,12 @@ func (view *ControlView) Render(lvl *level.Level) {
 	if view.model.windowOpen {
 		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 300 * view.guiScale}, imgui.ConditionFirstUseEver)
 		title := "Level Control"
-		readOnly := !view.editingAllowed(lvl.ID())
+		readOnly := view.editor.IsReadOnly()
 		if readOnly {
 			title += hintReadOnly
 		}
 		if imgui.BeginV(title+"###Level Control", view.WindowOpen(), imgui.WindowFlagsNoCollapse) {
-			view.renderContent(lvl, readOnly)
+			view.renderContent(view.editor.Level(), readOnly)
 		}
 		imgui.End()
 	}
@@ -290,11 +290,6 @@ func (view *ControlView) renderTextureAnimations(lvl *level.Level, readOnly bool
 			imgui.EndCombo()
 		}
 	}
-}
-
-func (view *ControlView) editingAllowed(id int) bool {
-	moddedLevel := len(view.mod.ModifiedBlocks(resource.LangAny, ids.LevelResourcesStart.Plus(lvlids.PerLevel*id+lvlids.FirstUsed))) > 0
-	return moddedLevel
 }
 
 func (view *ControlView) renderSliderInt(readOnly bool, label string, selectedValue int,

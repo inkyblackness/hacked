@@ -237,8 +237,7 @@ func (app *Application) render() {
 	app.updateAutoSave()
 
 	app.archiveView.Render()
-	activeLevel := app.activeLevel()
-	app.levelControlView.Render(activeLevel)
+	app.levelControlView.Render()
 	app.levelTilesView.Render()
 	app.levelObjectsView.Render()
 	app.messagesView.Render()
@@ -251,9 +250,9 @@ func (app *Application) render() {
 	app.objectsView.Render()
 
 	paletteTexture, _ := app.paletteCache.Palette(0)
-	app.mapDisplay.Render(app.mod.ObjectProperties(), activeLevel,
+	app.mapDisplay.Render(app.mod.ObjectProperties(),
 		paletteTexture, app.textureCache.Texture,
-		app.levelTilesView.TextureDisplay(), app.levelTilesView.ColorDisplay(activeLevel))
+		app.levelTilesView.TextureDisplay(), app.levelTilesView.ColorDisplay())
 
 	app.handleFailure()
 	app.aboutView.Render()
@@ -310,10 +309,6 @@ func (app *Application) initGui() (err error) {
 		app.gameTexture)
 
 	return
-}
-
-func (app *Application) activeLevel() *level.Level {
-	return app.levels.Level(app.levelSelection.CurrentLevelID())
 }
 
 func (app *Application) gameTexture(index level.TextureIndex) (*graphics.BitmapTexture, error) {
@@ -632,7 +627,7 @@ func (app *Application) initView() {
 
 	app.projectView = project.NewView(app.projectService, &app.modalState, app.GuiScale, &app.txnBuilder)
 	app.archiveView = archives.NewArchiveView(&app.txnBuilder, app.gameStateService, app.mod, app.textLineCache, app.cp, &app.modalState, app.GuiScale, app)
-	app.levelControlView = levels.NewControlView(app.levels, app.levelSelection, app.mod, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
+	app.levelControlView = levels.NewControlView(app.levels, app.levelSelection, app.levelEditorService, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
 	app.levelTilesView = levels.NewTilesView(app.levelEditorService, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
 	app.levelObjectsView = levels.NewObjectsView(app.gameObjectsService, app.levelEditorService, app.levelSelection, app.gameStateService, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
 	app.messagesView = messages.NewMessagesView(app.mod, app.messagesCache, app.cp, app.movieCache, app.textureCache, &app.modalState, app.clipboard, app.GuiScale, app)

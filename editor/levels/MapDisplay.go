@@ -122,9 +122,10 @@ func NewMapDisplay(levelSelection *edit.LevelSelectionService, editor *edit.Leve
 }
 
 // Render renders the whole map display.
-func (display *MapDisplay) Render(properties object.PropertiesTable, lvl *level.Level,
+func (display *MapDisplay) Render(properties object.PropertiesTable,
 	paletteTexture *graphics.PaletteTexture, textureRetriever func(resource.Key) (*graphics.BitmapTexture, error),
 	textureDisplay TextureDisplay, colorDisplay ColorDisplay) {
+	lvl := display.editor.Level()
 	columns, rows, _ := lvl.Size()
 
 	display.setActiveLevel(lvl)

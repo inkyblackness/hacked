@@ -55,7 +55,8 @@ func (view TilesView) TextureDisplay() TextureDisplay {
 }
 
 // ColorDisplay returns the current setting which colors should be displayed.
-func (view TilesView) ColorDisplay(lvl *level.Level) ColorDisplay {
+func (view TilesView) ColorDisplay() ColorDisplay {
+	lvl := view.editor.Level()
 	if lvl.IsCyberspace() {
 		return view.model.cyberColorDisplay
 	}
