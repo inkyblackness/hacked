@@ -25,11 +25,11 @@ import (
 
 // ObjectsView is for object properties.
 type ObjectsView struct {
+	gameObjects     *edit.GameObjectsService
 	levels          *edit.EditableLevels
 	levelSelection  *edit.LevelSelectionService
 	editor          *edit.LevelEditorService
 	varInfoProvider archive.GameVariableInfoProvider
-	mod             *world.Mod
 	textCache       *text.Cache
 	textureCache    *graphics.TextureCache
 
@@ -40,16 +40,19 @@ type ObjectsView struct {
 }
 
 // NewObjectsView returns a new instance.
-func NewObjectsView(editor *edit.LevelEditorService, levels *edit.EditableLevels, levelSelection *edit.LevelSelectionService,
+func NewObjectsView(gameObjects *edit.GameObjectsService,
+	editor *edit.LevelEditorService,
+	levels *edit.EditableLevels,
+	levelSelection *edit.LevelSelectionService,
 	varInfoProvider archive.GameVariableInfoProvider,
-	mod *world.Mod, guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
+	guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
 	registry cmd.Registry) *ObjectsView {
 	view := &ObjectsView{
+		gameObjects:     gameObjects,
 		levelSelection:  levelSelection,
 		levels:          levels,
 		editor:          editor,
 		varInfoProvider: varInfoProvider,
-		mod:             mod,
 		textCache:       textCache,
 		textureCache:    textureCache,
 
@@ -153,7 +156,7 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 			imgui.EndCombo()
 		}
 		if imgui.BeginCombo("New Object Type", view.tripleName(view.model.newObjectTriple)) {
-			allTypes := view.mod.ObjectProperties().TriplesInClass(view.model.newObjectTriple.Class)
+			allTypes := view.gameObjects.AllProperties().TriplesInClass(view.model.newObjectTriple.Class)
 			for _, triple := range allTypes {
 				if imgui.SelectableV(view.tripleName(triple), triple == view.model.newObjectTriple, 0, imgui.Vec2{}) {
 					view.model.newObjectTriple = triple
@@ -177,7 +180,7 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 	}
 
 	objTypeRenderer := values.ObjectTypeControlRenderer{
-		Meta:      view.mod.ObjectProperties(),
+		Meta:      view.gameObjects.AllProperties(),
 		TextCache: view.textCache,
 	}
 	objTypeRenderer.Render(readOnly, "Object Type", classUnifier, typeUnifier,
@@ -360,7 +363,7 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool,
 	moveTileHeightFormatter := moveTileHeightFormatterFor(levelHeight)
 
 	objTypeRenderer := values.ObjectTypeControlRenderer{
-		Meta:      view.mod.ObjectProperties(),
+		Meta:      view.gameObjects.AllProperties(),
 		TextCache: view.textCache,
 	}
 	simplifier := values.StandardSimplifier(readOnly, fullKey, unifier, updater, objTypeRenderer)
@@ -794,7 +797,7 @@ func (view *ObjectsView) setSelectedObjectsTask(ids []level.ObjectID) cmd.Task {
 
 func (view *ObjectsView) tripleName(triple object.Triple) string {
 	suffix := hintUnknown
-	linearIndex := view.mod.ObjectProperties().TripleIndex(triple)
+	linearIndex := view.gameObjects.AllProperties().TripleIndex(triple)
 	if linearIndex >= 0 {
 		key := resource.KeyOf(ids.ObjectLongNames, resource.LangDefault, linearIndex)
 		objName, err := view.textCache.Text(key)
