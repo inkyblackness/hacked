@@ -255,14 +255,11 @@ func (display *MapDisplay) Render(properties object.PropertiesTable,
 		display.icons.Render(paletteTexture, fineCoordinatesPerTileSide/4, icons)
 	}
 	{
-		selectedObjects := display.levelSelection.CurrentSelectedObjects()
+		selectedObjects := display.editor.Objects()
 		selectedObjectHighlights := make([]MapPosition, 0, len(selectedObjects))
-		for _, entry := range selectedObjects {
-			obj := lvl.Object(entry)
-			if obj != nil {
-				objPos := MapPosition{X: obj.X, Y: obj.Y}
-				selectedObjectHighlights = append(selectedObjectHighlights, objPos)
-			}
+		for _, obj := range selectedObjects {
+			objPos := MapPosition{X: obj.X, Y: obj.Y}
+			selectedObjectHighlights = append(selectedObjectHighlights, objPos)
 		}
 		display.highlighter.Render(selectedObjectHighlights, fineCoordinatesPerTileSide/4, [4]float32{0.0, 0.8, 0.2, 0.5})
 	}
