@@ -23,7 +23,7 @@ func main() {
 	scale := flag.Float64("scale", 1.0, "factor for scaling the UI (0.5 .. 10.0). 1080p displays should use default. 4K most likely 2.0.")
 	fontFile := flag.String("fontfile", "", "Path to font file (.TTF) to use instead of the default font. Useful for HiDPI displays.")
 	fontSize := flag.Float64("fontsize", 0.0, "Size of the font to use. If not specified, a default height will be used.")
-	cpuprofile := flag.String("cpuprofile", "", "write cpu profile to file")
+	cpuProfile := flag.String("cpuprofile", "", "write cpu profile to file")
 	flag.Parse()
 	var app editor.Application
 	app.FontFile = *fontFile
@@ -34,11 +34,10 @@ func main() {
 	} else {
 		app.Version = fmt.Sprintf("(manual build %v)", time.Now().Format("2006-01-02"))
 	}
-	deferrer := make(chan func(), 100)
 
 	configDir, err := configDir()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to determine config dir: %v", err)
+		_, _ = fmt.Fprintf(os.Stderr, "Failed to determine config dir: %v", err)
 		os.Exit(-1)
 	}
 	app.ConfigDir = configDir
@@ -46,28 +45,31 @@ func main() {
 	versionInfo := "InkyBlackness - HackEd - " + app.Version
 	defer crash.Handler(versionInfo)
 
-	profileFin, err := initProfiling(*cpuprofile)
+	profileFin, err := initProfiling(*cpuProfile)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to start CPU profiling: %v\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "Failed to start CPU profiling: %v\n", err)
 	}
 	defer profileFin()
 
-	err = native.Run(app.InitializeWindow, versionInfo, 30.0, deferrer)
+	err = native.Run(app.InitializeWindow, versionInfo, 30.0)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to run application: %v\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "Failed to run application: %v\n", err)
 	}
 }
 
 func initProfiling(filename string) (func(), error) {
-	if filename != "" {
-		f, err := os.Create(filename)
-		if err != nil {
-			return func() {}, err
-		}
-		err = pprof.StartCPUProfile(f)
-		return func() { pprof.StopCPUProfile() }, err
+	if filename == "" {
+		return func() {}, nil
 	}
-	return func() {}, nil
+	f, err := os.Create(filename)
+	if err != nil {
+		return func() {}, err
+	}
+	err = pprof.StartCPUProfile(f)
+	return func() {
+		pprof.StopCPUProfile()
+		_ = f.Close()
+	}, err
 }
 
 func configDir() (string, error) {
