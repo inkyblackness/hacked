@@ -305,10 +305,9 @@ func (app *Application) initGui() (err error) {
 
 	app.initGuiStyle()
 
-	app.mapDisplay = levels.NewMapDisplay(app.levelSelection,
+	app.mapDisplay = levels.NewMapDisplay(app.levelSelection, app.levelEditorService,
 		app.gl, app.GuiScale,
-		app.gameTexture,
-		app)
+		app.gameTexture)
 
 	return
 }
@@ -589,6 +588,9 @@ func (app *Application) initModel() {
 	app.levels = edit.NewEditableLevels(&app.txnBuilder, app.mod)
 	app.levelSelection = edit.NewLevelSelectionService(app.levels)
 
+	app.gameObjectsService = edit.NewGameObjectsService(app.mod)
+	app.levelEditorService = edit.NewLevelEditorService(&app.txnBuilder, app.gameObjectsService, app.levels, app.levelSelection)
+
 	app.paletteCache = graphics.NewPaletteCache(app.gl, app.mod)
 	app.textureCache = graphics.NewTextureCache(app.gl, app.mod)
 	app.frameCache = graphics.NewFrameCache(app.gl)
@@ -628,9 +630,6 @@ func (app *Application) initView() {
 	app.projectService = edit.NewProjectService(&app.txnBuilder, app.mod)
 	app.gameStateService = edit.NewGameStateService(&app.txnBuilder)
 
-	app.gameObjectsService = edit.NewGameObjectsService(app.mod)
-	app.levelEditorService = edit.NewLevelEditorService(&app.txnBuilder, app.gameObjectsService, app.levels, app.levelSelection)
-
 	app.projectView = project.NewView(app.projectService, &app.modalState, app.GuiScale, &app.txnBuilder)
 	app.archiveView = archives.NewArchiveView(&app.txnBuilder, app.gameStateService, app.mod, app.textLineCache, app.cp, &app.modalState, app.GuiScale, app)
 	app.levelControlView = levels.NewControlView(app.levels, app.levelSelection, app.mod, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
@@ -661,11 +660,6 @@ func (app *Application) Queue(command cmd.Command) {
 func (app *Application) onFailure(source string, details string, err error) {
 	app.failurePending = true
 	app.failureMessage = fmt.Sprintf("Source: %v\nDetails: %v\nError: %v", source, details, err)
-}
-
-// CreateNewObjectAt can be used to create a new object at the given position.
-func (app *Application) CreateNewObjectAt(pos levels.MapPosition) {
-	app.levelObjectsView.RequestCreateObject(pos)
 }
 
 func (app *Application) renderMainMenu() {

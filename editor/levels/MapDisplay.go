@@ -48,20 +48,14 @@ func (item objectHoverItem) Size() float32 {
 	return fineCoordinatesPerTileSide / 4
 }
 
-// ObjectCreator assists in creating a new object at a position.
-type ObjectCreator interface {
-	CreateNewObjectAt(pos MapPosition)
-}
-
 // MapDisplay renders a level map.
 type MapDisplay struct {
 	levelSelection *edit.LevelSelectionService
+	editor         *edit.LevelEditorService
 
 	context  render.Context
 	camera   *LimitedCamera
 	guiScale float32
-
-	objectCreator ObjectCreator
 
 	background  *BackgroundGrid
 	textures    *MapTextures
@@ -86,9 +80,9 @@ type MapDisplay struct {
 }
 
 // NewMapDisplay returns a new instance.
-func NewMapDisplay(levelSelection *edit.LevelSelectionService, gl opengl.OpenGL, guiScale float32,
-	textureQuery TextureQuery,
-	objectCreator ObjectCreator) *MapDisplay {
+func NewMapDisplay(levelSelection *edit.LevelSelectionService, editor *edit.LevelEditorService,
+	gl opengl.OpenGL, guiScale float32,
+	textureQuery TextureQuery) *MapDisplay {
 	tilesPerMapSide := float32(64)
 
 	tileBaseLength := float32(fineCoordinatesPerTileSide)
@@ -100,14 +94,14 @@ func NewMapDisplay(levelSelection *edit.LevelSelectionService, gl opengl.OpenGL,
 
 	display := &MapDisplay{
 		levelSelection: levelSelection,
+		editor:         editor,
 		context: render.Context{
 			OpenGL:           gl,
 			ProjectionMatrix: mgl.Ident4(),
 		},
-		camera:        NewLimitedCamera(zoomLevelMin, zoomLevelMax, -tileBaseHalf, camLimit),
-		guiScale:      guiScale,
-		objectCreator: objectCreator,
-		moveCapture:   func(float32, float32) {},
+		camera:      NewLimitedCamera(zoomLevelMin, zoomLevelMax, -tileBaseHalf, camLimit),
+		guiScale:    guiScale,
+		moveCapture: func(float32, float32) {},
 	}
 	display.context.ViewMatrix = display.camera.ViewMatrix()
 	display.background = NewBackgroundGrid(&display.context)
@@ -462,23 +456,41 @@ func (display *MapDisplay) MouseButtonUp(mouseX, mouseY float32, button uint32, 
 		}
 	} else if button == input.MouseSecondary {
 		if display.positionValid {
-			pos := display.position
-			if modifier.Has(input.ModShift) {
-				toGrid := func(value byte) byte {
-					switch {
-					case value < 0x40:
-						return 0x00
-					case value >= 0xC0:
-						return 0xFF
-					default:
-						return 0x80
-					}
-				}
-				pos.X = level.CoordinateAt(pos.X.Tile(), toGrid(pos.X.Fine()))
-				pos.Y = level.CoordinateAt(pos.Y.Tile(), toGrid(pos.Y.Fine()))
-			}
-			display.objectCreator.CreateNewObjectAt(pos)
+			display.requestCreateNewObject(modifier.Has(input.ModShift))
 		}
+	}
+}
+
+func (display *MapDisplay) requestCreateNewObject(snapToGrid bool) {
+	triple := display.editor.NewObjectTriple()
+	if display.editor.IsReadOnly() {
+		return
+	}
+	lvl := display.editor.Level()
+	if !lvl.HasRoomForObjectOf(triple.Class) {
+		return
+	}
+	pos := display.position
+	if snapToGrid {
+		toGrid := func(value byte) byte {
+			switch {
+			case value < 0x40:
+				return 0x00
+			case value >= 0xC0:
+				return 0xFF
+			default:
+				return 0x80
+			}
+		}
+		pos.X = level.CoordinateAt(pos.X.Tile(), toGrid(pos.X.Fine()))
+		pos.Y = level.CoordinateAt(pos.Y.Tile(), toGrid(pos.Y.Fine()))
+	}
+	err := display.editor.CreateNewObject(triple, func(obj *level.ObjectMainEntry) {
+		obj.X = pos.X
+		obj.Y = pos.Y
+	})
+	if err != nil {
+		panic(err)
 	}
 }
 

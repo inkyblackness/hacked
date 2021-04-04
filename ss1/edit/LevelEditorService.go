@@ -14,6 +14,8 @@ type LevelEditorService struct {
 	gameObjects    *GameObjectsService
 	levels         *EditableLevels
 	levelSelection *LevelSelectionService
+
+	newObjectTriple object.Triple
 }
 
 // NewLevelEditorService returns a new instance.
@@ -81,8 +83,18 @@ func (service *LevelEditorService) Objects() []*level.ObjectMainEntry {
 	return objects
 }
 
-// NewObject adds a new object to the level and selects it.
-func (service *LevelEditorService) NewObject(triple object.Triple, modifier level.ObjectMainEntryModifier) error {
+// NewObjectTriple returns the identifier of implicitly created objects.
+func (service *LevelEditorService) NewObjectTriple() object.Triple {
+	return service.newObjectTriple
+}
+
+// SetNewObjectTriple sets the identifier for implicitly created objects.
+func (service *LevelEditorService) SetNewObjectTriple(value object.Triple) {
+	service.newObjectTriple = value
+}
+
+// CreateNewObject adds a new object to the level and selects it.
+func (service *LevelEditorService) CreateNewObject(triple object.Triple, modifier level.ObjectMainEntryModifier) error {
 	lvl := service.Level()
 	id, err := lvl.NewObject(triple.Class)
 	if err != nil {

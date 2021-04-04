@@ -138,19 +138,19 @@ func (view *ObjectsView) renderContent(lvl *level.Level, objects []*level.Object
 			}
 			return fmt.Sprintf("%2d: %v -- %d/%d", int(class), class, active, capacity)
 		}
-		if imgui.BeginCombo("New Object Class", classString(view.model.newObjectTriple.Class)) {
+		if imgui.BeginCombo("New Object Class", classString(view.editor.NewObjectTriple().Class)) {
 			for _, class := range object.Classes() {
-				if imgui.SelectableV(classString(class), class == view.model.newObjectTriple.Class, 0, imgui.Vec2{}) {
-					view.model.newObjectTriple = object.TripleFrom(int(class), 0, 0)
+				if imgui.SelectableV(classString(class), class == view.editor.NewObjectTriple().Class, 0, imgui.Vec2{}) {
+					view.editor.SetNewObjectTriple(object.TripleFrom(int(class), 0, 0))
 				}
 			}
 			imgui.EndCombo()
 		}
-		if imgui.BeginCombo("New Object Type", view.tripleName(view.model.newObjectTriple)) {
-			allTypes := view.gameObjects.AllProperties().TriplesInClass(view.model.newObjectTriple.Class)
+		if imgui.BeginCombo("New Object Type", view.tripleName(view.editor.NewObjectTriple())) {
+			allTypes := view.gameObjects.AllProperties().TriplesInClass(view.editor.NewObjectTriple().Class)
 			for _, triple := range allTypes {
-				if imgui.SelectableV(view.tripleName(triple), triple == view.model.newObjectTriple, 0, imgui.Vec2{}) {
-					view.model.newObjectTriple = triple
+				if imgui.SelectableV(view.tripleName(triple), triple == view.editor.NewObjectTriple(), 0, imgui.Vec2{}) {
+					view.editor.SetNewObjectTriple(triple)
 				}
 			}
 			imgui.EndCombo()
@@ -689,26 +689,6 @@ func (view *ObjectsView) requestPropertiesChange(interpreterRetriever func(*leve
 			interpreter.Set(subKey, modifier(interpreter.Get(subKey)))
 		})
 	})
-}
-
-// RequestCreateObject requests to create a new object of the currently selected type.
-func (view *ObjectsView) RequestCreateObject(pos MapPosition) {
-	if view.editor.IsReadOnly() {
-		return
-	}
-	view.requestCreateObject(view.model.newObjectTriple, pos)
-}
-
-func (view *ObjectsView) requestCreateObject(triple object.Triple, pos MapPosition) {
-	lvl := view.editor.Level()
-	if !lvl.HasRoomForObjectOf(triple.Class) {
-		return
-	}
-	placeObject := func(obj *level.ObjectMainEntry) {
-		obj.X = pos.X
-		obj.Y = pos.Y
-	}
-	view.requestAction("NewObject", func() error { return view.editor.NewObject(triple, placeObject) })
 }
 
 func (view *ObjectsView) requestDeleteObjects() {
