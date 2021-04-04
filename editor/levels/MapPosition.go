@@ -12,3 +12,8 @@ type MapPosition struct {
 func (pos MapPosition) Tile() level.TilePosition {
 	return level.TilePosition{X: pos.X.Tile(), Y: pos.Y.Tile()}
 }
+
+// Fine returns the fine position of the exact position.
+func (pos MapPosition) Fine() level.FinePosition {
+	return level.FinePosition{X: pos.X.Fine(), Y: pos.Y.Fine()}
+}

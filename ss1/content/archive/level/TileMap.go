@@ -33,6 +33,35 @@ func (tile *TileMapEntry) Reset() {
 	tile.SubClip = 0xFF
 }
 
+// FloorTileHeightAt returns the height of the floor (in tile unit) at the given fine position.
+func (tile TileMapEntry) FloorTileHeightAt(pos FinePosition, height HeightShift) float32 {
+	floorHeight, _ := height.ValueFromTileHeight(tile.Floor.AbsoluteHeight())
+	if tile.Flags.SlopeControl() == TileSlopeControlFloorFlat {
+		return floorHeight
+	}
+	slopeHeight, _ := height.ValueFromTileHeight(tile.SlopeHeight)
+	fineHeight := slopeHeight * pos.SlopeFactorFor(tile.Type)
+	return floorHeight + fineHeight
+}
+
+// CeilingTileHeightAt returns the height of the ceiling (in tile unit) at the given fine position.
+func (tile TileMapEntry) CeilingTileHeightAt(pos FinePosition, height HeightShift) float32 {
+	ceilingHeight, _ := height.ValueFromTileHeight(tile.Ceiling.AbsoluteHeight())
+	slopeControl := tile.Flags.SlopeControl()
+	if slopeControl == TileSlopeControlCeilingFlat {
+		return ceilingHeight
+	}
+	slopeHeight, _ := height.ValueFromTileHeight(tile.SlopeHeight)
+	var slopeFactor float32
+	if slopeControl == TileSlopeControlCeilingMirrored {
+		slopeFactor = pos.SlopeFactorFor(tile.Type)
+	} else {
+		slopeFactor = pos.SlopeFactorFor(tile.Type.Info().SlopeInvertedType)
+	}
+	fineHeight := slopeHeight * slopeFactor
+	return ceilingHeight - fineHeight
+}
+
 // TileMap is a rectangular set of tiles.
 // The first index is the Y-axis, the second index the X-axis. This way the map can be serialized quicker.
 type TileMap struct {

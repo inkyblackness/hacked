@@ -761,80 +761,11 @@ func (view *ObjectsView) requestCreateObject(lvl *level.Level, triple object.Tri
 }
 
 func (view *ObjectsView) floorHeightAtFine(tile *level.TileMapEntry, pos MapPosition, height level.HeightShift) float32 {
-	floorHeight, _ := height.ValueFromTileHeight(tile.Floor.AbsoluteHeight())
-	if tile.Flags.SlopeControl() == level.TileSlopeControlFloorFlat {
-		return floorHeight
-	}
-
-	slopeHeight, _ := height.ValueFromTileHeight(tile.SlopeHeight)
-	fineHeight := slopeHeight * view.slopeFactorAtFine(tile.Type, pos)
-	return floorHeight + fineHeight
+	return tile.FloorTileHeightAt(pos.Fine(), height)
 }
 
 func (view *ObjectsView) ceilingHeightAtFine(tile *level.TileMapEntry, pos MapPosition, height level.HeightShift) float32 {
-	ceilingHeight, _ := height.ValueFromTileHeight(tile.Ceiling.AbsoluteHeight())
-	slopeControl := tile.Flags.SlopeControl()
-	if slopeControl == level.TileSlopeControlCeilingFlat {
-		return ceilingHeight
-	}
-
-	slopeHeight, _ := height.ValueFromTileHeight(tile.SlopeHeight)
-	var slopeFactor float32
-	if slopeControl == level.TileSlopeControlCeilingMirrored {
-		slopeFactor = view.slopeFactorAtFine(tile.Type, pos)
-	} else {
-		slopeFactor = view.slopeFactorAtFine(tile.Type.Info().SlopeInvertedType, pos)
-	}
-	fineHeight := slopeHeight * slopeFactor
-	return ceilingHeight - fineHeight
-}
-
-func (view *ObjectsView) slopeFactorAtFine(tileType level.TileType, pos MapPosition) float32 {
-	southToNorth := float32(pos.Y.Fine()) / 255
-	westToEast := float32(pos.X.Fine()) / 255
-	swneDiag := func(northWest, southEast float32) float32 {
-		if pos.X.Fine() < pos.Y.Fine() {
-			return northWest
-		}
-		return southEast
-	}
-	nwseDiag := func(southWest, northEast float32) float32 {
-		if (255 - pos.X.Fine()) < pos.Y.Fine() {
-			return northEast
-		}
-		return southWest
-	}
-
-	switch tileType {
-	case level.TileTypeSlopeSouthToNorth:
-		return southToNorth
-	case level.TileTypeSlopeWestToEast:
-		return westToEast
-	case level.TileTypeSlopeNorthToSouth:
-		return 1 - southToNorth
-	case level.TileTypeSlopeEastToWest:
-		return 1 - westToEast
-
-	case level.TileTypeValleySouthEastToNorthWest:
-		return nwseDiag(1-westToEast, southToNorth)
-	case level.TileTypeValleySouthWestToNorthEast:
-		return swneDiag(southToNorth, westToEast)
-	case level.TileTypeValleyNorthWestToSouthEast:
-		return nwseDiag(1-southToNorth, westToEast)
-	case level.TileTypeValleyNorthEastToSouthWest:
-		return swneDiag(1-westToEast, 1-southToNorth)
-
-	case level.TileTypeRidgeNorthWestToSouthEast:
-		return nwseDiag(westToEast, 1-southToNorth)
-	case level.TileTypeRidgeNorthEastToSouthWest:
-		return swneDiag(1-southToNorth, 1-westToEast)
-	case level.TileTypeRidgeSouthEastToNorthWest:
-		return nwseDiag(southToNorth, 1-westToEast)
-	case level.TileTypeRidgeSouthWestToNorthEast:
-		return swneDiag(westToEast, southToNorth)
-	}
-
-	return 0.0
+	return tile.CeilingTileHeightAt(pos.Fine(), height)
 }
 
 func (view *ObjectsView) requestDeleteObjects() {
