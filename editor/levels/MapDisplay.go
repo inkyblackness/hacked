@@ -34,7 +34,7 @@ func (item tileHoverItem) Pos() MapPosition {
 }
 
 func (item tileHoverItem) Size() float32 {
-	return fineCoordinatesPerTileSide
+	return level.FineCoordinatesPerTileSide
 }
 
 type objectHoverItem struct {
@@ -47,7 +47,7 @@ func (item objectHoverItem) Pos() MapPosition {
 }
 
 func (item objectHoverItem) Size() float32 {
-	return fineCoordinatesPerTileSide / 4
+	return level.FineCoordinatesPerTileSide / 4
 }
 
 // MapDisplay renders a level map.
@@ -88,7 +88,7 @@ func NewMapDisplay(levelSelection *edit.LevelSelectionService, editor *edit.Leve
 	textureQuery TextureQuery) *MapDisplay {
 	tilesPerMapSide := float32(64)
 
-	tileBaseLength := float32(fineCoordinatesPerTileSide)
+	tileBaseLength := float32(level.FineCoordinatesPerTileSide)
 	tileBaseHalf := tileBaseLength / 2.0
 	camLimit := tilesPerMapSide*tileBaseLength - tileBaseHalf
 	zoomShift := guiScale - 1.0
@@ -193,18 +193,18 @@ func (display *MapDisplay) Render(properties object.PropertiesTable,
 		tileMapPositions := make([]MapPosition, 0, len(selectedTiles))
 		for _, pos := range selectedTiles {
 			tileMapPositions = append(tileMapPositions, MapPosition{
-				X: level.CoordinateAt(pos.X, fineCoordinatesPerTileSide/2),
-				Y: level.CoordinateAt(pos.Y, fineCoordinatesPerTileSide/2),
+				X: level.CoordinateAt(pos.X, level.FineCoordinatesPerTileSide/2),
+				Y: level.CoordinateAt(pos.Y, level.FineCoordinatesPerTileSide/2),
 			})
 		}
-		display.highlighter.Render(tileMapPositions, fineCoordinatesPerTileSide, [4]float32{0.0, 0.8, 0.2, 0.5})
+		display.highlighter.Render(tileMapPositions, level.FineCoordinatesPerTileSide, [4]float32{0.0, 0.8, 0.2, 0.5})
 	}
 	{
 		var objects []MapPosition
 		lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMainEntry) {
 			objects = append(objects, MapPosition{X: entry.X, Y: entry.Y})
 		})
-		display.highlighter.Render(objects, fineCoordinatesPerTileSide/4, [4]float32{1.0, 1.0, 1.0, 0.3})
+		display.highlighter.Render(objects, level.FineCoordinatesPerTileSide/4, [4]float32{1.0, 1.0, 1.0, 0.3})
 	}
 	if paletteTexture != nil {
 		tripleOffsets := make(map[object.Triple]int)
@@ -252,7 +252,7 @@ func (display *MapDisplay) Render(properties object.PropertiesTable,
 		if (highlightID != 0) && (highlightIcon.texture != nil) {
 			icons = append(icons, highlightIcon)
 		}
-		display.icons.Render(paletteTexture, fineCoordinatesPerTileSide/4, icons)
+		display.icons.Render(paletteTexture, level.FineCoordinatesPerTileSide/4, icons)
 	}
 	{
 		selectedObjects := display.editor.Objects()
@@ -261,7 +261,7 @@ func (display *MapDisplay) Render(properties object.PropertiesTable,
 			objPos := MapPosition{X: obj.X, Y: obj.Y}
 			selectedObjectHighlights = append(selectedObjectHighlights, objPos)
 		}
-		display.highlighter.Render(selectedObjectHighlights, fineCoordinatesPerTileSide/4, [4]float32{0.0, 0.8, 0.2, 0.5})
+		display.highlighter.Render(selectedObjectHighlights, level.FineCoordinatesPerTileSide/4, [4]float32{0.0, 0.8, 0.2, 0.5})
 	}
 	if display.activeHoverItem != nil {
 		display.highlighter.Render([]MapPosition{display.activeHoverItem.Pos()}, display.activeHoverItem.Size(), [4]float32{0.0, 0.2, 0.8, 0.3})
@@ -284,16 +284,16 @@ func (display *MapDisplay) nearestHoverItems(lvl *level.Level, ref MapPosition) 
 	lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMainEntry) {
 		entryVec := mgl.Vec2{float32(entry.X), float32(entry.Y)}
 		distance := refVec.Sub(entryVec).Len()
-		if distance < fineCoordinatesPerTileSide/4 {
+		if distance < level.FineCoordinatesPerTileSide/4 {
 			items = append(items, objectHoverItem{id: id, pos: MapPosition{X: entry.X, Y: entry.Y}})
 			distances = append(distances, distance)
 		}
 	})
 	items = append(items, tileHoverItem{pos: MapPosition{
-		X: level.CoordinateAt(ref.X.Tile(), fineCoordinatesPerTileSide/2),
-		Y: level.CoordinateAt(ref.Y.Tile(), fineCoordinatesPerTileSide/2),
+		X: level.CoordinateAt(ref.X.Tile(), level.FineCoordinatesPerTileSide/2),
+		Y: level.CoordinateAt(ref.Y.Tile(), level.FineCoordinatesPerTileSide/2),
 	}})
-	distances = append(distances, fineCoordinatesPerTileSide)
+	distances = append(distances, level.FineCoordinatesPerTileSide)
 
 	sort.Slice(items, func(a, b int) bool { return distances[a] < distances[b] })
 
@@ -621,8 +621,8 @@ func (display *MapDisplay) updateMouseWorldPosition(mouseX, mouseY float32) {
 	var worldHeight float32
 	if display.activeLevel != nil {
 		width, height, _ := display.activeLevel.Size()
-		worldWidth = float32(width) * fineCoordinatesPerTileSide
-		worldHeight = float32(height) * fineCoordinatesPerTileSide
+		worldWidth = float32(width) * level.FineCoordinatesPerTileSide
+		worldHeight = float32(height) * level.FineCoordinatesPerTileSide
 	}
 	display.positionValid = (worldX >= 0.0) && (worldX < worldWidth) && (worldY >= 0.0) && (worldY < worldHeight)
 	if display.positionValid {

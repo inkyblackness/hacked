@@ -2,6 +2,7 @@ package levels
 
 import (
 	"github.com/inkyblackness/hacked/editor/render"
+	"github.com/inkyblackness/hacked/ss1/content/archive/level"
 	"github.com/inkyblackness/hacked/ui/opengl"
 )
 
@@ -138,9 +139,9 @@ func (grid *BackgroundGrid) setGridSize(columns, rows int) {
 		vTiles := float32(rows)
 
 		gl.BindBuffer(opengl.ARRAY_BUFFER, grid.vertexPositionBuffer)
-		fineHalf := fineCoordinatesPerTileSide / float32(2.0)
-		hLimit := fineCoordinatesPerTileSide*hTiles + fineHalf
-		vLimit := fineCoordinatesPerTileSide*vTiles + fineHalf
+		fineHalf := level.FineCoordinatesPerTileSide / float32(2.0)
+		hLimit := level.FineCoordinatesPerTileSide*hTiles + fineHalf
+		vLimit := level.FineCoordinatesPerTileSide*vTiles + fineHalf
 		var vertices = []float32{
 			-fineHalf, -fineHalf, 0.0,
 			hLimit, -fineHalf, 0.0,

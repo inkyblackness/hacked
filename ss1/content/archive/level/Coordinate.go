@@ -1,5 +1,8 @@
 package level
 
+// FineCoordinatesPerTileSide is the number of possible positions along an axis within a tile.
+const FineCoordinatesPerTileSide = 256
+
 // Coordinate describes a tile position in one dimension.
 type Coordinate uint16
 

@@ -202,7 +202,7 @@ func (view *ObjectsView) renderContent(lvl *level.Level, objects []*level.Object
 		values.RenderUnifiedSliderInt(readOnly, "Fine X", fineXUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(byte)) },
 			func(value int) string { return "%d" },
-			0, 0xFF,
+			0, level.FineCoordinatesPerTileSide-1,
 			func(newValue int) {
 				view.requestChangeObjects("ChangeBaseFineX", func(entry *level.ObjectMainEntry) { entry.X = level.CoordinateAt(entry.X.Tile(), byte(newValue)) })
 			})
@@ -216,7 +216,7 @@ func (view *ObjectsView) renderContent(lvl *level.Level, objects []*level.Object
 		values.RenderUnifiedSliderInt(readOnly, "Fine Y", fineYUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(byte)) },
 			func(value int) string { return "%d" },
-			0, 0xFF,
+			0, level.FineCoordinatesPerTileSide-1,
 			func(newValue int) {
 				view.requestChangeObjects("ChangeFineY", func(entry *level.ObjectMainEntry) { entry.Y = level.CoordinateAt(entry.Y.Tile(), byte(newValue)) })
 			})

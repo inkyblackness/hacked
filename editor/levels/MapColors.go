@@ -84,9 +84,9 @@ func NewMapColors(context *render.Context) *MapColors {
 	}
 
 	{
-		top := float32(fineCoordinatesPerTileSide)
+		top := float32(level.FineCoordinatesPerTileSide)
 		left := float32(0.0)
-		right := float32(fineCoordinatesPerTileSide)
+		right := float32(level.FineCoordinatesPerTileSide)
 		bottom := float32(0.0)
 
 		vertices := []float32{
@@ -159,7 +159,7 @@ func (renderable *MapColors) Render(columnCount, rowCount int, query ColorQuery)
 				colorTopRight := renderable.lastColorGrid[y+1][x+1]
 
 				modelMatrix := mgl.Ident4().
-					Mul4(mgl.Translate3D((float32(x))*fineCoordinatesPerTileSide, (float32(y))*fineCoordinatesPerTileSide, 0.0))
+					Mul4(mgl.Translate3D((float32(x))*level.FineCoordinatesPerTileSide, (float32(y))*level.FineCoordinatesPerTileSide, 0.0))
 				renderable.modelMatrixUniform.Set(gl, &modelMatrix)
 
 				copy(colors[0:4], colorBottomLeft[:])

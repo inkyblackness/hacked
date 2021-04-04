@@ -213,7 +213,7 @@ func (renderable *MapTextures) Render(columns, rows int, tileTextureQuery TileTe
 		gl.ActiveTexture(opengl.TEXTURE0 + uint32(textureUnit))
 		gl.Uniform1i(renderable.bitmapUniform, textureUnit)
 
-		scaling := mgl.Scale3D(fineCoordinatesPerTileSide, fineCoordinatesPerTileSide, 1.0)
+		scaling := mgl.Scale3D(level.FineCoordinatesPerTileSide, level.FineCoordinatesPerTileSide, 1.0)
 		for y := 0; y < rows; y++ {
 			for x := 0; x < columns; x++ {
 				tileType, textureIndex, textureRotations := tileTextureQuery(level.TilePosition{X: byte(x), Y: byte(y)})
@@ -225,7 +225,7 @@ func (renderable *MapTextures) Render(columns, rows int, tileTextureQuery TileTe
 					continue
 				}
 
-				modelMatrix := mgl.Translate3D(float32(x)*fineCoordinatesPerTileSide, float32(y)*fineCoordinatesPerTileSide, 0.0).
+				modelMatrix := mgl.Translate3D(float32(x)*level.FineCoordinatesPerTileSide, float32(y)*level.FineCoordinatesPerTileSide, 0.0).
 					Mul4(scaling)
 
 				uvMatrix := uvRotations[textureRotations]

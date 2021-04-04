@@ -185,8 +185,8 @@ func (grid *MapGrid) Render(columns, rows int, mapper TileMapper) {
 		for y := 0; y < rows; y++ {
 			for x := 0; x < columns; x++ {
 				modelMatrix = mgl.Ident4().
-					Mul4(mgl.Translate3D((float32(x)+0.5)*fineCoordinatesPerTileSide, (float32(y)+0.5)*fineCoordinatesPerTileSide, 0.0)).
-					Mul4(mgl.Scale3D(fineCoordinatesPerTileSide, fineCoordinatesPerTileSide, 1.0))
+					Mul4(mgl.Translate3D((float32(x)+0.5)*level.FineCoordinatesPerTileSide, (float32(y)+0.5)*level.FineCoordinatesPerTileSide, 0.0)).
+					Mul4(mgl.Scale3D(level.FineCoordinatesPerTileSide, level.FineCoordinatesPerTileSide, 1.0))
 				grid.modelMatrixUniform.Set(gl, &modelMatrix)
 
 				vertices := vertexBuffer[0:0]
