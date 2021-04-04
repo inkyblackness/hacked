@@ -144,8 +144,9 @@ type Application struct {
 
 	mapDisplay *levels.MapDisplay
 
-	levels         *edit.EditableLevels
-	levelSelection *edit.LevelSelectionService
+	levels             *edit.EditableLevels
+	levelSelection     *edit.LevelSelectionService
+	levelEditorService *edit.LevelEditorService
 
 	projectService   *edit.ProjectService
 	gameStateService *edit.GameStateService
@@ -421,11 +422,11 @@ func (app *Application) onChar(char rune) {
 
 	switch char {
 	case 'v':
-		app.levelObjectsView.PlaceSelectedObjectsOnFloor()
+		_ = app.levelEditorService.PlaceObjectsOnFloor()
 	case 'f':
-		app.levelObjectsView.PlaceSelectedObjectsOnEyeLevel()
+		_ = app.levelEditorService.PlaceObjectsOnEyeLevel()
 	case 'r':
-		app.levelObjectsView.PlaceSelectedObjectsOnCeiling()
+		_ = app.levelEditorService.PlaceObjectsOnCeiling()
 	}
 }
 
@@ -627,13 +628,13 @@ func (app *Application) initView() {
 	app.gameStateService = edit.NewGameStateService(&app.txnBuilder)
 
 	gameObjectsService := edit.NewGameObjectsService(app.mod)
-	levelEditorService := edit.NewLevelEditorService(&app.txnBuilder, gameObjectsService, app.levels, app.levelSelection)
+	app.levelEditorService = edit.NewLevelEditorService(&app.txnBuilder, gameObjectsService, app.levels, app.levelSelection)
 
 	app.projectView = project.NewView(app.projectService, &app.modalState, app.GuiScale, &app.txnBuilder)
 	app.archiveView = archives.NewArchiveView(&app.txnBuilder, app.gameStateService, app.mod, app.textLineCache, app.cp, &app.modalState, app.GuiScale, app)
 	app.levelControlView = levels.NewControlView(app.levels, app.levelSelection, app.mod, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
-	app.levelTilesView = levels.NewTilesView(levelEditorService, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
-	app.levelObjectsView = levels.NewObjectsView(levelEditorService, app.levels, app.levelSelection, app.gameStateService, app.mod, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
+	app.levelTilesView = levels.NewTilesView(app.levelEditorService, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
+	app.levelObjectsView = levels.NewObjectsView(app.levelEditorService, app.levels, app.levelSelection, app.gameStateService, app.mod, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
 	app.messagesView = messages.NewMessagesView(app.mod, app.messagesCache, app.cp, app.movieCache, app.textureCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.textsView = texts.NewTextsView(augmentedTextService, &app.modalState, app.clipboard, app.GuiScale)
 	app.bitmapsView = bitmaps.NewBitmapsView(app.mod, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)

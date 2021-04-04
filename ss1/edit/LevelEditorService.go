@@ -87,6 +87,27 @@ func (service *LevelEditorService) NewObject(triple object.Triple, modifier leve
 	return service.patchLevelObjects(lvl, service.levelSelection.CurrentSelectedObjects(), []level.ObjectID{id})
 }
 
+// PlaceObjectsOnFloor puts all selected objects to sit on the floor.
+func (service *LevelEditorService) PlaceObjectsOnFloor() error {
+	lvl := service.Level()
+	atHeight := service.atFloorLevelIn(lvl)
+	return service.ChangeObjects(func(obj *level.ObjectMainEntry) { service.placeObject(lvl, obj, atHeight) })
+}
+
+// PlaceObjectsOnEyeLevel puts all selected objects to be at eye level (approximately).
+func (service *LevelEditorService) PlaceObjectsOnEyeLevel() error {
+	lvl := service.Level()
+	atHeight := service.atEyeLevelIn(lvl)
+	return service.ChangeObjects(func(obj *level.ObjectMainEntry) { service.placeObject(lvl, obj, atHeight) })
+}
+
+// PlaceObjectsOnCeiling puts all selected objects to hang from the ceiling.
+func (service *LevelEditorService) PlaceObjectsOnCeiling() error {
+	lvl := service.Level()
+	atHeight := service.atCeilingLevelIn(lvl)
+	return service.ChangeObjects(func(obj *level.ObjectMainEntry) { service.placeObject(lvl, obj, atHeight) })
+}
+
 // ChangeObjects modifies the basic properties of objects.
 func (service *LevelEditorService) ChangeObjects(modifier level.ObjectMainEntryModifier) error {
 	objectIDs := service.levelSelection.CurrentSelectedObjects()
@@ -166,6 +187,22 @@ func (service *LevelEditorService) atFloorLevelIn(lvl *level.Level) heightCalcul
 	return func(tile *level.TileMapEntry, pos level.FinePosition, objPivot float32) level.HeightUnit {
 		floorHeight := tile.FloorTileHeightAt(pos, height)
 		return height.ValueToObjectHeight(floorHeight + objPivot)
+	}
+}
+
+func (service *LevelEditorService) atEyeLevelIn(lvl *level.Level) heightCalculatorFunc {
+	_, _, height := lvl.Size()
+	return func(tile *level.TileMapEntry, pos level.FinePosition, objPivot float32) level.HeightUnit {
+		floorHeight := tile.FloorTileHeightAt(pos, height)
+		return height.ValueToObjectHeight(floorHeight + 0.75 - objPivot)
+	}
+}
+
+func (service *LevelEditorService) atCeilingLevelIn(lvl *level.Level) heightCalculatorFunc {
+	_, _, height := lvl.Size()
+	return func(tile *level.TileMapEntry, pos level.FinePosition, objPivot float32) level.HeightUnit {
+		floorHeight := tile.CeilingTileHeightAt(pos, height)
+		return height.ValueToObjectHeight(floorHeight - objPivot)
 	}
 }
 
