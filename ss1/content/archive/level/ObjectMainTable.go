@@ -47,6 +47,11 @@ func (entry ObjectMainEntry) TilePosition() TilePosition {
 	return TilePosition{X: entry.X.Tile(), Y: entry.Y.Tile()}
 }
 
+// FinePosition returns the coordinates of the object within the tile.
+func (entry ObjectMainEntry) FinePosition() FinePosition {
+	return FinePosition{X: entry.X.Fine(), Y: entry.Y.Fine()}
+}
+
 // Reset clears the entry and resets all members.
 func (entry *ObjectMainEntry) Reset() {
 	*entry = ObjectMainEntry{}

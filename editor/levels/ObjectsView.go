@@ -749,22 +749,14 @@ func (view *ObjectsView) requestCreateObject(triple object.Triple, pos MapPositi
 		}
 		obj.X = pos.X
 		obj.Y = pos.Y
-		tile := lvl.Tile(pos.Tile())
+		tile := lvl.Tile(obj.TilePosition())
 		if tile != nil {
 			_, _, height := lvl.Size()
-			floorHeight := view.floorHeightAtFine(tile, pos, height)
+			floorHeight := tile.FloorTileHeightAt(obj.FinePosition(), height)
 			obj.Z = height.ValueToObjectHeight(floorHeight + objPivot)
 		}
 	}
 	view.requestAction("NewObject", func() error { return view.editor.NewObject(triple, initObject) })
-}
-
-func (view *ObjectsView) floorHeightAtFine(tile *level.TileMapEntry, pos MapPosition, height level.HeightShift) float32 {
-	return tile.FloorTileHeightAt(pos.Fine(), height)
-}
-
-func (view *ObjectsView) ceilingHeightAtFine(tile *level.TileMapEntry, pos MapPosition, height level.HeightShift) float32 {
-	return tile.CeilingTileHeightAt(pos.Fine(), height)
 }
 
 func (view *ObjectsView) requestDeleteObjects() {
@@ -839,8 +831,8 @@ func (view *ObjectsView) textureName(index int) string {
 func (view *ObjectsView) PlaceSelectedObjectsOnFloor() {
 	lvl := view.editor.Level()
 	_, _, height := lvl.Size()
-	view.placeSelectedObjects(lvl, func(tile *level.TileMapEntry, pos MapPosition, objPivot float32) level.HeightUnit {
-		floorHeight := view.floorHeightAtFine(tile, pos, height)
+	view.placeSelectedObjects(lvl, func(tile *level.TileMapEntry, pos level.FinePosition, objPivot float32) level.HeightUnit {
+		floorHeight := tile.FloorTileHeightAt(pos, height)
 		return height.ValueToObjectHeight(floorHeight + objPivot)
 	})
 }
@@ -849,8 +841,8 @@ func (view *ObjectsView) PlaceSelectedObjectsOnFloor() {
 func (view *ObjectsView) PlaceSelectedObjectsOnEyeLevel() {
 	lvl := view.editor.Level()
 	_, _, height := lvl.Size()
-	view.placeSelectedObjects(lvl, func(tile *level.TileMapEntry, pos MapPosition, objPivot float32) level.HeightUnit {
-		floorHeight := view.floorHeightAtFine(tile, pos, height)
+	view.placeSelectedObjects(lvl, func(tile *level.TileMapEntry, pos level.FinePosition, objPivot float32) level.HeightUnit {
+		floorHeight := tile.FloorTileHeightAt(pos, height)
 		return height.ValueToObjectHeight(floorHeight + 0.75 - objPivot)
 	})
 }
@@ -859,14 +851,14 @@ func (view *ObjectsView) PlaceSelectedObjectsOnEyeLevel() {
 func (view *ObjectsView) PlaceSelectedObjectsOnCeiling() {
 	lvl := view.editor.Level()
 	_, _, height := lvl.Size()
-	view.placeSelectedObjects(lvl, func(tile *level.TileMapEntry, pos MapPosition, objPivot float32) level.HeightUnit {
-		ceilingHeight := view.ceilingHeightAtFine(tile, pos, height)
+	view.placeSelectedObjects(lvl, func(tile *level.TileMapEntry, pos level.FinePosition, objPivot float32) level.HeightUnit {
+		ceilingHeight := tile.CeilingTileHeightAt(pos, height)
 		return height.ValueToObjectHeight(ceilingHeight - objPivot)
 	})
 }
 
 func (view *ObjectsView) placeSelectedObjects(lvl *level.Level,
-	atHeight func(tile *level.TileMapEntry, pos MapPosition, objPivot float32) level.HeightUnit) {
+	atHeight func(tile *level.TileMapEntry, pos level.FinePosition, objPivot float32) level.HeightUnit) {
 	view.requestChangeObjects("ChangeBasePlacement", func(obj *level.ObjectMainEntry) {
 		var objPivot float32
 		prop, err := view.mod.ObjectProperties().ForObject(obj.Triple())
@@ -876,7 +868,7 @@ func (view *ObjectsView) placeSelectedObjects(lvl *level.Level,
 		tilePos := obj.TilePosition()
 		tile := lvl.Tile(tilePos)
 		if tile != nil {
-			obj.Z = atHeight(tile, MapPosition{X: obj.X, Y: obj.Y}, objPivot)
+			obj.Z = atHeight(tile, obj.FinePosition(), objPivot)
 		}
 	})
 }
