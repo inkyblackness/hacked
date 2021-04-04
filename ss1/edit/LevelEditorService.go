@@ -70,6 +70,17 @@ func (service *LevelEditorService) ChangeTiles(modifier func(*level.TileMapEntry
 	)
 }
 
+// Objects returns the list of currently selected objects of the current level.
+func (service *LevelEditorService) Objects() []*level.ObjectMainEntry {
+	lvl := service.Level()
+	ids := service.levelSelection.CurrentSelectedObjects()
+	objects := make([]*level.ObjectMainEntry, len(ids))
+	for i, id := range ids {
+		objects[i] = lvl.Object(id)
+	}
+	return objects
+}
+
 // NewObject adds a new object to the level and selects it.
 func (service *LevelEditorService) NewObject(triple object.Triple, modifier level.ObjectMainEntryModifier) error {
 	lvl := service.Level()

@@ -26,7 +26,6 @@ import (
 // ObjectsView is for object properties.
 type ObjectsView struct {
 	gameObjects     *edit.GameObjectsService
-	levels          *edit.EditableLevels
 	levelSelection  *edit.LevelSelectionService
 	editor          *edit.LevelEditorService
 	varInfoProvider archive.GameVariableInfoProvider
@@ -42,7 +41,6 @@ type ObjectsView struct {
 // NewObjectsView returns a new instance.
 func NewObjectsView(gameObjects *edit.GameObjectsService,
 	editor *edit.LevelEditorService,
-	levels *edit.EditableLevels,
 	levelSelection *edit.LevelSelectionService,
 	varInfoProvider archive.GameVariableInfoProvider,
 	guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
@@ -50,7 +48,6 @@ func NewObjectsView(gameObjects *edit.GameObjectsService,
 	view := &ObjectsView{
 		gameObjects:     gameObjects,
 		levelSelection:  levelSelection,
-		levels:          levels,
 		editor:          editor,
 		varInfoProvider: varInfoProvider,
 		textCache:       textCache,
@@ -78,21 +75,21 @@ func (view *ObjectsView) Render() {
 	}
 	if view.model.windowOpen {
 		lvl := view.editor.Level()
+		objects := view.editor.Objects()
 		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 500 * view.guiScale}, imgui.ConditionFirstUseEver)
-		title := fmt.Sprintf("Level Objects, %d selected", view.levelSelection.NumberOfSelectedObjects())
+		title := fmt.Sprintf("Level Objects, %d selected", len(objects))
 		readOnly := view.editor.IsReadOnly()
 		if readOnly {
 			title += hintReadOnly
 		}
 		if imgui.BeginV(title+"###Level Objects", view.WindowOpen(), imgui.WindowFlagsHorizontalScrollbar|imgui.WindowFlagsAlwaysVerticalScrollbar) {
-			view.renderContent(lvl, readOnly)
+			view.renderContent(lvl, objects, readOnly)
 		}
 		imgui.End()
 	}
 }
 
-func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
-	objectIDUnifier := values.NewUnifier()
+func (view *ObjectsView) renderContent(lvl *level.Level, objects []*level.ObjectMainEntry, readOnly bool) {
 	classUnifier := values.NewUnifier()
 	typeUnifier := values.NewUnifier()
 	zUnifier := values.NewUnifier()
@@ -105,23 +102,18 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 	rotationZUnifier := values.NewUnifier()
 	hitpointsUnifier := values.NewUnifier()
 
-	selectedObjectIDs := view.levelSelection.CurrentSelectedObjects()
-	for _, id := range selectedObjectIDs {
-		obj := lvl.Object(id)
-		if obj != nil {
-			objectIDUnifier.Add(id)
-			classUnifier.Add(object.TripleFrom(int(obj.Class), 0, 0))
-			typeUnifier.Add(obj.Triple())
-			zUnifier.Add(obj.Z)
-			tileXUnifier.Add(obj.X.Tile())
-			fineXUnifier.Add(obj.X.Fine())
-			tileYUnifier.Add(obj.Y.Tile())
-			fineYUnifier.Add(obj.Y.Fine())
-			rotationXUnifier.Add(obj.XRotation)
-			rotationYUnifier.Add(obj.YRotation)
-			rotationZUnifier.Add(obj.ZRotation)
-			hitpointsUnifier.Add(obj.Hitpoints)
-		}
+	for _, obj := range objects {
+		classUnifier.Add(object.TripleFrom(int(obj.Class), 0, 0))
+		typeUnifier.Add(obj.Triple())
+		zUnifier.Add(obj.Z)
+		tileXUnifier.Add(obj.X.Tile())
+		fineXUnifier.Add(obj.X.Fine())
+		tileYUnifier.Add(obj.Y.Tile())
+		fineYUnifier.Add(obj.Y.Fine())
+		rotationXUnifier.Add(obj.XRotation)
+		rotationYUnifier.Add(obj.YRotation)
+		rotationZUnifier.Add(obj.ZRotation)
+		hitpointsUnifier.Add(obj.Hitpoints)
 	}
 
 	imgui.PushItemWidth(-150 * view.guiScale)
@@ -170,10 +162,11 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 		imgui.Separator()
 	}
 
+	selectedIDs := view.levelSelection.CurrentSelectedObjects()
 	switch {
-	case objectIDUnifier.IsUnique():
-		imgui.LabelText("ID", fmt.Sprintf("%3d", int(objectIDUnifier.Unified().(level.ObjectID))))
-	case !objectIDUnifier.IsEmpty():
+	case len(selectedIDs) == 1:
+		imgui.LabelText("ID", fmt.Sprintf("%3d", int(selectedIDs[0])))
+	case len(selectedIDs) > 1:
 		imgui.LabelText("ID", "(multiple)")
 	default:
 		imgui.LabelText("ID", "")
@@ -261,23 +254,23 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 		imgui.TreePop()
 	}
 	if imgui.TreeNodeV("Extra Properties", imgui.TreeNodeFlagsFramed) {
-		view.renderProperties(lvl, readOnly,
+		view.renderProperties(lvl, objects, readOnly,
 			func(obj *level.ObjectMainEntry) []byte { return obj.Extra[:] },
 			view.extraInterpreterFactory(lvl))
 		imgui.TreePop()
 	}
 	if imgui.TreeNodeV("Class Properties", imgui.TreeNodeFlagsFramed) {
-		view.renderProperties(lvl, readOnly,
+		view.renderProperties(lvl, objects, readOnly,
 			func(obj *level.ObjectMainEntry) []byte { return lvl.ObjectClassData(obj) },
 			view.classInterpreterFactory(lvl))
-		view.renderBlockPuzzleControl(lvl, readOnly)
+		view.renderBlockPuzzleControl(lvl, objects, readOnly)
 		imgui.TreePop()
 	}
 
 	imgui.PopItemWidth()
 }
 
-func (view *ObjectsView) renderProperties(lvl *level.Level, readOnly bool,
+func (view *ObjectsView) renderProperties(lvl *level.Level, objects []*level.ObjectMainEntry, readOnly bool,
 	dataRetriever func(*level.ObjectMainEntry) []byte,
 	interpreterFactory lvlobj.InterpreterFactory) {
 	propertyUnifier := make(map[string]*values.Unifier)
@@ -308,24 +301,21 @@ func (view *ObjectsView) renderProperties(lvl *level.Level, readOnly bool,
 		}
 	}
 
-	for index, id := range view.levelSelection.CurrentSelectedObjects() {
-		obj := lvl.Object(id)
-		if obj != nil {
-			data := dataRetriever(obj)
-			interpreter := interpreterFactory(obj.Triple(), data)
+	for index, obj := range objects {
+		data := dataRetriever(obj)
+		interpreter := interpreterFactory(obj.Triple(), data)
 
-			thisKeys := make(map[string]bool)
-			unifyInterpreter("", interpreter, index == 0, thisKeys)
-			{
-				var toRemove []string
-				for previousKey := range propertyUnifier {
-					if !thisKeys[previousKey] {
-						toRemove = append(toRemove, previousKey)
-					}
+		thisKeys := make(map[string]bool)
+		unifyInterpreter("", interpreter, index == 0, thisKeys)
+		{
+			var toRemove []string
+			for previousKey := range propertyUnifier {
+				if !thisKeys[previousKey] {
+					toRemove = append(toRemove, previousKey)
 				}
-				for _, key := range toRemove {
-					delete(propertyUnifier, key)
-				}
+			}
+			for _, key := range toRemove {
+				delete(propertyUnifier, key)
 			}
 		}
 	}
@@ -598,21 +588,17 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool,
 	describer(simplifier)
 }
 
-func (view *ObjectsView) renderBlockPuzzleControl(lvl *level.Level, readOnly bool) {
+func (view *ObjectsView) renderBlockPuzzleControl(lvl *level.Level, objects []*level.ObjectMainEntry, readOnly bool) {
 	var blockPuzzleData *interpreters.Instance
 
-	selectedObjectIDs := view.levelSelection.CurrentSelectedObjects()
-	if len(selectedObjectIDs) == 1 {
-		id := selectedObjectIDs[0]
-		obj := lvl.Object(id)
-		if (obj != nil) && (obj.InUse != 0) {
-			triple := obj.Triple()
-			classData := lvl.ObjectClassData(obj)
-			interpreter := view.classInterpreterFactory(lvl)(triple, classData)
-			isBlockPuzzle := interpreter.Refined("Puzzle").Get("Type") == 0x10
-			if isBlockPuzzle {
-				blockPuzzleData = interpreter.Refined("Puzzle").Refined("Block")
-			}
+	if len(objects) == 1 {
+		obj := objects[0]
+		triple := obj.Triple()
+		classData := lvl.ObjectClassData(obj)
+		interpreter := view.classInterpreterFactory(lvl)(triple, classData)
+		isBlockPuzzle := interpreter.Refined("Puzzle").Get("Type") == 0x10
+		if isBlockPuzzle {
+			blockPuzzleData = interpreter.Refined("Puzzle").Refined("Block")
 		}
 	}
 	if blockPuzzleData != nil {
