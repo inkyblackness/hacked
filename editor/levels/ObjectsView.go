@@ -162,7 +162,7 @@ func (view *ObjectsView) renderContent(lvl *level.Level, readOnly bool) {
 			imgui.EndCombo()
 		}
 		if imgui.Button("Delete Selected") {
-			view.requestDeleteObjects(lvl)
+			view.requestDeleteObjects()
 		}
 		imgui.Separator()
 	}
@@ -847,13 +847,17 @@ func (view *ObjectsView) slopeFactorAtFine(tileType level.TileType, pos MapPosit
 	return 0.0
 }
 
-func (view *ObjectsView) requestDeleteObjects(lvl *level.Level) {
-	objectIDs := view.levelSelection.CurrentSelectedObjects()
-	if len(objectIDs) > 0 {
-		for _, id := range objectIDs {
-			lvl.DelObject(id)
-		}
-		view.patchLevel(lvl, nil)
+func (view *ObjectsView) requestDeleteObjects() {
+	view.requestAction("DeleteObjects", view.editor.DeleteObjects)
+}
+
+func (view *ObjectsView) requestAction(name string, nested func() error) {
+	err := view.registry.Register(cmd.Named(name),
+		cmd.Forward(view.restoreFocusTask()),
+		cmd.Nested(nested),
+		cmd.Reverse(view.restoreFocusTask()))
+	if err != nil {
+		panic(err)
 	}
 }
 

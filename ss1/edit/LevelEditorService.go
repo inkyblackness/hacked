@@ -46,8 +46,11 @@ func (service *LevelEditorService) Tiles() []*level.TileMapEntry {
 
 // ChangeTiles performs a modification on all currently selected tiles and commits these changes to the repository.
 func (service *LevelEditorService) ChangeTiles(modifier func(*level.TileMapEntry)) error {
-	lvl := service.Level()
 	positions := service.levelSelection.CurrentSelectedTiles()
+	if len(positions) == 0 {
+		return nil
+	}
+	lvl := service.Level()
 	for _, pos := range positions {
 		modifier(lvl.Tile(pos))
 	}
@@ -61,9 +64,44 @@ func (service *LevelEditorService) ChangeTiles(modifier func(*level.TileMapEntry
 	)
 }
 
+// DeleteObjects deletes all currently selected objects, clearing the selection afterwards.
+func (service *LevelEditorService) DeleteObjects() error {
+	objectIDs := service.levelSelection.CurrentSelectedObjects()
+	if len(objectIDs) == 0 {
+		return nil
+	}
+	lvl := service.Level()
+	for _, id := range objectIDs {
+		lvl.DelObject(id)
+	}
+	return service.patchLevelObjects(lvl, objectIDs, nil)
+}
+
+func (service *LevelEditorService) patchLevelObjects(
+	lvl *level.Level,
+	reverseObjectIDs []level.ObjectID,
+	forwardObjectIDs []level.ObjectID) error {
+	levelID := lvl.ID()
+
+	return service.registry.Register(cmd.Named("PatchLevelObjects"),
+		cmd.Forward(service.levelSelection.SetCurrentLevelIDTask(levelID)),
+		cmd.Reverse(service.setSelectedObjectsTask(reverseObjectIDs)),
+		cmd.Nested(func() error { return service.levels.CommitLevelChanges(levelID) }),
+		cmd.Forward(service.setSelectedObjectsTask(forwardObjectIDs)),
+		cmd.Reverse(service.levelSelection.SetCurrentLevelIDTask(levelID)),
+	)
+}
+
 func (service *LevelEditorService) setSelectedTilesTask(positions []level.TilePosition) cmd.Task {
 	return func(world.Modder) error {
 		service.levelSelection.SetCurrentSelectedTiles(positions)
+		return nil
+	}
+}
+
+func (service *LevelEditorService) setSelectedObjectsTask(ids []level.ObjectID) cmd.Task {
+	return func(world.Modder) error {
+		service.levelSelection.SetCurrentSelectedObjects(ids)
 		return nil
 	}
 }
