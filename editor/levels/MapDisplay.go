@@ -18,6 +18,8 @@ import (
 	"github.com/inkyblackness/hacked/ui/opengl"
 )
 
+const contextMenuName = "MapContextMenu"
+
 type hoverItem interface {
 	Pos() MapPosition
 	Size() float32
@@ -67,9 +69,10 @@ type MapDisplay struct {
 	moveCapture func(pixelX, pixelY float32)
 	mouseMoved  bool
 
-	positionPopupPos imgui.Vec2
-	positionValid    bool
-	position         MapPosition
+	positionPopupPos     imgui.Vec2
+	positionValid        bool
+	position             MapPosition
+	contextMenuRequested bool
 
 	selectionReference *level.TilePosition
 
@@ -267,6 +270,11 @@ func (display *MapDisplay) Render(properties object.PropertiesTable, lvl *level.
 	}
 
 	display.renderPositionOverlay(lvl)
+	if display.contextMenuRequested {
+		imgui.OpenPopup(contextMenuName)
+		display.contextMenuRequested = false
+	}
+	display.renderContextMenu()
 }
 
 func (display *MapDisplay) nearestHoverItems(lvl *level.Level, ref MapPosition) []hoverItem {
@@ -382,6 +390,27 @@ func (display *MapDisplay) renderPositionOverlay(lvl *level.Level) {
 	}
 }
 
+func (display *MapDisplay) renderContextMenu() {
+	if imgui.BeginPopupV(contextMenuName, imgui.PopupFlagsMouseButtonRight) {
+		if imgui.BeginMenu("New...") {
+			implicitTriple := display.editor.NewObjectTriple()
+			canCreateImplicitClass := display.canCreateObjectOf(implicitTriple.Class)
+			if imgui.MenuItemV("Object", "2ndClick", false, canCreateImplicitClass) {
+				display.requestCreateNewObject(false, implicitTriple)
+			}
+			if imgui.MenuItemV("Object (at grid)", "Shift+2ndClick", false, canCreateImplicitClass) {
+				display.requestCreateNewObject(true, implicitTriple)
+			}
+			imgui.EndMenu()
+		}
+		imgui.Separator()
+		if imgui.MenuItemV("Delete Objects", "", false, !display.editor.IsReadOnly()) {
+			_ = display.editor.DeleteObjects()
+		}
+		imgui.EndPopup()
+	}
+}
+
 // WindowResized must be called to notify of a change in window geometry.
 func (display *MapDisplay) WindowResized(width int, height int) {
 	display.context.ProjectionMatrix = mgl.Ortho2D(0.0, float32(width), float32(height), 0.0)
@@ -455,19 +484,24 @@ func (display *MapDisplay) MouseButtonUp(mouseX, mouseY float32, button uint32, 
 			}
 		}
 	} else if button == input.MouseSecondary {
-		if display.positionValid {
-			display.requestCreateNewObject(modifier.Has(input.ModShift))
+		if modifier.Has(input.ModControl) {
+			display.contextMenuRequested = true
+		} else {
+			display.requestCreateNewObject(modifier.Has(input.ModShift), display.editor.NewObjectTriple())
 		}
 	}
 }
 
-func (display *MapDisplay) requestCreateNewObject(snapToGrid bool) {
-	triple := display.editor.NewObjectTriple()
+func (display *MapDisplay) canCreateObjectOf(class object.Class) bool {
 	if display.editor.IsReadOnly() {
-		return
+		return false
 	}
 	lvl := display.editor.Level()
-	if !lvl.HasRoomForObjectOf(triple.Class) {
+	return lvl.HasRoomForObjectOf(class) && display.positionValid
+}
+
+func (display *MapDisplay) requestCreateNewObject(snapToGrid bool, triple object.Triple) {
+	if !display.canCreateObjectOf(triple.Class) {
 		return
 	}
 	pos := display.position
