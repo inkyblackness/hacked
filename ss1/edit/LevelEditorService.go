@@ -11,14 +11,19 @@ import (
 type LevelEditorService struct {
 	registry cmd.Registry
 
+	gameObjects    *GameObjectsService
 	levels         *EditableLevels
 	levelSelection *LevelSelectionService
 }
 
 // NewLevelEditorService returns a new instance.
-func NewLevelEditorService(registry cmd.Registry, levels *EditableLevels, levelSelection *LevelSelectionService) *LevelEditorService {
+func NewLevelEditorService(registry cmd.Registry,
+	gameObjects *GameObjectsService,
+	levels *EditableLevels,
+	levelSelection *LevelSelectionService) *LevelEditorService {
 	return &LevelEditorService{
 		registry:       registry,
+		gameObjects:    gameObjects,
 		levels:         levels,
 		levelSelection: levelSelection,
 	}
@@ -66,7 +71,7 @@ func (service *LevelEditorService) ChangeTiles(modifier func(*level.TileMapEntry
 }
 
 // NewObject adds a new object to the level and selects it.
-func (service *LevelEditorService) NewObject(triple object.Triple, modifier func(*level.ObjectMainEntry)) error {
+func (service *LevelEditorService) NewObject(triple object.Triple, modifier level.ObjectMainEntryModifier) error {
 	lvl := service.Level()
 	id, err := lvl.NewObject(triple.Class)
 	if err != nil {
@@ -75,13 +80,15 @@ func (service *LevelEditorService) NewObject(triple object.Triple, modifier func
 	obj := lvl.Object(id)
 	obj.Subclass = triple.Subclass
 	obj.Type = triple.Type
+	service.resetHitpointsToDefault(obj)
 	modifier(obj)
+	service.placeObject(lvl, obj, service.atFloorLevelIn(lvl))
 	lvl.UpdateObjectLocation(id)
 	return service.patchLevelObjects(lvl, service.levelSelection.CurrentSelectedObjects(), []level.ObjectID{id})
 }
 
 // ChangeObjects modifies the basic properties of objects.
-func (service *LevelEditorService) ChangeObjects(modifier func(*level.ObjectMainEntry)) error {
+func (service *LevelEditorService) ChangeObjects(modifier level.ObjectMainEntryModifier) error {
 	objectIDs := service.levelSelection.CurrentSelectedObjects()
 	if len(objectIDs) == 0 {
 		return nil
@@ -138,4 +145,34 @@ func (service *LevelEditorService) setSelectedObjectsTask(ids []level.ObjectID) 
 		service.levelSelection.SetCurrentSelectedObjects(ids)
 		return nil
 	}
+}
+
+type heightCalculatorFunc func(tile *level.TileMapEntry, pos level.FinePosition, objPivot float32) level.HeightUnit
+
+func (service *LevelEditorService) placeObject(lvl *level.Level, obj *level.ObjectMainEntry, atHeight heightCalculatorFunc) {
+	var objPivot float32
+	prop, err := service.gameObjects.PropertiesFor(obj.Triple())
+	if err == nil {
+		objPivot = object.Pivot(prop.Common)
+	}
+	tile := lvl.Tile(obj.TilePosition())
+	if tile != nil {
+		obj.Z = atHeight(tile, obj.FinePosition(), objPivot)
+	}
+}
+
+func (service *LevelEditorService) atFloorLevelIn(lvl *level.Level) heightCalculatorFunc {
+	_, _, height := lvl.Size()
+	return func(tile *level.TileMapEntry, pos level.FinePosition, objPivot float32) level.HeightUnit {
+		floorHeight := tile.FloorTileHeightAt(pos, height)
+		return height.ValueToObjectHeight(floorHeight + objPivot)
+	}
+}
+
+func (service *LevelEditorService) resetHitpointsToDefault(obj *level.ObjectMainEntry) {
+	prop, err := service.gameObjects.PropertiesFor(obj.Triple())
+	if err != nil {
+		return
+	}
+	obj.Hitpoints = prop.Common.Hitpoints
 }

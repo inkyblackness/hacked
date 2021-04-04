@@ -626,7 +626,8 @@ func (app *Application) initView() {
 	app.projectService = edit.NewProjectService(&app.txnBuilder, app.mod)
 	app.gameStateService = edit.NewGameStateService(&app.txnBuilder)
 
-	levelEditorService := edit.NewLevelEditorService(&app.txnBuilder, app.levels, app.levelSelection)
+	gameObjectsService := edit.NewGameObjectsService(app.mod)
+	levelEditorService := edit.NewLevelEditorService(&app.txnBuilder, gameObjectsService, app.levels, app.levelSelection)
 
 	app.projectView = project.NewView(app.projectService, &app.modalState, app.GuiScale, &app.txnBuilder)
 	app.archiveView = archives.NewArchiveView(&app.txnBuilder, app.gameStateService, app.mod, app.textLineCache, app.cp, &app.modalState, app.GuiScale, app)

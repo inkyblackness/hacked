@@ -740,23 +740,11 @@ func (view *ObjectsView) requestCreateObject(triple object.Triple, pos MapPositi
 	if !lvl.HasRoomForObjectOf(triple.Class) {
 		return
 	}
-	initObject := func(obj *level.ObjectMainEntry) {
-		var objPivot float32
-		prop, err := view.mod.ObjectProperties().ForObject(triple)
-		if err == nil {
-			obj.Hitpoints = prop.Common.Hitpoints
-			objPivot = object.Pivot(prop.Common)
-		}
+	placeObject := func(obj *level.ObjectMainEntry) {
 		obj.X = pos.X
 		obj.Y = pos.Y
-		tile := lvl.Tile(obj.TilePosition())
-		if tile != nil {
-			_, _, height := lvl.Size()
-			floorHeight := tile.FloorTileHeightAt(obj.FinePosition(), height)
-			obj.Z = height.ValueToObjectHeight(floorHeight + objPivot)
-		}
 	}
-	view.requestAction("NewObject", func() error { return view.editor.NewObject(triple, initObject) })
+	view.requestAction("NewObject", func() error { return view.editor.NewObject(triple, placeObject) })
 }
 
 func (view *ObjectsView) requestDeleteObjects() {

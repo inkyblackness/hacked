@@ -9,6 +9,9 @@ const (
 	defaultObjectMainEntryCount = 872
 )
 
+// ObjectMainEntryModifier is a function that changes properties.
+type ObjectMainEntryModifier func(*ObjectMainEntry)
+
 // ObjectMainEntry describes an object in the level.
 type ObjectMainEntry struct {
 	InUse byte
