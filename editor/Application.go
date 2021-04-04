@@ -238,7 +238,7 @@ func (app *Application) render() {
 	activeLevel := app.activeLevel()
 	app.levelControlView.Render(activeLevel)
 	app.levelTilesView.Render()
-	app.levelObjectsView.Render(activeLevel)
+	app.levelObjectsView.Render()
 	app.messagesView.Render()
 	app.textsView.Render()
 	app.bitmapsView.Render()
@@ -419,14 +419,13 @@ func (app *Application) onChar(char rune) {
 		return
 	}
 
-	activeLevel := app.activeLevel()
 	switch char {
 	case 'v':
-		app.levelObjectsView.PlaceSelectedObjectsOnFloor(activeLevel)
+		app.levelObjectsView.PlaceSelectedObjectsOnFloor()
 	case 'f':
-		app.levelObjectsView.PlaceSelectedObjectsOnEyeLevel(activeLevel)
+		app.levelObjectsView.PlaceSelectedObjectsOnEyeLevel()
 	case 'r':
-		app.levelObjectsView.PlaceSelectedObjectsOnCeiling(activeLevel)
+		app.levelObjectsView.PlaceSelectedObjectsOnCeiling()
 	}
 }
 
@@ -633,7 +632,7 @@ func (app *Application) initView() {
 	app.archiveView = archives.NewArchiveView(&app.txnBuilder, app.gameStateService, app.mod, app.textLineCache, app.cp, &app.modalState, app.GuiScale, app)
 	app.levelControlView = levels.NewControlView(app.levels, app.levelSelection, app.mod, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
 	app.levelTilesView = levels.NewTilesView(levelEditorService, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
-	app.levelObjectsView = levels.NewObjectsView(app.levels, app.levelSelection, app.gameStateService, app.mod, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
+	app.levelObjectsView = levels.NewObjectsView(levelEditorService, app.levels, app.levelSelection, app.gameStateService, app.mod, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
 	app.messagesView = messages.NewMessagesView(app.mod, app.messagesCache, app.cp, app.movieCache, app.textureCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.textsView = texts.NewTextsView(augmentedTextService, &app.modalState, app.clipboard, app.GuiScale)
 	app.bitmapsView = bitmaps.NewBitmapsView(app.mod, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)
@@ -663,7 +662,7 @@ func (app *Application) onFailure(source string, details string, err error) {
 
 // CreateNewObjectAt can be used to create a new object at the given position.
 func (app *Application) CreateNewObjectAt(pos levels.MapPosition) {
-	app.levelObjectsView.RequestCreateObject(app.activeLevel(), pos)
+	app.levelObjectsView.RequestCreateObject(pos)
 }
 
 func (app *Application) renderMainMenu() {

@@ -11,7 +11,6 @@ import (
 	"github.com/inkyblackness/hacked/editor/values"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
-	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlobj"
 	"github.com/inkyblackness/hacked/ss1/content/interpreters"
 	"github.com/inkyblackness/hacked/ss1/content/numbers"
@@ -28,6 +27,7 @@ import (
 type ObjectsView struct {
 	levels          *edit.EditableLevels
 	levelSelection  *edit.LevelSelectionService
+	editor          *edit.LevelEditorService
 	varInfoProvider archive.GameVariableInfoProvider
 	mod             *world.Mod
 	textCache       *text.Cache
@@ -40,13 +40,14 @@ type ObjectsView struct {
 }
 
 // NewObjectsView returns a new instance.
-func NewObjectsView(levels *edit.EditableLevels, levelSelection *edit.LevelSelectionService,
+func NewObjectsView(editor *edit.LevelEditorService, levels *edit.EditableLevels, levelSelection *edit.LevelSelectionService,
 	varInfoProvider archive.GameVariableInfoProvider,
 	mod *world.Mod, guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
 	registry cmd.Registry) *ObjectsView {
 	view := &ObjectsView{
 		levelSelection:  levelSelection,
 		levels:          levels,
+		editor:          editor,
 		varInfoProvider: varInfoProvider,
 		mod:             mod,
 		textCache:       textCache,
@@ -66,16 +67,17 @@ func (view *ObjectsView) WindowOpen() *bool {
 }
 
 // Render renders the view.
-func (view *ObjectsView) Render(lvl *level.Level) {
+func (view *ObjectsView) Render() {
 	if view.model.restoreFocus {
 		imgui.SetNextWindowFocus()
 		view.model.restoreFocus = false
 		view.model.windowOpen = true
 	}
 	if view.model.windowOpen {
+		lvl := view.editor.Level()
 		imgui.SetNextWindowSizeV(imgui.Vec2{X: 400 * view.guiScale, Y: 500 * view.guiScale}, imgui.ConditionFirstUseEver)
 		title := fmt.Sprintf("Level Objects, %d selected", view.levelSelection.NumberOfSelectedObjects())
-		readOnly := !view.editingAllowed(lvl.ID())
+		readOnly := view.editor.IsReadOnly()
 		if readOnly {
 			title += hintReadOnly
 		}
@@ -679,11 +681,6 @@ func (view *ObjectsView) renderBlockPuzzleControl(lvl *level.Level, readOnly boo
 	}
 }
 
-func (view *ObjectsView) editingAllowed(id int) bool {
-	moddedLevel := len(view.mod.ModifiedBlocks(resource.LangAny, ids.LevelResourcesStart.Plus(lvlids.PerLevel*id+lvlids.FirstUsed))) > 0
-	return moddedLevel
-}
-
 func (view *ObjectsView) requestBaseChange(lvl *level.Level, modifier func(*level.ObjectMainEntry)) {
 	objectIDs := view.levelSelection.CurrentSelectedObjects()
 	for _, id := range objectIDs {
@@ -741,9 +738,9 @@ func (view *ObjectsView) requestPropertiesChange(lvl *level.Level,
 }
 
 // RequestCreateObject requests to create a new object of the currently selected type.
-func (view *ObjectsView) RequestCreateObject(lvl *level.Level, pos MapPosition) {
-	if view.editingAllowed(lvl.ID()) {
-		view.requestCreateObject(lvl, view.model.newObjectTriple, pos)
+func (view *ObjectsView) RequestCreateObject(pos MapPosition) {
+	if !view.editor.IsReadOnly() {
+		view.requestCreateObject(view.editor.Level(), view.model.newObjectTriple, pos)
 	}
 }
 
@@ -915,7 +912,8 @@ func (view *ObjectsView) textureName(index int) string {
 }
 
 // PlaceSelectedObjectsOnFloor puts all selected objects to sit on the floor.
-func (view *ObjectsView) PlaceSelectedObjectsOnFloor(lvl *level.Level) {
+func (view *ObjectsView) PlaceSelectedObjectsOnFloor() {
+	lvl := view.editor.Level()
 	_, _, height := lvl.Size()
 	view.placeSelectedObjects(lvl, func(tile *level.TileMapEntry, pos MapPosition, objPivot float32) level.HeightUnit {
 		floorHeight := view.floorHeightAtFine(tile, pos, height)
@@ -924,7 +922,8 @@ func (view *ObjectsView) PlaceSelectedObjectsOnFloor(lvl *level.Level) {
 }
 
 // PlaceSelectedObjectsOnEyeLevel puts all selected objects to be at eye level (approximately).
-func (view *ObjectsView) PlaceSelectedObjectsOnEyeLevel(lvl *level.Level) {
+func (view *ObjectsView) PlaceSelectedObjectsOnEyeLevel() {
+	lvl := view.editor.Level()
 	_, _, height := lvl.Size()
 	view.placeSelectedObjects(lvl, func(tile *level.TileMapEntry, pos MapPosition, objPivot float32) level.HeightUnit {
 		floorHeight := view.floorHeightAtFine(tile, pos, height)
@@ -933,7 +932,8 @@ func (view *ObjectsView) PlaceSelectedObjectsOnEyeLevel(lvl *level.Level) {
 }
 
 // PlaceSelectedObjectsOnCeiling puts all selected objects to hang from the ceiling.
-func (view *ObjectsView) PlaceSelectedObjectsOnCeiling(lvl *level.Level) {
+func (view *ObjectsView) PlaceSelectedObjectsOnCeiling() {
+	lvl := view.editor.Level()
 	_, _, height := lvl.Size()
 	view.placeSelectedObjects(lvl, func(tile *level.TileMapEntry, pos MapPosition, objPivot float32) level.HeightUnit {
 		ceilingHeight := view.ceilingHeightAtFine(tile, pos, height)
