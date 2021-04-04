@@ -11,7 +11,6 @@ import (
 	"github.com/inkyblackness/hacked/editor/values"
 	"github.com/inkyblackness/hacked/ss1/content/archive"
 	"github.com/inkyblackness/hacked/ss1/content/archive/level"
-	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlobj"
 	"github.com/inkyblackness/hacked/ss1/content/interpreters"
 	"github.com/inkyblackness/hacked/ss1/content/numbers"
 	"github.com/inkyblackness/hacked/ss1/content/object"
@@ -255,14 +254,12 @@ func (view *ObjectsView) renderContent(lvl *level.Level, objects []*level.Object
 	}
 	if imgui.TreeNodeV("Extra Properties", imgui.TreeNodeFlagsFramed) {
 		view.renderProperties(lvl, objects, readOnly,
-			func(obj *level.ObjectMainEntry) []byte { return obj.Extra[:] },
-			view.extraInterpreterFactory(lvl))
+			func(obj *level.ObjectMainEntry) *interpreters.Instance { return lvl.ObjectExtraData(obj) })
 		imgui.TreePop()
 	}
 	if imgui.TreeNodeV("Class Properties", imgui.TreeNodeFlagsFramed) {
 		view.renderProperties(lvl, objects, readOnly,
-			func(obj *level.ObjectMainEntry) []byte { return lvl.ObjectClassData(obj) },
-			view.classInterpreterFactory(lvl))
+			func(obj *level.ObjectMainEntry) *interpreters.Instance { return lvl.ObjectClassData(obj) })
 		view.renderBlockPuzzleControl(lvl, objects, readOnly)
 		imgui.TreePop()
 	}
@@ -271,8 +268,7 @@ func (view *ObjectsView) renderContent(lvl *level.Level, objects []*level.Object
 }
 
 func (view *ObjectsView) renderProperties(lvl *level.Level, objects []*level.ObjectMainEntry, readOnly bool,
-	dataRetriever func(*level.ObjectMainEntry) []byte,
-	interpreterFactory lvlobj.InterpreterFactory) {
+	interpreterRetriever func(*level.ObjectMainEntry) *interpreters.Instance) {
 	propertyUnifier := make(map[string]*values.Unifier)
 	propertyDescribers := make(map[string]func(*interpreters.Simplifier))
 	var propertyOrder []string
@@ -302,8 +298,7 @@ func (view *ObjectsView) renderProperties(lvl *level.Level, objects []*level.Obj
 	}
 
 	for index, obj := range objects {
-		data := dataRetriever(obj)
-		interpreter := interpreterFactory(obj.Triple(), data)
+		interpreter := interpreterRetriever(obj)
 
 		thisKeys := make(map[string]bool)
 		unifyInterpreter("", interpreter, index == 0, thisKeys)
@@ -335,7 +330,7 @@ func (view *ObjectsView) renderProperties(lvl *level.Level, objects []*level.Obj
 			}
 			view.renderPropertyControl(lvl, readOnly, key, *unifier, propertyDescribers[key],
 				func(modifier func(uint32) uint32) {
-					view.requestPropertiesChange(dataRetriever, interpreterFactory, key, modifier) // nolint: scopelint
+					view.requestPropertiesChange(interpreterRetriever, key, modifier) // nolint: scopelint
 				})
 		}
 	}
@@ -592,10 +587,7 @@ func (view *ObjectsView) renderBlockPuzzleControl(lvl *level.Level, objects []*l
 	var blockPuzzleData *interpreters.Instance
 
 	if len(objects) == 1 {
-		obj := objects[0]
-		triple := obj.Triple()
-		classData := lvl.ObjectClassData(obj)
-		interpreter := view.classInterpreterFactory(lvl)(triple, classData)
+		interpreter := lvl.ObjectClassData(objects[0])
 		isBlockPuzzle := interpreter.Refined("Puzzle").Get("Type") == 0x10
 		if isBlockPuzzle {
 			blockPuzzleData = interpreter.Refined("Puzzle").Refined("Block")
@@ -604,7 +596,7 @@ func (view *ObjectsView) renderBlockPuzzleControl(lvl *level.Level, objects []*l
 	if blockPuzzleData != nil {
 		blockPuzzleDataID := level.ObjectID(blockPuzzleData.Get("StateStoreObjectID"))
 		dataObj := lvl.Object(blockPuzzleDataID)
-		blockPuzzleDataState := lvl.ObjectClassData(dataObj)
+		blockPuzzleDataState := lvl.ObjectClassData(dataObj).Raw()
 		expectedTriple := object.TripleFrom(int(object.ClassTrap), 0, 1)
 
 		imgui.Separator()
@@ -682,32 +674,14 @@ func (view *ObjectsView) requestChangeObjects(name string, modifier func(*level.
 	})
 }
 
-func (view *ObjectsView) extraInterpreterFactory(lvl *level.Level) lvlobj.InterpreterFactory {
-	interpreterFactory := lvlobj.RealWorldExtra
-	if lvl.IsCyberspace() {
-		interpreterFactory = lvlobj.CyberspaceExtra
-	}
-	return interpreterFactory
-}
-
-func (view *ObjectsView) classInterpreterFactory(lvl *level.Level) lvlobj.InterpreterFactory {
-	interpreterFactory := lvlobj.ForRealWorld
-	if lvl.IsCyberspace() {
-		interpreterFactory = lvlobj.ForCyberspace
-	}
-	return interpreterFactory
-}
-
-func (view *ObjectsView) requestPropertiesChange(dataRetriever func(*level.ObjectMainEntry) []byte,
-	interpreterFactory lvlobj.InterpreterFactory,
+func (view *ObjectsView) requestPropertiesChange(interpreterRetriever func(*level.ObjectMainEntry) *interpreters.Instance,
 	key string, modifier func(uint32) uint32) {
 	subKeys := strings.Split(key, ".")
 	valueIndex := len(subKeys) - 1
 
 	view.requestAction("ChangeProperties", func() error {
 		return view.editor.ChangeObjects(func(obj *level.ObjectMainEntry) {
-			data := dataRetriever(obj)
-			interpreter := interpreterFactory(obj.Triple(), data)
+			interpreter := interpreterRetriever(obj)
 			for subIndex := 0; subIndex < valueIndex; subIndex++ {
 				interpreter = interpreter.Refined(subKeys[subIndex])
 			}

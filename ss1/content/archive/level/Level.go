@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 
 	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlids"
+	"github.com/inkyblackness/hacked/ss1/content/archive/level/lvlobj"
+	"github.com/inkyblackness/hacked/ss1/content/interpreters"
 	"github.com/inkyblackness/hacked/ss1/content/object"
 	"github.com/inkyblackness/hacked/ss1/resource"
 	"github.com/inkyblackness/hacked/ss1/serial"
@@ -321,18 +323,35 @@ func (lvl *Level) Object(id ObjectID) *ObjectMainEntry {
 }
 
 // ObjectClassData returns the raw class data for the given object.
-func (lvl *Level) ObjectClassData(obj *ObjectMainEntry) []byte {
+func (lvl *Level) ObjectClassData(obj *ObjectMainEntry) *interpreters.Instance {
 	if (obj == nil) || (obj.InUse == 0) {
-		return nil
+		return interpreters.New().For(nil)
 	}
 	if int(obj.Class) >= len(lvl.objectClassTables) {
-		return nil
+		return interpreters.New().For(nil)
 	}
 	classTable := lvl.objectClassTables[obj.Class]
 	if (obj.ClassTableIndex < 1) || (int(obj.ClassTableIndex) >= len(classTable)) {
-		return nil
+		return interpreters.New().For(nil)
 	}
-	return classTable[obj.ClassTableIndex].Data
+
+	interpreterFactory := lvlobj.ForRealWorld
+	if lvl.IsCyberspace() {
+		interpreterFactory = lvlobj.ForCyberspace
+	}
+	return interpreterFactory(obj.Triple(), classTable[obj.ClassTableIndex].Data)
+}
+
+// ObjectClassData returns the raw extra data for the given object.
+func (lvl *Level) ObjectExtraData(obj *ObjectMainEntry) *interpreters.Instance {
+	if (obj == nil) || (obj.InUse == 0) {
+		return interpreters.New().For(nil)
+	}
+	interpreterFactory := lvlobj.RealWorldExtra
+	if lvl.IsCyberspace() {
+		interpreterFactory = lvlobj.CyberspaceExtra
+	}
+	return interpreterFactory(obj.Triple(), obj.Extra[:])
 }
 
 // EncodeState returns a subset of encoded level data, which only includes
