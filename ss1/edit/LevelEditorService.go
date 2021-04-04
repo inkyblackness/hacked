@@ -65,7 +65,7 @@ func (service *LevelEditorService) ChangeTiles(modifier func(*level.TileMapEntry
 	)
 }
 
-// NewObject adds a new object to the level.
+// NewObject adds a new object to the level and selects it.
 func (service *LevelEditorService) NewObject(triple object.Triple, modifier func(*level.ObjectMainEntry)) error {
 	lvl := service.Level()
 	id, err := lvl.NewObject(triple.Class)

@@ -729,35 +729,34 @@ func (view *ObjectsView) requestPropertiesChange(lvl *level.Level,
 
 // RequestCreateObject requests to create a new object of the currently selected type.
 func (view *ObjectsView) RequestCreateObject(pos MapPosition) {
-	if !view.editor.IsReadOnly() {
-		view.requestCreateObject(view.editor.Level(), view.model.newObjectTriple, pos)
-	}
-}
-
-func (view *ObjectsView) requestCreateObject(lvl *level.Level, triple object.Triple, pos MapPosition) {
-	id, err := lvl.NewObject(triple.Class)
-	if err != nil {
+	if view.editor.IsReadOnly() {
 		return
 	}
-	var objPivot float32
-	obj := lvl.Object(id)
-	prop, err := view.mod.ObjectProperties().ForObject(triple)
-	if err == nil {
-		obj.Hitpoints = prop.Common.Hitpoints
-		objPivot = object.Pivot(prop.Common)
+	view.requestCreateObject(view.model.newObjectTriple, pos)
+}
+
+func (view *ObjectsView) requestCreateObject(triple object.Triple, pos MapPosition) {
+	lvl := view.editor.Level()
+	if !lvl.HasRoomForObjectOf(triple.Class) {
+		return
 	}
-	obj.X = pos.X
-	obj.Y = pos.Y
-	tile := lvl.Tile(pos.Tile())
-	if tile != nil {
-		_, _, height := lvl.Size()
-		floorHeight := view.floorHeightAtFine(tile, pos, height)
-		obj.Z = height.ValueToObjectHeight(floorHeight + objPivot)
+	initObject := func(obj *level.ObjectMainEntry) {
+		var objPivot float32
+		prop, err := view.mod.ObjectProperties().ForObject(triple)
+		if err == nil {
+			obj.Hitpoints = prop.Common.Hitpoints
+			objPivot = object.Pivot(prop.Common)
+		}
+		obj.X = pos.X
+		obj.Y = pos.Y
+		tile := lvl.Tile(pos.Tile())
+		if tile != nil {
+			_, _, height := lvl.Size()
+			floorHeight := view.floorHeightAtFine(tile, pos, height)
+			obj.Z = height.ValueToObjectHeight(floorHeight + objPivot)
+		}
 	}
-	obj.Subclass = triple.Subclass
-	obj.Type = triple.Type
-	lvl.UpdateObjectLocation(id)
-	view.patchLevel(lvl, []level.ObjectID{id})
+	view.requestAction("NewObject", func() error { return view.editor.NewObject(triple, initObject) })
 }
 
 func (view *ObjectsView) floorHeightAtFine(tile *level.TileMapEntry, pos MapPosition, height level.HeightShift) float32 {

@@ -176,6 +176,14 @@ func (lvl *Level) ForEachObject(handler func(ObjectID, ObjectMainEntry)) {
 	}
 }
 
+// HasRoomForObject returns true if the level can hold one object of given class.
+func (lvl *Level) HasRoomForObjectOf(class object.Class) bool {
+	classActive, classCapacity := lvl.ObjectClassStats(class)
+	levelActive := lvl.objectMainTable.AllocatedCount()
+	levelCapacity := lvl.objectMainTable.Capacity()
+	return (levelActive < levelCapacity) && (classActive < classCapacity)
+}
+
 // NewObject attempts to allocate a new object for given class.
 // The created object has no place in the world and must be placed.
 // Returns 0 and an error if not possible.
