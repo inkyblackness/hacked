@@ -268,10 +268,6 @@ func (display *MapDisplay) Render(properties object.PropertiesTable,
 	}
 
 	display.renderPositionOverlay(lvl)
-	if display.contextMenuRequested {
-		imgui.OpenPopup(contextMenuName)
-		display.contextMenuRequested = false
-	}
 	display.renderContextMenu()
 }
 
@@ -389,6 +385,10 @@ func (display *MapDisplay) renderPositionOverlay(lvl *level.Level) {
 }
 
 func (display *MapDisplay) renderContextMenu() {
+	if display.contextMenuRequested {
+		imgui.OpenPopup(contextMenuName)
+		display.contextMenuRequested = false
+	}
 	if imgui.BeginPopupV(contextMenuName, imgui.PopupFlagsMouseButtonRight) {
 		if imgui.BeginMenu("New...") {
 			implicitTriple := display.editor.NewObjectTriple()
