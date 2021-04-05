@@ -234,14 +234,17 @@ func (grid *MapGrid) Render(columns, rows int, mapper TileMapper) {
 
 		for y := 0; y < rows; y++ {
 			for x := 0; x < columns; x++ {
+				tileType, slopeControl, wallHeights := mapper.MapGridInfo(level.TilePosition{X: byte(x), Y: byte(y)})
+				if tileType == level.TileTypeSolid {
+					continue
+				}
+
 				modelMatrix = mgl.Ident4().
 					Mul4(mgl.Translate3D((float32(x)+0.5)*level.FineCoordinatesPerTileSide, (float32(y)+0.5)*level.FineCoordinatesPerTileSide, 0.0)).
 					Mul4(mgl.Scale3D(level.FineCoordinatesPerTileSide, level.FineCoordinatesPerTileSide, 1.0))
 				grid.modelMatrixUniform.Set(gl, &modelMatrix)
 				var alphaMatrix mgl.Mat4
 				alphaMatrix[15] = 1.0 // for tick marks
-
-				tileType, slopeControl, wallHeights := mapper.MapGridInfo(level.TilePosition{X: byte(x), Y: byte(y)})
 
 				gl.EnableVertexAttribArray(uint32(grid.vertexPositionAttrib))
 				gl.BindBuffer(opengl.ARRAY_BUFFER, grid.vertexPositionBuffer)
