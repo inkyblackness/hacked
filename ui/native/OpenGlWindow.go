@@ -33,42 +33,48 @@ type OpenGLWindow struct {
 
 // NewOpenGLWindow tries to initialize the OpenGL environment and returns a
 // new window instance.
-func NewOpenGLWindow(title string, framesPerSecond float64) (window *OpenGLWindow, err error) {
-	if err = glfw.Init(); err == nil {
-		glfw.WindowHint(glfw.Resizable, 1)
-		glfw.WindowHint(glfw.Decorated, 1)
-		glfw.WindowHint(glfw.ClientAPI, glfw.OpenGLAPI)
-		glfw.WindowHint(glfw.ContextVersionMajor, 3)
-		glfw.WindowHint(glfw.ContextVersionMinor, 2)
-		glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
-		glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
-		var glfwWindow *glfw.Window
-		glfwWindow, err = glfw.CreateWindow(1280, 720, title, nil, nil)
-		if err == nil {
-			glfwWindow.MakeContextCurrent()
-
-			window = &OpenGLWindow{
-				WindowEventDispatcher: opengl.NullWindowEventDispatcher(),
-				glfwWindow:            glfwWindow,
-				glWrapper:             NewOpenGL(),
-				titleBase:             title,
-				framesPerSecond:       framesPerSecond,
-				frameTime:             time.Duration(int64(float64(time.Second) / framesPerSecond)),
-				nextRenderTick:        time.Now()}
-
-			window.keyBuffer = input.NewStickyKeyBuffer(window.StickyKeyListener())
-
-			glfwWindow.SetCursorPosCallback(window.onCursorPos)
-			glfwWindow.SetMouseButtonCallback(window.onMouseButton)
-			glfwWindow.SetScrollCallback(window.onMouseScroll)
-			glfwWindow.SetFramebufferSizeCallback(window.onFramebufferResize)
-			glfwWindow.SetKeyCallback(window.onKey)
-			glfwWindow.SetCharCallback(window.onChar)
-			glfwWindow.SetDropCallback(window.onDrop)
-			glfwWindow.SetCloseCallback(window.onClosing)
-		}
+func NewOpenGLWindow(title string, framesPerSecond float64) (*OpenGLWindow, error) {
+	err := glfw.Init()
+	if err != nil {
+		return nil, err
 	}
-	return
+
+	glfw.WindowHint(glfw.Resizable, 1)
+	glfw.WindowHint(glfw.Decorated, 1)
+	glfw.WindowHint(glfw.ClientAPI, glfw.OpenGLAPI)
+	glfw.WindowHint(glfw.ContextVersionMajor, 3)
+	glfw.WindowHint(glfw.ContextVersionMinor, 2)
+	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
+	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
+	glfw.WindowHint(glfw.DoubleBuffer, glfw.True)
+	glfwWindow, err := glfw.CreateWindow(1280, 720, title, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	glfwWindow.MakeContextCurrent()
+	glfw.SwapInterval(0)
+
+	window := &OpenGLWindow{
+		WindowEventDispatcher: opengl.NullWindowEventDispatcher(),
+		glfwWindow:            glfwWindow,
+		glWrapper:             NewOpenGL(),
+		titleBase:             title,
+		framesPerSecond:       framesPerSecond,
+		frameTime:             time.Duration(int64(float64(time.Second) / framesPerSecond)),
+		nextRenderTick:        time.Now()}
+
+	window.keyBuffer = input.NewStickyKeyBuffer(window.StickyKeyListener())
+
+	glfwWindow.SetCursorPosCallback(window.onCursorPos)
+	glfwWindow.SetMouseButtonCallback(window.onMouseButton)
+	glfwWindow.SetScrollCallback(window.onMouseScroll)
+	glfwWindow.SetFramebufferSizeCallback(window.onFramebufferResize)
+	glfwWindow.SetKeyCallback(window.onKey)
+	glfwWindow.SetCharCallback(window.onChar)
+	glfwWindow.SetDropCallback(window.onDrop)
+	glfwWindow.SetCloseCallback(window.onClosing)
+
+	return window, nil
 }
 
 // ShouldClose returns true if the user requested the window to close.
