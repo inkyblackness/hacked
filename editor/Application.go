@@ -250,7 +250,7 @@ func (app *Application) render() {
 	app.objectsView.Render()
 
 	paletteTexture, _ := app.paletteCache.Palette(0)
-	app.mapDisplay.Render(app.mod.ObjectProperties(),
+	app.mapDisplay.Render(
 		paletteTexture, app.textureCache.Texture,
 		app.levelTilesView.TextureDisplay(), app.levelTilesView.ColorDisplay())
 
@@ -304,7 +304,7 @@ func (app *Application) initGui() (err error) {
 
 	app.initGuiStyle()
 
-	app.mapDisplay = levels.NewMapDisplay(app.levelSelection, app.levelEditorService,
+	app.mapDisplay = levels.NewMapDisplay(app.gameObjectsService, app.levelSelection, app.levelEditorService,
 		app.gl, app.GuiScale,
 		app.gameTexture)
 

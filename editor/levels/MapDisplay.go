@@ -52,6 +52,7 @@ func (item objectHoverItem) Size() float32 {
 
 // MapDisplay renders a level map.
 type MapDisplay struct {
+	gameObjects    *edit.GameObjectsService
 	levelSelection *edit.LevelSelectionService
 	editor         *edit.LevelEditorService
 
@@ -83,7 +84,7 @@ type MapDisplay struct {
 }
 
 // NewMapDisplay returns a new instance.
-func NewMapDisplay(levelSelection *edit.LevelSelectionService, editor *edit.LevelEditorService,
+func NewMapDisplay(gameObjects *edit.GameObjectsService, levelSelection *edit.LevelSelectionService, editor *edit.LevelEditorService,
 	gl opengl.OpenGL, guiScale float32,
 	textureQuery TextureQuery) *MapDisplay {
 	tilesPerMapSide := float32(64)
@@ -96,6 +97,7 @@ func NewMapDisplay(levelSelection *edit.LevelSelectionService, editor *edit.Leve
 	zoomLevelMax := float32(1) + zoomShift
 
 	display := &MapDisplay{
+		gameObjects:    gameObjects,
 		levelSelection: levelSelection,
 		editor:         editor,
 		context: render.Context{
@@ -122,7 +124,7 @@ func NewMapDisplay(levelSelection *edit.LevelSelectionService, editor *edit.Leve
 }
 
 // Render renders the whole map display.
-func (display *MapDisplay) Render(properties object.PropertiesTable,
+func (display *MapDisplay) Render(
 	paletteTexture *graphics.PaletteTexture, textureRetriever func(resource.Key) (*graphics.BitmapTexture, error),
 	textureDisplay TextureDisplay, colorDisplay ColorDisplay) {
 	lvl := display.editor.Level()
@@ -131,54 +133,10 @@ func (display *MapDisplay) Render(properties object.PropertiesTable,
 	display.setActiveLevel(lvl)
 	display.background.Render(columns, rows)
 	if lvl.IsCyberspace() {
-		if paletteTexture != nil {
-			var colorQuery ColorQuery
-			palette := paletteTexture.Palette()
-			if colorDisplay == ColorDisplayFloor {
-				colorQuery = display.colorQueryFor(lvl, func(tile *level.TileMapEntry) [4]float32 {
-					rgb := palette[tile.TextureInfo.FloorPaletteIndex()]
-					return [4]float32{float32(rgb.Red) / 255, float32(rgb.Green) / 255, float32(rgb.Blue) / 255, 0.8}
-				})
-			} else if colorDisplay == ColorDisplayCeiling {
-				colorQuery = display.colorQueryFor(lvl, func(tile *level.TileMapEntry) [4]float32 {
-					rgb := palette[tile.TextureInfo.CeilingPaletteIndex()]
-					return [4]float32{float32(rgb.Red) / 255, float32(rgb.Green) / 255, float32(rgb.Blue) / 255, 0.8}
-				})
-			}
-			if colorQuery != nil {
-				display.colors.Render(columns, rows, colorQuery)
-			}
-		}
+		display.renderCyberspaceColors(lvl, columns, rows, paletteTexture, colorDisplay)
 	} else {
-		if paletteTexture != nil {
-			display.textures.Render(columns, rows, func(pos level.TilePosition) (level.TileType, level.TextureIndex, int) {
-				tile := lvl.Tile(pos)
-				if tile == nil {
-					return level.TileTypeSolid, 0, 0
-				}
-				atlasIndex, textureRotations := textureDisplay.Func()(tile)
-				atlas := lvl.TextureAtlas()
-				textureIndex := level.TextureIndex(-1)
-				if (int(atlasIndex) >= 0) && (int(atlasIndex) < len(atlas)) {
-					textureIndex = atlas[atlasIndex]
-				}
-				return tile.Type, textureIndex, textureRotations
-			}, paletteTexture)
-		}
-
-		var colorQuery ColorQuery
-		if colorDisplay == ColorDisplayFloor {
-			colorQuery = display.colorQueryFor(lvl, func(tile *level.TileMapEntry) [4]float32 {
-				return [4]float32{0.0, 0.0, 0.0, float32(tile.Flags.ForRealWorld().FloorShadow()) / 15.0}
-			})
-		} else if colorDisplay == ColorDisplayCeiling {
-			colorQuery = display.colorQueryFor(lvl, func(tile *level.TileMapEntry) [4]float32 {
-				return [4]float32{0.0, 0.0, 0.0, float32(tile.Flags.ForRealWorld().CeilingShadow()) / 15.0}
-			})
-		}
-		if colorQuery != nil {
-			display.colors.Render(columns, rows, colorQuery)
-		}
+		display.renderRealWorldTextures(lvl, columns, rows, paletteTexture, textureDisplay)
+		display.renderRealWorldShadows(lvl, columns, rows, colorDisplay)
 	}
 	display.mapGrid.Render(columns, rows, lvl)
 	if display.positionValid {
@@ -188,87 +146,160 @@ func (display *MapDisplay) Render(properties object.PropertiesTable,
 			display.activeHoverItem = display.availableHoverItems[0]
 		}
 	}
-	{
-		selectedTiles := display.levelSelection.CurrentSelectedTiles()
-		tileMapPositions := make([]MapPosition, 0, len(selectedTiles))
-		for _, pos := range selectedTiles {
-			tileMapPositions = append(tileMapPositions, MapPosition{
-				X: level.CoordinateAt(pos.X, level.FineCoordinatesPerTileSide/2),
-				Y: level.CoordinateAt(pos.Y, level.FineCoordinatesPerTileSide/2),
-			})
-		}
-		display.highlighter.Render(tileMapPositions, level.FineCoordinatesPerTileSide, [4]float32{0.0, 0.8, 0.2, 0.5})
-	}
-	{
-		var objects []MapPosition
-		lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMainEntry) {
-			objects = append(objects, MapPosition{X: entry.X, Y: entry.Y})
-		})
-		display.highlighter.Render(objects, level.FineCoordinatesPerTileSide/4, [4]float32{1.0, 1.0, 1.0, 0.3})
-	}
-	if paletteTexture != nil {
-		tripleOffsets := make(map[object.Triple]int)
-
-		{
-			offset := 0
-			properties.Iterate(func(triple object.Triple, prop *object.Properties) bool {
-				numExtra := int(prop.Common.Bitmap3D.FrameNumber())
-
-				if triple.Class != object.ClassTrap {
-					tripleOffsets[triple] = offset + 2
-				} else {
-					tripleOffsets[triple] = offset
-				}
-				offset += 3 + numExtra
-				return true
-			})
-		}
-		var icons []iconData
-		var highlightIcon iconData
-		var highlightID level.ObjectID
-
-		if display.positionValid {
-			objectItem, isObject := display.activeHoverItem.(objectHoverItem)
-			if isObject {
-				highlightID = objectItem.id
-			}
-		}
-		lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMainEntry) {
-			triple := entry.Triple()
-			index, cached := tripleOffsets[triple]
-			if cached {
-				key := resource.KeyOf(ids.ObjectBitmaps, resource.LangAny, index+1)
-				texture, err := textureRetriever(key)
-				if err == nil {
-					icon := iconData{pos: MapPosition{X: entry.X, Y: entry.Y}, texture: texture}
-					if highlightID == id {
-						highlightIcon = icon
-					} else {
-						icons = append(icons, icon)
-					}
-				}
-			}
-		})
-		if (highlightID != 0) && (highlightIcon.texture != nil) {
-			icons = append(icons, highlightIcon)
-		}
-		display.icons.Render(paletteTexture, level.FineCoordinatesPerTileSide/4, icons)
-	}
-	{
-		selectedObjects := display.editor.Objects()
-		selectedObjectHighlights := make([]MapPosition, 0, len(selectedObjects))
-		for _, obj := range selectedObjects {
-			objPos := MapPosition{X: obj.X, Y: obj.Y}
-			selectedObjectHighlights = append(selectedObjectHighlights, objPos)
-		}
-		display.highlighter.Render(selectedObjectHighlights, level.FineCoordinatesPerTileSide/4, [4]float32{0.0, 0.8, 0.2, 0.5})
-	}
-	if display.activeHoverItem != nil {
-		display.highlighter.Render([]MapPosition{display.activeHoverItem.Pos()}, display.activeHoverItem.Size(), [4]float32{0.0, 0.2, 0.8, 0.3})
-	}
-
+	display.renderTileSelection()
+	display.renderObjectBackgrounds(lvl)
+	display.renderObjectIcons(lvl, paletteTexture, textureRetriever)
+	display.renderObjectSelection()
+	display.renderActiveHoverItem()
 	display.renderPositionOverlay(lvl)
 	display.renderContextMenu()
+}
+
+func (display *MapDisplay) renderCyberspaceColors(lvl *level.Level, columns int, rows int, paletteTexture *graphics.PaletteTexture, colorDisplay ColorDisplay) {
+	if paletteTexture == nil {
+		return
+	}
+	var colorQuery ColorQuery
+	palette := paletteTexture.Palette()
+	if colorDisplay == ColorDisplayFloor {
+		colorQuery = display.colorQueryFor(lvl, func(tile *level.TileMapEntry) [4]float32 {
+			rgb := palette[tile.TextureInfo.FloorPaletteIndex()]
+			return [4]float32{float32(rgb.Red) / 255, float32(rgb.Green) / 255, float32(rgb.Blue) / 255, 0.8}
+		})
+	} else if colorDisplay == ColorDisplayCeiling {
+		colorQuery = display.colorQueryFor(lvl, func(tile *level.TileMapEntry) [4]float32 {
+			rgb := palette[tile.TextureInfo.CeilingPaletteIndex()]
+			return [4]float32{float32(rgb.Red) / 255, float32(rgb.Green) / 255, float32(rgb.Blue) / 255, 0.8}
+		})
+	}
+	if colorQuery != nil {
+		display.colors.Render(columns, rows, colorQuery)
+	}
+}
+
+func (display *MapDisplay) renderRealWorldTextures(lvl *level.Level, columns int, rows int, paletteTexture *graphics.PaletteTexture, textureDisplay TextureDisplay) {
+	if paletteTexture == nil {
+		return
+	}
+	display.textures.Render(columns, rows, func(pos level.TilePosition) (level.TileType, level.TextureIndex, int) {
+		tile := lvl.Tile(pos)
+		if tile == nil {
+			return level.TileTypeSolid, 0, 0
+		}
+		atlasIndex, textureRotations := textureDisplay.Func()(tile)
+		atlas := lvl.TextureAtlas()
+		textureIndex := level.TextureIndex(-1)
+		if (int(atlasIndex) >= 0) && (int(atlasIndex) < len(atlas)) {
+			textureIndex = atlas[atlasIndex]
+		}
+		return tile.Type, textureIndex, textureRotations
+	}, paletteTexture)
+}
+
+func (display *MapDisplay) renderRealWorldShadows(lvl *level.Level, columns int, rows int, colorDisplay ColorDisplay) {
+	var colorQuery ColorQuery
+	if colorDisplay == ColorDisplayFloor {
+		colorQuery = display.colorQueryFor(lvl, func(tile *level.TileMapEntry) [4]float32 {
+			return [4]float32{0.0, 0.0, 0.0, float32(tile.Flags.ForRealWorld().FloorShadow()) / 15.0}
+		})
+	} else if colorDisplay == ColorDisplayCeiling {
+		colorQuery = display.colorQueryFor(lvl, func(tile *level.TileMapEntry) [4]float32 {
+			return [4]float32{0.0, 0.0, 0.0, float32(tile.Flags.ForRealWorld().CeilingShadow()) / 15.0}
+		})
+	}
+	if colorQuery != nil {
+		display.colors.Render(columns, rows, colorQuery)
+	}
+}
+
+func (display *MapDisplay) renderTileSelection() {
+	selectedTiles := display.levelSelection.CurrentSelectedTiles()
+	tileMapPositions := make([]MapPosition, 0, len(selectedTiles))
+	for _, pos := range selectedTiles {
+		tileMapPositions = append(tileMapPositions, MapPosition{
+			X: level.CoordinateAt(pos.X, level.FineCoordinatesPerTileSide/2),
+			Y: level.CoordinateAt(pos.Y, level.FineCoordinatesPerTileSide/2),
+		})
+	}
+	display.highlighter.Render(tileMapPositions, level.FineCoordinatesPerTileSide, [4]float32{0.0, 0.8, 0.2, 0.5})
+}
+
+func (display *MapDisplay) renderObjectBackgrounds(lvl *level.Level) {
+	var objects []MapPosition
+	lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMainEntry) {
+		objects = append(objects, MapPosition{X: entry.X, Y: entry.Y})
+	})
+	display.highlighter.Render(objects, level.FineCoordinatesPerTileSide/4, [4]float32{1.0, 1.0, 1.0, 0.3})
+}
+
+func (display *MapDisplay) renderObjectIcons(lvl *level.Level, paletteTexture *graphics.PaletteTexture, textureRetriever func(resource.Key) (*graphics.BitmapTexture, error)) {
+	if paletteTexture == nil {
+		return
+	}
+	tripleOffsets := make(map[object.Triple]int)
+
+	{
+		offset := 0
+		properties := display.gameObjects.AllProperties()
+		properties.Iterate(func(triple object.Triple, prop *object.Properties) bool {
+			numExtra := int(prop.Common.Bitmap3D.FrameNumber())
+
+			if triple.Class != object.ClassTrap {
+				tripleOffsets[triple] = offset + 2
+			} else {
+				tripleOffsets[triple] = offset
+			}
+			offset += 3 + numExtra
+			return true
+		})
+	}
+	var icons []iconData
+	var highlightIcon iconData
+	var highlightID level.ObjectID
+
+	if display.positionValid {
+		objectItem, isObject := display.activeHoverItem.(objectHoverItem)
+		if isObject {
+			highlightID = objectItem.id
+		}
+	}
+	lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMainEntry) {
+		triple := entry.Triple()
+		index, cached := tripleOffsets[triple]
+		if cached {
+			key := resource.KeyOf(ids.ObjectBitmaps, resource.LangAny, index+1)
+			texture, err := textureRetriever(key)
+			if err == nil {
+				icon := iconData{pos: MapPosition{X: entry.X, Y: entry.Y}, texture: texture}
+				if highlightID == id {
+					highlightIcon = icon
+				} else {
+					icons = append(icons, icon)
+				}
+			}
+		}
+	})
+	if (highlightID != 0) && (highlightIcon.texture != nil) {
+		icons = append(icons, highlightIcon)
+	}
+	display.icons.Render(paletteTexture, level.FineCoordinatesPerTileSide/4, icons)
+}
+
+func (display *MapDisplay) renderObjectSelection() {
+	selectedObjects := display.editor.Objects()
+	selectedObjectHighlights := make([]MapPosition, 0, len(selectedObjects))
+	for _, obj := range selectedObjects {
+		objPos := MapPosition{X: obj.X, Y: obj.Y}
+		selectedObjectHighlights = append(selectedObjectHighlights, objPos)
+	}
+	display.highlighter.Render(selectedObjectHighlights, level.FineCoordinatesPerTileSide/4, [4]float32{0.0, 0.8, 0.2, 0.5})
+}
+
+func (display *MapDisplay) renderActiveHoverItem() {
+	if display.activeHoverItem == nil {
+		return
+	}
+	display.highlighter.Render([]MapPosition{display.activeHoverItem.Pos()}, display.activeHoverItem.Size(), [4]float32{0.0, 0.2, 0.8, 0.3})
 }
 
 func (display *MapDisplay) nearestHoverItems(lvl *level.Level, ref MapPosition) []hoverItem {
@@ -505,13 +536,14 @@ func (display *MapDisplay) requestCreateNewObject(snapToGrid bool, triple object
 	pos := display.position
 	if snapToGrid {
 		toGrid := func(value byte) byte {
+			cornerSnapDistance := level.FineCoordinatesPerTileSide / 4
 			switch {
-			case value < 0x40:
+			case value < byte(cornerSnapDistance):
 				return 0x00
-			case value >= 0xC0:
-				return 0xFF
+			case value >= byte(level.FineCoordinatesPerTileSide-cornerSnapDistance):
+				return level.FineCoordinatesPerTileSide - 1
 			default:
-				return 0x80
+				return level.FineCoordinatesPerTileSide / 2
 			}
 		}
 		pos.X = level.CoordinateAt(pos.X.Tile(), toGrid(pos.X.Fine()))
