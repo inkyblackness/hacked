@@ -18,13 +18,14 @@ in vec3 uvPosition;
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 projectionMatrix;
+uniform vec4 uvLimit;
 
 out vec2 uv;
 
 void main(void) {
 	gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(vertexPosition, 1.0);
 
-	uv = uvPosition.xy;
+	uv = vec2(uvPosition.x * uvLimit.x, uvPosition.y * uvLimit.y);
 }
 `
 
@@ -62,6 +63,7 @@ type MapIcons struct {
 	modelMatrixUniform      opengl.Matrix4Uniform
 	viewMatrixUniform       opengl.Matrix4Uniform
 	projectionMatrixUniform opengl.Matrix4Uniform
+	uvLimitUniform          opengl.Vector4Uniform
 
 	paletteUniform int32
 	bitmapUniform  int32
@@ -92,6 +94,7 @@ func NewMapIcons(context *render.Context) *MapIcons {
 		modelMatrixUniform:      opengl.Matrix4Uniform(gl.GetUniformLocation(program, "modelMatrix")),
 		viewMatrixUniform:       opengl.Matrix4Uniform(gl.GetUniformLocation(program, "viewMatrix")),
 		projectionMatrixUniform: opengl.Matrix4Uniform(gl.GetUniformLocation(program, "projectionMatrix")),
+		uvLimitUniform:          opengl.Vector4Uniform(gl.GetUniformLocation(program, "uvLimit")),
 
 		paletteUniform: gl.GetUniformLocation(program, "palette"),
 		bitmapUniform:  gl.GetUniformLocation(program, "bitmap")}
@@ -105,9 +108,24 @@ func NewMapIcons(context *render.Context) *MapIcons {
 
 			half, -half, 0.0,
 			-half, -half, 0.0,
-			-half, half, 0.0}
+			-half, half, 0.0,
+		}
 		gl.BindBuffer(opengl.ARRAY_BUFFER, renderable.vertexPositionBuffer)
 		gl.BufferData(opengl.ARRAY_BUFFER, len(vertices)*4, vertices, opengl.STATIC_DRAW)
+		gl.BindBuffer(opengl.ARRAY_BUFFER, 0)
+	}
+	{
+		var uv = []float32{
+			0.0, 0.0, 0.0,
+			1.0, 0.0, 0.0,
+			1.0, 1.0, 0.0,
+
+			1.0, 1.0, 0.0,
+			0.0, 1.0, 0.0,
+			0.0, 0.0, 0.0,
+		}
+		gl.BindBuffer(opengl.ARRAY_BUFFER, renderable.uvPositionBuffer)
+		gl.BufferData(opengl.ARRAY_BUFFER, len(uv)*4, uv, opengl.STATIC_DRAW)
 		gl.BindBuffer(opengl.ARRAY_BUFFER, 0)
 	}
 	renderable.vao.WithSetter(func(gl opengl.OpenGL) {
@@ -149,17 +167,8 @@ func (renderable *MapIcons) Render(paletteTexture *graphics.PaletteTexture, icon
 
 			renderable.modelMatrixUniform.Set(gl, &modelMatrix)
 
-			var uv = []float32{
-				0.0, 0.0, 0.0,
-				u, 0.0, 0.0,
-				u, v, 0.0,
-
-				u, v, 0.0,
-				0.0, v, 0.0,
-				0.0, 0.0, 0.0}
-			gl.BindBuffer(opengl.ARRAY_BUFFER, renderable.uvPositionBuffer)
-			gl.BufferData(opengl.ARRAY_BUFFER, len(uv)*4, uv, opengl.STATIC_DRAW)
-			gl.BindBuffer(opengl.ARRAY_BUFFER, 0)
+			uvLimit := [4]float32{u, v, 0, 0}
+			renderable.uvLimitUniform.Set(gl, &uvLimit)
 
 			gl.BindTexture(opengl.TEXTURE_2D, icon.texture.Handle())
 			gl.DrawArrays(opengl.TRIANGLES, 0, 6)
