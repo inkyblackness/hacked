@@ -46,8 +46,7 @@ type MapDisplay struct {
 
 	selectionReference *level.TilePosition
 
-	activeLevel *level.Level
-	hoverItems  hoverItems
+	hoverItems hoverItems
 }
 
 // NewMapDisplay returns a new instance.
@@ -97,7 +96,8 @@ func (display *MapDisplay) Render(
 	lvl := display.editor.Level()
 	columns, rows, _ := lvl.Size()
 
-	display.setActiveLevel(lvl)
+	display.hoverItems.validate(lvl)
+
 	display.background.Render(columns, rows)
 	if lvl.IsCyberspace() {
 		display.renderCyberspaceColors(lvl, columns, rows, paletteTexture, colorDisplay)
@@ -106,11 +106,6 @@ func (display *MapDisplay) Render(
 		display.renderRealWorldShadows(lvl, columns, rows, colorDisplay)
 	}
 	display.mapGrid.Render(columns, rows, lvl)
-	if display.positionValid {
-		if len(display.hoverItems.available) == 0 {
-			display.hoverItems.find(lvl, display.position)
-		}
-	}
 	display.renderTileSelection()
 	display.renderObjectBackgrounds(lvl)
 	display.renderObjectIcons(lvl, paletteTexture, textureRetriever)
@@ -549,20 +544,23 @@ func (display *MapDisplay) objectsInTiles(tiles []level.TilePosition) []level.Ob
 	}
 
 	var objects []level.ObjectID
-	if display.activeLevel != nil {
-		display.activeLevel.ForEachObject(func(id level.ObjectID, entry level.ObjectMainEntry) {
-			if tilesContain(entry.TilePosition()) {
-				objects = append(objects, id)
-			}
-		})
-	}
+	lvl := display.editor.Level()
+	lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMainEntry) {
+		if tilesContain(entry.TilePosition()) {
+			objects = append(objects, id)
+		}
+	})
 	return objects
 }
 
 // MouseMoved must be called for a mouse move.
 func (display *MapDisplay) MouseMoved(mouseX, mouseY float32) {
 	display.updateMouseWorldPosition(mouseX, mouseY)
-	display.hoverItems.reset()
+	if display.positionValid {
+		display.hoverItems.find(display.editor.Level(), display.position)
+	} else {
+		display.hoverItems.reset()
+	}
 	display.moveCapture(mouseX, mouseY)
 }
 
@@ -584,27 +582,15 @@ func (display *MapDisplay) MouseScrolled(mouseX, mouseY float32, deltaX, deltaY 
 
 func (display *MapDisplay) updateMouseWorldPosition(mouseX, mouseY float32) {
 	worldX, worldY := display.unprojectPixel(mouseX, mouseY)
-	var worldWidth float32
-	var worldHeight float32
-	if display.activeLevel != nil {
-		width, height, _ := display.activeLevel.Size()
-		worldWidth = float32(width) * level.FineCoordinatesPerTileSide
-		worldHeight = float32(height) * level.FineCoordinatesPerTileSide
-	}
+	lvl := display.editor.Level()
+	width, height, _ := lvl.Size()
+	worldWidth := float32(width) * level.FineCoordinatesPerTileSide
+	worldHeight := float32(height) * level.FineCoordinatesPerTileSide
+
 	display.positionValid = (worldX >= 0.0) && (worldX < worldWidth) && (worldY >= 0.0) && (worldY < worldHeight)
 	if display.positionValid {
 		display.position = MapPosition{X: level.Coordinate(worldX + 0.5), Y: level.Coordinate(worldY + 0.5)}
 	} else {
 		display.position = MapPosition{}
-	}
-}
-
-func (display *MapDisplay) setActiveLevel(lvl *level.Level) {
-	oldIsNil := display.activeLevel == nil
-	newIsNil := lvl == nil
-	isChanged := (oldIsNil != newIsNil) || (!oldIsNil && !newIsNil && display.activeLevel.ID() != lvl.ID())
-	if isChanged {
-		display.activeLevel = lvl
-		display.hoverItems.reset()
 	}
 }

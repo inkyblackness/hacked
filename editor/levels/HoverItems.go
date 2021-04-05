@@ -45,7 +45,7 @@ func (item objectHoverItem) Size() float32 {
 
 func (item objectHoverItem) IsIn(lvl *level.Level) bool {
 	obj := lvl.Object(item.id)
-	return (obj != nil) && (obj.InUse != 0)
+	return (obj != nil) && (obj.InUse != 0) && (item.pos.X == obj.X) && (item.pos.Y == obj.Y)
 }
 
 type hoverItems struct {
@@ -104,5 +104,32 @@ func (items *hoverItems) find(lvl *level.Level, pos MapPosition) {
 }
 
 func (items *hoverItems) validate(lvl *level.Level) {
+	allValid := true
+	for _, item := range items.available {
+		if !item.IsIn(lvl) {
+			allValid = false
+			break
+		}
+	}
+	if allValid {
+		return
+	}
 
+	newItems := make([]hoverItem, 0, len(items.available))
+	for index, item := range items.available {
+		isActive := index == items.activeIndex
+		if item.IsIn(lvl) {
+			if isActive {
+				items.activeIndex = len(newItems)
+			}
+			newItems = append(newItems, item)
+		} else if isActive {
+			items.activeIndex = 0
+		}
+	}
+	items.available = newItems
+	items.activeItem = nil
+	if items.activeIndex < len(items.available) {
+		items.activeItem = items.available[items.activeIndex]
+	}
 }
