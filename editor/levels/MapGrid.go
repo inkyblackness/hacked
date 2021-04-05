@@ -47,16 +47,15 @@ type TileMapper interface {
 type MapGrid struct {
 	context *render.Context
 
-	program                 uint32
-	vao                     *opengl.VertexArrayObject
-	vertexPositionBuffer    uint32
-	vertexPositionAttrib    int32
-	colorUniform            opengl.Vector4Uniform
-	modelMatrixUniform      opengl.Matrix4Uniform
-	viewMatrixUniform       opengl.Matrix4Uniform
-	projectionMatrixUniform opengl.Matrix4Uniform
-
-	tickVertices []float32
+	program                  uint32
+	vao                      *opengl.VertexArrayObject
+	vertexPositionBuffer     uint32
+	tickVertexPositionBuffer uint32
+	vertexPositionAttrib     int32
+	colorUniform             opengl.Vector4Uniform
+	modelMatrixUniform       opengl.Matrix4Uniform
+	viewMatrixUniform        opengl.Matrix4Uniform
+	projectionMatrixUniform  opengl.Matrix4Uniform
 }
 
 // NewMapGrid returns a new instance.
@@ -67,24 +66,24 @@ func NewMapGrid(context *render.Context) *MapGrid {
 		panic(opengl.NamedShaderError{Name: "MapGrid", Nested: programErr})
 	}
 	grid := &MapGrid{
-		context:                 context,
-		program:                 program,
-		vao:                     opengl.NewVertexArrayObject(gl, program),
-		vertexPositionBuffer:    gl.GenBuffers(1)[0],
-		vertexPositionAttrib:    gl.GetAttribLocation(program, "vertexPosition"),
-		colorUniform:            opengl.Vector4Uniform(gl.GetUniformLocation(program, "color")),
-		modelMatrixUniform:      opengl.Matrix4Uniform(gl.GetUniformLocation(program, "modelMatrix")),
-		viewMatrixUniform:       opengl.Matrix4Uniform(gl.GetUniformLocation(program, "viewMatrix")),
-		projectionMatrixUniform: opengl.Matrix4Uniform(gl.GetUniformLocation(program, "projectionMatrix")),
+		context:                  context,
+		program:                  program,
+		vao:                      opengl.NewVertexArrayObject(gl, program),
+		vertexPositionBuffer:     gl.GenBuffers(1)[0],
+		tickVertexPositionBuffer: gl.GenBuffers(1)[0],
+		vertexPositionAttrib:     gl.GetAttribLocation(program, "vertexPosition"),
+		colorUniform:             opengl.Vector4Uniform(gl.GetUniformLocation(program, "color")),
+		modelMatrixUniform:       opengl.Matrix4Uniform(gl.GetUniformLocation(program, "modelMatrix")),
+		viewMatrixUniform:        opengl.Matrix4Uniform(gl.GetUniformLocation(program, "viewMatrix")),
+		projectionMatrixUniform:  opengl.Matrix4Uniform(gl.GetUniformLocation(program, "projectionMatrix")),
 	}
-	grid.tickVertices = grid.calculateTickVertices()
 
-	grid.vao.WithSetter(func(gl opengl.OpenGL) {
-		gl.EnableVertexAttribArray(uint32(grid.vertexPositionAttrib))
-		gl.BindBuffer(opengl.ARRAY_BUFFER, grid.vertexPositionBuffer)
-		gl.VertexAttribOffset(uint32(grid.vertexPositionAttrib), 3, opengl.FLOAT, false, 0, 0)
+	{
+		tickVertices := grid.calculateTickVertices()
+		gl.BindBuffer(opengl.ARRAY_BUFFER, grid.tickVertexPositionBuffer)
+		gl.BufferData(opengl.ARRAY_BUFFER, len(tickVertices)*4, tickVertices, opengl.STATIC_DRAW)
 		gl.BindBuffer(opengl.ARRAY_BUFFER, 0)
-	})
+	}
 
 	return grid
 }
@@ -93,7 +92,7 @@ func NewMapGrid(context *render.Context) *MapGrid {
 func (grid *MapGrid) Dispose() {
 	gl := grid.context.OpenGL
 	gl.DeleteProgram(grid.program)
-	gl.DeleteBuffers([]uint32{grid.vertexPositionBuffer})
+	gl.DeleteBuffers([]uint32{grid.vertexPositionBuffer, grid.tickVertexPositionBuffer})
 	grid.vao.Dispose()
 }
 
@@ -155,7 +154,6 @@ func (grid *MapGrid) Render(columns, rows int, mapper TileMapper) {
 		{0},
 		{1},
 	}
-
 	floorTickStarts := [4]int32{0, 6, 12, 18}
 	ceilingTickStarts := [4]int32{3, 9, 15, 21}
 
@@ -226,7 +224,10 @@ func (grid *MapGrid) Render(columns, rows int, mapper TileMapper) {
 				}
 
 				grid.colorUniform.Set(gl, &lineColor)
-				gl.BufferData(opengl.ARRAY_BUFFER, len(vertices)*4, vertices, opengl.STATIC_DRAW)
+				gl.EnableVertexAttribArray(uint32(grid.vertexPositionAttrib))
+				gl.BindBuffer(opengl.ARRAY_BUFFER, grid.vertexPositionBuffer)
+				gl.VertexAttribOffset(uint32(grid.vertexPositionAttrib), 3, opengl.FLOAT, false, 0, 0)
+				gl.BufferData(opengl.ARRAY_BUFFER, len(vertices)*4, vertices, opengl.STREAM_DRAW)
 				gl.DrawArrays(opengl.LINES, 0, int32(len(vertices)/3))
 
 				var floorTicks []int
@@ -241,7 +242,10 @@ func (grid *MapGrid) Render(columns, rows int, mapper TileMapper) {
 					ceilingTicks = slopeTicksByType[tileType.Info().SlopeInvertedType]
 				}
 
-				gl.BufferData(opengl.ARRAY_BUFFER, len(grid.tickVertices)*4, grid.tickVertices, opengl.STATIC_DRAW)
+				gl.EnableVertexAttribArray(uint32(grid.vertexPositionAttrib))
+				gl.BindBuffer(opengl.ARRAY_BUFFER, grid.tickVertexPositionBuffer)
+				gl.VertexAttribOffset(uint32(grid.vertexPositionAttrib), 3, opengl.FLOAT, false, 0, 0)
+
 				grid.colorUniform.Set(gl, &floorTickColor)
 				for _, index := range floorTicks {
 					gl.DrawArrays(opengl.TRIANGLES, floorTickStarts[index], 3)
