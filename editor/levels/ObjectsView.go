@@ -148,10 +148,21 @@ func (view *ObjectsView) renderContent(lvl *level.Level, objects []*level.Object
 		}
 		if imgui.BeginCombo("New Object Type", view.tripleName(view.editor.NewObjectTriple())) {
 			allTypes := view.gameObjects.AllProperties().TriplesInClass(view.editor.NewObjectTriple().Class)
-			for _, triple := range allTypes {
+			bitmapInfo := view.gameObjects.BitmapInfo()
+			lineHeight := imgui.TextLineHeight()
+			iconSize := imgui.Vec2{X: lineHeight * view.guiScale, Y: lineHeight * view.guiScale}
+			for index, triple := range allTypes {
+				info := bitmapInfo[triple]
+				iconKey := resource.KeyOf(ids.ObjectBitmaps, resource.LangAny, info.Start+info.IconRecommendation)
+				imgui.PushIDInt(index)
+				imgui.BeginGroup()
+				render.TextureImage("Icon", view.textureCache, iconKey, iconSize)
+				imgui.SameLine()
 				if imgui.SelectableV(view.tripleName(triple), triple == view.editor.NewObjectTriple(), 0, imgui.Vec2{}) {
 					view.editor.SetNewObjectTriple(triple)
 				}
+				imgui.EndGroup()
+				imgui.PopID()
 			}
 			imgui.EndCombo()
 		}
