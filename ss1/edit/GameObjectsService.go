@@ -5,13 +5,13 @@ import (
 	"github.com/inkyblackness/hacked/ss1/world"
 )
 
-// GameObjectBitmapInfo contains indices about bitmaps for a particual game object.
+// GameObjectBitmapInfo contains indices about bitmaps for a particular game object.
 type GameObjectBitmapInfo struct {
 	// Start is the index for the first object bitmap in ids.ObjectBitmaps.
 	Start int
-	// Count is the amount of bitmaps in total the object has.
+	// Count is the amount of bitmaps the object has in total.
 	Count int
-	// IconRecommendation is the offset to start for using icons.
+	// IconRecommendation is the offset from start for using icons.
 	IconRecommendation int
 }
 
