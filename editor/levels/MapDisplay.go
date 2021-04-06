@@ -196,23 +196,7 @@ func (display *MapDisplay) renderObjectIcons(lvl *level.Level, paletteTexture *g
 	if paletteTexture == nil {
 		return
 	}
-	tripleOffsets := make(map[object.Triple]int)
-
-	{
-		offset := 0
-		properties := display.gameObjects.AllProperties()
-		properties.Iterate(func(triple object.Triple, prop *object.Properties) bool {
-			numExtra := int(prop.Common.Bitmap3D.FrameNumber())
-
-			if triple.Class != object.ClassTrap {
-				tripleOffsets[triple] = offset + 2
-			} else {
-				tripleOffsets[triple] = offset
-			}
-			offset += 3 + numExtra
-			return true
-		})
-	}
+	tripleInfo := display.gameObjects.BitmapInfo()
 	var icons []iconData
 	var highlightIcon iconData
 	var highlightID level.ObjectID
@@ -225,17 +209,18 @@ func (display *MapDisplay) renderObjectIcons(lvl *level.Level, paletteTexture *g
 	}
 	lvl.ForEachObject(func(id level.ObjectID, entry level.ObjectMainEntry) {
 		triple := entry.Triple()
-		index, cached := tripleOffsets[triple]
-		if cached {
-			key := resource.KeyOf(ids.ObjectBitmaps, resource.LangAny, index+1)
-			texture, err := textureRetriever(key)
-			if err == nil {
-				icon := iconData{pos: MapPosition{X: entry.X, Y: entry.Y}, texture: texture}
-				if highlightID == id {
-					highlightIcon = icon
-				} else {
-					icons = append(icons, icon)
-				}
+		info, cached := tripleInfo[triple]
+		if !cached {
+			return
+		}
+		key := resource.KeyOf(ids.ObjectBitmaps, resource.LangAny, info.Start+info.IconRecommendation)
+		texture, err := textureRetriever(key)
+		if err == nil {
+			icon := iconData{pos: MapPosition{X: entry.X, Y: entry.Y}, texture: texture}
+			if highlightID == id {
+				highlightIcon = icon
+			} else {
+				icons = append(icons, icon)
 			}
 		}
 	})
