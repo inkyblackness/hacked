@@ -52,6 +52,20 @@ func (service *LevelEditorService) Tiles() []*level.TileMapEntry {
 	return tiles
 }
 
+// HasSelectedTiles returns true if Tiles() returns at least one entry.
+func (service *LevelEditorService) HasSelectedTiles() bool {
+	return len(service.levelSelection.CurrentSelectedTiles()) > 0
+}
+
+// ClearTiles resets the selected tiles.
+func (service *LevelEditorService) ClearTiles() error {
+	return service.ChangeTiles(func(tile *level.TileMapEntry) {
+		index := tile.FirstObjectIndex
+		tile.Reset()
+		tile.FirstObjectIndex = index
+	})
+}
+
 // ChangeTiles performs a modification on all currently selected tiles and commits these changes to the repository.
 func (service *LevelEditorService) ChangeTiles(modifier func(*level.TileMapEntry)) error {
 	positions := service.levelSelection.CurrentSelectedTiles()
@@ -81,6 +95,11 @@ func (service *LevelEditorService) Objects() []*level.ObjectMainEntry {
 		objects[i] = lvl.Object(id)
 	}
 	return objects
+}
+
+// HasSelectedObjects returns true if a call to Objects() returns at least one item.
+func (service *LevelEditorService) HasSelectedObjects() bool {
+	return len(service.levelSelection.CurrentSelectedObjects()) > 0
 }
 
 // NewObjectTriple returns the identifier of implicitly created objects.

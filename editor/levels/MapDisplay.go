@@ -359,20 +359,24 @@ func (display *MapDisplay) renderContextMenu() {
 		display.contextMenuRequested = false
 	}
 	if imgui.BeginPopupV(contextMenuName, imgui.PopupFlagsMouseButtonRight) {
+		readOnly := display.editor.IsReadOnly()
 		if imgui.BeginMenu("New...") {
 			implicitTriple := display.editor.NewObjectTriple()
 			canCreateImplicitClass := display.canCreateObjectOf(implicitTriple.Class)
-			if imgui.MenuItemV("Object", "2ndClick", false, canCreateImplicitClass) {
+			if imgui.MenuItemV("Object", "Ctrl+2ndClick", false, canCreateImplicitClass) {
 				display.requestCreateNewObject(false, implicitTriple)
 			}
-			if imgui.MenuItemV("Object (at grid)", "Shift+2ndClick", false, canCreateImplicitClass) {
+			if imgui.MenuItemV("Object (at grid)", "Ctrl+Shift+2ndClick", false, canCreateImplicitClass) {
 				display.requestCreateNewObject(true, implicitTriple)
 			}
 			imgui.EndMenu()
 		}
 		imgui.Separator()
-		if imgui.MenuItemV("Delete Objects", "", false, !display.editor.IsReadOnly()) {
+		if imgui.MenuItemV("Delete Objects", "", false, !readOnly && display.editor.HasSelectedObjects()) {
 			_ = display.editor.DeleteObjects()
+		}
+		if imgui.MenuItemV("Clear Tiles", "", false, !readOnly && display.editor.HasSelectedTiles()) {
+			_ = display.editor.ClearTiles()
 		}
 		imgui.EndPopup()
 	}
@@ -451,9 +455,9 @@ func (display *MapDisplay) MouseButtonUp(mouseX, mouseY float32, button uint32, 
 			}
 		}
 	} else if button == input.MouseSecondary {
-		if modifier.Has(input.ModControl) {
+		if modifier.IsClear() {
 			display.contextMenuRequested = true
-		} else {
+		} else if modifier.Has(input.ModControl) {
 			display.requestCreateNewObject(modifier.Has(input.ModShift), display.editor.NewObjectTriple())
 		}
 	}
