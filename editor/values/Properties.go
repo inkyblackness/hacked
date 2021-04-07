@@ -128,7 +128,7 @@ func RenderUnifiedRotation(readOnly bool, label string, unifier Unifier,
 		center := winTopLeft.Plus(winSize.Times(0.5))
 		circleRadius := ((winSize.X / 2) * 5) / 6
 		dl.AddCircleV(center, circleRadius, lineColor, 100, lineThickness)
-		// This code is specialized for Hacker-Yaw. To re-use it for other rotations, the target needs to be provided.
+
 		targetX := 0.0
 		targetY := 0.0
 		if info.Horizontal {

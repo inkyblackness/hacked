@@ -123,6 +123,7 @@ func StandardSimplifier(readOnly bool, fullKey string, unifier Unifier,
 		RenderUnifiedRotation(readOnly, label, unifier,
 			int(minValue), int(maxValue),
 			RotationInfo{
+				// This code is specialized for Hacker-Yaw. To re-use it for other rotations, details must change.
 				Horizontal: true,
 				Positive:   true,
 				Clockwise:  false,
