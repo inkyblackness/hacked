@@ -2,6 +2,8 @@ package values
 
 import (
 	"fmt"
+	"image/color"
+	"math"
 
 	"github.com/inkyblackness/imgui-go/v3"
 
@@ -82,5 +84,49 @@ func RenderUnifiedCheckboxCombo(readOnly bool, label string, unifier Unifier, ch
 			}
 		}
 		imgui.EndCombo()
+	}
+}
+
+// RenderUnifiedRotation renders a control for rotation value.
+func RenderUnifiedRotation(readOnly bool, label string, unifier Unifier, min, max int, changeHandler func(int)) {
+	calcValuePercent := func(value int) float64 {
+		valueRange := (max - min) + 1
+		return float64(value) / float64(valueRange)
+	}
+	RenderUnifiedSliderInt(readOnly, label, unifier,
+		func(u Unifier) int {
+			unifiedValue := u.Unified().(int32)
+			return int(unifiedValue)
+		},
+		func(value int) string {
+			valuePercent := calcValuePercent(value)
+			result := fmt.Sprintf("%3.02f°  - raw: %%d", valuePercent*360.0)
+			return result
+		},
+		min, max,
+		changeHandler)
+
+	if (imgui.IsItemFocused() || imgui.IsItemActive() || imgui.IsItemHovered()) && unifier.IsUnique() {
+		valuePercent := calcValuePercent(int(unifier.Unified().(int32)))
+		valueRadian := valuePercent * (math.Pi * 2)
+
+		lineColor := imgui.Packed(color.RGBA{R: 0x21, G: 0xFF, B: 0x43, A: 0xFF}) // color copied from style.
+		lineThickness := float32(4.0)
+		imgui.BeginTooltip()
+		imgui.Dummy(imgui.Vec2{X: imgui.TextLineHeightWithSpacing() * 2, Y: imgui.TextLineHeightWithSpacing() * 2})
+		dl := imgui.WindowDrawList()
+		winTopLeft := imgui.WindowPos()
+		winSize := imgui.WindowSize()
+		center := winTopLeft.Plus(winSize.Times(0.5))
+		circleRadius := ((winSize.X / 2) * 5) / 6
+		dl.AddCircleV(center, circleRadius, lineColor, 100, lineThickness)
+		// This code is specialized for Hacker-Yaw. To re-use it for other rotations, the target needs to be provided.
+		targetX := 1.0
+		targetY := 0.0
+		dl.AddLineV(center, imgui.Vec2{
+			X: center.X + float32((float64(circleRadius)*targetX)*math.Cos(valueRadian)-(float64(circleRadius)*targetY)*math.Sin(valueRadian)),
+			Y: center.Y - float32((float64(circleRadius)*targetY)*math.Cos(valueRadian)+(float64(circleRadius)*targetX)*math.Sin(valueRadian)),
+		}, lineColor, lineThickness)
+		imgui.EndTooltip()
 	}
 }
