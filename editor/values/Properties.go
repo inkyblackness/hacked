@@ -87,8 +87,16 @@ func RenderUnifiedCheckboxCombo(readOnly bool, label string, unifier Unifier, ch
 	}
 }
 
+// RotationInfo describes how the rotation is aligned in its zero position.
+type RotationInfo struct {
+	Horizontal bool
+	Positive   bool
+	Clockwise  bool
+}
+
 // RenderUnifiedRotation renders a control for rotation value.
-func RenderUnifiedRotation(readOnly bool, label string, unifier Unifier, min, max int, changeHandler func(int)) {
+func RenderUnifiedRotation(readOnly bool, label string, unifier Unifier,
+	min, max int, info RotationInfo, changeHandler func(int)) {
 	calcValuePercent := func(value int) float64 {
 		valueRange := (max - min) + 1
 		return float64(value) / float64(valueRange)
@@ -121,12 +129,28 @@ func RenderUnifiedRotation(readOnly bool, label string, unifier Unifier, min, ma
 		circleRadius := ((winSize.X / 2) * 5) / 6
 		dl.AddCircleV(center, circleRadius, lineColor, 100, lineThickness)
 		// This code is specialized for Hacker-Yaw. To re-use it for other rotations, the target needs to be provided.
-		targetX := 1.0
+		targetX := 0.0
 		targetY := 0.0
-		dl.AddLineV(center, imgui.Vec2{
-			X: center.X + float32((float64(circleRadius)*targetX)*math.Cos(valueRadian)-(float64(circleRadius)*targetY)*math.Sin(valueRadian)),
-			Y: center.Y - float32((float64(circleRadius)*targetY)*math.Cos(valueRadian)+(float64(circleRadius)*targetX)*math.Sin(valueRadian)),
-		}, lineColor, lineThickness)
+		if info.Horizontal {
+			targetX = 1.0
+			if !info.Positive {
+				targetX = -1.0
+			}
+		} else {
+			targetY = -1.0
+			if !info.Positive {
+				targetY = 1.0
+			}
+		}
+		var target imgui.Vec2
+		if info.Clockwise {
+			target.X = center.X - float32((float64(circleRadius)*targetX)*math.Cos(valueRadian)+(float64(circleRadius)*targetY)*math.Sin(valueRadian))
+			target.Y = center.Y + float32((float64(circleRadius)*targetY)*math.Cos(valueRadian)-(float64(circleRadius)*targetX)*math.Sin(valueRadian))
+		} else {
+			target.X = center.X + float32((float64(circleRadius)*targetX)*math.Cos(valueRadian)-(float64(circleRadius)*targetY)*math.Sin(valueRadian))
+			target.Y = center.Y - float32((float64(circleRadius)*targetY)*math.Cos(valueRadian)+(float64(circleRadius)*targetX)*math.Sin(valueRadian))
+		}
+		dl.AddLineV(center, target, lineColor, lineThickness)
 		imgui.EndTooltip()
 	}
 }

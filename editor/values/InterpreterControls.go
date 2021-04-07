@@ -120,9 +120,16 @@ func StandardSimplifier(readOnly bool, fullKey string, unifier Unifier,
 	})
 
 	simplifier.SetRotationHandler(func(minValue, maxValue int64) {
-		RenderUnifiedRotation(readOnly, label, unifier, int(minValue), int(maxValue), func(newValue int) {
-			updater(func(oldValue uint32) uint32 { return uint32(newValue) })
-		})
+		RenderUnifiedRotation(readOnly, label, unifier,
+			int(minValue), int(maxValue),
+			RotationInfo{
+				Horizontal: true,
+				Positive:   true,
+				Clockwise:  false,
+			},
+			func(newValue int) {
+				updater(func(oldValue uint32) uint32 { return uint32(newValue) })
+			})
 	})
 
 	simplifier.SetSpecialHandler("ObjectTriple", func() {

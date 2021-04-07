@@ -109,9 +109,9 @@ func (view *ObjectsView) renderContent(lvl *level.Level, objects []*level.Object
 		fineXUnifier.Add(obj.X.Fine())
 		tileYUnifier.Add(obj.Y.Tile())
 		fineYUnifier.Add(obj.Y.Fine())
-		rotationXUnifier.Add(obj.XRotation)
-		rotationYUnifier.Add(obj.YRotation)
-		rotationZUnifier.Add(obj.ZRotation)
+		rotationXUnifier.Add(int32(obj.XRotation))
+		rotationYUnifier.Add(int32(obj.YRotation))
+		rotationZUnifier.Add(int32(obj.ZRotation))
 		hitpointsUnifier.Add(obj.Hitpoints)
 	}
 
@@ -119,9 +119,6 @@ func (view *ObjectsView) renderContent(lvl *level.Level, objects []*level.Object
 	columns, rows, levelHeight := lvl.Size()
 
 	objectHeightFormatter := objectHeightFormatterFor(levelHeight)
-	rotationFormatter := func(value int) string {
-		return fmt.Sprintf("%.3f degrees  - raw: %%d", level.RotationUnit(value).ToDegrees())
-	}
 
 	if !readOnly {
 		classString := func(class object.Class) string {
@@ -231,24 +228,21 @@ func (view *ObjectsView) renderContent(lvl *level.Level, objects []*level.Object
 			func(newValue int) {
 				view.requestChangeObjects("ChangeFineY", func(entry *level.ObjectMainEntry) { entry.Y = level.CoordinateAt(entry.Y.Tile(), byte(newValue)) })
 			})
-		values.RenderUnifiedSliderInt(readOnly, "Rotation X", rotationXUnifier,
-			func(u values.Unifier) int { return int(u.Unified().(level.RotationUnit)) },
-			rotationFormatter,
-			0, 0xFF,
+		values.RenderUnifiedRotation(readOnly, "Rotation X", rotationXUnifier,
+			0, 0x0FF,
+			values.RotationInfo{Horizontal: true, Positive: false, Clockwise: false},
 			func(newValue int) {
 				view.requestChangeObjects("ChangeBaseRotationX", func(entry *level.ObjectMainEntry) { entry.XRotation = level.RotationUnit(newValue) })
 			})
-		values.RenderUnifiedSliderInt(readOnly, "Rotation Y", rotationYUnifier,
-			func(u values.Unifier) int { return int(u.Unified().(level.RotationUnit)) },
-			rotationFormatter,
-			0, 0xFF,
+		values.RenderUnifiedRotation(readOnly, "Rotation Y", rotationYUnifier,
+			0, 0x0FF,
+			values.RotationInfo{Horizontal: false, Positive: true, Clockwise: true},
 			func(newValue int) {
 				view.requestChangeObjects("ChangeBaseRotationY", func(entry *level.ObjectMainEntry) { entry.YRotation = level.RotationUnit(newValue) })
 			})
-		values.RenderUnifiedSliderInt(readOnly, "Rotation Z", rotationZUnifier,
-			func(u values.Unifier) int { return int(u.Unified().(level.RotationUnit)) },
-			rotationFormatter,
-			0, 0xFF,
+		values.RenderUnifiedRotation(readOnly, "Rotation Z", rotationZUnifier,
+			0, 0x0FF,
+			values.RotationInfo{Horizontal: false, Positive: false, Clockwise: true},
 			func(newValue int) {
 				view.requestChangeObjects("ChangeBaseRotationZ", func(entry *level.ObjectMainEntry) { entry.ZRotation = level.RotationUnit(newValue) })
 			})
