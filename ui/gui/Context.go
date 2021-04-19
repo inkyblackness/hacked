@@ -163,6 +163,10 @@ void main()
 		vec4 pixel = texture(Texture, Frag_UV.st);
 		Out_Color = Frag_Color * texture(Palette, vec2(pixel.r, 0.5));
 	}
+	else if (ImageType == 2)
+	{
+		Out_Color = texture(Texture, Frag_UV.st) * Frag_Color;
+	}
 	else
 	{
 		Out_Color = vec4(Frag_Color.rgb, Frag_Color.a * texture( Texture, Frag_UV.st).r);
@@ -344,6 +348,9 @@ func (context *Context) renderDrawData(drawData imgui.DrawData, bitmapTextureQue
 				gl.Uniform1i(context.attribLocationType, int32(imageType))
 				switch imageType {
 				case ImageTypeSimpleTexture:
+					gl.ActiveTexture(opengl.TEXTURE0 + uint32(0))
+					gl.BindTexture(opengl.TEXTURE_2D, uint32(textureID))
+				case ImageTypeColorTexture:
 					gl.ActiveTexture(opengl.TEXTURE0 + uint32(0))
 					gl.BindTexture(opengl.TEXTURE_2D, uint32(textureID))
 				case ImageTypeBitmapTexture:

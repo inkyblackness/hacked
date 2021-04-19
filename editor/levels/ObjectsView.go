@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/inkyblackness/hacked/ui/gui"
+	"github.com/inkyblackness/hacked/ui/opengl"
 	"github.com/inkyblackness/imgui-go/v3"
 
 	"github.com/inkyblackness/hacked/editor/graphics"
@@ -34,6 +36,8 @@ type ObjectsView struct {
 	guiScale float32
 	registry cmd.Registry
 
+	textureRenderer *render.TextureRenderer
+
 	model objectsViewModel
 }
 
@@ -43,7 +47,7 @@ func NewObjectsView(gameObjects *edit.GameObjectsService,
 	levelSelection *edit.LevelSelectionService,
 	varInfoProvider archive.GameVariableInfoProvider,
 	guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
-	registry cmd.Registry) *ObjectsView {
+	registry cmd.Registry, gl opengl.OpenGL) *ObjectsView {
 	view := &ObjectsView{
 		gameObjects:     gameObjects,
 		levelSelection:  levelSelection,
@@ -54,6 +58,8 @@ func NewObjectsView(gameObjects *edit.GameObjectsService,
 
 		guiScale: guiScale,
 		registry: registry,
+
+		textureRenderer: render.NewTextureRenderer(gl),
 
 		model: freshObjectsViewModel(),
 	}
@@ -254,6 +260,17 @@ func (view *ObjectsView) renderContent(lvl *level.Level, objects []*level.Object
 			func(newValue int) {
 				view.requestChangeObjects("ChangeBaseHitpoints", func(entry *level.ObjectMainEntry) { entry.Hitpoints = int16(newValue) })
 			})
+		if imgui.IsItemFocused() || imgui.IsItemActive() || imgui.IsItemHovered() {
+			view.textureRenderer.Render(func() {})
+			imgui.BeginTooltip()
+
+			imgui.ImageV(gui.TextureIDForColorTexture(view.textureRenderer.Handle()),
+				imgui.Vec2{X: 50 * view.guiScale, Y: 50 * view.guiScale},
+				imgui.Vec2{X: 0.0, Y: 0.0}, imgui.Vec2{X: 1.0, Y: 1.0},
+				imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1.0}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
+
+			imgui.EndTooltip()
+		}
 
 		imgui.TreePop()
 	}

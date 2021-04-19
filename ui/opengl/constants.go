@@ -41,6 +41,18 @@ const (
 	ELEMENT_ARRAY_BUFFER        = 0x8893
 )
 
+// Framebuffer Types
+// nolint: golint,megacheck
+const (
+	FRAMEBUFFER  = 0x8D40
+	RENDERBUFFER = 0x8D41
+
+	DEPTH_COMPONENT24 = 0x81A6
+
+	COLOR_ATTACHMENT0 = 0x8CE0
+	DEPTH_ATTACHMENT  = 0x8D00
+)
+
 // Draw Types
 // nolint: golint,megacheck
 const (
@@ -134,5 +146,7 @@ const (
 	ALPHA uint32 = 0x1906
 	RGBA         = 0x1908
 	RED          = 0x1903
-	R8           = 0x8229
+
+	RGBA8 = 0x8058
+	R8    = 0x8229
 )

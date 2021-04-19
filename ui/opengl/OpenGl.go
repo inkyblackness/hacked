@@ -8,6 +8,8 @@ type OpenGL interface {
 
 	BindAttribLocation(program uint32, index uint32, name string)
 	BindBuffer(target uint32, buffer uint32)
+	BindFramebuffer(target uint32, buffer uint32)
+	BindRenderbuffer(target uint32, buffer uint32)
 	BindSampler(unit uint32, sampler uint32)
 	BindTexture(target uint32, texture uint32)
 	BindVertexArray(array uint32)
@@ -16,6 +18,8 @@ type OpenGL interface {
 	BlendFunc(sfactor uint32, dfactor uint32)
 	BlendFuncSeparate(srcRGB uint32, dstRGB uint32, srcAlpha uint32, dstAlpha uint32)
 	BufferData(target uint32, size int, data interface{}, usage uint32)
+
+	CheckFramebufferStatus(target uint32) uint32
 
 	Clear(mask uint32)
 	ClearColor(red float32, green float32, blue float32, alpha float32)
@@ -26,6 +30,7 @@ type OpenGL interface {
 	CreateShader(shaderType uint32) uint32
 
 	DeleteBuffers(buffers []uint32)
+	DeleteFramebuffers(buffers []uint32)
 	DeleteProgram(program uint32)
 	DeleteShader(shader uint32)
 	DeleteTextures(textures []uint32)
@@ -33,13 +38,19 @@ type OpenGL interface {
 	Disable(cap uint32)
 
 	DrawArrays(mode uint32, first int32, count int32)
+	DrawBuffers(buffers []uint32)
 	DrawElements(mode uint32, count int32, elementType uint32, indices uintptr)
 
 	Enable(cap uint32)
 	EnableVertexAttribArray(index uint32)
 
+	FramebufferRenderbuffer(target uint32, attachment uint32, renderbuffertarget uint32, renderbuffer uint32)
+	FramebufferTexture(target uint32, attachment uint32, texture uint32, level int32)
+
 	GenerateMipmap(target uint32)
 	GenBuffers(n int32) []uint32
+	GenFramebuffers(n int32) []uint32
+	GenRenderbuffers(n int32) []uint32
 	GenTextures(n int32) []uint32
 	GenVertexArrays(n int32) []uint32
 
@@ -60,6 +71,7 @@ type OpenGL interface {
 	PolygonMode(face uint32, mode uint32)
 
 	ReadPixels(x int32, y int32, width int32, height int32, format uint32, pixelType uint32, pixels interface{})
+	RenderbufferStorage(target uint32, internalFormat uint32, width int32, height int32)
 
 	Scissor(x, y int32, width, height int32)
 	ShaderSource(shader uint32, source string)

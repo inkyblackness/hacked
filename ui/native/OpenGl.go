@@ -42,6 +42,16 @@ func (native *OpenGL) BindBuffer(target uint32, buffer uint32) {
 	gl.BindBuffer(target, buffer)
 }
 
+// BindFramebuffer implements the opengl.OpenGL interface.
+func (native *OpenGL) BindFramebuffer(target uint32, buffer uint32) {
+	gl.BindFramebuffer(target, buffer)
+}
+
+// BindRenderbuffer implements the opengl.OpenGL interface.
+func (native *OpenGL) BindRenderbuffer(target uint32, buffer uint32) {
+	gl.BindRenderbuffer(target, buffer)
+}
+
 // BindSampler implements the opengl.OpenGL interface.
 func (native *OpenGL) BindSampler(unit uint32, sampler uint32) {
 	gl.BindSampler(unit, sampler)
@@ -87,6 +97,11 @@ func (native *OpenGL) BufferData(target uint32, size int, data interface{}, usag
 	}
 }
 
+// CheckFramebufferStatus implements the opengl.OpenGL interface.
+func (native *OpenGL) CheckFramebufferStatus(target uint32) uint32 {
+	return gl.CheckFramebufferStatus(target)
+}
+
 // Clear implements the opengl.OpenGL interface.
 func (native *OpenGL) Clear(mask uint32) {
 	gl.Clear(mask)
@@ -115,6 +130,11 @@ func (native *OpenGL) CreateShader(shaderType uint32) uint32 {
 // DeleteBuffers implements the opengl.OpenGL interface.
 func (native *OpenGL) DeleteBuffers(buffers []uint32) {
 	gl.DeleteBuffers(int32(len(buffers)), &buffers[0])
+}
+
+// DeleteFramebuffers implements the opengl.OpenGL interface.
+func (native *OpenGL) DeleteFramebuffers(buffers []uint32) {
+	gl.DeleteFramebuffers(int32(len(buffers)), &buffers[0])
 }
 
 // DeleteProgram implements the opengl.OpenGL interface.
@@ -147,6 +167,11 @@ func (native *OpenGL) DrawArrays(mode uint32, first int32, count int32) {
 	gl.DrawArrays(mode, first, count)
 }
 
+// DrawBuffers implements the opengl.OpenGL interface.
+func (native *OpenGL) DrawBuffers(buffers []uint32) {
+	gl.DrawBuffers(int32(len(buffers)), &buffers[0])
+}
+
 // DrawElements implements the opengl.OpenGL interface.
 func (native *OpenGL) DrawElements(mode uint32, count int32, elementType uint32, indices uintptr) {
 	gl.DrawElements(mode, count, elementType, unsafe.Pointer(indices)) // nolint: govet,gas
@@ -162,6 +187,16 @@ func (native *OpenGL) EnableVertexAttribArray(index uint32) {
 	gl.EnableVertexAttribArray(index)
 }
 
+// FramebufferRenderbuffer implements the opengl.OpenGL interface.
+func (native *OpenGL) FramebufferRenderbuffer(target uint32, attachment uint32, renderbuffertarget uint32, renderbuffer uint32) {
+	gl.FramebufferRenderbuffer(target, attachment, renderbuffertarget, renderbuffer)
+}
+
+// FramebufferTexture implements the opengl.OpenGL interface.
+func (native *OpenGL) FramebufferTexture(target uint32, attachment uint32, texture uint32, level int32) {
+	gl.FramebufferTexture(target, attachment, texture, level)
+}
+
 // GenerateMipmap implements the opengl.OpenGL interface.
 func (native *OpenGL) GenerateMipmap(target uint32) {
 	gl.GenerateMipmap(target)
@@ -171,6 +206,20 @@ func (native *OpenGL) GenerateMipmap(target uint32) {
 func (native *OpenGL) GenBuffers(n int32) []uint32 {
 	buffers := make([]uint32, n)
 	gl.GenBuffers(n, &buffers[0])
+	return buffers
+}
+
+// GenFramebuffers implements the opengl.OpenGL interface.
+func (native *OpenGL) GenFramebuffers(n int32) []uint32 {
+	buffers := make([]uint32, n)
+	gl.GenFramebuffers(n, &buffers[0])
+	return buffers
+}
+
+// GenRenderbuffers implements the opengl.OpenGL interface.
+func (native *OpenGL) GenRenderbuffers(n int32) []uint32 {
+	buffers := make([]uint32, n)
+	gl.GenRenderbuffers(n, &buffers[0])
 	return buffers
 }
 
@@ -261,6 +310,11 @@ func (native *OpenGL) PolygonMode(face uint32, mode uint32) {
 // ReadPixels implements the opengl.OpenGL interface.
 func (native *OpenGL) ReadPixels(x int32, y int32, width int32, height int32, format uint32, pixelType uint32, pixels interface{}) {
 	gl.ReadPixels(x, y, width, height, format, pixelType, gl.Ptr(pixels))
+}
+
+// RenderbufferStorage implements the opengl.OpenGL interface.
+func (native *OpenGL) RenderbufferStorage(target uint32, internalFormat uint32, width int32, height int32) {
+	gl.RenderbufferStorage(target, internalFormat, width, height)
 }
 
 // Scissor implements the opengl.OpenGL interface.

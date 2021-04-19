@@ -229,8 +229,17 @@ func (app *Application) initWindowCallbacks() {
 func (app *Application) render() {
 	app.guiContext.NewFrame()
 
+	width, height := app.window.Size()
+	app.gl.Viewport(0, 0, int32(width), int32(height))
+	app.gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 	app.gl.Clear(opengl.COLOR_BUFFER_BIT)
 
+	paletteTexture, _ := app.paletteCache.Palette(0)
+	app.mapDisplay.Render(
+		paletteTexture, app.textureCache.Texture,
+		app.levelTilesView.TextureDisplay(), app.levelTilesView.ColorDisplay())
+
+	app.handleFailure()
 	app.renderMainMenu()
 
 	app.projectView.Render()
@@ -248,13 +257,6 @@ func (app *Application) render() {
 	app.moviesView.Render()
 	app.soundEffectsView.Render()
 	app.objectsView.Render()
-
-	paletteTexture, _ := app.paletteCache.Palette(0)
-	app.mapDisplay.Render(
-		paletteTexture, app.textureCache.Texture,
-		app.levelTilesView.TextureDisplay(), app.levelTilesView.ColorDisplay())
-
-	app.handleFailure()
 	app.aboutView.Render()
 	app.licensesView.Render()
 
@@ -267,7 +269,6 @@ func (app *Application) initOpenGL() {
 	app.gl.Disable(opengl.DEPTH_TEST)
 	app.gl.Enable(opengl.BLEND)
 	app.gl.BlendFunc(opengl.SRC_ALPHA, opengl.ONE_MINUS_SRC_ALPHA)
-	app.gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 }
 
 func (app *Application) initGui() (err error) {
@@ -629,7 +630,7 @@ func (app *Application) initView() {
 	app.archiveView = archives.NewArchiveView(&app.txnBuilder, app.gameStateService, app.mod, app.textLineCache, app.cp, &app.modalState, app.GuiScale, app)
 	app.levelControlView = levels.NewControlView(app.levels, app.levelSelection, app.levelEditorService, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
 	app.levelTilesView = levels.NewTilesView(app.levelEditorService, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
-	app.levelObjectsView = levels.NewObjectsView(app.gameObjectsService, app.levelEditorService, app.levelSelection, app.gameStateService, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder)
+	app.levelObjectsView = levels.NewObjectsView(app.gameObjectsService, app.levelEditorService, app.levelSelection, app.gameStateService, app.GuiScale, app.textLineCache, app.textureCache, &app.txnBuilder, app.gl)
 	app.messagesView = messages.NewMessagesView(app.mod, app.messagesCache, app.cp, app.movieCache, app.textureCache, &app.modalState, app.clipboard, app.GuiScale, app)
 	app.textsView = texts.NewTextsView(augmentedTextService, &app.modalState, app.clipboard, app.GuiScale)
 	app.bitmapsView = bitmaps.NewBitmapsView(app.mod, app.textureCache, app.paletteCache, &app.modalState, app.clipboard, app.GuiScale, app)

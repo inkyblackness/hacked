@@ -52,6 +52,20 @@ func (debugging *debuggingOpenGL) BindBuffer(target uint32, buffer uint32) {
 	debugging.recordExit("BindBuffer")
 }
 
+// BindFramebuffer implements the OpenGL interface.
+func (debugging *debuggingOpenGL) BindFramebuffer(target uint32, buffer uint32) {
+	debugging.recordEntry("BindFramebuffer", target, buffer)
+	debugging.gl.BindFramebuffer(target, buffer)
+	debugging.recordExit("BindFramebuffer")
+}
+
+// BindRenderbuffer implements the OpenGL interface.
+func (debugging *debuggingOpenGL) BindRenderbuffer(target uint32, buffer uint32) {
+	debugging.recordEntry("BindRenderbuffer", target, buffer)
+	debugging.gl.BindRenderbuffer(target, buffer)
+	debugging.recordExit("BindRenderbuffer")
+}
+
 // BindSampler implements the OpenGL interface.
 func (debugging *debuggingOpenGL) BindSampler(unit uint32, sampler uint32) {
 	debugging.recordEntry("BindSampler", unit, sampler)
@@ -108,6 +122,14 @@ func (debugging *debuggingOpenGL) BufferData(target uint32, size int, data inter
 	debugging.recordExit("BufferData")
 }
 
+// CheckFramebufferStatus implements the OpenGL interface.
+func (debugging *debuggingOpenGL) CheckFramebufferStatus(target uint32) uint32 {
+	debugging.recordEntry("CheckFramebufferStatus", target)
+	result := debugging.gl.CheckFramebufferStatus(target)
+	debugging.recordExit("CheckFramebufferStatus")
+	return result
+}
+
 // Clear implements the OpenGL interface.
 func (debugging *debuggingOpenGL) Clear(mask uint32) {
 	debugging.recordEntry("Clear", mask)
@@ -152,6 +174,13 @@ func (debugging *debuggingOpenGL) DeleteBuffers(buffers []uint32) {
 	debugging.recordExit("DeleteBuffers")
 }
 
+// DeleteFramebuffers implements the OpenGL interface.
+func (debugging *debuggingOpenGL) DeleteFramebuffers(buffers []uint32) {
+	debugging.recordEntry("DeleteFramebuffers", buffers)
+	debugging.gl.DeleteFramebuffers(buffers)
+	debugging.recordExit("DeleteFramebuffers")
+}
+
 // DeleteProgram implements the OpenGL interface.
 func (debugging *debuggingOpenGL) DeleteProgram(program uint32) {
 	debugging.recordEntry("DeleteProgram", program)
@@ -194,6 +223,13 @@ func (debugging *debuggingOpenGL) DrawArrays(mode uint32, first int32, count int
 	debugging.recordExit("DrawArrays")
 }
 
+// DrawBuffers implements the OpenGL interface.
+func (debugging *debuggingOpenGL) DrawBuffers(buffers []uint32) {
+	debugging.recordEntry("DrawBuffers", buffers)
+	debugging.gl.DrawBuffers(buffers)
+	debugging.recordExit("DrawBuffers")
+}
+
 // DrawElements implements the OpenGL interface.
 func (debugging *debuggingOpenGL) DrawElements(mode uint32, count int32, elementType uint32, indices uintptr) {
 	debugging.recordEntry("DrawElements", mode, count, elementType, indices)
@@ -215,6 +251,20 @@ func (debugging *debuggingOpenGL) EnableVertexAttribArray(index uint32) {
 	debugging.recordExit("EnableVertexAttribArray")
 }
 
+// FramebufferRenderbuffer implements the OpenGL interface.
+func (debugging *debuggingOpenGL) FramebufferRenderbuffer(target uint32, attachment uint32, renderbuffertarget uint32, renderbuffer uint32) {
+	debugging.recordEntry("FramebufferRenderbuffer", target, attachment, renderbuffertarget, renderbuffer)
+	debugging.gl.FramebufferRenderbuffer(target, attachment, renderbuffertarget, renderbuffer)
+	debugging.recordExit("FramebufferRenderbuffer")
+}
+
+// FramebufferTexture implements the OpenGL interface.
+func (debugging *debuggingOpenGL) FramebufferTexture(target uint32, attachment uint32, texture uint32, level int32) {
+	debugging.recordEntry("FramebufferTexture", target, attachment, texture, level)
+	debugging.gl.FramebufferTexture(target, attachment, texture, level)
+	debugging.recordExit("FramebufferTexture")
+}
+
 // GenerateMipmap implements the opengl.OpenGL interface.
 func (debugging *debuggingOpenGL) GenerateMipmap(target uint32) {
 	debugging.recordEntry("GenerateMipmap", target)
@@ -227,6 +277,22 @@ func (debugging *debuggingOpenGL) GenBuffers(n int32) []uint32 {
 	debugging.recordEntry("GenBuffers", n)
 	result := debugging.gl.GenBuffers(n)
 	debugging.recordExit("GenBuffers", result)
+	return result
+}
+
+// GenFramebuffers implements the OpenGL interface.
+func (debugging *debuggingOpenGL) GenFramebuffers(n int32) []uint32 {
+	debugging.recordEntry("GenFramebuffers", n)
+	result := debugging.gl.GenFramebuffers(n)
+	debugging.recordExit("GenFramebuffers", result)
+	return result
+}
+
+// GenRenderbuffers implements the OpenGL interface.
+func (debugging *debuggingOpenGL) GenRenderbuffers(n int32) []uint32 {
+	debugging.recordEntry("GenRenderbuffers", n)
+	result := debugging.gl.GenRenderbuffers(n)
+	debugging.recordExit("GenRenderbuffers", result)
 	return result
 }
 
@@ -343,6 +409,13 @@ func (debugging *debuggingOpenGL) ReadPixels(x int32, y int32, width int32, heig
 	debugging.recordEntry("ReadPixels", x, y, width, height, format, pixelType, pixels)
 	debugging.gl.ReadPixels(x, y, width, height, format, pixelType, pixels)
 	debugging.recordExit("ReadPixels")
+}
+
+// RenderbufferStorage implements the opengl.OpenGL interface.
+func (debugging *debuggingOpenGL) RenderbufferStorage(target uint32, internalFormat uint32, width int32, height int32) {
+	debugging.recordEntry("RenderbufferStorage", target, internalFormat, width, height)
+	debugging.gl.RenderbufferStorage(target, internalFormat, width, height)
+	debugging.recordExit("RenderbufferStorage")
 }
 
 // Scissor implements the OpenGL interface.
