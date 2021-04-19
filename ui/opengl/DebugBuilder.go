@@ -32,7 +32,7 @@ func NewDebugBuilder(wrapped OpenGL) *DebugBuilder {
 }
 
 // Build creates a new instance of the debugging OpenGL implementation.
-// The builder can be resused to create another instance with different parameters.
+// The builder can be reused to create another instance with different parameters.
 func (builder *DebugBuilder) Build() OpenGL {
 	opengl := &debuggingOpenGL{
 		gl: builder.wrapped,
