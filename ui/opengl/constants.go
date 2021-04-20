@@ -69,6 +69,10 @@ const (
 	CULL_FACE           = 0x0B44
 	SCISSOR_TEST        = 0x0C11
 
+	NICEST           = 0x1102
+	LINE_SMOOTH      = 0x0B20
+	LINE_SMOOTH_HINT = 0x0C52
+
 	ACTIVE_TEXTURE               = 0x84E0
 	CURRENT_PROGRAM              = 0x8B8D
 	TEXTURE_BINDING_2D           = 0x8069

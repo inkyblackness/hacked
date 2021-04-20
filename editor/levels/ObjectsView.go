@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	mgl "github.com/go-gl/mathgl/mgl32"
 	"github.com/inkyblackness/hacked/ui/gui"
 	"github.com/inkyblackness/hacked/ui/opengl"
 	"github.com/inkyblackness/imgui-go/v3"
@@ -37,6 +38,7 @@ type ObjectsView struct {
 	registry cmd.Registry
 
 	textureRenderer *render.TextureRenderer
+	orientationView *render.OrientationView
 
 	model objectsViewModel
 }
@@ -48,6 +50,16 @@ func NewObjectsView(gameObjects *edit.GameObjectsService,
 	varInfoProvider archive.GameVariableInfoProvider,
 	guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
 	registry cmd.Registry, gl opengl.OpenGL) *ObjectsView {
+
+	textureRenderer := render.NewTextureRenderer(gl)
+	viewMatrix := mgl.LookAt(0.35, 0.35, -1, 0, 0, 0, 1.0, 0.0, 0.0)
+	context := render.Context{
+		OpenGL:           gl,
+		ViewMatrix:       &viewMatrix,
+		ProjectionMatrix: mgl.Ortho(-0.5, 0.5, 0.5, -0.5, -10, 10.0),
+	}
+	orientationView := render.NewOrientationView(context, mgl.Vec3{1.0, -1.0, 1.0}, mgl.Vec3{1.0, 1.0, 1.0})
+
 	view := &ObjectsView{
 		gameObjects:     gameObjects,
 		levelSelection:  levelSelection,
@@ -59,7 +71,8 @@ func NewObjectsView(gameObjects *edit.GameObjectsService,
 		guiScale: guiScale,
 		registry: registry,
 
-		textureRenderer: render.NewTextureRenderer(gl),
+		textureRenderer: textureRenderer,
+		orientationView: orientationView,
 
 		model: freshObjectsViewModel(),
 	}
@@ -260,17 +273,28 @@ func (view *ObjectsView) renderContent(lvl *level.Level, objects []*level.Object
 			func(newValue int) {
 				view.requestChangeObjects("ChangeBaseHitpoints", func(entry *level.ObjectMainEntry) { entry.Hitpoints = int16(newValue) })
 			})
-		if imgui.IsItemFocused() || imgui.IsItemActive() || imgui.IsItemHovered() {
-			view.textureRenderer.Render(func() {})
-			imgui.BeginTooltip()
+		//if imgui.IsItemFocused() || imgui.IsItemActive() || imgui.IsItemHovered() {
 
-			imgui.ImageV(gui.TextureIDForColorTexture(view.textureRenderer.Handle()),
-				imgui.Vec2{X: 50 * view.guiScale, Y: 50 * view.guiScale},
-				imgui.Vec2{X: 0.0, Y: 0.0}, imgui.Vec2{X: 1.0, Y: 1.0},
-				imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1.0}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
-
-			imgui.EndTooltip()
+		var rotation mgl.Vec3
+		if rotationXUnifier.IsUnique() {
+			rotation[0] = float32(rotationXUnifier.Unified().(int32)*360) / 256.0
 		}
+		if rotationYUnifier.IsUnique() {
+			rotation[1] = float32(rotationYUnifier.Unified().(int32)*360) / 256.0
+		}
+		if rotationZUnifier.IsUnique() {
+			rotation[2] = float32(rotationZUnifier.Unified().(int32)*360) / 256.0
+		}
+		view.textureRenderer.Render(func() { view.orientationView.Render(rotation) })
+		//imgui.BeginTooltip()
+
+		imgui.ImageV(gui.TextureIDForColorTexture(view.textureRenderer.Handle()),
+			imgui.Vec2{X: 200 * view.guiScale, Y: 200 * view.guiScale},
+			imgui.Vec2{X: 0.0, Y: 0.0}, imgui.Vec2{X: 1.0, Y: 1.0},
+			imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1.0}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
+
+		//			imgui.EndTooltip()
+		//}
 
 		imgui.TreePop()
 	}

@@ -23,8 +23,8 @@ func NewTextureRenderer(gl opengl.OpenGL) *TextureRenderer {
 		framebuffer: gl.GenFramebuffers(1)[0],
 		texture:     gl.GenTextures(1)[0],
 
-		width:  400,
-		height: 400,
+		width:  200,
+		height: 200,
 	}
 
 	gl.BindTexture(opengl.TEXTURE_2D, renderer.texture)
@@ -67,7 +67,7 @@ func (renderer *TextureRenderer) Render(nested func()) {
 	gl := renderer.gl
 	renderer.onFramebuffer(func() {
 		gl.Viewport(0, 0, renderer.width, renderer.height)
-		gl.ClearColor(0.0, 1.0, 0.0, 1.0)
+		gl.ClearColor(0.0, 0.0, 0.0, 0.0)
 		gl.Clear(opengl.COLOR_BUFFER_BIT | opengl.DEPTH_BUFFER_BIT)
 
 		nested()
