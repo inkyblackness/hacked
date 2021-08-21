@@ -23,6 +23,9 @@ func FileLocationFrom(filename string) FileLocation {
 func (loc FileLocation) AbsolutePathFrom(base string) string {
 	rel, err := filepath.Rel(base, loc.DirPath)
 	if err != nil {
+		if filepath.IsAbs(loc.DirPath) {
+			return filepath.Join(loc.DirPath, loc.Name)
+		}
 		return filepath.Join(base, loc.DirPath, loc.Name)
 	}
 	return filepath.Join(base, rel, loc.Name)
