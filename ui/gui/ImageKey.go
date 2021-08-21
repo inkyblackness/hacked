@@ -10,7 +10,7 @@ const (
 	ImageTypeSimpleTexture ImageType = 0
 	// ImageTypeBitmapTexture identifies bitmap textures.
 	ImageTypeBitmapTexture ImageType = 1
-	// ImageTypeBitmapTexture identifies textures with own color information.
+	// ImageTypeColorTexture identifies textures with own color information.
 	ImageTypeColorTexture ImageType = 2
 )
 

@@ -16,7 +16,8 @@ type BitstreamReader struct {
 func NewBitstreamReader(data []byte) *BitstreamReader {
 	return &BitstreamReader{
 		source:       data,
-		sourceBitLen: uint64(len(data)) * 8}
+		sourceBitLen: uint64(len(data)) * 8,
+	}
 }
 
 func (reader *BitstreamReader) bufferNextByte() {

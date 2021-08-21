@@ -2,7 +2,55 @@ run:
   deadline: 10m
 
 linters:
-  enable-all: true
+  enable:
+    - asciicheck
+    - bodyclose
+    - deadcode
+    - depguard
+    - dogsled
+    - dupl
+    - durationcheck
+    - errcheck
+    - errorlint
+    - exportloopref
+    - forbidigo
+    - goconst
+    - gocritic
+    - godot
+    - godox
+    - goerr113
+    - gofmt
+    - goheader
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    - gosimple
+    - govet
+    - importas
+    - ineffassign
+    - lll
+    - makezero
+    - misspell
+    - nilerr
+    - noctx
+    - nolintlint
+    - predeclared
+    - promlinter
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - staticcheck
+    - structcheck
+    - tagliatelle
+    - testpackage
+    - thelper
+    - tparallel
+    - typecheck
+    - unconvert
+    - unused
+    - varcheck
+    - wastedassign
+    - whitespace
 
   # linters are disabled if their majority of issues is considered false-positive (intended code)
   # and the remaining issues (if existing) aren't worth it.
@@ -24,6 +72,9 @@ linters:
     - gomnd # too many false positives with constants themselves.
 
 issues:
+  exclude:
+    # too often for OpenGL constants
+    - don't use ALL_CAPS in Go names
   exclude-use-default: false # disable filtering of defaults for better zero-issue policy
   max-per-linter: 0 # disable limit; report all issues of a linter
   max-same-issues: 0 # disable limit; report all issues of the same issue

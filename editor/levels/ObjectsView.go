@@ -53,7 +53,6 @@ func NewObjectsView(gameObjects *edit.GameObjectsService,
 	varInfoProvider archive.GameVariableInfoProvider,
 	guiScale float32, textCache *text.Cache, textureCache *graphics.TextureCache,
 	registry cmd.Registry, gl opengl.OpenGL) *ObjectsView {
-
 	textureRenderer := render.NewTextureRenderer(gl)
 	viewMatrix := mgl.LookAt(0.35, 0.35, -1, 0, 0, 0, 1.0, 0.0, 0.0)
 	context := render.Context{

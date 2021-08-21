@@ -210,9 +210,9 @@ func (debugging *debuggingOpenGL) DeleteVertexArrays(arrays []uint32) {
 }
 
 // Disable implements the OpenGL interface.
-func (debugging *debuggingOpenGL) Disable(cap uint32) {
-	debugging.recordEntry("Disable", cap)
-	debugging.gl.Disable(cap)
+func (debugging *debuggingOpenGL) Disable(capability uint32) {
+	debugging.recordEntry("Disable", capability)
+	debugging.gl.Disable(capability)
 	debugging.recordExit("Disable")
 }
 
@@ -238,9 +238,9 @@ func (debugging *debuggingOpenGL) DrawElements(mode uint32, count int32, element
 }
 
 // Enable implements the OpenGL interface.
-func (debugging *debuggingOpenGL) Enable(cap uint32) {
-	debugging.recordEntry("Enable", cap)
-	debugging.gl.Enable(cap)
+func (debugging *debuggingOpenGL) Enable(capability uint32) {
+	debugging.recordEntry("Enable", capability)
+	debugging.gl.Enable(capability)
 	debugging.recordExit("Enable")
 }
 
@@ -376,9 +376,9 @@ func (debugging *debuggingOpenGL) GetUniformLocation(program uint32, name string
 }
 
 // IsEnabled implements the OpenGL interface.
-func (debugging *debuggingOpenGL) IsEnabled(cap uint32) bool {
-	debugging.recordEntry("IsEnabled", cap)
-	result := debugging.gl.IsEnabled(cap)
+func (debugging *debuggingOpenGL) IsEnabled(capability uint32) bool {
+	debugging.recordEntry("IsEnabled", capability)
+	result := debugging.gl.IsEnabled(capability)
 	debugging.recordExit("IsEnabled", result)
 	return result
 }

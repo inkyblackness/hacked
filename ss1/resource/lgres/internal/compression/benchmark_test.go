@@ -23,6 +23,7 @@ func rawData(size int) []byte {
 }
 
 func initProfiling(b *testing.B, nameSuffix string) func() {
+	b.Helper()
 	flag.Parse()
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile + "-" + b.Name() + nameSuffix)
@@ -47,6 +48,7 @@ func BenchmarkRawDataStorage(b *testing.B) {
 }
 
 func benchmarkCompression(b *testing.B, size int, nameSuffix string) {
+	b.Helper()
 	profileStop := initProfiling(b, nameSuffix)
 	defer profileStop()
 	data := rawData(size)
@@ -79,6 +81,7 @@ func BenchmarkCompression1024KB(b *testing.B) {
 }
 
 func benchmarkCompressionDecompression(b *testing.B, size int, nameSuffix string) {
+	b.Helper()
 	profileStop := initProfiling(b, nameSuffix)
 	defer profileStop()
 	data := rawData(size)

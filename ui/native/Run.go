@@ -25,9 +25,7 @@ func Run(initializer func(opengl.Window) error, title string, framesPerSecond fl
 
 	ticker := time.NewTicker(time.Millisecond)
 	for !window.ShouldClose() {
-		select {
-		case <-ticker.C:
-		}
+		<-ticker.C
 		window.Update()
 	}
 	ticker.Stop()

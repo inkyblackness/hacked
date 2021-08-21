@@ -81,7 +81,7 @@ func NewTileMap(width, height int) TileMap {
 // Nil is returned for a coordinate outside the boundaries.
 func (m TileMap) Tile(pos TilePosition, xShift int) *TileMapEntry {
 	index := int(pos.X) + (int(pos.Y) << xShift)
-	if (pos.X < 0) || (int(pos.X) >= (1 << xShift)) || (pos.Y < 0) || (index >= len(m.entries)) {
+	if (int(pos.X) >= (1 << xShift)) || (index >= len(m.entries)) {
 		return nil
 	}
 	return &m.entries[index]

@@ -166,7 +166,6 @@ func NewMapGrid(context *render.Context) *MapGrid {
 		}
 		grid.floorTickStarts = []int32{0, 6, 12, 18}
 		grid.ceilingTickStarts = []int32{3, 9, 15, 21}
-
 	}
 
 	return grid

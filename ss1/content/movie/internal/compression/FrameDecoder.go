@@ -19,7 +19,8 @@ func newFrameDecoder(builder *FrameDecoderBuilder) *FrameDecoder {
 		verticalTiles:     builder.height / TileSideLength,
 		colorer:           builder.colorer,
 		paletteLookupList: make([]byte, listLen+16),
-		controlWords:      builder.controlWords}
+		controlWords:      builder.controlWords,
+	}
 
 	copy(decoder.paletteLookupList[:listLen], builder.paletteLookupList)
 

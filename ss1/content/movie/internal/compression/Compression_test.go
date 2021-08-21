@@ -85,17 +85,17 @@ func BenchmarkRecompressionDeth02(b *testing.B) {
 	recompress(b, "deth", "scene02")
 }
 
-func recompress(t testing.TB, dir1, dir2 string) {
-	t.Helper()
+func recompress(tb testing.TB, dir1, dir2 string) {
+	tb.Helper()
 	scenepath := filepath.Join(".", "_testdata", dir1, dir2)
 	read := func(name string) []byte {
 		data, err := ioutil.ReadFile(filepath.Join(scenepath, name))
-		require.Nil(t, err, "no error expected reading %v", name)
+		require.Nil(tb, err, "no error expected reading %v", name)
 		return data
 	}
 	controlWordsData := read("controlDict.bin")
 	controlWords, err := compression.UnpackControlWords(controlWordsData)
-	require.Nil(t, err, "no error expected unpacking control words")
+	require.Nil(tb, err, "no error expected unpacking control words")
 	paletteLookup := read("paletteLookup.bin")
 
 	width := 600
@@ -103,7 +103,7 @@ func recompress(t testing.TB, dir1, dir2 string) {
 	frame := make([]byte, width*height)
 	decoderBuilder := compression.NewFrameDecoderBuilder(600, 300)
 
-	logStatistics(t, "In", controlWords, paletteLookup)
+	logStatistics(tb, "In", controlWords, paletteLookup)
 
 	decoderBuilder.WithControlWords(controlWords)
 	decoderBuilder.WithPaletteLookupList(paletteLookup)
@@ -119,10 +119,10 @@ func recompress(t testing.TB, dir1, dir2 string) {
 			return false
 		}
 
-		t.Logf("InStatistics F%2d: Bitstream: %v, Maskstream: %v", index, len(bitstream), len(maskstream))
+		tb.Logf("InStatistics F%2d: Bitstream: %v, Maskstream: %v", index, len(bitstream), len(maskstream))
 		err = decoder.Decode(bitstream, maskstream)
 		if err != nil {
-			t.Logf("Failed to decode frame F%2d: %v", index, err)
+			tb.Logf("Failed to decode frame F%2d: %v", index, err)
 			return false
 		}
 		return true
@@ -136,8 +136,8 @@ func recompress(t testing.TB, dir1, dir2 string) {
 		frameIndex++
 	}
 
-	fmt.Printf("verifying compression of %v frames\n", len(frames))
-	verifyCompression(t, width, height, frames...)
+	tb.Logf("verifying compression of %v frames\n", len(frames))
+	verifyCompression(tb, width, height, frames...)
 }
 
 func BenchmarkRandomFrames(b *testing.B) {
@@ -183,19 +183,19 @@ func BenchmarkRandomFrames(b *testing.B) {
 	verifyCompression(b, width, height, frames...)
 }
 
-func verifyCompression(t testing.TB, width, height int, inFrames ...[]byte) {
-	t.Helper()
+func verifyCompression(tb testing.TB, width, height int, inFrames ...[]byte) {
+	tb.Helper()
 	encoder := compression.NewSceneEncoder(width, height)
 	for frameIndex, frame := range inFrames {
-		require.Equal(t, width*height, len(frame), fmt.Sprintf("Length of frame %d is wrong for dimension", frameIndex))
+		require.Equal(tb, width*height, len(frame), fmt.Sprintf("Length of frame %d is wrong for dimension", frameIndex))
 		err := encoder.AddFrame(frame)
-		require.Nil(t, err, fmt.Sprintf("no error expected adding frame %d: %v", frameIndex, err))
+		require.Nil(tb, err, fmt.Sprintf("no error expected adding frame %d: %v", frameIndex, err))
 	}
 	controlWords, paletteLookup, encodedFrames, err := encoder.Encode(context.Background())
-	require.Equal(t, len(inFrames), len(encodedFrames), "expected equal amount of encoded frames for input frames")
-	require.Nil(t, err, fmt.Sprintf("no error expected encoding: %v", err))
+	require.Equal(tb, len(inFrames), len(encodedFrames), "expected equal amount of encoded frames for input frames")
+	require.Nil(tb, err, fmt.Sprintf("no error expected encoding: %v", err))
 
-	logStatistics(t, "Out", controlWords, paletteLookup)
+	logStatistics(tb, "Out", controlWords, paletteLookup)
 
 	decoderBuilder := compression.NewFrameDecoderBuilder(width, height)
 	decoderBuilder.WithControlWords(controlWords)
@@ -204,15 +204,16 @@ func verifyCompression(t testing.TB, width, height int, inFrames ...[]byte) {
 	decoderBuilder.ForStandardFrame(frameBuffer, width)
 	for frameIndex, encodedFrame := range encodedFrames {
 		decoder := decoderBuilder.Build()
-		t.Logf("Statistics F%2d: Bitstream: %v, Maskstream: %v",
+		tb.Logf("Statistics F%2d: Bitstream: %v, Maskstream: %v",
 			frameIndex, len(encodedFrame.Bitstream), len(encodedFrame.Maskstream))
 		err = decoder.Decode(encodedFrame.Bitstream, encodedFrame.Maskstream)
-		assert.Nil(t, err, fmt.Sprintf("no error expected re-decoding: %v", err))
-		assert.Equal(t, inFrames[frameIndex], frameBuffer, fmt.Sprintf("Frame content mismatch for frame %d", frameIndex))
+		assert.Nil(tb, err, fmt.Sprintf("no error expected re-decoding: %v", err))
+		assert.Equal(tb, inFrames[frameIndex], frameBuffer, fmt.Sprintf("Frame content mismatch for frame %d", frameIndex))
 	}
 }
 
-func logStatistics(t testing.TB, prefix string, controlWords []compression.ControlWord, paletteLookup []byte) {
+func logStatistics(tb testing.TB, prefix string, controlWords []compression.ControlWord, paletteLookup []byte) {
+	tb.Helper()
 	controls := make(map[compression.ControlType]int)
 	skips := make(map[int]int)
 	longOffsets := 0
@@ -235,6 +236,6 @@ func logStatistics(t testing.TB, prefix string, controlWords []compression.Contr
 			}
 		}
 	}
-	t.Logf("%vStatistics: PaletteLookup: %vB, ControlWords: %v, LO: %v, CTRL: %v, SKIP: %v -- firstWords: %v",
+	tb.Logf("%vStatistics: PaletteLookup: %vB, ControlWords: %v, LO: %v, CTRL: %v, SKIP: %v -- firstWords: %v",
 		prefix, len(paletteLookup), len(controlWords), longOffsets, controls, skips, firstWords)
 }

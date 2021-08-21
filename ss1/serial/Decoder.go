@@ -2,6 +2,7 @@ package serial
 
 import (
 	"encoding/binary"
+	"errors"
 	"io"
 )
 
@@ -47,7 +48,7 @@ func (coder *Decoder) Read(data []byte) (read int, err error) {
 	read, err = coder.source.Read(data)
 	coder.offset += uint32(read)
 
-	isErrEOF := err == io.EOF
+	isErrEOF := errors.Is(err, io.EOF)
 	expectedAmountReturned := read == len(data)
 	errorCanBeIgnored := isErrEOF && expectedAmountReturned
 	if (coder.firstError == nil) && !errorCanBeIgnored {

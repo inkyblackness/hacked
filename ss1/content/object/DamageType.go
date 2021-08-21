@@ -70,7 +70,7 @@ const (
 	specialDamageTypeSuperShift   = 4
 	specialDamageTypeSuperMask    = 0xF0
 
-	// SpecialDamageTypeLimit identifies the maximum value of special damage type
+	// SpecialDamageTypeLimit identifies the maximum value of special damage type.
 	SpecialDamageTypeLimit = 0x0F
 )
 

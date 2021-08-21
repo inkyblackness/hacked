@@ -135,7 +135,6 @@ func NewOrientationView(context Context, baseOrientation mgl.Mat4, rotation mgl.
 		gl.BindBuffer(opengl.ARRAY_BUFFER, 0)
 	}
 	view.vao.WithSetter(func(gl opengl.OpenGL) {
-
 		gl.EnableVertexAttribArray(uint32(view.vertexPositionAttrib))
 		gl.BindBuffer(opengl.ARRAY_BUFFER, view.vertexPositionBuffer)
 		gl.VertexAttribOffset(uint32(view.vertexPositionAttrib), 3, opengl.FLOAT, false, 0, 0)
@@ -145,6 +144,7 @@ func NewOrientationView(context Context, baseOrientation mgl.Mat4, rotation mgl.
 	return view
 }
 
+// Dispose cleans up resources of the view.
 func (view *OrientationView) Dispose() {
 	gl := view.context.OpenGL
 	view.vao.Dispose()

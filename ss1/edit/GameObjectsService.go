@@ -32,7 +32,7 @@ func (service *GameObjectsService) AllProperties() object.PropertiesTable {
 	return service.mod.ObjectProperties()
 }
 
-// AllProperties returns the currently know properties.
+// PropertiesFor returns the properties for the given triple.
 func (service *GameObjectsService) PropertiesFor(triple object.Triple) (object.Properties, error) {
 	prop, err := service.AllProperties().ForObject(triple)
 	if err != nil {

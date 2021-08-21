@@ -10,6 +10,7 @@ import (
 )
 
 func verifyBlockContent(t *testing.T, provider resource.BlockProvider, index int, expected []byte) {
+	t.Helper()
 	reader, err := provider.Block(index)
 	assert.Nil(t, err, "No error expected for index %d", index)
 	assert.NotNil(t, reader, "Reader expected for index %d", index)
@@ -21,6 +22,7 @@ func verifyBlockContent(t *testing.T, provider resource.BlockProvider, index int
 }
 
 func verifyBlockError(t *testing.T, provider resource.BlockProvider, index int) {
+	t.Helper()
 	_, err := provider.Block(index)
 	assert.NotNil(t, err, "Error expected for index %d", index)
 }

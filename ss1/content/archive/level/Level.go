@@ -178,7 +178,7 @@ func (lvl *Level) ForEachObject(handler func(ObjectID, ObjectMainEntry)) {
 	}
 }
 
-// HasRoomForObject returns true if the level can hold one object of given class.
+// HasRoomForObjectOf returns true if the level can hold one object of given class.
 func (lvl *Level) HasRoomForObjectOf(class object.Class) bool {
 	classActive, classCapacity := lvl.ObjectClassStats(class)
 	levelActive := lvl.objectMainTable.AllocatedCount()
@@ -342,7 +342,7 @@ func (lvl *Level) ObjectClassData(obj *ObjectMainEntry) *interpreters.Instance {
 	return interpreterFactory(obj.Triple(), classTable[obj.ClassTableIndex].Data)
 }
 
-// ObjectClassData returns the raw extra data for the given object.
+// ObjectExtraData returns the raw extra data for the given object.
 func (lvl *Level) ObjectExtraData(obj *ObjectMainEntry) *interpreters.Instance {
 	if (obj == nil) || (obj.InUse == 0) {
 		return interpreters.New().For(nil)

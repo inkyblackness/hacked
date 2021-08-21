@@ -10,6 +10,7 @@ import (
 )
 
 func benchmarkRecompression(b *testing.B, size int, chanceLimit byte, nameSuffix string, seed int64) {
+	b.Helper()
 	input := make([]byte, size)
 	reference := make([]byte, size)
 	var chance [1]byte

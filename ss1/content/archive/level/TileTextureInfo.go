@@ -13,7 +13,7 @@ func (info TileTextureInfo) WallTextureIndex() AtlasIndex {
 // WithWallTextureIndex returns an info with given index set.
 // Values outside valid range are ignored.
 func (info TileTextureInfo) WithWallTextureIndex(value AtlasIndex) TileTextureInfo {
-	if (value < 0) || (value >= 64) {
+	if value >= 64 {
 		return info
 	}
 	return TileTextureInfo(uint16(info&^0x003F) | uint16(value&0x003F))
@@ -29,7 +29,7 @@ func (info TileTextureInfo) CeilingTextureIndex() AtlasIndex {
 // WithCeilingTextureIndex returns an info with given index set.
 // Values outside valid range are ignored.
 func (info TileTextureInfo) WithCeilingTextureIndex(value AtlasIndex) TileTextureInfo {
-	if (value < 0) || (value >= FloorCeilingTextureLimit) {
+	if value >= FloorCeilingTextureLimit {
 		return info
 	}
 	return TileTextureInfo(uint16(info&^0x07C0) | (uint16(value&0x001F) << 6))
@@ -45,7 +45,7 @@ func (info TileTextureInfo) FloorTextureIndex() AtlasIndex {
 // WithFloorTextureIndex returns an info with given index set.
 // Values outside valid range are ignored.
 func (info TileTextureInfo) WithFloorTextureIndex(value AtlasIndex) TileTextureInfo {
-	if (value < 0) || (value >= FloorCeilingTextureLimit) {
+	if value >= FloorCeilingTextureLimit {
 		return info
 	}
 	return TileTextureInfo(uint16(info&^0xF800) | (uint16(value&0x001F) << 11))

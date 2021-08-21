@@ -27,7 +27,8 @@ func NewStickyKeyBuffer(listener StickyKeyListener) *StickyKeyBuffer {
 		pressedKeys:     make(map[Key]int),
 		pressedModifier: make(map[Modifier]int),
 		activeModifier:  ModNone,
-		listener:        listener}
+		listener:        listener,
+	}
 
 	return buffer
 }

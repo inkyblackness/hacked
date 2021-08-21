@@ -16,7 +16,8 @@ type FrameDecoderBuilder struct {
 func NewFrameDecoderBuilder(width, height int) *FrameDecoderBuilder {
 	return &FrameDecoderBuilder{
 		width:  width,
-		height: height}
+		height: height,
+	}
 }
 
 // Build creates a new instance of a decoder with the most recent parameters.

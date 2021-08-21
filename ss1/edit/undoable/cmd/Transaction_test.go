@@ -1,6 +1,7 @@
 package cmd_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -108,7 +109,8 @@ func (suite *TransactionBuilderSuite) thenResultShouldBe(expected []string) {
 
 func (suite *TransactionBuilderSuite) thenResultShouldBeError(expected string) {
 	require.NotNil(suite.T(), suite.err, "no error returned")
-	txnErr, isTxnErr := suite.err.(cmd.TransactionError)
+	var txnErr cmd.TransactionError
+	isTxnErr := errors.As(suite.err, &txnErr)
 	require.True(suite.T(), isTxnErr, "error is not a transaction error: %v", suite.err)
 	assert.Equal(suite.T(), expected, txnErr.Error())
 	assert.NotNil(suite.T(), txnErr.Nested, "no nested error set")

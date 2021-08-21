@@ -46,7 +46,6 @@ func (suite *StandardTileColorerSuite) TestColoringATileLeavesPixelOfOthersAlone
 	suite.thenTileShouldBeUntouched(1, 0)
 	suite.thenTileShouldBeUntouched(2, 0)
 	suite.thenTileShouldBeUntouched(0, 1)
-	//suite.thenTileShouldBeUntouched(1, 1)
 	suite.thenTileShouldBeUntouched(2, 1)
 	suite.thenTileShouldBeUntouched(0, 2)
 	suite.thenTileShouldBeUntouched(1, 2)

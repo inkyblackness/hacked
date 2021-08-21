@@ -2,6 +2,7 @@ package compression_test
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -110,7 +111,7 @@ func (suite *DecompressorSuite) verifyOutput(expected []byte) {
 	decompressor := compression.NewDecompressor(source)
 	read, err := decompressor.Read(output)
 
-	assert.True(suite.T(), (err == nil) || (err == io.EOF), fmt.Sprintf("unexpected error: %v", err))
+	assert.True(suite.T(), (err == nil) || errors.Is(err, io.EOF), fmt.Sprintf("unexpected error: %v", err))
 	assert.Equal(suite.T(), len(output), read, "unexpected number of bytes read")
 	assert.Equal(suite.T(), expected, output)
 }

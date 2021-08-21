@@ -473,9 +473,7 @@ func (view *View) requestImportScene(returningInfo string) {
 			if data.BackgroundIndex == 255 {
 				indexMap[0] = palette.IndexClosestTo(palette[0], []byte{0, 255})
 			} else {
-				temp := palette[0]
-				palette[0] = palette[data.BackgroundIndex]
-				palette[data.BackgroundIndex] = temp
+				palette[0], palette[data.BackgroundIndex] = palette[data.BackgroundIndex], palette[0]
 				indexMap[0] = data.BackgroundIndex
 				indexMap[data.BackgroundIndex] = 0
 			}
@@ -498,7 +496,7 @@ func (view *View) requestImportScene(returningInfo string) {
 				}
 			}
 
-			scene.Frames[index].DisplayTime = time.Duration(data.Delay[index]) * 10 * time.Millisecond
+			scene.Frames[index].DisplayTime = time.Duration(data.Delay[index]) * 10 * time.Millisecond // nolint: durationcheck
 			scene.Frames[index].Pixels = framebufferSnapshot()
 		}
 

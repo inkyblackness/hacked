@@ -106,7 +106,8 @@ func (seq ControlWordSequencer) Sequence() (ControlWordSequence, error) {
 			result.opPaths[op] = nestedTileColorOp{
 				parent:        &nestedTileColorOp{relOffsetBits: 12, relOffset: maximumDirect + offset/16},
 				relOffsetBits: 4,
-				relOffset:     offset % 16}
+				relOffset:     offset % 16,
+			}
 			result.words = append(result.words, ControlWordOf(4, op.Type, op.Offset))
 		} else {
 			result.opPaths[op] = nestedTileColorOp{parent: nil, relOffsetBits: 12, relOffset: uint32(opIndex)}

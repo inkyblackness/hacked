@@ -145,6 +145,7 @@ func TestReaderResourceWithCompressedCompoundContent(t *testing.T) {
 }
 
 func verifyBlockContent(t *testing.T, blockProvider resource.BlockProvider, blockIndex int, expected []byte) {
+	t.Helper()
 	blockReader, readerErr := blockProvider.Block(blockIndex)
 	assert.Nil(t, readerErr, "error retrieving reader")
 	require.NotNil(t, blockReader, "reader is nil")

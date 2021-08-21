@@ -137,7 +137,8 @@ func (display *MapDisplay) renderCyberspaceColors(lvl *level.Level, columns int,
 	}
 }
 
-func (display *MapDisplay) renderRealWorldTextures(lvl *level.Level, columns int, rows int, paletteTexture *graphics.PaletteTexture, textureDisplay TextureDisplay) {
+func (display *MapDisplay) renderRealWorldTextures(lvl *level.Level, columns int, rows int,
+	paletteTexture *graphics.PaletteTexture, textureDisplay TextureDisplay) {
 	if paletteTexture == nil {
 		return
 	}
@@ -192,7 +193,8 @@ func (display *MapDisplay) renderObjectBackgrounds(lvl *level.Level) {
 	display.highlighter.Render(objects, level.FineCoordinatesPerTileSide/4, [4]float32{1.0, 1.0, 1.0, 0.3})
 }
 
-func (display *MapDisplay) renderObjectIcons(lvl *level.Level, paletteTexture *graphics.PaletteTexture, textureRetriever func(resource.Key) (*graphics.BitmapTexture, error)) {
+func (display *MapDisplay) renderObjectIcons(lvl *level.Level, paletteTexture *graphics.PaletteTexture,
+	textureRetriever func(resource.Key) (*graphics.BitmapTexture, error)) {
 	if paletteTexture == nil {
 		return
 	}

@@ -6,6 +6,8 @@ import (
 	"github.com/inkyblackness/hacked/ui/opengl"
 )
 
+// TextureRenderer is a renderer within which something can be rendered onto a texture.
+// This texture can then be used to be displayed.
 type TextureRenderer struct {
 	gl opengl.OpenGL
 
@@ -16,6 +18,7 @@ type TextureRenderer struct {
 	height int32
 }
 
+// NewTextureRenderer returns a new instance.
 func NewTextureRenderer(gl opengl.OpenGL) *TextureRenderer {
 	renderer := &TextureRenderer{
 		gl: gl,
@@ -30,7 +33,8 @@ func NewTextureRenderer(gl opengl.OpenGL) *TextureRenderer {
 	gl.BindTexture(opengl.TEXTURE_2D, renderer.texture)
 	gl.TexParameteri(opengl.TEXTURE_2D, opengl.TEXTURE_MAG_FILTER, opengl.NEAREST)
 	gl.TexParameteri(opengl.TEXTURE_2D, opengl.TEXTURE_MIN_FILTER, opengl.NEAREST)
-	gl.TexImage2D(opengl.TEXTURE_2D, 0, opengl.RGBA, renderer.width, renderer.height, 0, opengl.RGBA, opengl.UNSIGNED_BYTE, unsafe.Pointer(uintptr(0)))
+	offset := unsafe.Pointer(uintptr(0)) // nolint: govet
+	gl.TexImage2D(opengl.TEXTURE_2D, 0, opengl.RGBA, renderer.width, renderer.height, 0, opengl.RGBA, opengl.UNSIGNED_BYTE, offset)
 	// gl.GenerateMipmap(opengl.TEXTURE_2D)
 	gl.BindTexture(opengl.TEXTURE_2D, 0)
 
@@ -47,6 +51,7 @@ func NewTextureRenderer(gl opengl.OpenGL) *TextureRenderer {
 	return renderer
 }
 
+// Dispose cleans up resources.
 func (renderer *TextureRenderer) Dispose() {
 	gl := renderer.gl
 	gl.DeleteFramebuffers([]uint32{renderer.framebuffer})
@@ -63,6 +68,7 @@ func (renderer *TextureRenderer) Size() (width, height float32) {
 	return float32(renderer.width), float32(renderer.height)
 }
 
+// Render calls the nested function. All drawing commands within this function will end up in the texture.
 func (renderer *TextureRenderer) Render(nested func()) {
 	gl := renderer.gl
 	renderer.onFramebuffer(func() {

@@ -35,13 +35,13 @@ type OpenGL interface {
 	DeleteShader(shader uint32)
 	DeleteTextures(textures []uint32)
 	DeleteVertexArrays(arrays []uint32)
-	Disable(cap uint32)
+	Disable(capability uint32)
 
 	DrawArrays(mode uint32, first int32, count int32)
 	DrawBuffers(buffers []uint32)
 	DrawElements(mode uint32, count int32, elementType uint32, indices uintptr)
 
-	Enable(cap uint32)
+	Enable(capability uint32)
 	EnableVertexAttribArray(index uint32)
 
 	FramebufferRenderbuffer(target uint32, attachment uint32, renderbuffertarget uint32, renderbuffer uint32)
@@ -63,7 +63,7 @@ type OpenGL interface {
 	GetProgramParameter(program uint32, param uint32) int32
 	GetUniformLocation(program uint32, name string) int32
 
-	IsEnabled(cap uint32) bool
+	IsEnabled(capability uint32) bool
 
 	LinkProgram(program uint32)
 
