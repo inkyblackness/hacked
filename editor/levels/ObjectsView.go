@@ -2,6 +2,7 @@ package levels
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	mgl "github.com/go-gl/mathgl/mgl32"
@@ -24,6 +25,8 @@ import (
 	"github.com/inkyblackness/hacked/ss1/world"
 	"github.com/inkyblackness/hacked/ss1/world/ids"
 )
+
+const shouldRenderRotationView = false
 
 // ObjectsView is for object properties.
 type ObjectsView struct {
@@ -58,7 +61,13 @@ func NewObjectsView(gameObjects *edit.GameObjectsService,
 		ViewMatrix:       &viewMatrix,
 		ProjectionMatrix: mgl.Ortho(-0.5, 0.5, 0.5, -0.5, -10, 10.0),
 	}
-	orientationView := render.NewOrientationView(context, mgl.Vec3{1.0, -1.0, 1.0}, mgl.Vec3{1.0, 1.0, 1.0})
+	// Set up an orientation view. The orientation parameter would match the
+	// map as seen from above, and the rotation to match how the objects rotate in world.
+	orientationView := render.NewOrientationView(context,
+		mgl.Ident4().
+			Mul4(mgl.HomogRotate3D(math.Pi/2, mgl.Vec3{0.0, 0.0, 1.0})).
+			Mul4(mgl.HomogRotate3D(math.Pi, mgl.Vec3{1.0, 0.0, 0.0})),
+		mgl.Vec3{1.0, 1.0, -1.0})
 
 	view := &ObjectsView{
 		gameObjects:     gameObjects,
@@ -247,6 +256,7 @@ func (view *ObjectsView) renderContent(lvl *level.Level, objects []*level.Object
 			func(newValue int) {
 				view.requestChangeObjects("ChangeFineY", func(entry *level.ObjectMainEntry) { entry.Y = level.CoordinateAt(entry.Y.Tile(), byte(newValue)) })
 			})
+
 		values.RenderUnifiedRotation(readOnly, "Rotation X", rotationXUnifier,
 			0, 0x0FF,
 			values.RotationInfo{Horizontal: true, Positive: false, Clockwise: false},
@@ -266,6 +276,24 @@ func (view *ObjectsView) renderContent(lvl *level.Level, objects []*level.Object
 				view.requestChangeObjects("ChangeBaseRotationZ", func(entry *level.ObjectMainEntry) { entry.ZRotation = level.RotationUnit(newValue) })
 			})
 
+		if shouldRenderRotationView {
+			var rotation mgl.Vec3
+			if rotationXUnifier.IsUnique() {
+				rotation[0] = float32(rotationXUnifier.Unified().(int32)*360) / 256.0
+			}
+			if rotationYUnifier.IsUnique() {
+				rotation[1] = float32(rotationYUnifier.Unified().(int32)*360) / 256.0
+			}
+			if rotationZUnifier.IsUnique() {
+				rotation[2] = float32(rotationZUnifier.Unified().(int32)*360) / 256.0
+			}
+			view.textureRenderer.Render(func() { view.orientationView.Render(rotation) })
+			imgui.ImageV(gui.TextureIDForColorTexture(view.textureRenderer.Handle()),
+				imgui.Vec2{X: 200 * view.guiScale, Y: 200 * view.guiScale},
+				imgui.Vec2{X: 0.0, Y: 0.0}, imgui.Vec2{X: 1.0, Y: 1.0},
+				imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1.0}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
+		}
+
 		values.RenderUnifiedSliderInt(readOnly, "Hitpoints", hitpointsUnifier,
 			func(u values.Unifier) int { return int(u.Unified().(int16)) },
 			func(value int) string { return "%d" },
@@ -273,29 +301,6 @@ func (view *ObjectsView) renderContent(lvl *level.Level, objects []*level.Object
 			func(newValue int) {
 				view.requestChangeObjects("ChangeBaseHitpoints", func(entry *level.ObjectMainEntry) { entry.Hitpoints = int16(newValue) })
 			})
-		//if imgui.IsItemFocused() || imgui.IsItemActive() || imgui.IsItemHovered() {
-
-		var rotation mgl.Vec3
-		if rotationXUnifier.IsUnique() {
-			rotation[0] = float32(rotationXUnifier.Unified().(int32)*360) / 256.0
-		}
-		if rotationYUnifier.IsUnique() {
-			rotation[1] = float32(rotationYUnifier.Unified().(int32)*360) / 256.0
-		}
-		if rotationZUnifier.IsUnique() {
-			rotation[2] = float32(rotationZUnifier.Unified().(int32)*360) / 256.0
-		}
-		view.textureRenderer.Render(func() { view.orientationView.Render(rotation) })
-		//imgui.BeginTooltip()
-
-		imgui.ImageV(gui.TextureIDForColorTexture(view.textureRenderer.Handle()),
-			imgui.Vec2{X: 200 * view.guiScale, Y: 200 * view.guiScale},
-			imgui.Vec2{X: 0.0, Y: 0.0}, imgui.Vec2{X: 1.0, Y: 1.0},
-			imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1.0}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
-
-		//			imgui.EndTooltip()
-		//}
-
 		imgui.TreePop()
 	}
 	if imgui.TreeNodeV("Extra Properties", imgui.TreeNodeFlagsFramed) {
