@@ -13,5 +13,5 @@ require (
 	github.com/sqweek/dialog v0.0.0-20200911184034-8a3d98e8211d
 	github.com/stretchr/testify v1.4.0
 	golang.org/x/image v0.0.0-20210220032944-ac19c3e999fb
-	golang.org/x/net v0.0.0-20210421230115-4e50805a0758 // indirect
+	golang.org/x/net v0.7.0 // indirect
 )
