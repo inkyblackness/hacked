@@ -109,7 +109,9 @@ func (view *TilesView) renderContent(lvl *level.Level, tiles []*level.TileMapEnt
 	useAdjacentWallTextureUnifier := values.NewUnifier()
 	wallTexturePatternUnifier := values.NewUnifier()
 	floorLightUnifier := values.NewUnifier()
+	floorLightDeltaUnifier := values.NewUnifier()
 	ceilingLightUnifier := values.NewUnifier()
+	ceilingLightDeltaUnifier := values.NewUnifier()
 	deconstructedUnifier := values.NewUnifier()
 	floorHazardUnifier := values.NewUnifier()
 	ceilingHazardUnifier := values.NewUnifier()
@@ -137,7 +139,9 @@ func (view *TilesView) renderContent(lvl *level.Level, tiles []*level.TileMapEnt
 			useAdjacentWallTextureUnifier.Add(flags.UseAdjacentWallTexture())
 			wallTexturePatternUnifier.Add(flags.WallTexturePattern())
 			floorLightUnifier.Add(level.GradesOfShadow - 1 - flags.FloorShadow())
+			floorLightDeltaUnifier.Add(tile.LightDelta.OfFloor())
 			ceilingLightUnifier.Add(level.GradesOfShadow - 1 - flags.CeilingShadow())
+			ceilingLightDeltaUnifier.Add(tile.LightDelta.OfCeiling())
 			deconstructedUnifier.Add(flags.Deconstructed())
 			floorHazardUnifier.Add(tile.Floor.HasHazard())
 			ceilingHazardUnifier.Add(tile.Ceiling.HasHazard())
@@ -303,11 +307,21 @@ func (view *TilesView) renderContent(lvl *level.Level, tiles []*level.TileMapEnt
 			func(value int) string { return "%d" },
 			0, level.GradesOfShadow-1,
 			func(newValue int) { view.changeTiles(setFloorLightTo(newValue)) })
+		values.RenderUnifiedSliderInt(readOnly, "Floor Light Delta", floorLightDeltaUnifier,
+			func(u values.Unifier) int { return u.Unified().(int) },
+			func(value int) string { return "%d" },
+			0, level.GradesOfShadow-1,
+			func(newValue int) { view.changeTiles(setFloorLightDeltaTo(newValue)) })
 		values.RenderUnifiedSliderInt(readOnly, "Ceiling Light", ceilingLightUnifier,
 			func(u values.Unifier) int { return u.Unified().(int) },
 			func(value int) string { return "%d" },
 			0, level.GradesOfShadow-1,
 			func(newValue int) { view.changeTiles(setCeilingLightTo(newValue)) })
+		values.RenderUnifiedSliderInt(readOnly, "Ceiling Light Delta", ceilingLightDeltaUnifier,
+			func(u values.Unifier) int { return u.Unified().(int) },
+			func(value int) string { return "%d" },
+			0, level.GradesOfShadow-1,
+			func(newValue int) { view.changeTiles(setCeilingLightDeltaTo(newValue)) })
 
 		imgui.Separator()
 
@@ -446,9 +460,21 @@ func setFloorLightTo(value int) tileMapEntryModifier {
 	}
 }
 
+func setFloorLightDeltaTo(value int) tileMapEntryModifier {
+	return func(tile *level.TileMapEntry) {
+		tile.LightDelta = tile.LightDelta.WithFloor(value)
+	}
+}
+
 func setCeilingLightTo(value int) tileMapEntryModifier {
 	return func(tile *level.TileMapEntry) {
 		tile.Flags = tile.Flags.ForRealWorld().WithCeilingShadow(level.GradesOfShadow - 1 - value).AsTileFlag()
+	}
+}
+
+func setCeilingLightDeltaTo(value int) tileMapEntryModifier {
+	return func(tile *level.TileMapEntry) {
+		tile.LightDelta = tile.LightDelta.WithCeiling(value)
 	}
 }
 

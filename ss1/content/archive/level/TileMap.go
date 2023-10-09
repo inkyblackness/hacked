@@ -24,7 +24,7 @@ type TileMapEntry struct {
 	SubClip byte
 	_       [2]byte
 	// LightDelta describes the light offsets of this tile.
-	LightDelta byte
+	LightDelta LightDeltaInfo
 }
 
 // Reset puts the tile into an initial state.
