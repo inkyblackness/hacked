@@ -34,8 +34,7 @@ var nullTrigger = baseTraps.
 	Refining("Action", 0, 22, actions.Unconditional().
 		Refining("PuzzleData", 6, 16, puzzleData, func(inst *interpreters.Instance) bool { return inst.Get("Type") == 0 }),
 		interpreters.Always).
-	Refining("Condition", 2, 4, conditions.GameVariable(),
-		func(inst *interpreters.Instance) bool { return inst.Refined("Action").Get("Type") != 0 })
+	Refining("Condition", 2, 4, conditions.GameVariable(), interpreters.Always)
 
 var deathWatchTrigger = baseTrigger.
 	With("ConditionType", 5, 1).As(interpreters.EnumValue(map[uint32]string{0: "Object Type", 1: "Object ID"})).
