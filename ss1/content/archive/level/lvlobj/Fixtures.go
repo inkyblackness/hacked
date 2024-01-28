@@ -21,7 +21,8 @@ var recepticlePanel = baseFixture
 
 var standardRecepticle = recepticlePanel.
 	Refining("Action", 0, 22, actions.Unconditional(), interpreters.Always).
-	Refining("TypeCondition", 2, 4, conditions.ObjectType(), interpreters.Always)
+	Refining("TypeCondition", 2, 3, conditions.ObjectType(), interpreters.Always).
+	With("FailMessage", 5, 1).As(interpreters.RangedValue(0, 255))
 
 var antennaRelayPanel = recepticlePanel.
 	With("TriggerObjectID1", 6, 2).As(interpreters.ObjectID()).
@@ -46,6 +47,10 @@ var energyChargeStation = gameVariablePanel.
 	})).
 	With("TriggerObjectID", 14, 4).As(interpreters.ObjectID()).
 	With("RechargedTimestamp", 18, 4)
+
+var vendingMachine = baseFixture.
+	Refining("TypeCondition", 2, 3, conditions.ObjectType(), interpreters.Always).
+	With("FailMessage", 5, 1).As(interpreters.RangedValue(0, 255))
 
 var inputPanel = gameVariablePanel
 
@@ -165,6 +170,8 @@ func initFixtures() interpreterRetriever {
 	stations.set(0, newInterpreterLeaf(cyberspaceTerminal))
 	stations.set(1, newInterpreterLeaf(energyChargeStation))
 
+	vendingMachines := newInterpreterEntry(vendingMachine)
+
 	puzzles := newInterpreterLeaf(puzzlePanel)
 	elevatorPanels := newInterpreterLeaf(elevatorPanel)
 	numberPads := newInterpreterLeaf(numberPad)
@@ -189,6 +196,7 @@ func initFixtures() interpreterRetriever {
 	class.set(1, recepticles)
 	class.set(2, stations)
 	class.set(3, inputPanels)
+	class.set(4, vendingMachines)
 	class.set(5, cyberspaceSwitches)
 
 	return class
