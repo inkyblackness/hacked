@@ -55,11 +55,14 @@ for os in "linux" "win"; do
 done
 
 for lib in "libgcc_s_seh-1.dll" "libstdc++-6.dll" "libwinpthread-1.dll"; do
-  for base in "/usr/x86_64-w64-mingw32/bin" "/usr/lib/gcc/x86_64-w64-mingw32/8.3-win32" "/usr/x86_64-w64-mingw32/lib"; do
+  for base in "/usr/x86_64-w64-mingw32/bin" "/usr/lib/gcc/x86_64-w64-mingw32/10-win32" "/usr/x86_64-w64-mingw32/lib"; do
     if [ -e $base/$lib ]; then
       cp $base/$lib $HACKED_BASE/_build/win/$FOLDER_NAME
     fi
   done
+  if [ ! -f $HACKED_BASE/_build/win/$FOLDER_NAME/$lib ]; then
+    echo "  FAIL: file $lib is nowhere found"
+  fi
 done
 
 echo "Creating packages..."
