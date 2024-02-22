@@ -31,7 +31,7 @@ func objectHeightFormatterFor(levelHeight level.HeightShift) func(int) string {
 func moveTileHeightFormatterFor(levelHeight level.HeightShift) func(int) string {
 	normalFormatter := tileHeightFormatterFor(levelHeight)
 	return func(value int) string {
-		if (value >= 0) && (value < int(level.TileHeightUnitMax)) {
+		if (value >= 0) && (value <= int(level.TileHeightUnitMax)) {
 			return normalFormatter(value)
 		}
 		return "Don't change  - raw: %d"

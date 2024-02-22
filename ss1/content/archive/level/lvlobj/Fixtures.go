@@ -30,7 +30,15 @@ var antennaRelayPanel = recepticlePanel.
 	With("DestroyObjectID", 14, 2).As(interpreters.ObjectID())
 
 var retinalIDScanner = recepticlePanel.
-	Refining("Action", 0, 22, actions.Unconditional(), interpreters.Always)
+	Refining("Action", 0, 22, actions.Unconditional(), interpreters.Always).
+	With("Head", 2, 3).As(interpreters.FormattedRangedValue(0, 21,
+	func(value int) (result string) {
+		if value < 11 {
+			return fmt.Sprintf("(8/2/13 frame: %d)", value)
+		} else {
+			return fmt.Sprintf("(8/2/14 frame: %d)", value-11)
+		}
+	}))
 
 var cyberspaceTerminal = gameVariablePanel.
 	With("State", 0, 1).As(interpreters.EnumValue(map[uint32]string{0: "Off", 1: "Active", 2: "Locked"})).
