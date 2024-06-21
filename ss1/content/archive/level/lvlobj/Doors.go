@@ -7,7 +7,7 @@ import (
 )
 
 var baseDoor = interpreters.New().
-	With("LockVariableIndex", 0, 2).As(interpreters.RangedValue(0, 0x1FF)).
+	With("LockVariableIndex", 0, 2).As(interpreters.SpecialValue("LockVariable")).
 	With("LockMessageIndex", 2, 1).As(interpreters.FormattedRangedValue(0, 255,
 	func(value int) (result string) {
 		return fmt.Sprintf("%d", value+7)
