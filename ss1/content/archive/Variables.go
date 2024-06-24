@@ -196,12 +196,18 @@ var engineBooleanVariables = GameVariables{
 	20: GameVariableInfoFor("Reactor on Destruct").At(0).
 		DescribedAs("Note: Rumble will stop if boolean var 152 is 'True'."),
 
+	94: GameVariableInfoFor("Unopenable door").
+		DescribedAs("Doors that are 'broken beyond repair' or such."),
+
 	145: GameVariableInfoFor("On-Line Help"),
 
 	152: GameVariableInfoFor("Self-Destruct Rumble Stop").At(0).
 		DescribedAs("Disables rumble caused by boolean var 20."),
 	153: GameVariableInfoFor("Four or more plastique exploded").At(0).
 		DescribedAs("Set to 'True' if integer variable 2 reached 4 (or higher)."),
+
+	231: GameVariableInfoFor("Unopenable door").
+		DescribedAs("Doors that are 'broken beyond repair' or such."),
 
 	300: GameVariableInfoFor("New Message Flag").At(0),
 }
