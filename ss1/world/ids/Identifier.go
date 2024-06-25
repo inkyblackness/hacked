@@ -14,6 +14,8 @@ const (
 	MediumTextures resource.ID = 0x02C3
 	LargeTextures  resource.ID = 0x03E8
 
+	ScreenTextures resource.ID = 0x0141
+
 	TextureNames  resource.ID = 0x086A
 	TextureUsages resource.ID = 0x086B
 )

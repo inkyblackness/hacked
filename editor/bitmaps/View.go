@@ -29,6 +29,7 @@ var knownBitmapTypes = map[resource.ID]bitmapInfo{
 	ids.ObjectTextureBitmaps:  {title: "Object Textures", languageSpecific: false, bitmapType: bitmap.TypeFlat8Bit, bitmapFlags: 0},
 	ids.IconBitmaps:           {title: "Wall Icons", languageSpecific: false, bitmapType: bitmap.TypeCompressed8Bit, bitmapFlags: bitmap.FlagTransparent},
 	ids.GraffitiBitmaps:       {title: "Graffiti", languageSpecific: false, bitmapType: bitmap.TypeCompressed8Bit, bitmapFlags: bitmap.FlagTransparent},
+	ids.ScreenTextures:        {title: "Screens", languageSpecific: false, bitmapType: bitmap.TypeCompressed8Bit, bitmapFlags: 0},
 }
 
 var knownBitmapTypesOrder = []resource.ID{
@@ -37,6 +38,7 @@ var knownBitmapTypesOrder = []resource.ID{
 	ids.ObjectTextureBitmaps,
 	ids.IconBitmaps,
 	ids.GraffitiBitmaps,
+	ids.ScreenTextures,
 }
 
 // View provides edit controls for bitmaps.

@@ -117,6 +117,8 @@ var infoList = []ResourceInfo{
 	{ObjectTextureBitmaps, ObjectTextureBitmaps.Plus(64), resource.Bitmap, true, false, false, 64, CitMat},
 	{ObjectMaterialBitmaps, ObjectMaterialBitmaps.Plus(32), resource.Bitmap, true, false, false, 32, CitMat},
 
+	{ScreenTextures, ScreenTextures.Plus(102), resource.Bitmap, true, false, false, 102, Texture},
+
 	{IconBitmaps, IconBitmaps.Plus(1), resource.Bitmap, true, false, true, 64, ObjArt3},
 	{GraffitiBitmaps, GraffitiBitmaps.Plus(1), resource.Bitmap, true, false, true, 64, ObjArt3},
 
