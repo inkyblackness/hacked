@@ -152,6 +152,7 @@ var infoList = []ResourceInfo{
 	{LogsAudioStart, LogsAudioStart.Plus(224), resource.Movie, false, false, false, 224, CitALog},
 
 	{ObjectLongNames, ObjectLongNames.Plus(1), resource.Text, true, false, true, 0, CybStrng},
+	{ObjectShortNames, ObjectShortNames.Plus(1), resource.Text, true, false, true, 0, CybStrng},
 
 	{ArchiveName, ArchiveName.Plus(1), resource.Archive, false, false, false, 1, Archive},
 	{GameState, GameState.Plus(1), resource.Archive, false, true, false, 1, Archive},
