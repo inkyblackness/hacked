@@ -41,11 +41,7 @@ var retinalIDScanner = recepticlePanel.
 	}))
 
 var cyberspaceTerminal = gameVariablePanel.
-	With("State", 0, 1).As(interpreters.EnumValue(map[uint32]string{0: "Off", 1: "Active", 2: "Locked"})).
-	With("TargetX", 6, 4).As(interpreters.RangedValue(1, 63)).
-	With("TargetY", 10, 4).As(interpreters.RangedValue(1, 63)).
-	With("TargetZ", 14, 4).As(interpreters.RangedValue(0, 255)).
-	With("TargetLevel", 18, 4).As(interpreters.EnumValue(map[uint32]string{10: "10", 14: "14", 15: "15"}))
+	Refining("Action", 0, 22, actions.Unconditional(), interpreters.Always)
 
 var energyChargeStation = gameVariablePanel.
 	With("EnergyDelta", 6, 4).As(interpreters.RangedValue(0, 255)).

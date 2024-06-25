@@ -132,12 +132,12 @@ func (view *View) renderContent() {
 			}
 			imgui.EndCombo()
 		}
-		view.renderText(readOnly, "Long Name",
+		view.renderText(false, "Long Name",
 			view.objectName(view.model.currentObject, view.model.currentLang, true),
 			func(newValue string) {
 				view.requestSetObjectName(view.model.currentObject, true, newValue)
 			})
-		view.renderText(readOnly, "Short Name",
+		view.renderText(false, "Short Name",
 			view.objectName(view.model.currentObject, view.model.currentLang, false),
 			func(newValue string) {
 				view.requestSetObjectName(view.model.currentObject, false, newValue)

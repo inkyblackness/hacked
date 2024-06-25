@@ -117,6 +117,8 @@ var infoList = []ResourceInfo{
 	{ObjectTextureBitmaps, ObjectTextureBitmaps.Plus(64), resource.Bitmap, true, false, false, 64, CitMat},
 	{ObjectMaterialBitmaps, ObjectMaterialBitmaps.Plus(32), resource.Bitmap, true, false, false, 32, CitMat},
 
+	{ScreenTextures, ScreenTextures.Plus(102), resource.Bitmap, true, false, false, 102, Texture},
+
 	{IconBitmaps, IconBitmaps.Plus(1), resource.Bitmap, true, false, true, 64, ObjArt3},
 	{GraffitiBitmaps, GraffitiBitmaps.Plus(1), resource.Bitmap, true, false, true, 64, ObjArt3},
 
@@ -152,6 +154,7 @@ var infoList = []ResourceInfo{
 	{LogsAudioStart, LogsAudioStart.Plus(224), resource.Movie, false, false, false, 224, CitALog},
 
 	{ObjectLongNames, ObjectLongNames.Plus(1), resource.Text, true, false, true, 0, CybStrng},
+	{ObjectShortNames, ObjectShortNames.Plus(1), resource.Text, true, false, true, 0, CybStrng},
 
 	{ArchiveName, ArchiveName.Plus(1), resource.Archive, false, false, false, 1, Archive},
 	{GameState, GameState.Plus(1), resource.Archive, false, true, false, 1, Archive},

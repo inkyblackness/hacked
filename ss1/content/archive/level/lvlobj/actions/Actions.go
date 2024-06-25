@@ -159,7 +159,8 @@ var exposeDetails = interpreters.New().
 	With("EffectType", 4, 4).As(interpreters.EnumValue(map[uint32]string{4: "Radiation poisoning", 8: "Bio contamination"}))
 
 var setObjectParameterDetails = interpreters.New().
-	With("ObjectID", 0, 4).As(interpreters.ObjectID()).
+	With("ObjectID1", 0, 2).As(interpreters.ObjectID()).
+	With("ObjectID2", 2, 2).As(interpreters.ObjectID()).
 	With("Value1", 4, 4).
 	With("Value2", 8, 4).
 	With("Value3", 12, 4)
