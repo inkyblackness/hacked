@@ -6,19 +6,21 @@ import (
 
 var baseBigStuff = interpreters.New()
 
+var multiAnimation = interpreters.New().
+	With("LoopType", 0, 2).As(interpreters.Bitfield(map[uint32]string{0x01: "Forward/Backward", 0x02: "Backward"})).
+	With("Alternation", 2, 2).As(interpreters.SpecialValue("MultiAnimation")).
+	With("Picture", 4, 2).As(interpreters.SpecialValue("PictureSource")).
+	With("Alternate", 6, 2).As(interpreters.SpecialValue("PictureSource"))
+
 var displayScenery = baseBigStuff.
-	With("FrameCount", 0, 2).As(interpreters.RangedValue(0, 4)).
-	With("LoopType", 2, 2).As(interpreters.EnumValue(map[uint32]string{0: "Forward", 1: "Forward/Backward", 2: "Backward", 3: "Forward/Backward"})).
-	With("AlternationType", 4, 2).As(interpreters.EnumValue(map[uint32]string{0: "Don't Alternate", 3: "Alternate Randomly"})).
-	With("PictureSource", 6, 2).As(interpreters.RangedValue(0, 0x01FF)).
-	With("AlternateSource", 8, 2).As(interpreters.RangedValue(0, 0x01FF))
+	With("FrameCount", 0, 2).As(interpreters.RangedValue(0, 8)).
+	Refining("", 2, 8, multiAnimation, interpreters.Always)
 
 var displayControlPedestal = baseBigStuff.
-	With("FrameCount", 0, 2).As(interpreters.RangedValue(0, 4)).
-	With("TriggerObjectID", 2, 2).As(interpreters.ObjectID()).
-	With("AlternationType", 4, 2).As(interpreters.EnumValue(map[uint32]string{0: "Don't Alternate", 3: "Alternate Randomly"})).
-	With("PictureSource", 6, 2).As(interpreters.RangedValue(0, 0x01FF)).
-	With("AlternateSource", 8, 2).As(interpreters.RangedValue(0, 0x01FF))
+	With("FrameCount", 0, 2).As(interpreters.RangedValue(0, 8)).
+	With("TriggerObjectID1", 2, 2).As(interpreters.ObjectID()).
+	With("TriggerObjectID2", 4, 2).As(interpreters.ObjectID()).
+	Refining("", 2, 8, multiAnimation, interpreters.Always)
 
 var cabinetFurniture = baseBigStuff.
 	With("Object1ID", 2, 2).As(interpreters.ObjectID()).
@@ -38,7 +40,8 @@ var textureMapScenery = baseBigStuff.
 	With("TextureIndex", 6, 2).As(interpreters.SpecialValue("LevelTexture"))
 
 var buttonControlPedestal = baseBigStuff.
-	With("TriggerObjectID", 2, 2).As(interpreters.ObjectID())
+	With("TriggerObjectID1", 2, 2).As(interpreters.ObjectID()).
+	With("TriggerObjectID2", 4, 2).As(interpreters.ObjectID())
 
 var surgicalMachine = baseBigStuff.
 	With("BrokenState", 2, 1).As(interpreters.EnumValue(map[uint32]string{0x00: "OK", 0xE7: "Broken"})).
@@ -91,6 +94,7 @@ func initBigStuff() interpreterRetriever {
 
 	scienceSecurityEquipment := newInterpreterEntry(baseBigStuff)
 	scienceSecurityEquipment.set(4, newInterpreterLeaf(securityCamera))
+	scienceSecurityEquipment.set(5, newInterpreterLeaf(buttonControlPedestal))
 	scienceSecurityEquipment.set(6, newInterpreterLeaf(displayControlPedestal))
 
 	gardenScenery := newInterpreterEntry(baseBigStuff)
