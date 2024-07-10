@@ -27,7 +27,7 @@ var cabinetFurniture = baseBigStuff.
 	With("Object2ID", 4, 2).As(interpreters.ObjectID())
 
 var texturableFurniture = baseBigStuff.
-	With("TextureIndex", 6, 2).As(interpreters.RangedValue(0, 500))
+	With("Texture", 6, 2).As(interpreters.SpecialValue("PictureSource"))
 
 var wordScenery = baseBigStuff.
 	With("TextIndex", 0, 2).As(interpreters.RangedValue(0, 511)).
