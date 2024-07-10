@@ -93,7 +93,7 @@ func (view *TilesView) renderContent(lvl *level.Level, tiles []*level.TileMapEnt
 	ceilingHeightUnifier := values.NewUnifier()
 	slopeHeightUnifier := values.NewUnifier()
 	slopeControlUnifier := values.NewUnifier()
-	musicIndexUnifier := values.NewUnifier()
+	musicZoneUnifier := values.NewUnifier()
 
 	floorPaletteIndexUnifier := values.NewUnifier()
 	ceilingPaletteIndexUnifier := values.NewUnifier()
@@ -113,6 +113,7 @@ func (view *TilesView) renderContent(lvl *level.Level, tiles []*level.TileMapEnt
 	ceilingLightUnifier := values.NewUnifier()
 	ceilingLightDeltaUnifier := values.NewUnifier()
 	deconstructedUnifier := values.NewUnifier()
+	perildUnifier := values.NewUnifier()
 	floorHazardUnifier := values.NewUnifier()
 	ceilingHazardUnifier := values.NewUnifier()
 
@@ -122,7 +123,7 @@ func (view *TilesView) renderContent(lvl *level.Level, tiles []*level.TileMapEnt
 		ceilingHeightUnifier.Add(tile.Ceiling.AbsoluteHeight())
 		slopeHeightUnifier.Add(tile.SlopeHeight)
 		slopeControlUnifier.Add(tile.Flags.SlopeControl())
-		musicIndexUnifier.Add(tile.Flags.MusicIndex())
+		musicZoneUnifier.Add(tile.Flags.MusicZone())
 		if isCyberspace {
 			floorPaletteIndexUnifier.Add(tile.TextureInfo.FloorPaletteIndex())
 			ceilingPaletteIndexUnifier.Add(tile.TextureInfo.CeilingPaletteIndex())
@@ -143,6 +144,7 @@ func (view *TilesView) renderContent(lvl *level.Level, tiles []*level.TileMapEnt
 			ceilingLightUnifier.Add(level.GradesOfShadow - 1 - flags.CeilingShadow())
 			ceilingLightDeltaUnifier.Add(tile.LightDelta.OfCeiling())
 			deconstructedUnifier.Add(flags.Deconstructed())
+			perildUnifier.Add(flags.Peril())
 			floorHazardUnifier.Add(tile.Floor.HasHazard())
 			ceilingHazardUnifier.Add(tile.Ceiling.HasHazard())
 		}
@@ -180,11 +182,12 @@ func (view *TilesView) renderContent(lvl *level.Level, tiles []*level.TileMapEnt
 		func(value int) string { return slopeControls[value].String() },
 		len(slopeControls),
 		func(newValue int) { view.changeTiles(setSlopeControlTo(slopeControls[newValue])) })
-	values.RenderUnifiedSliderInt(readOnly, "Music Index", musicIndexUnifier,
-		func(u values.Unifier) int { return u.Unified().(int) },
-		func(value int) string { return "%d" },
-		0, 15,
-		func(newValue int) { view.changeTiles(setMusicIndexTo(newValue)) })
+	musicZones := level.TileMusicZones()
+	values.RenderUnifiedCombo(readOnly, "Music Zone", musicZoneUnifier,
+		func(u values.Unifier) int { return int(u.Unified().(level.TileMusicZone)) },
+		func(value int) string { return musicZones[value].String() },
+		len(musicZones),
+		func(newValue int) { view.changeTiles(setMusicZoneTo(musicZones[newValue])) })
 
 	imgui.Separator()
 
@@ -327,6 +330,8 @@ func (view *TilesView) renderContent(lvl *level.Level, tiles []*level.TileMapEnt
 
 		values.RenderUnifiedCheckboxCombo(readOnly, "Deconstructed", deconstructedUnifier,
 			func(newValue bool) { view.changeTiles(setDeconstructedTo(newValue)) })
+		values.RenderUnifiedCheckboxCombo(readOnly, "Peril", perildUnifier,
+			func(newValue bool) { view.changeTiles(setPerilTo(newValue)) })
 		values.RenderUnifiedCheckboxCombo(readOnly, "Floor Hazard", floorHazardUnifier,
 			func(newValue bool) { view.changeTiles(setFloorHazardTo(newValue)) })
 		values.RenderUnifiedCheckboxCombo(readOnly, "Ceiling Hazard", ceilingHazardUnifier,
@@ -400,9 +405,9 @@ func setSlopeControlTo(value level.TileSlopeControl) tileMapEntryModifier {
 	}
 }
 
-func setMusicIndexTo(value int) tileMapEntryModifier {
+func setMusicZoneTo(value level.TileMusicZone) tileMapEntryModifier {
 	return func(tile *level.TileMapEntry) {
-		tile.Flags = tile.Flags.WithMusicIndex(value)
+		tile.Flags = tile.Flags.WithMusicZone(value)
 	}
 }
 
@@ -481,6 +486,12 @@ func setCeilingLightDeltaTo(value int) tileMapEntryModifier {
 func setDeconstructedTo(value bool) tileMapEntryModifier {
 	return func(tile *level.TileMapEntry) {
 		tile.Flags = tile.Flags.ForRealWorld().WithDeconstructed(value).AsTileFlag()
+	}
+}
+
+func setPerilTo(value bool) tileMapEntryModifier {
+	return func(tile *level.TileMapEntry) {
+		tile.Flags = tile.Flags.ForRealWorld().WithPeril(value).AsTileFlag()
 	}
 }
 
