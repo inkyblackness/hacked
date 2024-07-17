@@ -124,6 +124,7 @@ func (view *TilesView) renderContent(lvl *level.Level, tiles []*level.TileMapEnt
 		slopeHeightUnifier.Add(tile.SlopeHeight)
 		slopeControlUnifier.Add(tile.Flags.SlopeControl())
 		musicZoneUnifier.Add(tile.Flags.MusicZone())
+		perildUnifier.Add(tile.Flags.Peril())
 		if isCyberspace {
 			floorPaletteIndexUnifier.Add(tile.TextureInfo.FloorPaletteIndex())
 			ceilingPaletteIndexUnifier.Add(tile.TextureInfo.CeilingPaletteIndex())
@@ -144,7 +145,6 @@ func (view *TilesView) renderContent(lvl *level.Level, tiles []*level.TileMapEnt
 			ceilingLightUnifier.Add(level.GradesOfShadow - 1 - flags.CeilingShadow())
 			ceilingLightDeltaUnifier.Add(tile.LightDelta.OfCeiling())
 			deconstructedUnifier.Add(flags.Deconstructed())
-			perildUnifier.Add(flags.Peril())
 			floorHazardUnifier.Add(tile.Floor.HasHazard())
 			ceilingHazardUnifier.Add(tile.Ceiling.HasHazard())
 		}
@@ -188,6 +188,8 @@ func (view *TilesView) renderContent(lvl *level.Level, tiles []*level.TileMapEnt
 		func(value int) string { return musicZones[value].String() },
 		len(musicZones),
 		func(newValue int) { view.changeTiles(setMusicZoneTo(musicZones[newValue])) })
+	values.RenderUnifiedCheckboxCombo(readOnly, "Music Peril", perildUnifier,
+		func(newValue bool) { view.changeTiles(setPerilTo(newValue)) })
 
 	imgui.Separator()
 
@@ -330,8 +332,6 @@ func (view *TilesView) renderContent(lvl *level.Level, tiles []*level.TileMapEnt
 
 		values.RenderUnifiedCheckboxCombo(readOnly, "Deconstructed", deconstructedUnifier,
 			func(newValue bool) { view.changeTiles(setDeconstructedTo(newValue)) })
-		values.RenderUnifiedCheckboxCombo(readOnly, "Peril", perildUnifier,
-			func(newValue bool) { view.changeTiles(setPerilTo(newValue)) })
 		values.RenderUnifiedCheckboxCombo(readOnly, "Floor Hazard", floorHazardUnifier,
 			func(newValue bool) { view.changeTiles(setFloorHazardTo(newValue)) })
 		values.RenderUnifiedCheckboxCombo(readOnly, "Ceiling Hazard", ceilingHazardUnifier,
@@ -402,6 +402,12 @@ func setSlopeHeightTo(height level.TileHeightUnit) tileMapEntryModifier {
 func setSlopeControlTo(value level.TileSlopeControl) tileMapEntryModifier {
 	return func(tile *level.TileMapEntry) {
 		tile.Flags = tile.Flags.WithSlopeControl(value)
+	}
+}
+
+func setPerilTo(value bool) tileMapEntryModifier {
+	return func(tile *level.TileMapEntry) {
+		tile.Flags = tile.Flags.WithPeril(value)
 	}
 }
 
@@ -486,12 +492,6 @@ func setCeilingLightDeltaTo(value int) tileMapEntryModifier {
 func setDeconstructedTo(value bool) tileMapEntryModifier {
 	return func(tile *level.TileMapEntry) {
 		tile.Flags = tile.Flags.ForRealWorld().WithDeconstructed(value).AsTileFlag()
-	}
-}
-
-func setPerilTo(value bool) tileMapEntryModifier {
-	return func(tile *level.TileMapEntry) {
-		tile.Flags = tile.Flags.ForRealWorld().WithPeril(value).AsTileFlag()
 	}
 }
 

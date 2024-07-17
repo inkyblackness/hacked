@@ -31,6 +31,20 @@ func (flag TileFlag) WithMusicZone(value TileMusicZone) TileFlag {
 	return TileFlag(uint32(flag&^0x0000E000) | (uint32(value) << 13))
 }
 
+// Peril returns whether the tile is marked as peril (may play peril music).
+func (flag TileFlag) Peril() bool {
+	return (flag & 0x00001000) != 0
+}
+
+// WithPeril returns a flag with the given peril set.
+func (flag TileFlag) WithPeril(value bool) TileFlag {
+	var valueFlag uint32
+	if value {
+		valueFlag = 0x00001000
+	}
+	return TileFlag(uint32(flag&^0x00001000) | valueFlag)
+}
+
 // SlopeControl returns the slope control as per flags.
 func (flag TileFlag) SlopeControl() TileSlopeControl {
 	return TileSlopeControl((flag & 0x00000C00) >> 10)
@@ -92,20 +106,6 @@ func (flag RealWorldFlag) WithDeconstructed(value bool) RealWorldFlag {
 		valueFlag = 0x00000200
 	}
 	return RealWorldFlag(uint32(flag&^0x00000200) | valueFlag)
-}
-
-// Peril returns whether the tile is marked as peril (may play peril music).
-func (flag RealWorldFlag) Peril() bool {
-	return (flag & 0x00001000) != 0
-}
-
-// WithPeril returns a flag with the given peril set.
-func (flag RealWorldFlag) WithPeril(value bool) RealWorldFlag {
-	var valueFlag uint32
-	if value {
-		valueFlag = 0x00001000
-	}
-	return RealWorldFlag(uint32(flag&^0x00001000) | valueFlag)
 }
 
 // FloorShadow returns the floor shadow value. Range: [0..GradesOfShadow].
