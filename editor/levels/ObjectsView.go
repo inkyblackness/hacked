@@ -502,6 +502,23 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool,
 				})
 			})
 	})
+	simplifier.SetSpecialHandler("LockVariable", func() {
+		limit := archive.BooleanVarCount
+		valueLabel := key + "###" + fullKey
+		values.RenderUnifiedSliderInt(readOnly, valueLabel, unifier,
+			func(u values.Unifier) int { return int(u.Unified().(int32)) & 0x1FF },
+			func(value int) string {
+				return fmt.Sprintf("%%d: %s", view.varInfoProvider.BooleanVariable(value).Name)
+			},
+			0, limit-1,
+			func(newValue int) {
+				updater(func(oldValue uint32) uint32 {
+					result := oldValue & ^uint32(0x01FF)
+					result |= uint32(newValue) & uint32(0x01FF)
+					return result
+				})
+			})
+	})
 
 	simplifier.SetSpecialHandler("BinaryCodedDecimal", func() {
 		values.RenderUnifiedSliderInt(readOnly, label, unifier,
