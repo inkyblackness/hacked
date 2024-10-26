@@ -647,6 +647,223 @@ func (view *ObjectsView) renderPropertyControl(lvl *level.Level, readOnly bool,
 			})
 	})
 
+	simplifier.SetSpecialHandler("MultiAnimation", func() {
+		/*
+			animationTypes := []string{"Random"}
+			selectedType := -1
+			if unifier.IsUnique() {
+				value := int(unifier.Unified().(int32))
+				selectedType = value >> 12
+			}
+
+			values.RenderUnifiedCombo(readOnly, key+"###"+fullKey+"-Type", unifier,
+				func(u values.Unifier) int {
+					key := unifier.Unified().(int32)
+					return int(key >> 12)
+				},
+				func(index int) string { return animationTypes[index] },
+				len(animationTypes),
+				func(newIndex int) {
+					updater(func(oldValue uint32) uint32 {
+						result := oldValue & ^uint32(0xF000)
+						result |= uint32(newIndex<<12) & uint32(0xF000)
+						return result
+					})
+				})
+		*/
+
+		// if selectedType == 0 {
+		values.RenderUnifiedSliderInt(readOnly, key+" infrequency###"+fullKey+"-infrequency", unifier,
+			func(u values.Unifier) int {
+				key := unifier.Unified().(int32)
+				return int(key & 0x0FFF)
+			},
+			func(value int) string { return "%d" },
+			0, 0x0FFF,
+			func(newValue int) {
+				updater(func(oldValue uint32) uint32 {
+					result := oldValue & ^uint32(0x0FFF)
+					result |= uint32(newValue) & uint32(0x0FFF)
+					return result
+				})
+			})
+		//}
+	})
+
+	simplifier.SetSpecialHandler("PictureSource", func() {
+		indexConverter := func(u values.Unifier) int { return int(u.Unified().(int32)) & 0x007F }
+		indexUpdater := func(newValue int) {
+			updater(func(oldValue uint32) uint32 {
+				result := oldValue & ^uint32(0x007F)
+				result |= uint32(newValue) & uint32(0x007F)
+				return result
+			})
+		}
+
+		sourceType := []string{"Data", "ObjectID"}
+		selectedType := -1
+		if unifier.IsUnique() {
+			value := int(unifier.Unified().(int32))
+			selectedType = (value & 0x1000) >> 12
+		}
+
+		imgui.Separator()
+		imgui.Text(key + ":")
+
+		values.RenderUnifiedCombo(readOnly, "Source###"+fullKey+"-Source", unifier,
+			func(u values.Unifier) int {
+				key := unifier.Unified().(int32)
+				return int((key & 0x1000) >> 12)
+			},
+			func(index int) string { return sourceType[index] },
+			len(sourceType),
+			func(newIndex int) {
+				updater(func(oldValue uint32) uint32 {
+					result := oldValue & ^uint32(0x1000)
+					result |= uint32(newIndex<<12) & uint32(0x1000)
+					return result
+				})
+			})
+
+		if selectedType == 0 {
+			dataType := []string{"Screen", "Custom", "Text", "Scrolling Text"}
+			textureData := -1
+			index := -1
+			selectedDataType := -1
+
+			if unifier.IsUnique() {
+				value := int(unifier.Unified().(int32))
+				textureData = value & 0x0FFF
+				index = textureData & 0x007F
+				selectedDataType = (value & 0x0180) >> 7
+			}
+
+			values.RenderUnifiedCombo(readOnly, "Type###"+fullKey+"-Type", unifier,
+				func(u values.Unifier) int {
+					key := unifier.Unified().(int32)
+					return int((key & 0x0180) >> 7)
+				},
+				func(index int) string { return dataType[index] },
+				len(dataType),
+				func(newIndex int) {
+					updater(func(oldValue uint32) uint32 {
+						result := oldValue & ^uint32(0x0180)
+						result |= uint32(newIndex<<7) & uint32(0x0180)
+						return result
+					})
+				})
+
+			if selectedDataType == 0 { // Screen
+				resInfo, _ := ids.Info(ids.ScreenTextures)
+
+				values.RenderUnifiedSliderInt(readOnly, "Index###"+fullKey+"-Index", unifier,
+					indexConverter,
+					func(value int) string { return "%d" },
+					0, resInfo.MaxCount-1,
+					indexUpdater)
+
+				render.TextureSelector(key+"-Screen###"+fullKey+"-Screen", -1, view.guiScale, resInfo.MaxCount, index,
+					view.textureCache,
+					func(index int) resource.Key {
+						return resource.KeyOf(ids.ScreenTextures.Plus(index), resource.LangAny, 0)
+					},
+					func(index int) string { return fmt.Sprintf("%3d", index) },
+					func(index int) {
+						if !readOnly {
+							indexUpdater(index)
+						}
+					})
+			} else if selectedDataType == 1 { // Custom
+				values.RenderUnifiedSliderInt(readOnly, "Index###"+fullKey+"-Index", unifier,
+					indexConverter,
+					func(value int) string {
+						if value >= 0x78 && value <= (0x78+8) {
+							return "%d - Camera"
+						} else if value == 0x77 {
+							return "%d - Static"
+						} else if value == 0x76 {
+							return "%d - SHODAN Proximity"
+						} else if value >= 0x70 && value <= (0x70+6) {
+							return "%d - Automap"
+						} else {
+							return "%d"
+						}
+					},
+					0, 0x007F,
+					indexUpdater)
+
+				resInfo, _ := ids.Info(ids.ObjectMaterialBitmaps)
+				if index < resInfo.MaxCount {
+					render.TextureImage("Preview", view.textureCache, resource.KeyOf(ids.ObjectMaterialBitmaps.Plus(index), resource.LangAny, 0), imgui.Vec2{X: 64 * view.guiScale, Y: 64 * view.guiScale})
+				}
+			} else if selectedDataType == 2 { // Text
+				values.RenderUnifiedSliderInt(readOnly, "Index###"+fullKey+"-Index", unifier,
+					indexConverter,
+					func(value int) string {
+						if value == 0x007F {
+							return "%d - (Random number)"
+						} else {
+							return "%d"
+						}
+					},
+					0, 0x007F,
+					indexUpdater)
+			} else if selectedDataType == 3 { // Scrolling Text
+				values.RenderUnifiedSliderInt(readOnly, "Index###"+fullKey+"-Index", unifier,
+					indexConverter,
+					func(value int) string { return "%d" },
+					0, 0x007F,
+					indexUpdater)
+			}
+
+			if selectedDataType == 2 || selectedDataType == 3 {
+				fontNames := []string{"Large Tech", "Small Tech"}
+				values.RenderUnifiedCombo(readOnly, "Font###"+fullKey+"-Font", unifier,
+					func(u values.Unifier) int {
+						key := unifier.Unified().(int32)
+						return int((key & 0x0800) >> 11)
+					},
+					func(value int) string { return fontNames[value] },
+					len(fontNames),
+					func(newValue int) {
+						updater(func(oldValue uint32) uint32 {
+							result := oldValue & ^uint32(0x0800)
+							result |= uint32(newValue<<11) & uint32(0x0800)
+							return result
+						})
+					})
+			}
+
+			values.RenderUnifiedSliderInt(readOnly, "Scale###"+fullKey+"-Scale", unifier,
+				func(u values.Unifier) int {
+					key := unifier.Unified().(int32)
+					return int((key & 0x0600) >> 9)
+				},
+				func(value int) string { return "%d" },
+				0, 3,
+				func(newValue int) {
+					updater(func(oldValue uint32) uint32 {
+						result := oldValue & ^uint32(0x0600)
+						result |= uint32(newValue<<9) & uint32(0x0600)
+						return result
+					})
+				})
+		} else {
+			// Indirection to another object
+			values.RenderUnifiedSliderInt(readOnly, "ObjectID###"+fullKey+"-Object", unifier,
+				func(u values.Unifier) int { return int(u.Unified().(int32)) & 0x0FFF },
+				func(value int) string { return "%d" },
+				0, lvl.ObjectCapacity(),
+				func(newValue int) {
+					updater(func(oldValue uint32) uint32 {
+						result := oldValue & ^uint32(0x0FFF)
+						result |= uint32(newValue) & uint32(0x0FFF)
+						return result
+					})
+				})
+		}
+	})
+
 	describer(simplifier)
 }
 

@@ -1,5 +1,7 @@
 package level
 
+import "fmt"
+
 // TileFlag describes simple properties of a map tile.
 type TileFlag uint32
 
@@ -19,17 +21,28 @@ func (flag TileFlag) ForCyberspace() CyberspaceFlag {
 	return CyberspaceFlag(flag)
 }
 
-// MusicIndex returns the music identifier. Range: [0..15].
-func (flag TileFlag) MusicIndex() int {
-	return int((flag & 0x0000F000) >> 12)
+// MusicZone returns the music zone.
+func (flag TileFlag) MusicZone() TileMusicZone {
+	return TileMusicZone((flag & 0x0000E000) >> 13)
 }
 
-// WithMusicIndex returns a new flag value with the given music index set. Values beyond allowed range are ignored.
-func (flag TileFlag) WithMusicIndex(value int) TileFlag {
-	if (value < 0) || (value > 15) {
-		return flag
+// WithMusicZone returns a new flag value with the given music index set.
+func (flag TileFlag) WithMusicZone(value TileMusicZone) TileFlag {
+	return TileFlag(uint32(flag&^0x0000E000) | (uint32(value) << 13))
+}
+
+// Peril returns whether the tile is marked as peril (may play peril music).
+func (flag TileFlag) Peril() bool {
+	return (flag & 0x00001000) != 0
+}
+
+// WithPeril returns a flag with the given peril set.
+func (flag TileFlag) WithPeril(value bool) TileFlag {
+	var valueFlag uint32
+	if value {
+		valueFlag = 0x00001000
 	}
-	return TileFlag(uint32(flag&^0x0000F000) | (uint32(value) << 12))
+	return TileFlag(uint32(flag&^0x00001000) | valueFlag)
 }
 
 // SlopeControl returns the slope control as per flags.
@@ -126,7 +139,7 @@ func (flag RealWorldFlag) TileVisited() bool {
 	return (flag & 0x80000000) != 0
 }
 
-// WithTileVisited returns a flag with the given deconstruction set.
+// WithTileVisited returns a flag with the given visited set.
 func (flag RealWorldFlag) WithTileVisited(value bool) RealWorldFlag {
 	var valueFlag uint32
 	if value {
@@ -161,4 +174,54 @@ func (flag CyberspaceFlag) WithFlightPull(value CyberspaceFlightPull) Cyberspace
 	newFlag |= uint32(value&0x0F) << 16
 	newFlag |= uint32(value&0x10) << 20
 	return CyberspaceFlag(newFlag)
+}
+
+type TileMusicZone byte
+
+const (
+	TileMusicZoneNoMusic    TileMusicZone = 0
+	TileMusicZoneHospital   TileMusicZone = 1
+	TileMusicZoneExecutive  TileMusicZone = 2
+	TileMusicZoneIndustrial TileMusicZone = 3
+	TileMusicZoneMetal      TileMusicZone = 4
+	TileMusicZonePark       TileMusicZone = 5
+	TileMusicZoneBridge     TileMusicZone = 6
+	TileMusicZoneElevator   TileMusicZone = 7
+)
+
+// TileSlopeControls returns all control values.
+func TileMusicZones() []TileMusicZone {
+	return []TileMusicZone{
+		TileMusicZoneNoMusic,
+		TileMusicZoneHospital,
+		TileMusicZoneExecutive,
+		TileMusicZoneIndustrial,
+		TileMusicZoneMetal,
+		TileMusicZonePark,
+		TileMusicZoneBridge,
+		TileMusicZoneElevator,
+	}
+}
+
+func (ctrl TileMusicZone) String() string {
+	switch ctrl {
+	case TileMusicZoneNoMusic:
+		return "No Music"
+	case TileMusicZoneHospital:
+		return "Hospital"
+	case TileMusicZoneExecutive:
+		return "Executive"
+	case TileMusicZoneIndustrial:
+		return "Industrial"
+	case TileMusicZoneMetal:
+		return "Metal"
+	case TileMusicZonePark:
+		return "Park"
+	case TileMusicZoneBridge:
+		return "Bridge"
+	case TileMusicZoneElevator:
+		return "Elevator"
+	default:
+		return fmt.Sprintf("Unknown%02X", int(ctrl))
+	}
 }
