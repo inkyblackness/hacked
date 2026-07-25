@@ -9,8 +9,9 @@ set(CMAKE_CXX_STANDARD 17) # GoogleTest requires at least C++17
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(FetchContent)
+include(CTest)
 
-if (!DOS)
+if (NOT DOS)
     FetchContent_Declare(
             googletest
             URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
@@ -19,19 +20,21 @@ if (!DOS)
     # For Windows: Prevent overriding the parent project's compiler/linker settings
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(googletest)
+    include(GoogleTest)
 endif ()
 
 file(GLOB_RECURSE LIB_CORE_SOURCES "${PROJECT_SOURCE_DIR}/core/main/source/*.c")
 add_library(hacked-core STATIC ${LIB_CORE_SOURCES})
 target_include_directories(hacked-core PUBLIC "${PROJECT_SOURCE_DIR}/core/main/include")
 
-if (!DOS)
+if (NOT DOS)
     file(GLOB_RECURSE TEST_CORE_SOURCES "${PROJECT_SOURCE_DIR}/core/test/source/*.cpp")
     add_executable(hacked-core-test ${TEST_CORE_SOURCES})
     target_link_libraries(hacked-core-test
             hacked-core
             GTest::gmock_main
     )
+    gtest_add_tests(TARGET hacked-core-test)
 endif ()
 
 add_executable(hacked main.c)
