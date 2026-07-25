@@ -1,5 +1,5 @@
 ---
-Language: C
+Language: Cpp
 AccessModifierOffset: -3
 AlignAfterOpenBracket: false
 AlignConsecutiveAssignments: None
