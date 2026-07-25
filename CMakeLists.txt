@@ -5,7 +5,7 @@ cmake_policy(SET CMP0077 NEW) # Abort if variables are not clearly set
 
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 17) # GoogleTest requires at least C++17
+#set(CMAKE_CXX_STANDARD 17) # GoogleTest requires at least C++17
 #set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(FetchContent)
