@@ -23,3 +23,5 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 # CMake determines how to examine dependencies based on the *host* system, leading to
 # a `file unknown error` unless the target platform is explicitly specified.
 set(CMAKE_GET_RUNTIME_DEPENDENCIES_PLATFORM "windows+pe")
+
+set(TOOLCHAIN_DLL_DEPENDENCIES libgcc_s_dw2-1.dll)
