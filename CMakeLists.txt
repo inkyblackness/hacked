@@ -101,6 +101,6 @@ if (EMSCRIPTEN)
     install(FILES
             "$<TARGET_FILE_DIR:hacked>/hacked.js"
             "$<TARGET_FILE_DIR:hacked>/hacked.wasm"
-            RUNTIME DESTINATION .
+            DESTINATION .
     )
 endif ()
