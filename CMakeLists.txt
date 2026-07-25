@@ -67,9 +67,9 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 else ()
     add_executable(hacked WIN32 ${APP_GUI_SOURCES})
 endif ()
-if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+if (EMSCRIPTEN)
     set_target_properties(hacked PROPERTIES SUFFIX ".html")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY -s GL_ENABLE_GET_PROC_ADDRESS=1")
+    #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY -s GL_ENABLE_GET_PROC_ADDRESS=1")
 endif ()
 target_link_libraries(hacked
         hacked-core
