@@ -24,7 +24,7 @@ jobs:
             toolchain_file: 'i686-gcc.cmake'
             extra_packages: 'gcc-multilib g++-multilib mesa-utils mesa-common-dev:i386 xorg-dev libxrandr-dev'
 
-          # Windows builds
+          # MS Windows builds
           - os: mswin
             arch: x86-64
             runner: ubuntu-24.04
@@ -42,8 +42,8 @@ jobs:
             arch: arm64
             runner: macos-14
 
-          # DOS builds
-          - os: dos
+          # MS DOS builds
+          - os: msdos
             arch: i586
             runner: ubuntu-24.04
             toolchain_file: 'i586-msdosdjgpp.cmake'
@@ -68,11 +68,11 @@ jobs:
           echo "/Applications/CMake.app/Contents/bin" >> $GITHUB_PATH
           brew install ninja
 
-      - name: Install build dependencies (DOS)
-        if: matrix.os == 'dos'
+      - name: Install build dependencies (MS DOS)
+        if: matrix.os == 'msdos'
         run: |
           wget -q https://github.com/andrewwutw/build-djgpp/releases/download/v3.4/djgpp-linux64-gcc1220.tar.bz2
-          tar -xzf djgpp-linux64-gcc1220.tar.bz2 -C "${{ runner.temp }}"
+          tar -xjf djgpp-linux64-gcc1220.tar.bz2 -C "${{ runner.temp }}"
           echo "${{ runner.temp }}/djgpp/bin" >> $GITHUB_PATH
 
       - name: Generate build files
