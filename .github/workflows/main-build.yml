@@ -47,6 +47,7 @@ jobs:
             arch: i586
             runner: ubuntu-24.04
             toolchain_file: 'i586-msdosdjgpp.cmake'
+            extra_packages: 'libfl-dev'
 
     steps:
       - uses: actions/checkout@v7
@@ -71,6 +72,8 @@ jobs:
       - name: Install build dependencies (MS DOS)
         if: matrix.os == 'msdos'
         run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ${{ matrix.extra_packages }}
           wget -q https://github.com/andrewwutw/build-djgpp/releases/download/v3.4/djgpp-linux64-gcc1220.tar.bz2
           tar -xjf djgpp-linux64-gcc1220.tar.bz2 -C "${{ runner.temp }}"
           echo "${{ runner.temp }}/djgpp/bin" >> $GITHUB_PATH
@@ -86,6 +89,10 @@ jobs:
 
       - name: Build
         run: cmake --build build -j $(sysctl -n hw.logicalcpu || nproc)
+
+      - name: Run tests
+        if: matrix.os == 'linux' || matrix.os == 'macos'
+        run: ctest --test-dir build --output-on-failure
 
       - name: Prepare distribution package
         run: cmake --install build --prefix dist
