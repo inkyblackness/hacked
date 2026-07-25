@@ -68,8 +68,7 @@ else ()
     add_executable(hacked WIN32 ${APP_GUI_SOURCES})
 endif ()
 if (EMSCRIPTEN)
-    set_target_properties(hacked PROPERTIES SUFFIX ".html")
-    #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY -s GL_ENABLE_GET_PROC_ADDRESS=1")
+    set_target_properties(hacked PROPERTIES SUFFIX ".html") # Tell Emscripten to also create .html for this (needed?)
 endif ()
 target_link_libraries(hacked
         hacked-core
@@ -98,6 +97,9 @@ install(TARGETS hacked
 )
 
 if (EMSCRIPTEN)
+    # As per CMake "bug", the additional files have to be manually taken into the installation directory as well.
+    # Reference:
+    # https://stackoverflow.com/questions/61865545/how-to-install-both-js-and-wasm-files-with-the-cmake-target-for-emscripten#comment140265783_70702138
     install(FILES
             "$<TARGET_FILE_DIR:hacked>/hacked.js"
             "$<TARGET_FILE_DIR:hacked>/hacked.wasm"
