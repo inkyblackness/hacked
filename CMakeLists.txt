@@ -23,6 +23,20 @@ if (NOT DOS)
     include(GoogleTest)
 endif ()
 
+FetchContent_Declare(
+        SDL
+        GIT_REPOSITORY https://github.com/libsdl-org/SDL
+        # This is a semi-random tag after 3.14.12, but before a release
+        # It includes MS DOS support.
+        GIT_TAG 855cbec702f246661ff00a0bce9e0683012840c2
+        EXCLUDE_FROM_ALL
+)
+set(SDL_SHARED OFF CACHE BOOL "Disabled SDL shared lib" FORCE)
+set(SDL_STATIC ON CACHE BOOL "Enabled SDL static lib" FORCE)
+set(SDL_TEST OFF CACHE BOOL "Disable SDL Test" FORCE)
+set(SDL_INSTALL OFF CACHE BOOL "Disable SDL installation" FORCE)
+FetchContent_MakeAvailable(SDL)
+
 file(GLOB_RECURSE LIB_CORE_SOURCES "${PROJECT_SOURCE_DIR}/core/main/source/*.c")
 add_library(hacked-core STATIC ${LIB_CORE_SOURCES})
 target_include_directories(hacked-core PUBLIC "${PROJECT_SOURCE_DIR}/core/main/include")
@@ -40,6 +54,7 @@ endif ()
 add_executable(hacked main.c)
 target_link_libraries(hacked
         hacked-core
+        SDL3::SDL3-static
 )
 
 install(TARGETS hacked
