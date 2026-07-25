@@ -1,0 +1,3 @@
+# JetBrains IDEs (CLion)
+.idea
+cmake-build-*
