@@ -37,7 +37,7 @@ jobs:
             toolchain_file: 'i686-w64-mingw32.cmake'
             extra_packages: 'gcc-mingw-w64-i686 g++-mingw-w64-i686'
 
-          - macOS builds (native compilation)
+          # macOS builds (native compilation)
           - os: macos
             arch: arm64
             runner: macos-14
