@@ -79,6 +79,6 @@ jobs:
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: systemshock-${{ matrix.os }}-${{ matrix.arch }}
+          name: hacked-${{ matrix.os }}-${{ matrix.arch }}
           path: dist/
           if-no-files-found: warn
