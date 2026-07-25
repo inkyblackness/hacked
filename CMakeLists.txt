@@ -99,8 +99,8 @@ install(TARGETS hacked
 
 if (EMSCRIPTEN)
     install(FILES
-            "$<CMAKE_BINARY_DIR:hacked>/hacked.js"
-            "$<CMAKE_BINARY_DIR:hacked>/hacked.wasm"
+            "$<TARGET_FILE_DIR:hacked>/hacked.js"
+            "$<TARGET_FILE_DIR:hacked>/hacked.wasm"
             RUNTIME DESTINATION .
     )
 endif ()
