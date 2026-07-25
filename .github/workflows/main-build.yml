@@ -90,6 +90,10 @@ jobs:
       - name: Build
         run: cmake --build build -j $(sysctl -n hw.logicalcpu || nproc)
 
+      - name: Run tests
+        if: matrix.os != 'msdos'
+        run: ctest --test-dir build
+
       - name: Prepare distribution package
         run: cmake --install build --prefix dist
 
