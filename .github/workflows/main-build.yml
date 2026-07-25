@@ -22,7 +22,7 @@ jobs:
             arch: i686
             runner: ubuntu-24.04
             toolchain_file: 'i686-gcc.cmake'
-            extra_packages: 'gcc-multilib g++-multilib mesa-utils mesa-common-dev:i386 xorg-dev libxrandr-dev libxcursor-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev libxkbcommon-dev'
+            extra_packages: 'gcc-multilib g++-multilib mesa-utils mesa-common-dev:i386 xorg-dev libxrandr-dev libxcursor-dev:i386 libxi-dev:i386 xfreerdp2-x11'
 
           # MS Windows builds
           - os: mswin
