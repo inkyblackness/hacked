@@ -54,10 +54,11 @@ if (NOT DOS)
     gtest_add_tests(TARGET hacked-core-test EXTRA_ARGS --gtest_shuffle)
 endif ()
 
+set(APP_GUI_SOURCES app/source/main.c)
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_executable(hacked main.c)
+    add_executable(hacked ${APP_GUI_SOURCES})
 else ()
-    add_executable(hacked WIN32 main.c)
+    add_executable(hacked WIN32 ${APP_GUI_SOURCES})
 endif ()
 target_link_libraries(hacked
         hacked-core
