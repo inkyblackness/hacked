@@ -1,3 +1,4 @@
 # JetBrains IDEs (CLion)
 .idea
+.junie
 cmake-build-*
