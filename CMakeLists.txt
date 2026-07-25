@@ -12,13 +12,16 @@ include(FetchContent)
 
 FetchContent_Declare(
         googletest
-        GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG 58d77fa8070e8cec2dc1ed015d66b454c8d78850 # release-1.12.1
+        URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
         OVERRIDE_FIND_PACKAGE
 )
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
+
+# Disable POSIX regular expressions for GoogleTest targets
+target_compile_definitions(gtest PUBLIC GTEST_USES_POSIX_RE=0)
+target_compile_definitions(gmock PUBLIC GTEST_USES_POSIX_RE=0)
 
 file(GLOB_RECURSE LIB_CORE_SOURCES "${PROJECT_SOURCE_DIR}/core/main/source/*.c")
 add_library(hacked-core STATIC ${LIB_CORE_SOURCES})
