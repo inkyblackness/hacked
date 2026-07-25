@@ -36,7 +36,8 @@ set(SDL_SHARED OFF CACHE BOOL "Disabled SDL shared lib" FORCE)
 set(SDL_STATIC ON CACHE BOOL "Enabled SDL static lib" FORCE)
 set(SDL_TEST OFF CACHE BOOL "Disable SDL Test" FORCE)
 set(SDL_INSTALL OFF CACHE BOOL "Disable SDL installation" FORCE)
-set(SDL_X11_XCURSOR OFF CACHE BOOL "Disable SDL xcursor dependency" FORCE) # Fails to build on i686
+#set(SDL_X11_XCURSOR OFF CACHE BOOL "Disable SDL xcursor dependency" FORCE) # Fails to build on i686
+set(SDL_X11_XSCRNSAVER OFF CACHE BOOL "Disable SDL xscreensaver dependency" FORCE)
 FetchContent_MakeAvailable(SDL)
 
 file(GLOB_RECURSE LIB_CORE_SOURCES "${PROJECT_SOURCE_DIR}/core/main/source/*.c")
