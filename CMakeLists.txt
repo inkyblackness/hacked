@@ -5,8 +5,8 @@ cmake_policy(SET CMP0077 NEW) # Abort if variables are not clearly set
 
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 17) # GoogleTest requires at least C++17
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+#set(CMAKE_CXX_STANDARD 17) # GoogleTest requires at least C++17
+#set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(FetchContent)
 
@@ -21,11 +21,11 @@ FetchContent_MakeAvailable(googletest)
 
 if (DOS)
     set_target_properties(gtest PROPERTIES
-            CXX_STANDARD_REQUIRED ON
+            CXX_STANDARD_REQUIRED OFF
             CXX_EXTENSIONS ON
     )
     set_target_properties(gmock PROPERTIES
-            CXX_STANDARD_REQUIRED ON
+            CXX_STANDARD_REQUIRED OFF
             CXX_EXTENSIONS ON
     )
 endif ()
