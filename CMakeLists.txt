@@ -34,7 +34,7 @@ if (NOT DOS)
             hacked-core
             GTest::gmock_main
     )
-    gtest_add_tests(TARGET hacked-core-test)
+    gtest_add_tests(TARGET hacked-core-test EXTRA_ARGS --gtest_shuffle)
 endif ()
 
 add_executable(hacked main.c)
