@@ -54,7 +54,11 @@ if (NOT DOS)
     gtest_add_tests(TARGET hacked-core-test EXTRA_ARGS --gtest_shuffle)
 endif ()
 
-add_executable(hacked main.c)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_executable(hacked main.c)
+else ()
+    add_executable(hacked WIN32 main.c)
+endif ()
 target_link_libraries(hacked
         hacked-core
         SDL3::SDL3-static
