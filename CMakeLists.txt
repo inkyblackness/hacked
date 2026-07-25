@@ -56,7 +56,7 @@ endif ()
 
 if (WIN32)
     enable_language(RC)
-    set(APP_GUI_WIN_RESOURCES app/win/hacked.rc)
+    set(APP_GUI_WIN_RESOURCES app/mswin/hacked.rc)
 endif ()
 set(APP_GUI_SOURCES app/source/main.c ${APP_GUI_WIN_RESOURCES})
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
