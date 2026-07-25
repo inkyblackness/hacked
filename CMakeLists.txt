@@ -67,6 +67,9 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 else ()
     add_executable(hacked WIN32 ${APP_GUI_SOURCES})
 endif ()
+if (EMSCRIPTEN)
+    set_target_properties(hacked PROPERTIES SUFFIX ".html") # Tell Emscripten to also create .html for this (needed?)
+endif ()
 target_link_libraries(hacked
         hacked-core
         SDL3::SDL3-static
@@ -92,3 +95,14 @@ endif ()
 install(TARGETS hacked
         RUNTIME DESTINATION .
 )
+
+if (EMSCRIPTEN)
+    # As per CMake "bug", the additional files have to be manually taken into the installation directory as well.
+    # Reference:
+    # https://stackoverflow.com/questions/61865545/how-to-install-both-js-and-wasm-files-with-the-cmake-target-for-emscripten#comment140265783_70702138
+    install(FILES
+            "$<TARGET_FILE_DIR:hacked>/hacked.js"
+            "$<TARGET_FILE_DIR:hacked>/hacked.wasm"
+            DESTINATION .
+    )
+endif ()

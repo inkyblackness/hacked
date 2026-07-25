@@ -15,26 +15,26 @@ jobs:
           - os: linux
             arch: x86-64
             runner: ubuntu-24.04
-            toolchain_file: 'x86-64-gcc.cmake'
+            toolchain_file: 'cmake/toolchains/x86-64-gcc.cmake'
             extra_packages: 'gcc g++ mesa-utils mesa-common-dev xorg-dev libxrandr-dev'
 
           - os: linux
             arch: i686
             runner: ubuntu-24.04
-            toolchain_file: 'i686-gcc.cmake'
+            toolchain_file: 'cmake/toolchains/i686-gcc.cmake'
             extra_packages: 'gcc-multilib g++-multilib mesa-utils mesa-common-dev:i386 xorg-dev libxrandr-dev:i386 libxcursor-dev:i386 libxi-dev:i386'
 
           # MS Windows builds
           - os: mswin
             arch: x86-64
             runner: ubuntu-24.04
-            toolchain_file: 'x86-64-w64-mingw32.cmake'
+            toolchain_file: 'cmake/toolchains/x86-64-w64-mingw32.cmake'
             extra_packages: 'gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64'
 
           - os: mswin
             arch: i686
             runner: ubuntu-24.04
-            toolchain_file: 'i686-w64-mingw32.cmake'
+            toolchain_file: 'cmake/toolchains/i686-w64-mingw32.cmake'
             extra_packages: 'gcc-mingw-w64-i686 g++-mingw-w64-i686'
 
           # macOS builds (native compilation)
@@ -46,8 +46,13 @@ jobs:
           - os: msdos
             arch: i586
             runner: ubuntu-24.04
-            toolchain_file: 'i586-msdosdjgpp.cmake'
+            toolchain_file: 'cmake/toolchains/i586-msdosdjgpp.cmake'
             extra_packages: 'libfl-dev'
+
+          - os: wasm
+            arch: x86
+            runner: ubuntu-24.04
+            toolchain_file: '${HOME}/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake'
 
     steps:
       - uses: actions/checkout@v7
@@ -78,6 +83,16 @@ jobs:
           tar -xjf djgpp-linux64-gcc1220.tar.bz2 -C "${{ runner.temp }}"
           echo "${{ runner.temp }}/djgpp/bin" >> $GITHUB_PATH
 
+      - name: Install build dependencies (WASM)
+        if: matrix.os == 'wasm'
+        run: |
+          pushd "${HOME}" > /dev/null || exit 1
+          git clone https://github.com/emscripten-core/emsdk.git
+          cd emsdk
+          ./emsdk install 6.0.4
+          ./emsdk activate 6.0.4
+          popd > /dev/null || exit 1
+
       - name: Generate build files
         run: >
           cmake 
@@ -85,10 +100,13 @@ jobs:
           -S . 
           -G Ninja
           -DCMAKE_BUILD_TYPE=RelWithDebInfo 
-          ${{ matrix.toolchain_file && format('-DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/{0}', matrix.toolchain_file) || '' }}
+          ${{ matrix.toolchain_file && format('-DCMAKE_TOOLCHAIN_FILE={0}', matrix.toolchain_file) || '' }}
 
       - name: Build
         run: cmake --build build -j $(sysctl -n hw.logicalcpu || nproc)
+
+      - name: List build output
+        run: ls -la build/
 
       - name: Run tests
         if: matrix.os == 'linux' || matrix.os == 'macos'
