@@ -100,7 +100,7 @@ jobs:
           -S . 
           -G Ninja
           -DCMAKE_BUILD_TYPE=RelWithDebInfo 
-          ${{ matrix.toolchain_file && format('-DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/{0}', matrix.toolchain_file) || '' }}
+          ${{ matrix.toolchain_file && format('-DCMAKE_TOOLCHAIN_FILE={0}', matrix.toolchain_file) || '' }}
 
       - name: Build
         run: cmake --build build -j $(sysctl -n hw.logicalcpu || nproc)
