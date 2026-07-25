@@ -72,6 +72,8 @@ jobs:
       - name: Install build dependencies (MS DOS)
         if: matrix.os == 'msdos'
         run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ${{ matrix.extra_packages }}
           wget -q https://github.com/andrewwutw/build-djgpp/releases/download/v3.4/djgpp-linux64-gcc1220.tar.bz2
           tar -xjf djgpp-linux64-gcc1220.tar.bz2 -C "${{ runner.temp }}"
           echo "${{ runner.temp }}/djgpp/bin" >> $GITHUB_PATH
