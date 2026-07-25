@@ -5,7 +5,7 @@ cmake_policy(SET CMP0077 NEW) # Abort if variables are not clearly set
 
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-#set(CMAKE_CXX_STANDARD 17) # GoogleTest requires at least C++17
+set(CMAKE_CXX_STANDARD 17) # GoogleTest requires at least C++17
 #set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(FetchContent)
@@ -30,8 +30,8 @@ if (DOS)
     )
 endif ()
 # Disable POSIX regular expressions for GoogleTest targets
-target_compile_definitions(gtest PUBLIC GTEST_HAS_POSIX_RE=0)
-target_compile_definitions(gmock PUBLIC GTEST_HAS_POSIX_RE=0)
+target_compile_definitions(gtest PUBLIC GTEST_HAS_POSIX_RE=0 GTEST_HAS_STD_WSTRING=0)
+target_compile_definitions(gmock PUBLIC GTEST_HAS_POSIX_RE=0 GTEST_HAS_STD_WSTRING=0)
 
 file(GLOB_RECURSE LIB_CORE_SOURCES "${PROJECT_SOURCE_DIR}/core/main/source/*.c")
 add_library(hacked-core STATIC ${LIB_CORE_SOURCES})
