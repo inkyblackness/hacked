@@ -105,6 +105,9 @@ jobs:
       - name: Build
         run: cmake --build build -j $(sysctl -n hw.logicalcpu || nproc)
 
+      - name: List build output
+        run: ls -la build/
+
       - name: Run tests
         if: matrix.os == 'linux' || matrix.os == 'macos'
         run: ctest --test-dir build --output-on-failure
