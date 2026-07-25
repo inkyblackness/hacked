@@ -96,3 +96,11 @@ endif ()
 install(TARGETS hacked
         RUNTIME DESTINATION .
 )
+
+if (EMSCRIPTEN)
+    install(FILES
+            "$<CMAKE_BINARY_DIR:hacked>/hacked.js"
+            "$<CMAKE_BINARY_DIR:hacked>/hacked.wasm"
+            RUNTIME DESTINATION .
+    )
+endif ()
