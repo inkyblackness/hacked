@@ -87,7 +87,7 @@ jobs:
         if: matrix.os == 'wasm'
         run: |
           pushd "${HOME}" > /dev/null || exit 1
-          wget -q https://github.com/emscripten-core/emsdk.git
+          git clone https://github.com/emscripten-core/emsdk.git
           cd emsdk
           ./emsdk install 6.0.4
           ./emsdk activate 6.0.4
