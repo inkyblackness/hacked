@@ -41,6 +41,13 @@ jobs:
           - os: macos
             arch: arm64
             runner: macos-14
+
+          # DOS builds
+          - os: dos
+            arch: i586
+            runner: ubuntu-24.04
+            toolchain_file: 'i586-msdosdjgpp.cmake'
+
     steps:
       - uses: actions/checkout@v7
 
@@ -60,6 +67,13 @@ jobs:
           sudo cp -r cmake-3.31.12-macos-universal/CMake.app /Applications/
           echo "/Applications/CMake.app/Contents/bin" >> $GITHUB_PATH
           brew install ninja
+
+      - name: Install build dependencies (DOS)
+        if: runner.os == 'dos'
+        run: |
+          wget -q https://github.com/andrewwutw/build-djgpp/releases/download/v3.4/djgpp-linux64-gcc1220.tar.bz2
+          tar -xzf djgpp-linux64-gcc1220.tar.bz2 -C "${{ runner.temp }}"
+          echo "${{ runner.temp }}/djgpp/bin" >> $GITHUB_PATH
 
       - name: Generate build files
         run: >
