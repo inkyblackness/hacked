@@ -20,8 +20,8 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 # Disable POSIX regular expressions for GoogleTest targets
-target_compile_definitions(gtest PUBLIC GTEST_USES_POSIX_RE=0)
-target_compile_definitions(gmock PUBLIC GTEST_USES_POSIX_RE=0)
+target_compile_definitions(gtest PUBLIC GTEST_HAS_POSIX_RE=0)
+target_compile_definitions(gmock PUBLIC GTEST_HAS_POSIX_RE=0)
 
 file(GLOB_RECURSE LIB_CORE_SOURCES "${PROJECT_SOURCE_DIR}/core/main/source/*.c")
 add_library(hacked-core STATIC ${LIB_CORE_SOURCES})
