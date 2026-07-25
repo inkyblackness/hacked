@@ -20,8 +20,14 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 if (DOS)
-    target_compile_features(gtest PRIVATE -std=gnu++17)
-    target_compile_features(gmock PRIVATE -std=gnu++17)
+    set_target_properties(gtest PROPERTIES
+            CXX_STANDARD_REQUIRED ON
+            CXX_EXTENSIONS ON
+    )
+    set_target_properties(gmock PROPERTIES
+            CXX_STANDARD_REQUIRED ON
+            CXX_EXTENSIONS ON
+    )
 endif ()
 # Disable POSIX regular expressions for GoogleTest targets
 target_compile_definitions(gtest PUBLIC GTEST_HAS_POSIX_RE=0)
