@@ -47,6 +47,7 @@ jobs:
             arch: i586
             runner: ubuntu-24.04
             toolchain_file: 'i586-msdosdjgpp.cmake'
+            extra_packages: 'libefl-all-dev'
 
     steps:
       - uses: actions/checkout@v7
