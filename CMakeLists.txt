@@ -3,6 +3,8 @@ project(Hacked)
 
 cmake_policy(SET CMP0077 NEW) # Abort if variables are not clearly set
 
+# Setting a C-Standard automatically reduces the available compilers; For example, MSVC is out.
+# See here for a good overview: https://en.cppreference.com/c/compiler_support/23
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 17) # GoogleTest requires at least C++17
@@ -16,16 +18,22 @@ if (NOT DOS)
     include(cmake/modules/TestSupport.cmake)
 endif ()
 include(cmake/modules/SimpleDirectMediaLayer.cmake)
+include(cmake/modules/BuildRules.cmake)
 
 file(GLOB_RECURSE LIB_CORE_SOURCES "${PROJECT_SOURCE_DIR}/core/main/source/*.c")
 add_library(hacked-core STATIC ${LIB_CORE_SOURCES})
 target_include_directories(hacked-core PUBLIC "${PROJECT_SOURCE_DIR}/core/main/include")
+target_link_libraries(hacked-core
+        PRIVATE
+        BuildRules::common
+)
 
 if (NOT DOS)
     file(GLOB_RECURSE TEST_CORE_SOURCES "${PROJECT_SOURCE_DIR}/core/test/source/*.cpp")
     add_executable(hacked-core-test ${TEST_CORE_SOURCES})
     target_link_libraries(hacked-core-test
             hacked-core
+            BuildRules::common
             GTest::gmock_main
     )
     gtest_add_tests(TARGET hacked-core-test EXTRA_ARGS --gtest_shuffle)
@@ -46,6 +54,7 @@ if (EMSCRIPTEN)
 endif ()
 target_link_libraries(hacked
         hacked-core
+        BuildRules::common
         SDL3::SDL3-static
 )
 
