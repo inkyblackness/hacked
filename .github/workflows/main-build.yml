@@ -54,6 +54,10 @@ jobs:
             runner: ubuntu-24.04
             toolchain_file: '${HOME}/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake'
 
+    defaults:
+      run:
+        shell: bash
+
     steps:
       - uses: actions/checkout@v7
 
@@ -67,8 +71,10 @@ jobs:
       - name: Install build dependencies (macOS)
         if: matrix.os == 'macos'
         run: |
-          brew uninstall cmake
+          set -e
+          brew uninstall -y cmake || true
           wget -q https://github.com/Kitware/CMake/releases/download/v3.31.12/cmake-3.31.12-macos-universal.tar.gz
+          echo "799af7fd545db9bf1b9cfe72f8095880e727a2d4e0df0e3dffc3bc7b95c2d3b0 *cmake-3.31.12-macos-universal.tar.gz" | sha256sum --check --status -
           tar -xzf cmake-3.31.12-macos-universal.tar.gz
           sudo cp -r cmake-3.31.12-macos-universal/CMake.app /Applications/
           echo "/Applications/CMake.app/Contents/bin" >> $GITHUB_PATH
@@ -77,9 +83,11 @@ jobs:
       - name: Install build dependencies (MS DOS)
         if: matrix.os == 'msdos'
         run: |
+          set -e
           sudo apt-get update
           sudo apt-get install -y cmake ${{ matrix.extra_packages }}
           wget -q https://github.com/andrewwutw/build-djgpp/releases/download/v3.4/djgpp-linux64-gcc1220.tar.bz2
+          echo "9464f17017d6ab1b2bb2df4ed82357b5bf692e6e2b7fee37e315638f3d505f00 *djgpp-linux64-gcc1220.tar.bz2" | sha256sum --check --status -
           tar -xjf djgpp-linux64-gcc1220.tar.bz2 -C "${{ runner.temp }}"
           echo "${{ runner.temp }}/djgpp/bin" >> $GITHUB_PATH
 
@@ -121,3 +129,4 @@ jobs:
           name: hacked-${{ matrix.os }}-${{ matrix.arch }}
           path: dist/
           if-no-files-found: warn
+          retention-days: 7
