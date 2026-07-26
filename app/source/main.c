@@ -11,13 +11,13 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
    (void)argv;
    *appstate = NULL;
 
-   SDL_SetAppMetadata("InkyBlackness - HackEd", "1.0", "io.github.inkyblackness.hacked");
+   SDL_SetAppMetadata("InkyBlackness - HackEd", REPO_SHORT_VERSION, "io.github.inkyblackness.hacked");
    if (!SDL_Init(SDL_INIT_VIDEO))
    {
       SDL_Log("Couldn't initialize SDL: %s", SDL_GetError());
       return SDL_APP_FAILURE;
    }
-   if (!SDL_CreateWindowAndRenderer("InkyBlackness - HackEd", 320, 200, SDL_WINDOW_RESIZABLE, &window, &renderer))
+   if (!SDL_CreateWindowAndRenderer("InkyBlackness - HackEd - " REPO_LONG_VERSION, 320, 200, SDL_WINDOW_RESIZABLE, &window, &renderer))
    {
       SDL_Log("Couldn't create window/renderer: %s", SDL_GetError());
       return SDL_APP_FAILURE;
