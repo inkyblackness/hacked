@@ -124,10 +124,16 @@ jobs:
       - name: Prepare distribution package
         run: cmake --install build --prefix dist
 
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(grep 'REPO_SHORT_VERSION' build/CMakeCache.txt | cut -d "=" -f2)
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: hacked-${{ matrix.os }}-${{ matrix.arch }}
+          name: hacked-${{ steps.version.outputs.version }}-${{ matrix.os }}-${{ matrix.arch }}
           path: dist/
           if-no-files-found: warn
           retention-days: 7

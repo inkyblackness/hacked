@@ -19,6 +19,7 @@ if (NOT DOS)
 endif ()
 include(cmake/modules/SimpleDirectMediaLayer.cmake)
 include(cmake/modules/BuildRules.cmake)
+include(cmake/modules/Version.cmake)
 
 file(GLOB_RECURSE LIB_CORE_SOURCES "${PROJECT_SOURCE_DIR}/core/main/source/*.c")
 add_library(hacked-core STATIC ${LIB_CORE_SOURCES})
@@ -54,6 +55,7 @@ if (EMSCRIPTEN)
 endif ()
 target_link_libraries(hacked
         hacked-core
+        Version::all
         BuildRules::common
         SDL3::SDL3-static
 )
