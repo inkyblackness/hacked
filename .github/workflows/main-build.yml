@@ -74,7 +74,8 @@ jobs:
           set -e
           brew uninstall cmake || true
           wget -q https://github.com/Kitware/CMake/releases/download/v3.31.12/cmake-3.31.12-macos-universal.tar.gz
-          echo "799af7fd545db9bf1b9cfe72f8095880e727a2d4e0df0e3dffc3bc7b95c2d3b0 *cmake-3.31.12-macos-universal.tar.gz" | sha256sum --check --status -
+          echo "799af7fd545db9bf1b9cfe72f8095880e727a2d4e0df0e3dffc3bc7b95c2d3b0 *cmake-3.31.12-macos-universal.tar.gz" > sha256sums.txt
+          shasum --algorithm 256 --check sha256sums.txt
           tar -xzf cmake-3.31.12-macos-universal.tar.gz
           sudo cp -r cmake-3.31.12-macos-universal/CMake.app /Applications/
           echo "/Applications/CMake.app/Contents/bin" >> $GITHUB_PATH
