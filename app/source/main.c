@@ -7,6 +7,8 @@ static SDL_Renderer *renderer = NULL;
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 {
+   (void)argc;
+   (void)argv;
    *appstate = NULL;
 
    SDL_SetAppMetadata("InkyBlackness - HackEd", "1.0", "io.github.inkyblackness.hacked");
@@ -27,6 +29,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 {
+   (void)appstate;
    if (event->type == SDL_EVENT_QUIT)
    {
       return SDL_APP_SUCCESS;
@@ -36,6 +39,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
+   (void)appstate;
    const double now = ((double)SDL_GetTicks()) / 1000.0;
    /* choose the color for the frame we will draw. The sine wave trick makes it fade between colors smoothly. */
    const float red = (float)(0.5 + 0.5 * SDL_sin(now));
@@ -51,5 +55,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
+   (void)appstate;
+   (void)result;
    SDL_Log("Quitting");
 }
