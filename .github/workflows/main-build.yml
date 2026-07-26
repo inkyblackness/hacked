@@ -72,7 +72,7 @@ jobs:
         if: matrix.os == 'macos'
         run: |
           set -e
-          brew uninstall -y cmake || true
+          brew uninstall cmake || true
           wget -q https://github.com/Kitware/CMake/releases/download/v3.31.12/cmake-3.31.12-macos-universal.tar.gz
           echo "799af7fd545db9bf1b9cfe72f8095880e727a2d4e0df0e3dffc3bc7b95c2d3b0 *cmake-3.31.12-macos-universal.tar.gz" | sha256sum --check --status -
           tar -xzf cmake-3.31.12-macos-universal.tar.gz
