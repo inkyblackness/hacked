@@ -616,7 +616,7 @@ void nk_sdl_shutdown(struct nk_context *ctx)
 NK_INTERN float nk_sdl_query_debug_font_width(nk_handle handle, float height, const char *text, int len)
 {
    NK_UNUSED(handle);
-   return nk_utf_len(text, len) * height;
+   return nk_utf_len(text, len) * (height + 1) + 1; // one per character for border (which may overlap) plus one for last character non-overlap.
 }
 
 NK_INTERN void nk_sdl_query_debug_font_glypth(nk_handle handle, float height, struct nk_user_font_glyph *glyph, nk_rune codepoint, nk_rune next_codepoint)
@@ -638,7 +638,7 @@ NK_INTERN void nk_sdl_query_debug_font_glypth(nk_handle handle, float height, st
 
    glyph->height = height;
    glyph->width = height;
-   glyph->xadvance = height;
+   glyph->xadvance = height - 2; // TODO: Is this shift by 2 correct? probably, because border is allowed to overlap.
    glyph->uv[0].x = (float)(x + 0) / NK_SDL_DFWH;
    glyph->uv[0].y = (float)(y + 0) / NK_SDL_DFWH;
    glyph->uv[1].x = (float)(x + 1) / NK_SDL_DFWH;
@@ -672,12 +672,14 @@ NK_API void nk_sdl_style_set_debug_font(struct nk_context *ctx)
 
    /* We use another Software Renderer just to make sure
     * that we won't mutate any state in the main Renderer. */
-   surface = SDL_CreateSurface(NK_SDL_DFWH * SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE, NK_SDL_DFWH * SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE, SDL_PIXELFORMAT_RGBA32);
+   // 4 = 2 for border, plus 2 for buffer to avoid blur bleed
+   surface = SDL_CreateSurface(
+      NK_SDL_DFWH * (SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE + 4), NK_SDL_DFWH * (SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE + 4), SDL_PIXELFORMAT_RGBA32);
    NK_ASSERT(surface);
    renderer = SDL_CreateSoftwareRenderer(surface);
    NK_ASSERT(renderer);
-   success = SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-   NK_ASSERT(success);
+   // success = SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+   // NK_ASSERT(success);
 
    /* SPACE is the first printable ASCII character */
    NK_MEMCPY(buf, " ", sizeof(buf));
@@ -685,7 +687,20 @@ NK_API void nk_sdl_style_set_debug_font(struct nk_context *ctx)
    {
       for (y = 0; y < NK_SDL_DFWH; y++)
       {
-         success = SDL_RenderDebugText(renderer, (float)(x * SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE), (float)(y * SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE), buf);
+         int startX = x * (SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE + 4) + 2;
+         int startY = y * (SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE + 4) + 2;
+         success = SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
+         for (int i = 0; i < 9; i++)
+         {
+            int offX = (i % 3) - 1;
+            int offY = (i / 3) - 1;
+            if (offX != 0 || offY != 0)
+            {
+               SDL_RenderDebugText(renderer, (float)(startX + offX), (float)(startY + offY), buf);
+            }
+         }
+         success = SDL_SetRenderDrawColor(renderer, 0x1E, 0xAC, 0x5B, 0xFF); // TODO: Why is this BGRA and not RGBA?
+         success = SDL_RenderDebugText(renderer, (float)(startX), (float)(startY), buf);
          NK_ASSERT(success);
          buf[0]++;
 
