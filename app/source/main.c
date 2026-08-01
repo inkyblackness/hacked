@@ -9,22 +9,17 @@ struct nk_sdl_app
    SDL_Window *window;
    SDL_Renderer *renderer;
    struct nk_context *ctx;
-   struct nk_colorf bg;
    enum nk_anti_aliasing AA;
 };
 
-static SDL_AppResult nk_sdl_fail(char *message)
+static SDL_AppResult nk_sdl_fail(char const *const message)
 {
    SDL_LogError(SDL_LOG_CATEGORY_CUSTOM, "Error; %s: %s", message, SDL_GetError());
    return SDL_APP_FAILURE;
 }
 
-SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
+SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
 {
-   struct nk_sdl_app *app = NULL;
-   struct nk_context *ctx = NULL;
-   float font_scale = 1.0f;
-
    (void)argc;
    (void)argv;
 
@@ -38,7 +33,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
    {
       return nk_sdl_fail("failed to initialize SDL");
    }
-   app = SDL_malloc(sizeof(*app));
+   struct nk_sdl_app *app = SDL_malloc(sizeof(*app));
    if (app == NULL)
    {
       return nk_sdl_fail("failed to allocate application memory");
@@ -56,18 +51,11 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
    }
    SDL_SetRenderLogicalPresentation(app->renderer, 320, 200, SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
-   ctx = nk_sdl_init(app->window, app->renderer, nk_sdl_allocator());
+   struct nk_context *ctx = nk_sdl_init(app->window, app->renderer, nk_sdl_allocator());
    app->ctx = ctx;
 
    {
-      /* If you don't want to use advanced Nuklear font baking API
-       * you can use simple ASCII debug font provided by SDL
-       * just change the `#if 0` above to `#if 1` */
       nk_sdl_style_set_tiny_font(ctx, 1.0f);
-
-      /* Note that since debug font is extremely small (only 8x8 pixels),
-       * scaling it does not make much sense. The font would appear blurry. */
-      NK_UNUSED(font_scale);
 
       /* You may wish to change a few style options, here are few recommendations: */
       ctx->style.button.rounding = 0.0f;
@@ -179,19 +167,6 @@ SDL_AppResult SDL_AppIterate(void *appstate)
       nk_layout_row_dynamic(ctx, 25, 1);
 
       nk_edit_string(ctx, NK_EDIT_ALWAYS_INSERT_MODE | NK_EDIT_MULTILINE, textBuffer, &textBufferUsedLen, textBufferSize, NULL);
-      /*
-      if (nk_combo_begin_color(ctx, nk_rgb_cf(app->bg), nk_vec2(nk_widget_width(ctx), 400)))
-      {
-         nk_layout_row_dynamic(ctx, 120, 1);
-         app->bg = nk_color_picker(ctx, app->bg, NK_RGBA);
-         nk_layout_row_dynamic(ctx, 25, 1);
-         app->bg.r = nk_propertyf(ctx, "#R:", 0, app->bg.r, 1.0f, 0.01f, 0.005f);
-         app->bg.g = nk_propertyf(ctx, "#G:", 0, app->bg.g, 1.0f, 0.01f, 0.005f);
-         app->bg.b = nk_propertyf(ctx, "#B:", 0, app->bg.b, 1.0f, 0.01f, 0.005f);
-         app->bg.a = nk_propertyf(ctx, "#A:", 0, app->bg.a, 1.0f, 0.01f, 0.005f);
-         nk_combo_end(ctx);
-      }
-      */
    }
    nk_end(ctx);
 
