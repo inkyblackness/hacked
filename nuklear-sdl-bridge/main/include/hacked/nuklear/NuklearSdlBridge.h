@@ -14,7 +14,7 @@ NK_API void nk_sdl_shutdown(struct nk_context *ctx);
 NK_API nk_handle nk_sdl_get_userdata(struct nk_context *ctx);
 NK_API void nk_sdl_set_userdata(struct nk_context *ctx, nk_handle userdata);
 NK_API void nk_sdl_style_set_tiny_font(struct nk_context *ctx, float scale);
-NK_API struct nk_allocator nk_sdl_allocator(void);
+NK_API struct nk_allocator nk_sdl_allocator();
 
 #ifdef __cplusplus
 }

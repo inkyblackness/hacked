@@ -125,7 +125,7 @@ NK_API struct nk_allocator nk_sdl_allocator()
    return allocator;
 }
 
-NK_INTERN void nk_sdl_device_upload_atlas(struct nk_context *ctx, const void *image, int width, int height)
+NK_INTERN void nk_sdl_device_upload_atlas(struct nk_context *ctx, void const *image, int width, int height)
 {
    NK_ASSERT(ctx);
    NK_ASSERT(image);
@@ -151,7 +151,7 @@ NK_INTERN void nk_sdl_device_upload_atlas(struct nk_context *ctx, const void *im
 
 NK_API void nk_sdl_update_TextInput(struct nk_context *ctx)
 {
-   bool active;
+   bool active = false;
    NK_ASSERT(ctx);
    struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
    NK_ASSERT(sdl);
@@ -170,7 +170,7 @@ NK_API void nk_sdl_update_TextInput(struct nk_context *ctx)
     * and change its state accordingly for owned SDL Window */
    if (active != sdl->edit_was_active)
    {
-      const bool window_edit_active = SDL_TextInputActive(sdl->win);
+      bool const window_edit_active = SDL_TextInputActive(sdl->win);
 
       /* If you ever hit this check, it means that the demo and your app
        * (or something else) are all trying to manage TextInputActive state.
@@ -197,34 +197,29 @@ NK_API void nk_sdl_update_TextInput(struct nk_context *ctx)
 
 NK_API void nk_sdl_render(struct nk_context *ctx, enum nk_anti_aliasing AA)
 {
-   /* setup global state */
    NK_ASSERT(ctx);
    struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
    NK_ASSERT(sdl);
 
    { /* setup internal delta time that Nuklear needs for animations */
-      const Uint64 now = SDL_GetTicksNS();
+      Uint64 const now = SDL_GetTicksNS();
       ctx->delta_time_seconds = (float)(now - sdl->last_render) / (float)SDL_NS_PER_SECOND;
       sdl->last_render = now;
    }
 
    {
-      SDL_Rect saved_clip;
-      int vs = sizeof(struct nk_sdl_vertex);
-      size_t vp = NK_OFFSETOF(struct nk_sdl_vertex, position);
-      size_t vt = NK_OFFSETOF(struct nk_sdl_vertex, uv);
-      size_t vc = NK_OFFSETOF(struct nk_sdl_vertex, col);
+      int constexpr vs = sizeof(struct nk_sdl_vertex);
+      size_t constexpr vp = NK_OFFSETOF(struct nk_sdl_vertex, position);
+      size_t constexpr vt = NK_OFFSETOF(struct nk_sdl_vertex, uv);
+      size_t constexpr vc = NK_OFFSETOF(struct nk_sdl_vertex, col);
 
       /* convert from command queue into draw list and draw to screen */
-      const struct nk_draw_command *cmd;
-      const nk_draw_index *offset = NULL;
-      struct nk_buffer vbuf, ebuf;
 
       /* fill converting configuration */
-      struct nk_convert_config config;
       static const struct nk_draw_vertex_layout_element vertex_layout[] = {{NK_VERTEX_POSITION, NK_FORMAT_FLOAT, NK_OFFSETOF(struct nk_sdl_vertex, position)},
          {NK_VERTEX_TEXCOORD, NK_FORMAT_FLOAT, NK_OFFSETOF(struct nk_sdl_vertex, uv)},
          {NK_VERTEX_COLOR, NK_FORMAT_R32G32B32A32_FLOAT, NK_OFFSETOF(struct nk_sdl_vertex, col)}, {NK_VERTEX_LAYOUT_END}};
+      struct nk_convert_config config;
       NK_MEMSET(&config, 0, sizeof(config));
       config.vertex_layout = vertex_layout;
       config.vertex_size = sizeof(struct nk_sdl_vertex);
@@ -238,16 +233,19 @@ NK_API void nk_sdl_render(struct nk_context *ctx, enum nk_anti_aliasing AA)
       config.line_AA = AA;
 
       /* convert shapes into vertices */
+      struct nk_buffer vbuf, ebuf;
       nk_buffer_init(&vbuf, &sdl->allocator, NK_BUFFER_DEFAULT_INITIAL_SIZE);
       nk_buffer_init(&ebuf, &sdl->allocator, NK_BUFFER_DEFAULT_INITIAL_SIZE);
       nk_convert(&sdl->ctx, &sdl->ogl.cmds, &vbuf, &ebuf, &config);
 
       /* iterate over and execute each draw command */
-      offset = (const nk_draw_index *)nk_buffer_memory_const(&ebuf);
+      nk_draw_index const *offset = (const nk_draw_index *)nk_buffer_memory_const(&ebuf);
 
       bool clipping_enabled = SDL_RenderClipEnabled(sdl->renderer);
+      SDL_Rect saved_clip;
       SDL_GetRenderClipRect(sdl->renderer, &saved_clip);
 
+      struct nk_draw_command const *cmd = NULL;
       nk_draw_foreach(cmd, &sdl->ctx, &sdl->ogl.cmds)
       {
          if (!cmd->elem_count)
@@ -310,33 +308,31 @@ NK_INTERN void nk_sdl_clipboard_paste(nk_handle usr, struct nk_text_edit *edit)
    SDL_free(text);
 }
 
-NK_INTERN void nk_sdl_clipboard_copy(nk_handle usr, const char *text, int len)
+NK_INTERN void nk_sdl_clipboard_copy(nk_handle usr, char const *text, int len)
 {
-   const char *ptext;
-   char *str;
-   size_t buflen;
-   struct nk_sdl *sdl = (struct nk_sdl *)usr.ptr;
-   NK_ASSERT(sdl);
    if (len <= 0 || text == NULL)
       return;
+
+   struct nk_sdl const *sdl = (struct nk_sdl *)usr.ptr;
+   NK_ASSERT(sdl);
 
    /* FIXME: there is a bug in Nuklear that affects UTF8 clipboard handling
     * "len" is expected to be a buffer length, but due to bug it actually is a glyph count
     * see: https://github.com/Immediate-Mode-UI/Nuklear/pull/841 */
+   size_t bufLen;
 #if 0
-    buflen = len + 1;
-    NK_UNUSED(ptext);
+   bufLen = len + 1;
 #else
-   ptext = text;
+   char const *ptext = text;
    for (int i = len; i > 0; i--)
       (void)SDL_StepUTF8(&ptext, NULL);
-   buflen = (size_t)(ptext - text) + 1;
+   bufLen = (size_t)(ptext - text) + 1;
 #endif
 
-   str = (char *)sdl->allocator.alloc(sdl->allocator.userdata, NULL, buflen);
+   char *str = (char *)sdl->allocator.alloc(sdl->allocator.userdata, NULL, bufLen);
    if (!str)
       return;
-   SDL_strlcpy(str, text, buflen);
+   SDL_strlcpy(str, text, bufLen);
    SDL_SetClipboardText(str);
    sdl->allocator.free(sdl->allocator.userdata, str);
 }
@@ -604,7 +600,7 @@ void nk_sdl_shutdown(struct nk_context *ctx)
    sdl->allocator.free(sdl->allocator.userdata, sdl);
 }
 
-NK_INTERN float nk_sdl_query_tiny_font_width(nk_handle handle, float height, char const *text, int len)
+NK_INTERN float nk_sdl_query_tiny_font_width(nk_handle const handle, float const height, char const *text, int const len)
 {
    NK_UNUSED(handle);
    int32_t width = 0;
@@ -623,7 +619,8 @@ NK_INTERN float nk_sdl_query_tiny_font_width(nk_handle handle, float height, cha
    return (float)(width + 1) * scale;
 }
 
-NK_INTERN void nk_sdl_query_tiny_font_glyph(nk_handle handle, float height, struct nk_user_font_glyph *glyph, nk_rune codepoint, nk_rune next_codepoint)
+NK_INTERN void nk_sdl_query_tiny_font_glyph(
+   nk_handle const handle, float const height, struct nk_user_font_glyph *const glyph, nk_rune const codepoint, nk_rune const next_codepoint)
 {
    NK_UNUSED(next_codepoint);
    NK_UNUSED(handle);
@@ -704,7 +701,8 @@ typedef struct
    uint8_t b;
 } ColorRgb;
 
-static void renderMonochromeFontCharacter(SDL_Surface *surface, size_t const characterIndex, PixelOffset const off, Bitmap const bitmap, ColorRgb const color)
+static void renderMonochromeFontCharacter(
+   SDL_Surface *const surface, size_t const characterIndex, PixelOffset const off, Bitmap const bitmap, ColorRgb const color)
 {
    // TODO figure out types; when which is more appropriate.
    ptrdiff_t const glyphOffsetBegin = tinyFontGlyphOffsets[characterIndex];
@@ -727,7 +725,7 @@ static void renderMonochromeFontCharacter(SDL_Surface *surface, size_t const cha
    }
 }
 
-NK_API void nk_sdl_style_set_tiny_font(struct nk_context *ctx, float scale)
+NK_API void nk_sdl_style_set_tiny_font(struct nk_context *const ctx, float const scale)
 {
    NK_ASSERT(ctx);
 
