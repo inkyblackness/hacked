@@ -1,3 +1,5 @@
+#include <stddef.h>
+
 #define NK_IMPLEMENTATION
 #include "hacked/nuklear/NuklearSdlBridge.h"
 
