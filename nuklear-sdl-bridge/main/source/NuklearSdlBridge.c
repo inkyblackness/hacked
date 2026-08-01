@@ -790,7 +790,8 @@ NK_INTERN float nk_sdl_query_tiny_font_width(nk_handle handle, float height, cha
 
       size_t const characterIndex = ascii - tinyFontCharLowest;
 
-      width += (tinyFontGlyphOffsets[characterIndex + 1] - tinyFontGlyphOffsets[characterIndex]);
+      // TODO: try to figure out why -1 makes it work suddenly with a text input (well, almost; new lines mess it up)
+      width += (tinyFontGlyphOffsets[characterIndex + 1] - tinyFontGlyphOffsets[characterIndex]) - 1;
    }
    return (float)(width + 1);
 }
