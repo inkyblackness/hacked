@@ -84,18 +84,16 @@ static int16_t *tinyFontGlyphOffsets = NULL;
 
 NK_API nk_handle nk_sdl_get_userdata(struct nk_context *ctx)
 {
-   struct nk_sdl *sdl;
    NK_ASSERT(ctx);
-   sdl = (struct nk_sdl *)ctx->userdata.ptr;
+   struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
    NK_ASSERT(sdl);
    return sdl->userdata;
 }
 
 NK_API void nk_sdl_set_userdata(struct nk_context *ctx, nk_handle userdata)
 {
-   struct nk_sdl *sdl;
    NK_ASSERT(ctx);
-   sdl = (struct nk_sdl *)ctx->userdata.ptr;
+   struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
    NK_ASSERT(sdl);
    sdl->userdata = userdata;
 }
@@ -124,7 +122,7 @@ NK_INTERN void nk_sdl_free(nk_handle user, void *old)
 NK_API struct nk_allocator nk_sdl_allocator()
 {
    struct nk_allocator allocator;
-   allocator.userdata.ptr = 0;
+   allocator.userdata.ptr = NULL;
    allocator.alloc = nk_sdl_alloc;
    allocator.free = nk_sdl_free;
    return allocator;
@@ -132,13 +130,12 @@ NK_API struct nk_allocator nk_sdl_allocator()
 
 NK_INTERN void nk_sdl_device_upload_atlas(struct nk_context *ctx, const void *image, int width, int height)
 {
-   struct nk_sdl *sdl;
    NK_ASSERT(ctx);
    NK_ASSERT(image);
    NK_ASSERT(width > 0);
    NK_ASSERT(height > 0);
 
-   sdl = (struct nk_sdl *)ctx->userdata.ptr;
+   struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
    NK_ASSERT(sdl);
 
    /* Clean up if the texture already exists. */
@@ -157,10 +154,9 @@ NK_INTERN void nk_sdl_device_upload_atlas(struct nk_context *ctx, const void *im
 
 NK_API void nk_sdl_update_TextInput(struct nk_context *ctx)
 {
-   struct nk_sdl *sdl;
    bool active;
    NK_ASSERT(ctx);
-   sdl = (struct nk_sdl *)ctx->userdata.ptr;
+   struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
    NK_ASSERT(sdl);
 
    /* Determine if Nuklear is using any top-level "edit" widget.
@@ -205,9 +201,8 @@ NK_API void nk_sdl_update_TextInput(struct nk_context *ctx)
 NK_API void nk_sdl_render(struct nk_context *ctx, enum nk_anti_aliasing AA)
 {
    /* setup global state */
-   struct nk_sdl *sdl;
    NK_ASSERT(ctx);
-   sdl = (struct nk_sdl *)ctx->userdata.ptr;
+   struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
    NK_ASSERT(sdl);
 
    { /* setup internal delta time that Nuklear needs for animations */
@@ -218,7 +213,6 @@ NK_API void nk_sdl_render(struct nk_context *ctx, enum nk_anti_aliasing AA)
 
    {
       SDL_Rect saved_clip;
-      bool clipping_enabled;
       int vs = sizeof(struct nk_sdl_vertex);
       size_t vp = NK_OFFSETOF(struct nk_sdl_vertex, position);
       size_t vt = NK_OFFSETOF(struct nk_sdl_vertex, uv);
@@ -254,7 +248,7 @@ NK_API void nk_sdl_render(struct nk_context *ctx, enum nk_anti_aliasing AA)
       /* iterate over and execute each draw command */
       offset = (const nk_draw_index *)nk_buffer_memory_const(&ebuf);
 
-      clipping_enabled = SDL_RenderClipEnabled(sdl->renderer);
+      bool clipping_enabled = SDL_RenderClipEnabled(sdl->renderer);
       SDL_GetRenderClipRect(sdl->renderer, &saved_clip);
 
       nk_draw_foreach(cmd, &sdl->ctx, &sdl->ogl.cmds)
@@ -264,10 +258,10 @@ NK_API void nk_sdl_render(struct nk_context *ctx, enum nk_anti_aliasing AA)
 
          {
             SDL_Rect r;
-            r.x = cmd->clip_rect.x;
-            r.y = cmd->clip_rect.y;
-            r.w = cmd->clip_rect.w;
-            r.h = cmd->clip_rect.h;
+            r.x = (int)nk_roundf(cmd->clip_rect.x);
+            r.y = (int)nk_roundf(cmd->clip_rect.y);
+            r.w = (int)nk_roundf(cmd->clip_rect.w);
+            r.h = (int)nk_roundf(cmd->clip_rect.h);
             SDL_SetRenderClipRect(sdl->renderer, &r);
          }
 
@@ -275,8 +269,8 @@ NK_API void nk_sdl_render(struct nk_context *ctx, enum nk_anti_aliasing AA)
             const void *vertices = nk_buffer_memory_const(&vbuf);
 
             SDL_RenderGeometryRaw(sdl->renderer, (SDL_Texture *)cmd->texture.ptr, (const float *)((const nk_byte *)vertices + vp), vs,
-               (const SDL_FColor *)((const nk_byte *)vertices + vc), vs, (const float *)((const nk_byte *)vertices + vt), vs, (vbuf.needed / vs),
-               (void *)offset, cmd->elem_count, 2);
+               (const SDL_FColor *)((const nk_byte *)vertices + vc), vs, (const float *)((const nk_byte *)vertices + vt), vs, (int)(vbuf.needed / vs),
+               (void *)offset, (int)cmd->elem_count, 2);
 
             offset += cmd->elem_count;
          }
@@ -297,23 +291,22 @@ NK_API void nk_sdl_render(struct nk_context *ctx, enum nk_anti_aliasing AA)
 
 NK_INTERN void nk_sdl_clipboard_paste(nk_handle usr, struct nk_text_edit *edit)
 {
-   char *text;
-   int len;
    NK_UNUSED(usr);
 
    /* this function returns empty string on failure, not NULL */
-   text = SDL_GetClipboardText();
+   char *text = SDL_GetClipboardText();
    NK_ASSERT(text);
 
    if (text[0] != '\0')
    {
+      int len;
       /* FIXME: there is a bug in Nuklear that affects UTF8 clipboard handling
        * "len" should be a buffer length, but due to bug it must be a glyph count
        * see: https://github.com/Immediate-Mode-UI/Nuklear/pull/841 */
 #if 0
         len = nk_strlen(text);
 #else
-      len = SDL_utf8strlen(text);
+      len = (int)SDL_utf8strlen(text);
 #endif
       nk_textedit_paste(edit, text, len);
    }
@@ -325,7 +318,6 @@ NK_INTERN void nk_sdl_clipboard_copy(nk_handle usr, const char *text, int len)
    const char *ptext;
    char *str;
    size_t buflen;
-   int i;
    struct nk_sdl *sdl = (struct nk_sdl *)usr.ptr;
    NK_ASSERT(sdl);
    if (len <= 0 || text == NULL)
@@ -339,12 +331,12 @@ NK_INTERN void nk_sdl_clipboard_copy(nk_handle usr, const char *text, int len)
     NK_UNUSED(ptext);
 #else
    ptext = text;
-   for (i = len; i > 0; i--)
+   for (int i = len; i > 0; i--)
       (void)SDL_StepUTF8(&ptext, NULL);
    buflen = (size_t)(ptext - text) + 1;
 #endif
 
-   str = (char *)sdl->allocator.alloc(sdl->allocator.userdata, 0, buflen);
+   str = (char *)sdl->allocator.alloc(sdl->allocator.userdata, NULL, buflen);
    if (!str)
       return;
    SDL_strlcpy(str, text, buflen);
@@ -354,12 +346,11 @@ NK_INTERN void nk_sdl_clipboard_copy(nk_handle usr, const char *text, int len)
 
 NK_API struct nk_context *nk_sdl_init(SDL_Window *win, SDL_Renderer *renderer, struct nk_allocator allocator)
 {
-   struct nk_sdl *sdl;
    NK_ASSERT(win);
    NK_ASSERT(renderer);
    NK_ASSERT(allocator.alloc);
    NK_ASSERT(allocator.free);
-   sdl = (struct nk_sdl *)allocator.alloc(allocator.userdata, 0, sizeof(*sdl));
+   struct nk_sdl *sdl = (struct nk_sdl *)allocator.alloc(allocator.userdata, NULL, sizeof(*sdl));
    NK_ASSERT(sdl);
    SDL_zerop(sdl);
    sdl->allocator.userdata = allocator.userdata;
@@ -367,7 +358,7 @@ NK_API struct nk_context *nk_sdl_init(SDL_Window *win, SDL_Renderer *renderer, s
    sdl->allocator.free = allocator.free;
    sdl->win = win;
    sdl->renderer = renderer;
-   nk_init(&sdl->ctx, &sdl->allocator, 0);
+   nk_init(&sdl->ctx, &sdl->allocator, NULL);
    sdl->ctx.userdata = nk_handle_ptr((void *)sdl);
    sdl->ctx.clip.copy = nk_sdl_clipboard_copy;
    sdl->ctx.clip.paste = nk_sdl_clipboard_paste;
@@ -382,9 +373,8 @@ NK_API struct nk_context *nk_sdl_init(SDL_Window *win, SDL_Renderer *renderer, s
 #ifdef NK_INCLUDE_FONT_BAKING
 NK_API struct nk_font_atlas *nk_sdl_font_stash_begin(struct nk_context *ctx)
 {
-   struct nk_sdl *sdl;
    NK_ASSERT(ctx);
-   sdl = (struct nk_sdl *)ctx->userdata.ptr;
+   struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
    NK_ASSERT(sdl);
    nk_font_atlas_init(&sdl->atlas, &sdl->allocator);
    nk_font_atlas_begin(&sdl->atlas);
@@ -395,13 +385,11 @@ NK_API struct nk_font_atlas *nk_sdl_font_stash_begin(struct nk_context *ctx)
 #ifdef NK_INCLUDE_FONT_BAKING
 NK_API void nk_sdl_font_stash_end(struct nk_context *ctx)
 {
-   struct nk_sdl *sdl;
-   const void *image;
    int w, h;
    NK_ASSERT(ctx);
-   sdl = (struct nk_sdl *)ctx->userdata.ptr;
+   struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
    NK_ASSERT(sdl);
-   image = nk_font_atlas_bake(&sdl->atlas, &w, &h, NK_FONT_ATLAS_RGBA32);
+   void const *image = nk_font_atlas_bake(&sdl->atlas, &w, &h, NK_FONT_ATLAS_RGBA32);
    NK_ASSERT(image);
    nk_sdl_device_upload_atlas(&sdl->ctx, image, w, h);
    nk_font_atlas_end(&sdl->atlas, nk_handle_ptr(sdl->ogl.font_tex), &sdl->ogl.tex_null);
@@ -414,12 +402,10 @@ NK_API void nk_sdl_font_stash_end(struct nk_context *ctx)
 
 NK_API int nk_sdl_handle_event(struct nk_context *ctx, SDL_Event *evt)
 {
-   struct nk_sdl *sdl;
-
    NK_ASSERT(ctx);
    NK_ASSERT(evt);
 
-   sdl = (struct nk_sdl *)ctx->userdata.ptr;
+   struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
    NK_ASSERT(sdl);
 
    /* We only care about Window currently used by Nuklear */
@@ -433,8 +419,8 @@ NK_API int nk_sdl_handle_event(struct nk_context *ctx, SDL_Event *evt)
    case SDL_EVENT_KEY_UP: /* KEYUP & KEYDOWN share same routine */
    case SDL_EVENT_KEY_DOWN:
    {
-      int down = evt->type == SDL_EVENT_KEY_DOWN;
-      int ctrl_down = evt->key.mod & SDL_KMOD_CTRL;
+      bool down = evt->type == SDL_EVENT_KEY_DOWN;
+      bool ctrl_down = (evt->key.mod & SDL_KMOD_CTRL) != 0;
 
       switch (evt->key.key)
       {
@@ -575,8 +561,9 @@ NK_API int nk_sdl_handle_event(struct nk_context *ctx, SDL_Event *evt)
    case SDL_EVENT_MOUSE_BUTTON_UP: /* MOUSEBUTTONUP & MOUSEBUTTONDOWN share same routine */
    case SDL_EVENT_MOUSE_BUTTON_DOWN:
    {
-      const int x = evt->button.x, y = evt->button.y;
-      const int down = evt->button.down;
+      int const x = (int)nk_roundf(evt->button.x);
+      int const y = (int)nk_roundf(evt->button.y);
+      bool const down = evt->button.down != 0;
       switch (evt->button.button)
       {
       case SDL_BUTTON_LEFT:
@@ -611,11 +598,10 @@ NK_API int nk_sdl_handle_event(struct nk_context *ctx, SDL_Event *evt)
 
    case SDL_EVENT_TEXT_INPUT:
    {
-      nk_glyph glyph;
-      nk_size len;
       NK_ASSERT(evt->text.text);
-      len = SDL_strlen(evt->text.text);
+      nk_size len = SDL_strlen(evt->text.text);
       NK_ASSERT(len <= NK_UTF_SIZE);
+      nk_glyph glyph;
       NK_MEMCPY(glyph, evt->text.text, len);
       nk_input_glyph(ctx, glyph);
    }
@@ -624,6 +610,9 @@ NK_API int nk_sdl_handle_event(struct nk_context *ctx, SDL_Event *evt)
    case SDL_EVENT_MOUSE_WHEEL:
       nk_input_scroll(ctx, nk_vec2(evt->wheel.x, evt->wheel.y));
       return 1;
+
+   default:
+      return 0;
    }
    return 0;
 }
@@ -631,9 +620,8 @@ NK_API int nk_sdl_handle_event(struct nk_context *ctx, SDL_Event *evt)
 NK_API
 void nk_sdl_shutdown(struct nk_context *ctx)
 {
-   struct nk_sdl *sdl;
    NK_ASSERT(ctx);
-   sdl = (struct nk_sdl *)ctx->userdata.ptr;
+   struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
    NK_ASSERT(sdl);
 
 #ifdef NK_INCLUDE_FONT_BAKING
@@ -652,130 +640,6 @@ void nk_sdl_shutdown(struct nk_context *ctx)
    nk_free(ctx);
    sdl->allocator.free(sdl->allocator.userdata, sdl->debug_font);
    sdl->allocator.free(sdl->allocator.userdata, sdl);
-}
-
-/* Debug Font Width/Height of internal texture atlas
- * This is a result of: ceil(sqrt('~' - ' '))
- * There is a sanity check for this value in nk_sdl_style_set_debug_font */
-#define NK_SDL_DFWH (10)
-
-NK_INTERN float nk_sdl_query_debug_font_width(nk_handle handle, float height, const char *text, int len)
-{
-   NK_UNUSED(handle);
-   return nk_utf_len(text, len) * (height + 1) + 1; // one per character for border (which may overlap) plus one for last character non-overlap.
-}
-
-NK_INTERN void nk_sdl_query_debug_font_glypth(nk_handle handle, float height, struct nk_user_font_glyph *glyph, nk_rune codepoint, nk_rune next_codepoint)
-{
-   char ascii;
-   int idx, x, y;
-   NK_UNUSED(next_codepoint);
-   NK_UNUSED(handle);
-
-   /* replace non-ASCII characters with question mark */
-   ascii = (codepoint < (nk_rune)' ' || codepoint > (nk_rune)'~') ? '?' : (char)codepoint;
-   NK_ASSERT(ascii >= ' ' && ascii <= '~');
-
-   idx = (int)(ascii - ' ');
-   x = idx / NK_SDL_DFWH;
-   y = idx % NK_SDL_DFWH;
-   NK_ASSERT(x >= 0 && x < NK_SDL_DFWH);
-   NK_ASSERT(y >= 0 && y < NK_SDL_DFWH);
-
-   glyph->height = height;
-   glyph->width = height;
-   glyph->xadvance = height - 2; // TODO: Is this shift by 2 correct? probably, because border is allowed to overlap.
-   glyph->uv[0].x = (float)(x + 0) / NK_SDL_DFWH;
-   glyph->uv[0].y = (float)(y + 0) / NK_SDL_DFWH;
-   glyph->uv[1].x = (float)(x + 1) / NK_SDL_DFWH;
-   glyph->uv[1].y = (float)(y + 1) / NK_SDL_DFWH;
-   glyph->offset.x = 0.0f;
-   glyph->offset.y = 0.0f;
-}
-
-NK_API void nk_sdl_style_set_debug_font(struct nk_context *ctx)
-{
-   struct nk_user_font *font;
-   struct nk_sdl *sdl;
-   SDL_Surface *surface;
-   SDL_Renderer *renderer;
-   char buf[2];
-   int x, y;
-   bool success;
-   NK_ASSERT(ctx);
-
-   sdl = (struct nk_sdl *)ctx->userdata.ptr;
-   NK_ASSERT(sdl);
-
-   if (sdl->debug_font)
-   {
-      sdl->allocator.free(sdl->allocator.userdata, sdl->debug_font);
-      sdl->debug_font = 0;
-   }
-
-   /* sanity check: formal proof of NK_SDL_DFWH value (which is 10) */
-   NK_ASSERT(SDL_ceil(SDL_sqrt('~' - ' ')) == NK_SDL_DFWH);
-
-   /* We use another Software Renderer just to make sure
-    * that we won't mutate any state in the main Renderer. */
-   // 4 = 2 for border, plus 2 for buffer to avoid blur bleed
-   surface = SDL_CreateSurface(
-      NK_SDL_DFWH * (SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE + 4), NK_SDL_DFWH * (SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE + 4), SDL_PIXELFORMAT_RGBA32);
-   NK_ASSERT(surface);
-   renderer = SDL_CreateSoftwareRenderer(surface);
-   NK_ASSERT(renderer);
-   // success = SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-   // NK_ASSERT(success);
-
-   /* SPACE is the first printable ASCII character */
-   NK_MEMCPY(buf, " ", sizeof(buf));
-   for (x = 0; x < NK_SDL_DFWH; x++)
-   {
-      for (y = 0; y < NK_SDL_DFWH; y++)
-      {
-         int startX = x * (SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE + 4) + 2;
-         int startY = y * (SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE + 4) + 2;
-         success = SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
-         for (int i = 0; i < 9; i++)
-         {
-            int offX = (i % 3) - 1;
-            int offY = (i / 3) - 1;
-            if (offX != 0 || offY != 0)
-            {
-               SDL_RenderDebugText(renderer, (float)(startX + offX), (float)(startY + offY), buf);
-            }
-         }
-         success = SDL_SetRenderDrawColor(renderer, 0x1E, 0xAC, 0x5B, 0xFF); // TODO: Why is this BGRA and not RGBA?
-         success = SDL_RenderDebugText(renderer, (float)(startX), (float)(startY), buf);
-         NK_ASSERT(success);
-         buf[0]++;
-
-         /* TILDE is the last printable ASCII character */
-         if (buf[0] > '~')
-            break;
-      }
-   }
-   success = SDL_RenderPresent(renderer);
-   NK_ASSERT(success);
-
-   font = (struct nk_user_font *)sdl->allocator.alloc(sdl->allocator.userdata, 0, sizeof(*font));
-   NK_ASSERT(font);
-   font->userdata.ptr = sdl;
-   font->height = SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE;
-   font->width = &nk_sdl_query_debug_font_width;
-   font->query = &nk_sdl_query_debug_font_glypth;
-
-   /* HACK: nk_sdl_device_upload_atlas turns pixels into SDL_Texture
-    *       and sets said Texture into sdl->ogl.font_tex
-    *       then nk_sdl_render expects same Texture at font->texture */
-   nk_sdl_device_upload_atlas(ctx, surface->pixels, surface->w, surface->h);
-   font->texture.ptr = sdl->ogl.font_tex;
-
-   sdl->debug_font = font;
-   nk_style_set_font(ctx, font);
-
-   SDL_DestroyRenderer(renderer);
-   SDL_DestroySurface(surface);
 }
 
 NK_INTERN float nk_sdl_query_tiny_font_width(nk_handle handle, float height, char const *text, int len)
@@ -911,7 +775,7 @@ NK_API void nk_sdl_style_set_tiny_font(struct nk_context *ctx, float scale)
    if (sdl->debug_font)
    {
       sdl->allocator.free(sdl->allocator.userdata, sdl->debug_font);
-      sdl->debug_font = 0;
+      sdl->debug_font = NULL;
    }
 
    tinyFontCharLowest = serialReadS16LittleEndian(tinyFont + 0x0024);
