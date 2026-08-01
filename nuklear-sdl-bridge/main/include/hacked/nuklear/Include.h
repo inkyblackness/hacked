@@ -6,10 +6,6 @@
 
 #include <SDL3/SDL.h>
 
-// TODO: determine whether font baking is necessary, or internal debug font is enough.
-#define NK_INCLUDE_FONT_BAKING
-#define NK_INCLUDE_DEFAULT_FONT
-
 // Mandatory: render bridge depends on those defines.
 #define NK_INCLUDE_COMMAND_USERDATA
 #define NK_INCLUDE_VERTEX_BUFFER_OUTPUT

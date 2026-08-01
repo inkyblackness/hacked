@@ -27,9 +27,6 @@ struct nk_sdl
    struct nk_user_font *debug_font;
    struct nk_sdl_device ogl;
    struct nk_context ctx;
-#ifdef NK_INCLUDE_FONT_BAKING
-   struct nk_font_atlas atlas;
-#endif
    struct nk_allocator allocator;
    nk_handle userdata;
    Uint64 last_render;
@@ -370,36 +367,6 @@ NK_API struct nk_context *nk_sdl_init(SDL_Window *win, SDL_Renderer *renderer, s
    return &sdl->ctx;
 }
 
-#ifdef NK_INCLUDE_FONT_BAKING
-NK_API struct nk_font_atlas *nk_sdl_font_stash_begin(struct nk_context *ctx)
-{
-   NK_ASSERT(ctx);
-   struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
-   NK_ASSERT(sdl);
-   nk_font_atlas_init(&sdl->atlas, &sdl->allocator);
-   nk_font_atlas_begin(&sdl->atlas);
-   return &sdl->atlas;
-}
-#endif
-
-#ifdef NK_INCLUDE_FONT_BAKING
-NK_API void nk_sdl_font_stash_end(struct nk_context *ctx)
-{
-   int w, h;
-   NK_ASSERT(ctx);
-   struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
-   NK_ASSERT(sdl);
-   void const *image = nk_font_atlas_bake(&sdl->atlas, &w, &h, NK_FONT_ATLAS_RGBA32);
-   NK_ASSERT(image);
-   nk_sdl_device_upload_atlas(&sdl->ctx, image, w, h);
-   nk_font_atlas_end(&sdl->atlas, nk_handle_ptr(sdl->ogl.font_tex), &sdl->ogl.tex_null);
-   if (sdl->atlas.default_font)
-   {
-      nk_style_set_font(&sdl->ctx, &sdl->atlas.default_font->handle);
-   }
-}
-#endif
-
 NK_API int nk_sdl_handle_event(struct nk_context *ctx, SDL_Event *evt)
 {
    NK_ASSERT(ctx);
@@ -623,11 +590,6 @@ void nk_sdl_shutdown(struct nk_context *ctx)
    NK_ASSERT(ctx);
    struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
    NK_ASSERT(sdl);
-
-#ifdef NK_INCLUDE_FONT_BAKING
-   if (sdl->atlas.font_num > 0)
-      nk_font_atlas_clear(&sdl->atlas);
-#endif
 
    nk_buffer_free(&sdl->ogl.cmds);
 
