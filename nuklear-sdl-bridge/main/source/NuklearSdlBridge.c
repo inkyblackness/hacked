@@ -793,7 +793,8 @@ NK_INTERN float nk_sdl_query_tiny_font_width(nk_handle handle, float height, cha
       // TODO: try to figure out why -1 makes it work suddenly with a text input (well, almost; new lines mess it up)
       width += (tinyFontGlyphOffsets[characterIndex + 1] - tinyFontGlyphOffsets[characterIndex]) - 1;
    }
-   return (float)(width + 1);
+   float scale = height / (float)(tinyFontHeight + 2);
+   return (float)(width + 1) * scale;
 }
 
 NK_INTERN void nk_sdl_query_tiny_font_glyph(nk_handle handle, float height, struct nk_user_font_glyph *glyph, nk_rune codepoint, nk_rune next_codepoint)
@@ -815,9 +816,10 @@ NK_INTERN void nk_sdl_query_tiny_font_glyph(nk_handle handle, float height, stru
    ptrdiff_t const glyphOffsetEnd = tinyFontGlyphOffsets[characterIndex + 1];
    int32_t width = glyphOffsetEnd - glyphOffsetBegin;
 
-   glyph->height = tinyFontHeight + 2;
-   glyph->width = width + 1;
-   glyph->xadvance = width;
+   float scale = height / (float)(tinyFontHeight + 2);
+   glyph->height = (float)(tinyFontHeight + 2) * scale;
+   glyph->width = (float)(width + 1) * scale;
+   glyph->xadvance = (float)width * scale;
    glyph->uv[0].x = (float)(glyphOffsetBegin + (characterIndex * 2) + (characterIndex * 2) + 1) / (float)bitmapWidth;
    glyph->uv[0].y = 0;
    glyph->uv[1].x = (float)(glyphOffsetEnd + (characterIndex * 2) + (characterIndex * 2) + 2) / (float)bitmapWidth;
@@ -899,16 +901,11 @@ static void renderMonochromeFontCharacter(SDL_Surface *surface, size_t const cha
    }
 }
 
-NK_API void nk_sdl_style_set_tiny_font(struct nk_context *ctx)
+NK_API void nk_sdl_style_set_tiny_font(struct nk_context *ctx, float scale)
 {
-   struct nk_user_font *font;
-   struct nk_sdl *sdl;
-   SDL_Surface *surface;
-   int x, y;
-   bool success;
    NK_ASSERT(ctx);
 
-   sdl = (struct nk_sdl *)ctx->userdata.ptr;
+   struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
    NK_ASSERT(sdl);
 
    if (sdl->debug_font)
@@ -930,7 +927,7 @@ NK_API void nk_sdl_style_set_tiny_font(struct nk_context *ctx)
    // +2 per character for border, +2 per character for buffer to avoid blur bleed
    int bitmapWidth = (int)(tinyFontGlyphOffsets[characterCount + 1] - tinyFontGlyphOffsets[0]) + (characterCount * 2) + (characterCount * 2);
    int bitmapHeight = tinyFontHeight + 2;
-   surface = SDL_CreateSurface(bitmapWidth, bitmapHeight, SDL_PIXELFORMAT_RGBA32);
+   SDL_Surface *surface = SDL_CreateSurface(bitmapWidth, bitmapHeight, SDL_PIXELFORMAT_RGBA32);
    NK_ASSERT(surface);
 
    Bitmap fontBitmap = {.data = tinyFontBitmap, .stride = tinyFontBitmapWidth};
@@ -951,10 +948,10 @@ NK_API void nk_sdl_style_set_tiny_font(struct nk_context *ctx)
       renderMonochromeFontCharacter(surface, currentCharOffset, zeroOffset, fontBitmap, textColor);
    }
 
-   font = (struct nk_user_font *)sdl->allocator.alloc(sdl->allocator.userdata, NULL, sizeof(*font));
+   struct nk_user_font *font = (struct nk_user_font *)sdl->allocator.alloc(sdl->allocator.userdata, NULL, sizeof(*font));
    NK_ASSERT(font);
    font->userdata.ptr = sdl;
-   font->height = (float)(tinyFontHeight + 2);
+   font->height = (float)(tinyFontHeight + 2) * scale;
    font->width = &nk_sdl_query_tiny_font_width;
    font->query = &nk_sdl_query_tiny_font_glyph;
 
