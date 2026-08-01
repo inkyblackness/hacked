@@ -83,6 +83,12 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
       ctx->style.tab.node_minimize_button.border = -2.0f;
       ctx->style.tab.node_maximize_button.border = -2.0f;
       ctx->style.checkbox.spacing = 5.0f;
+      ctx->style.window.header.label_padding.x = 0.0f;
+      ctx->style.window.header.label_padding.y = 0.0f;
+      ctx->style.window.header.padding.x = 0.0f;
+      ctx->style.window.header.padding.y = 0.0f;
+      ctx->style.window.header.spacing.x = 0.0f;
+      ctx->style.window.header.spacing.y = 0.0f;
 
       /* It's better to disable anti-aliasing when using small fonts */
       app->AA = NK_ANTI_ALIASING_OFF;
@@ -148,8 +154,11 @@ SDL_AppResult SDL_AppIterate(void *appstate)
       };
       static int op = EASY;
       static int property = 20;
+      static constexpr int textBufferSize = 1000;
+      static char textBuffer[textBufferSize] = "";
+      static int textBufferUsedLen = 0;
 
-      nk_layout_row_static(ctx, 30, 80, 1);
+      nk_layout_row_static(ctx, 9, 60, 1);
       if (nk_button_label(ctx, "button"))
       {
          SDL_Log("button pressed");
@@ -165,6 +174,9 @@ SDL_AppResult SDL_AppIterate(void *appstate)
       nk_layout_row_dynamic(ctx, 20, 1);
       nk_label(ctx, "background:", NK_TEXT_LEFT);
       nk_layout_row_dynamic(ctx, 25, 1);
+
+      nk_edit_string(ctx, NK_EDIT_ALWAYS_INSERT_MODE | NK_EDIT_MULTILINE, textBuffer, &textBufferUsedLen, textBufferSize, NULL);
+      /*
       if (nk_combo_begin_color(ctx, nk_rgb_cf(app->bg), nk_vec2(nk_widget_width(ctx), 400)))
       {
          nk_layout_row_dynamic(ctx, 120, 1);
@@ -176,6 +188,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
          app->bg.a = nk_propertyf(ctx, "#A:", 0, app->bg.a, 1.0f, 0.01f, 0.005f);
          nk_combo_end(ctx);
       }
+      */
    }
    nk_end(ctx);
 
