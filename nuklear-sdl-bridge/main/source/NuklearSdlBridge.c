@@ -790,7 +790,7 @@ NK_INTERN float nk_sdl_query_tiny_font_width(nk_handle handle, float height, cha
 
       size_t const characterIndex = ascii - tinyFontCharLowest;
 
-      width += (tinyFontGlyphOffsets[characterIndex + 1] - tinyFontGlyphOffsets[characterIndex]) + 1;
+      width += (tinyFontGlyphOffsets[characterIndex + 1] - tinyFontGlyphOffsets[characterIndex]);
    }
    return (float)(width + 1);
 }
@@ -883,7 +883,6 @@ static void renderMonochromeFontCharacter(SDL_Surface *surface, size_t const cha
    int16_t const width = (int16_t)(glyphOffsetEnd - glyphOffsetBegin);
    int outXBase = glyphOffsetBegin + (characterIndex * 2) + (characterIndex * 2) + 2 + off.x;
    int outYBase = 1 + off.y;
-   bool print = off.x == 0 && off.y == 0;
    for (int16_t y = 0; y < tinyFontHeight; ++y)
    {
       for (int16_t x = 0; x < width; ++x)
@@ -904,7 +903,6 @@ NK_API void nk_sdl_style_set_tiny_font(struct nk_context *ctx)
    struct nk_user_font *font;
    struct nk_sdl *sdl;
    SDL_Surface *surface;
-   SDL_Renderer *renderer;
    int x, y;
    bool success;
    NK_ASSERT(ctx);
@@ -933,8 +931,6 @@ NK_API void nk_sdl_style_set_tiny_font(struct nk_context *ctx)
    int bitmapHeight = tinyFontHeight + 2;
    surface = SDL_CreateSurface(bitmapWidth, bitmapHeight, SDL_PIXELFORMAT_RGBA32);
    NK_ASSERT(surface);
-   renderer = SDL_CreateSoftwareRenderer(surface);
-   NK_ASSERT(renderer);
 
    Bitmap fontBitmap = {.data = tinyFontBitmap, .stride = tinyFontBitmapWidth};
    ColorRgb black = {};
@@ -953,8 +949,6 @@ NK_API void nk_sdl_style_set_tiny_font(struct nk_context *ctx)
       PixelOffset zeroOffset = {};
       renderMonochromeFontCharacter(surface, currentCharOffset, zeroOffset, fontBitmap, textColor);
    }
-   success = SDL_RenderPresent(renderer);
-   NK_ASSERT(success);
 
    font = (struct nk_user_font *)sdl->allocator.alloc(sdl->allocator.userdata, NULL, sizeof(*font));
    NK_ASSERT(font);
@@ -972,6 +966,5 @@ NK_API void nk_sdl_style_set_tiny_font(struct nk_context *ctx)
    sdl->debug_font = font;
    nk_style_set_font(ctx, font);
 
-   SDL_DestroyRenderer(renderer);
    SDL_DestroySurface(surface);
 }
