@@ -63,7 +63,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
       /* If you don't want to use advanced Nuklear font baking API
        * you can use simple ASCII debug font provided by SDL
        * just change the `#if 0` above to `#if 1` */
-      nk_sdl_style_set_debug_font(ctx);
+      nk_sdl_style_set_tiny_font(ctx);
 
       /* Note that since debug font is extremely small (only 8x8 pixels),
        * scaling it does not make much sense. The font would appear blurry. */
@@ -139,7 +139,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
    nk_input_end(ctx);
    /* GUI */
-   if (nk_begin(ctx, "Demo", nk_rect(50, 50, 230, 250), NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE))
+   if (nk_begin(ctx, "Demo", nk_rect(50, 50, 230, 190), NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE))
    {
       enum
       {
