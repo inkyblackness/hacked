@@ -208,10 +208,10 @@ NK_API void nk_sdl_render(struct nk_context *ctx, enum nk_anti_aliasing AA)
    }
 
    {
-      int constexpr vs = sizeof(struct nk_sdl_vertex);
-      size_t constexpr vp = NK_OFFSETOF(struct nk_sdl_vertex, position);
-      size_t constexpr vt = NK_OFFSETOF(struct nk_sdl_vertex, uv);
-      size_t constexpr vc = NK_OFFSETOF(struct nk_sdl_vertex, col);
+      int const vs = sizeof(struct nk_sdl_vertex);
+      size_t const vp = NK_OFFSETOF(struct nk_sdl_vertex, position);
+      size_t const vt = NK_OFFSETOF(struct nk_sdl_vertex, uv);
+      size_t const vc = NK_OFFSETOF(struct nk_sdl_vertex, col);
 
       /* convert from command queue into draw list and draw to screen */
 

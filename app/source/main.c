@@ -154,7 +154,10 @@ SDL_AppResult SDL_AppIterate(void *appstate)
       };
       static int op = EASY;
       static int property = 20;
-      static constexpr int textBufferSize = 1000;
+      enum
+      {
+         textBufferSize = 1000
+      };
       static char textBuffer[textBufferSize] = "";
       static int textBufferUsedLen = 0;
 
