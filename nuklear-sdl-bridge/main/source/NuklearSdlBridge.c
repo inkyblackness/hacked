@@ -157,7 +157,7 @@ NK_API void nk_sdl_update_TextInput(struct nk_context *ctx)
    NK_ASSERT(sdl);
 
    /* Determine if Nuklear is using any top-level "edit" widget.
-    * Popups take higher priority because they block any incomming input.
+    * Popups take higher priority because they block any incoming input.
     * This will not work, if the widget is not updating context state properly. */
    if (!ctx->active)
       active = false;
