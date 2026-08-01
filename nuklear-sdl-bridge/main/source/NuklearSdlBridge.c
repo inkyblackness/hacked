@@ -152,6 +152,7 @@ NK_INTERN void nk_sdl_device_upload_atlas(struct nk_context *ctx, const void *im
    NK_ASSERT(sdl->ogl.font_tex);
    SDL_UpdateTexture(sdl->ogl.font_tex, NULL, image, 4 * width);
    SDL_SetTextureBlendMode(sdl->ogl.font_tex, SDL_BLENDMODE_BLEND);
+   SDL_SetTextureScaleMode(sdl->ogl.font_tex, SDL_SCALEMODE_NEAREST);
 }
 
 NK_API void nk_sdl_update_TextInput(struct nk_context *ctx)
