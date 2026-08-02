@@ -1,5 +1,8 @@
 #include <stddef.h>
 
+#include "hacked/core/media/PixelSpace.h"
+#include "hacked/core/serial/io/Primitives.h"
+
 #define NK_IMPLEMENTATION
 #include "hacked/nuklear/NuklearSdlBridge.h"
 
@@ -652,43 +655,6 @@ NK_INTERN void nk_sdl_query_tiny_font_glyph(
    glyph->offset.x = 0.0f;
    glyph->offset.y = 0.0f;
 }
-
-static uint16_t serialReadU16LittleEndian(void const *addr)
-{
-   uint8_t const *data = addr;
-   return ((uint16_t)data[1] << 8) | (uint16_t)data[0];
-}
-
-static int16_t serialReadS16LittleEndian(void const *addr)
-{
-   return (int16_t)serialReadU16LittleEndian(addr);
-}
-
-static uint32_t serialReadU32LittleEndian(void const *addr)
-{
-   uint8_t const *data = addr;
-   return ((uint32_t)data[3] << 24) | ((uint32_t)data[2] << 16) | ((uint32_t)data[1] << 8) | (uint32_t)data[0];
-}
-
-static int32_t serialReadS32LittleEndian(void const *addr)
-{
-   return (int32_t)serialReadU32LittleEndian(addr);
-}
-
-typedef int16_t PixelAxisPosition;
-typedef int32_t PixelAxisOffset;
-
-typedef struct
-{
-   PixelAxisPosition x;
-   PixelAxisPosition y;
-} PixelPosition;
-
-typedef struct
-{
-   PixelAxisOffset x;
-   PixelAxisOffset y;
-} PixelOffset;
 
 typedef struct
 {

@@ -46,6 +46,7 @@ add_library(hacked-nuklear-sdl-bridge STATIC ${LIB_NUKLEAR_SDL_BRIDGE_SOURCES})
 target_include_directories(hacked-nuklear-sdl-bridge PUBLIC "${PROJECT_SOURCE_DIR}/nuklear-sdl-bridge/main/include")
 target_link_libraries(hacked-nuklear-sdl-bridge
         PUBLIC
+        hacked-core
         Nuklear
         SDL3::SDL3-static
 )
