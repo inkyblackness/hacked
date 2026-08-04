@@ -102,14 +102,9 @@ static TextEncodingResult codepageDecoderDecode(
    Codepoint const *const codepage = decoder->state;
    size_t const toCopy = (*inSize > *outSize) ? *outSize : *inSize;
    TextEncodingResult const result = (toCopy < *inSize) ? TEXT_ENCODING_MORE_OUTPUT_NEEDED : TEXT_ENCODING_DONE;
-   Codepoint *outPtr = out;
-   uint8_t const *inPtr = in;
-   uint8_t const *const inEnd = inPtr + toCopy;
-   while (inPtr != inEnd)
+   for (size_t i = 0; i < toCopy; ++i)
    {
-      *outPtr = codepage[*inPtr];
-      ++inPtr;
-      ++outPtr;
+      out[i] = codepage[in[i]];
    }
    *outSize = toCopy;
    *inSize = toCopy;
