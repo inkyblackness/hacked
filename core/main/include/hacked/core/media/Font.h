@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 #include "hacked/core/media/Bitmap.h"
 #include "hacked/core/media/Text.h"
 
