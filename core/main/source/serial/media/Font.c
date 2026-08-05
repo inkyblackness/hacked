@@ -17,11 +17,21 @@ void fontRelease(Font **fontRef)
 
 FontCodepointEntry const *fontFindCodepointEntry(Font const *const font, Codepoint const codepoint)
 {
-   for (size_t i = 0; i < font->codepointCount; ++i)
+   size_t begin = 0;
+   size_t end = font->codepointCount;
+   while (begin < end)
    {
-      // TODO: implement binary search
-      FontCodepointEntry const *const entry = &font->codepoints[i];
-      if (entry->codepoint == codepoint)
+      size_t const middle = begin + ((end - begin) / 2);
+      FontCodepointEntry const *const entry = &font->codepoints[middle];
+      if (entry->codepoint < codepoint)
+      {
+         begin = middle + 1;
+      }
+      else if (entry->codepoint > codepoint)
+      {
+         end = middle;
+      }
+      else
       {
          return entry;
       }

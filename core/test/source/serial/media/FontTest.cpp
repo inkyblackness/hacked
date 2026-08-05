@@ -48,20 +48,42 @@ TEST(FontTest, fontFindCodepointReturnsNullForEmptyList)
    EXPECT_TRUE(result == nullptr);
 }
 
-TEST(FontTest, fontFindCodepointReturnsEntry)
+static void verifyFontFindCodepointReturnsEntry(bool const evenNumberOfCodepoints)
 {
-   static size_t constexpr codepointCount = 20;
-   Font instance = {};
+   static size_t constexpr codepointCount = 10;
    FontCodepointEntry entries[codepointCount] = {};
-   for (size_t i = 0; i < codepointCount; i++)
-   {
-      entries[i].codepoint = U'A' + i;
-   }
-   instance.codepointCount = codepointCount;
+   entries[0].codepoint = U'B';
+   entries[1].codepoint = U'C';
+   entries[2].codepoint = U'E';
+   entries[3].codepoint = U'G';
+   entries[4].codepoint = U'H';
+   entries[5].codepoint = U'I';
+   entries[6].codepoint = U'J';
+   entries[7].codepoint = U'O';
+   entries[8].codepoint = U'P';
+   entries[9].codepoint = U'S';
+   Font instance = {};
+   instance.codepointCount = codepointCount - (evenNumberOfCodepoints ? 0 : 1);
    instance.codepoints = entries;
 
-   for (auto const &expected : entries)
+   for (size_t i = 0; i < instance.codepointCount; i++)
    {
-      EXPECT_TRUE(fontFindCodepointEntry(&instance, expected.codepoint) == &expected) << "failed for " + std::to_string(expected.codepoint);
+      FontCodepointEntry const *const expected = &entries[i];
+      EXPECT_TRUE(fontFindCodepointEntry(&instance, expected->codepoint) == expected) << "failed for " + std::to_string(expected->codepoint);
    }
+   EXPECT_TRUE(fontFindCodepointEntry(&instance, U'A') == nullptr) << "should not find unknown codepoint before list";
+   EXPECT_TRUE(fontFindCodepointEntry(&instance, U'D') == nullptr) << "should not find unknown codepoint within list 1";
+   EXPECT_TRUE(fontFindCodepointEntry(&instance, U'K') == nullptr) << "should not find unknown codepoint within list 2";
+   EXPECT_TRUE(fontFindCodepointEntry(&instance, U'L') == nullptr) << "should not find unknown codepoint within list 3";
+   EXPECT_TRUE(fontFindCodepointEntry(&instance, U'Z') == nullptr) << "should not find unknown codepoint beyond list";
+}
+
+TEST(FontTest, fontFindCodepointReturnsEntryEvenNumberOfCodepoints)
+{
+   verifyFontFindCodepointReturnsEntry(true);
+}
+
+TEST(FontTest, fontFindCodepointReturnsEntryOddNumberOfCodepoints)
+{
+   verifyFontFindCodepointReturnsEntry(false);
 }
