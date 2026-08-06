@@ -138,6 +138,7 @@ TEST(ValidationTest, assertCallsFunction)
 TEST(ValidationTest, assertDebugDoesNothingIfOk)
 {
    ValidationResult constexpr result = {};
+   (void)result;
    validationResultAssertDebug(result);
 }
 

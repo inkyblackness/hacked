@@ -83,7 +83,6 @@ extern void validationResultSetAssertFunc(ValidationResultAssertFunc func);
 #define validationResultAssertDebug(result)                                                                                                                    \
    do                                                                                                                                                          \
    {                                                                                                                                                           \
-      (void)(result);                                                                                                                                          \
    } while (0)
 #endif
 
