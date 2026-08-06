@@ -40,6 +40,16 @@ extern bool validationResultHasFailure(ValidationResult const *result);
 extern ValidationResult validationResultAddMessage(ValidationResult *result, char const *message);
 
 /**
+ * Add a validation message to the result IF the condition is false.
+ *
+ * @param result the result to extend, it will be modified
+ * @param message the message to add
+ * @param isValid the condition under which to add given message
+ * @return a copy of the result, for quick returns in case no further validation is needed
+ */
+extern ValidationResult validateResultAddConditional(ValidationResult *result, bool isValid, char const *message);
+
+/**
  * Merges one validation result with a target. It is a convenience function to add the results
  * of another validation with one's own, plus adding a message IF the other validation result indicates a failure.
  *

@@ -26,6 +26,15 @@ ValidationResult validationResultAddMessage(ValidationResult *const result, char
    return *result;
 }
 
+ValidationResult validateResultAddConditional(ValidationResult *result, bool isValid, char const *message)
+{
+   if (isValid)
+   {
+      return *result;
+   }
+   return validationResultAddMessage(result, message);
+}
+
 ValidationResult validationResultMerge(ValidationResult *const result, ValidationResult const other, char const *const message)
 {
    size_t copyIndex = 0;

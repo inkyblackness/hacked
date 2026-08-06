@@ -68,6 +68,24 @@ TEST(ValidationTest, addMessageOverridesLast)
    EXPECT_EQ(returnValue.messages[VALIDATION_RESULT_MAX_MESSAGES - 1], message);
 }
 
+TEST(ValidationTest, addConditionalDoesNothingOnTrue)
+{
+   char const *const message = "test";
+   ValidationResult result = {};
+   ValidationResult const returnValue = validateResultAddConditional(&result, true, message);
+   assertResultMessages(result, "result", {});
+   assertResultMessages(returnValue, "returnValue", {});
+}
+
+TEST(ValidationTest, addConditionalAddsMessageOnFalse)
+{
+   char const *const message = "test";
+   ValidationResult result = {};
+   ValidationResult const returnValue = validateResultAddConditional(&result, false, message);
+   assertResultMessages(result, "result", {message});
+   assertResultMessages(returnValue, "returnValue", {message});
+}
+
 TEST(ValidationTest, mergeAddsAllMessages)
 {
    char const *const message1 = "message1";

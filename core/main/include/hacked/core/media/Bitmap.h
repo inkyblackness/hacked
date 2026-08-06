@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "hacked/core/media/PixelSpace.h"
+#include "hacked/core/system/Validation.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,6 +18,8 @@ typedef struct
    size_t dataLength;
    size_t stride;
 } Bitmap;
+
+extern ValidationResult bitmapValidate(Bitmap const *bitmap);
 
 #ifdef __cplusplus
 }
