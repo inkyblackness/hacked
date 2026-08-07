@@ -49,6 +49,7 @@ ValidationResult fontValidate(Font const *const font)
          }
          if ((entry->rect.size.width == 0) || (entry->rect.size.height == 0))
          {
+            // An argument could be made that instead pixelSpaceValidateSize is used. Maybe it should.
             properSize = false;
          }
          if (!pixelSpaceAreaContainsRect(bitmapRect, entry->rect))
