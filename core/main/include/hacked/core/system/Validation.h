@@ -47,7 +47,7 @@ extern ValidationResult validationResultAddMessage(ValidationResult *result, cha
  * @param isValid the condition under which to add given message
  * @return a copy of the result, for quick returns in case no further validation is needed
  */
-extern ValidationResult validateResultAddConditional(ValidationResult *result, bool isValid, char const *message);
+extern ValidationResult validationResultAddConditional(ValidationResult *result, bool isValid, char const *message);
 
 /**
  * Merges one validation result with a target. It is a convenience function to add the results

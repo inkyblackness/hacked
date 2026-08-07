@@ -26,7 +26,7 @@ ValidationResult validationResultAddMessage(ValidationResult *const result, char
    return *result;
 }
 
-ValidationResult validateResultAddConditional(ValidationResult *result, bool isValid, char const *message)
+ValidationResult validationResultAddConditional(ValidationResult *result, bool const isValid, char const *message)
 {
    if (isValid)
    {
@@ -37,6 +37,10 @@ ValidationResult validateResultAddConditional(ValidationResult *result, bool isV
 
 ValidationResult validationResultMerge(ValidationResult *const result, ValidationResult const other, char const *const message)
 {
+   if (other.messages[0] == NULL)
+   {
+      return *result;
+   }
    size_t copyIndex = 0;
    for (size_t i = 0; i < (VALIDATION_RESULT_MAX_MESSAGES - 1); i++)
    {

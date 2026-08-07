@@ -15,7 +15,7 @@ void assertResultMessages(ValidationResult const &result, char const *const name
    }
    for (size_t i = messages.size(); i < VALIDATION_RESULT_MAX_MESSAGES; i++)
    {
-      EXPECT_TRUE(result.messages[i] == nullptr) << "tail not null at " << std::to_string(i);
+      EXPECT_TRUE(result.messages[i] == nullptr) << "tail not null at " << std::to_string(i) << " has '" << result.messages[i] << "'";
    }
 }
 
@@ -75,7 +75,7 @@ TEST(ValidationTest, addConditionalDoesNothingOnTrue)
 {
    char const *const message = "test";
    ValidationResult result = {};
-   ValidationResult const returnValue = validateResultAddConditional(&result, true, message);
+   ValidationResult const returnValue = validationResultAddConditional(&result, true, message);
    assertResultMessages(result, "result", {});
    assertResultMessages(returnValue, "returnValue", {});
 }
@@ -84,7 +84,7 @@ TEST(ValidationTest, addConditionalAddsMessageOnFalse)
 {
    char const *const message = "test";
    ValidationResult result = {};
-   ValidationResult const returnValue = validateResultAddConditional(&result, false, message);
+   ValidationResult const returnValue = validationResultAddConditional(&result, false, message);
    assertResultMessages(result, "result", {message});
    assertResultMessages(returnValue, "returnValue", {message});
 }
@@ -128,6 +128,26 @@ TEST(ValidationTest, mergeOverwritesWithLastMessage)
    expected.push_back(message2);
    assertResultMessages(result, "result", expected);
    assertResultMessages(returnValue, "returnValue", expected);
+}
+
+TEST(ValidationTest, mergeDoesNothingIfBothOk)
+{
+   ValidationResult result = {};
+   ValidationResult other = {};
+   ValidationResult const returnValue = validationResultMerge(&result, other, "all ok");
+   assertResultMessages(result, "result", {});
+   assertResultMessages(returnValue, "returnValue", {});
+}
+
+TEST(ValidationTest, mergeDoesNothingIfOtherOk)
+{
+   char const *const message = "message";
+   ValidationResult result = {};
+   validationResultAddMessage(&result, message);
+   ValidationResult other = {};
+   ValidationResult const returnValue = validationResultMerge(&result, other, "all ok");
+   assertResultMessages(result, "result", {message});
+   assertResultMessages(returnValue, "returnValue", {message});
 }
 
 TEST(ValidationTest, assertDoesNothingIfOk)

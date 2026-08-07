@@ -31,14 +31,26 @@ target_link_libraries(hacked-core
 )
 
 if (NOT DOS)
+    file(GLOB_RECURSE TEST_SUPPORT_CORE_SOURCES "${PROJECT_SOURCE_DIR}/core/test-support/source/*.cpp")
+    add_library(hacked-core-test-support STATIC ${TEST_SUPPORT_CORE_SOURCES})
+    target_include_directories(hacked-core-test-support PUBLIC "${PROJECT_SOURCE_DIR}/core/test-support/include")
+    target_link_libraries(hacked-core-test-support
+            PUBLIC
+            hacked-core
+            GTest::gmock
+            PRIVATE
+            BuildRules::common
+    )
+
     file(GLOB_RECURSE TEST_CORE_SOURCES "${PROJECT_SOURCE_DIR}/core/test/source/*.cpp")
     add_executable(hacked-core-test ${TEST_CORE_SOURCES})
     target_link_libraries(hacked-core-test
             hacked-core
+            hacked-core-test-support
             BuildRules::common
             GTest::gmock_main
     )
-    gtest_add_tests(TARGET hacked-core-test EXTRA_ARGS --gtest_shuffle)
+    gtest_add_tests(TARGET hacked-core-test EXTRA_ARGS --gtest_shuffle SKIP_DEPENDENCY)
 endif ()
 
 file(GLOB_RECURSE LIB_NUKLEAR_SDL_BRIDGE_SOURCES "${PROJECT_SOURCE_DIR}/nuklear-sdl-bridge/main/source/*.c")
