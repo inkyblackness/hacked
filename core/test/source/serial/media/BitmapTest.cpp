@@ -2,6 +2,9 @@
 
 #include "hacked/core/media/Bitmap.h"
 
+namespace
+{
+
 class BitmapTest : public ::testing::Test
 {
 protected:
@@ -94,4 +97,6 @@ TEST_F(BitmapTest, validateStrideZero)
    bitmap.stride = 0;
    ValidationResult const result = bitmapValidate(&bitmap);
    assertResultMessages(result, {"stride is zero", "width is higher than stride"});
+}
+
 }

@@ -2,6 +2,9 @@
 
 #include "hacked/core/media/PixelSpace.h"
 
+namespace
+{
+
 TEST(PixelSpaceTest, offsetDataTypeCanHoldPositionDataType)
 {
    EXPECT_GE(sizeof(PixelAxisOffset), sizeof(PixelAxisPosition));
@@ -22,4 +25,6 @@ TEST(PixelSpaceTest, limitsAreFeasible)
    // Offsets need to allow for accumulating addition/subtraction, so they need to be higher.
    EXPECT_LT(limits.minOffset, limits.minPosition);
    EXPECT_GT(limits.maxOffset, limits.maxPosition);
+}
+
 }

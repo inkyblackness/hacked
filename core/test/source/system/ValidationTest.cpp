@@ -4,7 +4,10 @@
 
 #include "hacked/core/system/Validation.h"
 
-static void assertResultMessages(ValidationResult const &result, char const *const name, std::vector<char const *> const &messages)
+namespace
+{
+
+void assertResultMessages(ValidationResult const &result, char const *const name, std::vector<char const *> const &messages)
 {
    for (size_t i = 0; i < messages.size(); i++)
    {
@@ -133,9 +136,9 @@ TEST(ValidationTest, assertDoesNothingIfOk)
    validationResultAssert(result);
 }
 
-static bool assertFuncCalled = false;
+bool assertFuncCalled = false;
 
-static void testAssertFunc(ValidationResult const result)
+void testAssertFunc(ValidationResult const result)
 {
    (void)result;
    assertFuncCalled = true;
@@ -174,4 +177,6 @@ TEST(ValidationTest, assertWorksAccordingToBuildType)
 #endif
    validationResultSetAssertFunc(NULL);
    assertFuncCalled = false;
+}
+
 }

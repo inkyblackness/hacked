@@ -2,6 +2,8 @@
 
 #include "hacked/core/media/Text.h"
 
+namespace
+{
 TEST(TextTest, textDecoderReleaseIgnoresNullInput)
 {
    textDecoderRelease(NULL);
@@ -93,4 +95,6 @@ TEST(TextTest, codepage437DecodeNeedsMoreOutput)
    {
       EXPECT_EQ(output[i], expected[i]) << "failed for i=" << std::to_string(i);
    }
+}
+
 }

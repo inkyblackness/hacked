@@ -2,6 +2,9 @@
 
 #include "hacked/core/serial/io/Primitives.h"
 
+namespace
+{
+
 TEST(PrimitivesTest, serialReadU16LittleEndian)
 {
    uint8_t const data[2] = {0x12, 0x34};
@@ -28,4 +31,6 @@ TEST(PrimitivesTest, serialReadS32LittleEndian)
    uint8_t const data[4] = {0x32, 0x54, 0x65, 0x87};
    int32_t const result = serialReadS32LittleEndian(data);
    EXPECT_EQ(result, -2023402446);
+}
+
 }
