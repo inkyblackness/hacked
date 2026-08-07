@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 
+#include "hacked/core/system/Validation.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -62,7 +64,17 @@ typedef struct
    PixelAxisSize height;
 } PixelSize;
 
+typedef struct
+{
+   PixelPosition topLeft;
+   PixelSize size;
+} PixelRect;
+
 extern PixelSpaceLimits pixelSpaceLimits();
+
+extern ValidationResult pixelSpaceValidateSize(PixelSize size);
+
+extern bool pixelSpaceAreaContainsRect(PixelRect area, PixelRect rect);
 
 #ifdef __cplusplus
 }

@@ -2,6 +2,8 @@
 
 #include "hacked/core/media/PixelSpace.h"
 
+#include "hacked/core/test/ValidationAsserts.h"
+
 namespace
 {
 
@@ -12,7 +14,7 @@ TEST(PixelSpaceTest, offsetDataTypeCanHoldPositionDataType)
 
 TEST(PixelSpaceTest, limitsAreFeasible)
 {
-   PixelSpaceLimits limits = pixelSpaceLimits();
+   PixelSpaceLimits const limits = pixelSpaceLimits();
    // Size is the base property; It needs to be able to hold at least
    // high-res cutscenes of the original game, which were 600x300 in size, taking the higher value.
    EXPECT_EQ(limits.minSize, 1);
@@ -26,5 +28,47 @@ TEST(PixelSpaceTest, limitsAreFeasible)
    EXPECT_LT(limits.minOffset, limits.minPosition);
    EXPECT_GT(limits.maxOffset, limits.maxPosition);
 }
+
+TEST(PixelSpaceTest, validateSizeOkMinimum)
+{
+   PixelSpaceLimits const limits = pixelSpaceLimits();
+   PixelSize size = {};
+   size.width = limits.minSize;
+   size.height = limits.minSize;
+   ValidationResult const result = pixelSpaceValidateSize(size);
+   assertResultMessages(result, {});
+}
+
+TEST(PixelSpaceTest, validateSizeOkMaximum)
+{
+   PixelSpaceLimits const limits = pixelSpaceLimits();
+   PixelSize size = {};
+   size.width = limits.maxSize;
+   size.height = limits.maxSize;
+   ValidationResult const result = pixelSpaceValidateSize(size);
+   assertResultMessages(result, {});
+}
+
+TEST(PixelSpaceTest, validateSizeTooSmall)
+{
+   PixelSpaceLimits const limits = pixelSpaceLimits();
+   PixelSize size = {};
+   size.width = 0;
+   size.height = limits.minSize;
+   ValidationResult const result = pixelSpaceValidateSize(size);
+   assertResultMessages(result, {"width below limit"});
+}
+
+TEST(PixelSpaceTest, validateSizeTooBig)
+{
+   PixelSpaceLimits const limits = pixelSpaceLimits();
+   PixelSize size = {};
+   size.width = limits.minSize;
+   size.height = limits.maxSize + 1;
+   ValidationResult const result = pixelSpaceValidateSize(size);
+   assertResultMessages(result, {"height above limit"});
+}
+
+// TODO: write tests for area contains rect
 
 }
