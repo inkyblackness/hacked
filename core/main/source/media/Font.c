@@ -30,14 +30,22 @@ ValidationResult fontValidate(Font const *const font)
       Codepoint lastCodepoint = font->codepoints[0].codepoint;
       PixelRect bitmapRect = {.size = font->bitmap.size, .topLeft = {.x = 0, .y = 0}};
       bool sorted = true;
+      bool unique = true;
       bool inside = true;
       bool properSize = true;
       for (size_t i = 0; i < font->codepointCount; i++)
       {
          FontCodepointEntry const *const entry = &font->codepoints[i];
-         if ((i > 0) && (entry->codepoint < lastCodepoint))
+         if (i > 0)
          {
-            sorted = false;
+            if (entry->codepoint < lastCodepoint)
+            {
+               sorted = false;
+            }
+            if (entry->codepoint == lastCodepoint)
+            {
+               unique = false;
+            }
          }
          if ((entry->rect.size.width == 0) || (entry->rect.size.height == 0))
          {
@@ -50,6 +58,7 @@ ValidationResult fontValidate(Font const *const font)
          lastCodepoint = entry->codepoint;
       }
       validationResultAddConditional(&result, sorted, "codepoints not sorted");
+      validationResultAddConditional(&result, unique, "codepoints not unique");
       validationResultAddConditional(&result, inside, "codepoints outside bitmap");
       validationResultAddConditional(&result, properSize, "codepoints with zero size");
    }

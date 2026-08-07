@@ -152,6 +152,14 @@ TEST_F(FontTest, validateCodepointsNotSorted)
    assertResultMessages(result, {"codepoints not sorted"});
 }
 
+TEST_F(FontTest, validateCodepointsUnique)
+{
+   Font font = validFont();
+   font.codepoints[0].codepoint = font.codepoints[1].codepoint;
+   ValidationResult const result = fontValidate(&font);
+   assertResultMessages(result, {"codepoints not unique"});
+}
+
 TEST_F(FontTest, validateCodepointsZeroSize)
 {
    Font font = validFont();
