@@ -48,13 +48,25 @@ TEST_F(BitmapTest, validateDataNull)
    assertResultMessages(result, {"data is NULL"});
 }
 
-TEST_F(BitmapTest, validateEmptySize)
+TEST_F(BitmapTest, validateSizeBelowLimit)
 {
    Bitmap bitmap = validBitmap();
    bitmap.size.width = 0;
    bitmap.size.height = 0;
    ValidationResult const result = bitmapValidate(&bitmap);
-   assertResultMessages(result, {"width is zero", "height is zero"});
+   assertResultMessages(result, {"width below limit", "height below limit"});
+}
+
+TEST_F(BitmapTest, validateSizeAboveLimit)
+{
+   PixelSpaceLimits const limits = pixelSpaceLimits();
+   Bitmap bitmap = validBitmap();
+   bitmap.size.width = limits.maxSize + 1;
+   bitmap.size.height = limits.maxSize + 1;
+   bitmap.stride = bitmap.size.width;
+   bitmap.dataLength = bitmap.stride * static_cast<size_t>(bitmap.size.height);
+   ValidationResult const result = bitmapValidate(&bitmap);
+   assertResultMessages(result, {"width above limit", "height above limit"});
 }
 
 TEST_F(BitmapTest, validateWidthAgainstStride)
