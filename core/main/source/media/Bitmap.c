@@ -2,7 +2,7 @@
 
 ValidationResult bitmapValidate(Bitmap const *const bitmap)
 {
-   ValidationResult result = {};
+   ValidationResult result = {0};
    if (bitmap == NULL)
    {
       return validationResultAddMessage(&result, "bitmap is NULL");
