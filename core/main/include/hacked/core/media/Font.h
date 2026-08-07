@@ -4,6 +4,7 @@
 
 #include "hacked/core/media/Bitmap.h"
 #include "hacked/core/media/Text.h"
+#include "hacked/core/system/Validation.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -12,8 +13,7 @@ extern "C" {
 typedef struct
 {
    Codepoint codepoint;
-   PixelPosition topLeft;
-   PixelSize size;
+   PixelRect rect;
 } FontCodepointEntry;
 
 typedef struct Font Font;
@@ -34,7 +34,7 @@ typedef struct Font
    void *userData;
    /**
     * release function for the font, called from fontRelease().
-    * This function is expected to release the userdata, and the corresponding font structure itself.
+    * This function is expected to release the userdata, the bitmap, and the corresponding font structure itself.
     */
    FontReleaseFunc release;
 } Font;
@@ -45,6 +45,8 @@ typedef struct Font
  * @param fontRef address of the font pointer to release; the pointed-to-pointer will be set to @code NULL@endcode.
  */
 extern void fontRelease(Font **fontRef);
+
+extern ValidationResult fontValidate(Font const *font);
 
 /**
  * Finds the entry of the font for given codepoint.

@@ -2,6 +2,8 @@
 
 #include "hacked/core/media/Font.h"
 
+#include "hacked/core/test/ValidationAsserts.h"
+
 namespace
 {
 
@@ -45,6 +47,41 @@ protected:
       EXPECT_TRUE(fontFindCodepointEntry(&instance, U'L') == nullptr) << "should not find unknown codepoint within list 3";
       EXPECT_TRUE(fontFindCodepointEntry(&instance, U'Z') == nullptr) << "should not find unknown codepoint beyond list";
    }
+
+   static Font validFont()
+   {
+      static size_t constexpr codepointCount = 3;
+      static FontCodepointEntry codepoints[codepointCount] = {};
+      for (size_t i = 0; i < codepointCount; i++)
+      {
+         auto &codepoint = codepoints[i];
+         codepoint.codepoint = 'A' + i;
+         codepoint.rect.size.width = 2;
+         codepoint.rect.size.height = 2;
+      }
+      Font font = {};
+      font.bitmap = validBitmap();
+      font.codepointCount = codepointCount;
+      font.codepoints = codepoints;
+      return font;
+   }
+
+private:
+   static Bitmap validBitmap()
+   {
+      static size_t constexpr stride = 4;
+      static PixelAxisSize constexpr width = 3;
+      static PixelAxisSize constexpr height = 2;
+      static size_t constexpr dataLength = stride * height;
+      static uint8_t data[dataLength] = {};
+      Bitmap bitmap = {};
+      bitmap.size.width = width;
+      bitmap.size.height = height;
+      bitmap.data = data;
+      bitmap.dataLength = dataLength;
+      bitmap.stride = stride;
+      return bitmap;
+   }
 };
 
 TEST_F(FontTest, fontReleaseIgnoresNullArgument)
@@ -76,6 +113,68 @@ TEST_F(FontTest, fontReleaseResetsPointerEvenWithoutRelease)
    Font *font = &instance;
    fontRelease(&font);
    EXPECT_TRUE(font == nullptr) << "font should be nullptr";
+}
+
+TEST_F(FontTest, validatePointerNull)
+{
+   ValidationResult const result = fontValidate(nullptr);
+   assertResultMessages(result, {"font is NULL"});
+}
+
+TEST_F(FontTest, validateOk)
+{
+   Font const font = validFont();
+   ValidationResult const result = fontValidate(&font);
+   assertResultMessages(result, {});
+}
+
+TEST_F(FontTest, validateCodepointsNull)
+{
+   Font font = validFont();
+   font.codepoints = nullptr;
+   ValidationResult const result = fontValidate(&font);
+   assertResultMessages(result, {"codepoints is NULL"});
+}
+
+TEST_F(FontTest, validateCodepointCountZero)
+{
+   Font font = validFont();
+   font.codepointCount = 0;
+   ValidationResult const result = fontValidate(&font);
+   assertResultMessages(result, {"codepointCount is zero"});
+}
+
+TEST_F(FontTest, validateCodepointsNotSorted)
+{
+   Font font = validFont();
+   font.codepoints[0].codepoint += font.codepointCount;
+   ValidationResult const result = fontValidate(&font);
+   assertResultMessages(result, {"codepoints not sorted"});
+}
+
+TEST_F(FontTest, validateCodepointsZeroSize)
+{
+   Font font = validFont();
+   font.codepoints[0].rect.size.width = 0;
+   ValidationResult const result = fontValidate(&font);
+   assertResultMessages(result, {"codepoints with zero size"});
+}
+
+TEST_F(FontTest, validateCodepointsOutsideBitmap)
+{
+   Font font = validFont();
+   font.codepoints[0].rect.topLeft.x = font.bitmap.size.width;
+   ValidationResult const result = fontValidate(&font);
+   assertResultMessages(result, {"codepoints outside bitmap"});
+}
+
+TEST_F(FontTest, validateCodepointsTooLargeForBitmap)
+{
+   Font font = validFont();
+   font.codepoints[0].rect.topLeft.y++;
+   font.codepoints[0].rect.size.height = font.bitmap.size.height;
+   ValidationResult const result = fontValidate(&font);
+   assertResultMessages(result, {"codepoints outside bitmap"});
 }
 
 TEST_F(FontTest, fontFindCodepointReturnsNullForEmptyList)
