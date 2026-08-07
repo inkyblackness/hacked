@@ -22,7 +22,7 @@ PixelSpaceLimits pixelSpaceLimits()
 ValidationResult pixelSpaceValidateSize(PixelSize const size)
 {
    PixelSpaceLimits const limits = pixelSpaceLimits();
-   ValidationResult result = {};
+   ValidationResult result = {0};
    validationResultAddConditional(&result, size.width >= limits.minSize, "width below limit");
    validationResultAddConditional(&result, size.width <= limits.maxSize, "width above limit");
    validationResultAddConditional(&result, size.height >= limits.minSize, "height below limit");
