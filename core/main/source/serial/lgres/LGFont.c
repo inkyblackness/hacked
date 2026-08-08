@@ -133,7 +133,7 @@ static bool readHeader(LGFont *lgFont, uint8_t const *const data, size_t const d
          codepoints[i].rect.topLeft.y = (PixelAxisPosition)(*height - lgFont->bitmapHeight);
          x = right;
       }
-      else if (*height < width)
+      else if ((*height + lgFont->bitmapHeight) <= width)
       {
          codepoints[i].rect.topLeft.x = (PixelAxisPosition)0;
          codepoints[i].rect.topLeft.y = (PixelAxisPosition)*height;
@@ -172,6 +172,7 @@ static bool readHeader(LGFont *lgFont, uint8_t const *const data, size_t const d
          break;
       }
    }
+   // recalculate all positions again, because a previous attempt might have modified the positions of the codepoints.
    return attemptAtlasLayoutForWidth(lgFont, codepoints, codepointCount, size->width, &size->height);
 }
 
