@@ -102,11 +102,11 @@ static bool readHeader(LGFont *lgFont, uint8_t const *const data, size_t const d
    return codepoints;
 }
 
-[[nodiscard]] static bool isEmptyFontBitmap(LGFont const *const lgFont, size_t const index)
+[[nodiscard]] static bool isEmptyFontGlyph(LGFont const *const lgFont, size_t const index)
 {
    for (int16_t y = 0; y < lgFont->bitmapHeight; y++)
    {
-      if (lgFont->readPixel(lgFont, index, lgFont->xOffsets[index], y) != 0x00)
+      if (lgFont->readPixel(lgFont, index, 0, y) != 0x00)
       {
          return false;
       }
@@ -196,7 +196,7 @@ static bool readHeader(LGFont *lgFont, uint8_t const *const data, size_t const d
       size_t const currentOffset = lgFont->xOffsets[i];
       size_t const nextOffset = lgFont->xOffsets[i + 1];
       PixelAxisSize const width = (PixelAxisSize)(nextOffset - currentOffset);
-      if ((width == 0) || ((width == 1) && isEmptyFontBitmap(lgFont, i)))
+      if ((width == 0) || ((width == 1) && isEmptyFontGlyph(lgFont, i)))
       {
          // There are several characters in the original files that have only a single column of empty pixels.
          // There is no known case of a zero-width character, yet handle it the same. If that were to exist, it would be exported differently.
