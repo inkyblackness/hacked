@@ -46,7 +46,7 @@ typedef struct LGFont
    size_t const byteOffset = (lgFont->xOffsets[index] + x) / 8;
    uint8_t const b = lgFont->bitmapData[(size_t)lgFont->bitmapWidth * (size_t)y + byteOffset];
    size_t const bitOffset = (lgFont->xOffsets[index] + x) % 8;
-   return (b & (0x80 >> bitOffset)) ? 0x01 : 0x00;
+   return ((b & (0x80 >> bitOffset)) != 0) ? 0x01 : 0x00;
 }
 
 static bool readHeader(LGFont *lgFont, uint8_t const *const data, size_t const dataSize)
@@ -135,9 +135,9 @@ static bool readHeader(LGFont *lgFont, uint8_t const *const data, size_t const d
       }
       else if (*height < width)
       {
-         x = 0;
-         codepoints[i].rect.topLeft.x = (PixelAxisPosition)x;
+         codepoints[i].rect.topLeft.x = (PixelAxisPosition)0;
          codepoints[i].rect.topLeft.y = (PixelAxisPosition)*height;
+         x = codepoints[i].rect.size.width;
          *height += lgFont->bitmapHeight;
       }
       else
@@ -227,7 +227,8 @@ static void copyFontPixel(Font const *const font, LGFont const *const lgFont)
    {
       for (int16_t y = 0; y < font->codepoints[i].rect.size.height; y++)
       {
-         uint8_t *out = font->bitmap.data + (font->bitmap.stride * (size_t)y);
+         uint8_t *out
+            = font->bitmap.data + (font->bitmap.stride * ((size_t)font->codepoints[i].rect.topLeft.y + (size_t)y)) + font->codepoints[i].rect.topLeft.x;
          for (int16_t x = 0; x < font->codepoints[i].rect.size.width; x++)
          {
             *out = lgFont->readPixel(lgFont, i, x, y);
