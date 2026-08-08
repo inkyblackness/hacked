@@ -10,7 +10,7 @@ namespace
 class FontTest : public ::testing::Test
 {
 protected:
-   static void testReleaseFont(Font *const font)
+   static void testReleaseFont(Font const *const font)
    {
       ASSERT_TRUE(font != nullptr) << "font not provided";
       ASSERT_TRUE(font->userData != nullptr) << "userdata not provided";
@@ -91,7 +91,7 @@ TEST_F(FontTest, fontReleaseIgnoresNullArgument)
 
 TEST_F(FontTest, fontReleaseIgnoresNullPointer)
 {
-   Font *font = nullptr;
+   Font const *font = nullptr;
    fontRelease(&font);
 }
 
@@ -101,7 +101,7 @@ TEST_F(FontTest, fontReleaseCallsUserFunction)
    Font instance = {};
    instance.userData = &called;
    instance.release = testReleaseFont;
-   Font *font = &instance;
+   Font const *font = &instance;
    fontRelease(&font);
    EXPECT_TRUE(called) << "release was not called";
    EXPECT_TRUE(font == nullptr) << "font should be nullptr";
@@ -109,8 +109,8 @@ TEST_F(FontTest, fontReleaseCallsUserFunction)
 
 TEST_F(FontTest, fontReleaseResetsPointerEvenWithoutRelease)
 {
-   Font instance = {};
-   Font *font = &instance;
+   Font const instance = {};
+   Font const *font = &instance;
    fontRelease(&font);
    EXPECT_TRUE(font == nullptr) << "font should be nullptr";
 }

@@ -1,12 +1,12 @@
 #include "hacked/core/media/Font.h"
 
-void fontRelease(Font **fontRef)
+void fontRelease(Font const **const fontRef)
 {
    if ((fontRef == NULL) || (*fontRef == NULL))
    {
       return;
    }
-   Font *font = *fontRef;
+   Font const *font = *fontRef;
    *fontRef = NULL;
    if (font->release == NULL)
    {

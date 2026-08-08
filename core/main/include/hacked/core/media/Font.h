@@ -17,7 +17,7 @@ typedef struct
 } FontCodepointEntry;
 
 typedef struct Font Font;
-typedef void (*FontReleaseFunc)(Font *font);
+typedef void (*FontReleaseFunc)(Font const *font);
 
 typedef struct Font
 {
@@ -44,7 +44,7 @@ typedef struct Font
  *
  * @param fontRef address of the font pointer to release; the pointed-to-pointer will be set to @code NULL@endcode.
  */
-extern void fontRelease(Font **fontRef);
+extern void fontRelease(Font const **fontRef);
 
 extern ValidationResult fontValidate(Font const *font);
 
