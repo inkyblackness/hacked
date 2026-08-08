@@ -114,6 +114,8 @@ static bool readHeader(LGFont *lgFont, uint8_t const *const data, size_t const d
    return true;
 }
 
+static PixelAxisSize const emptyMarkerHeight = 1;
+
 [[nodiscard]] static bool attemptAtlasLayoutForWidth(
    LGFont const *const lgFont, FontCodepointEntry *const codepoints, size_t const codepointCount, PixelAxisSize const width, PixelAxisSize *const height)
 {
@@ -121,12 +123,12 @@ static bool readHeader(LGFont *lgFont, uint8_t const *const data, size_t const d
    *height = lgFont->bitmapHeight;
    for (size_t i = 0; i < codepointCount; i++)
    {
-      if (codepoints[i].rect.size.height == 1)
+      if (codepoints[i].rect.size.height == emptyMarkerHeight)
       {
-         // skip empty codepoint entries
+         // skip empty codepoint entries, they are placed at the very beginning, automatically.
          continue;
       }
-      PixelAxisOffset right = x + codepoints[i].rect.size.width;
+      PixelAxisOffset const right = x + codepoints[i].rect.size.width;
       if (right <= width)
       {
          codepoints[i].rect.topLeft.x = (PixelAxisPosition)x;
@@ -188,7 +190,6 @@ static bool readHeader(LGFont *lgFont, uint8_t const *const data, size_t const d
 [[nodiscard]] static bool determineAtlasLayout(
    LGFont const *const lgFont, FontCodepointEntry *const codepoints, size_t const codepointCount, PixelSize *const size)
 {
-   static PixelAxisSize const emptyMarkerHeight = 1;
    PixelRect const emptyCodepointRect = {.size = {.width = 1, .height = lgFont->bitmapHeight}, .topLeft = {.x = 0, .y = 0}};
    // first pass: initialize target with per codepoint, and determine whether it would be an "empty" codepoint.
    // Mark the codepoints that are empty, using the yet unused height field.
@@ -209,6 +210,7 @@ static bool readHeader(LGFont *lgFont, uint8_t const *const data, size_t const d
          codepoints[i].rect.size.width = width;
       }
    }
+   // now determine whether any size of the atlas will make room for all characters.
    if (!determineAtlasSize(lgFont, codepoints, codepointCount, size))
    {
       return false;
@@ -277,10 +279,8 @@ static Font *allocateFont(FontCodepointEntry *const codepoints, size_t const cod
       free(codepoints);
       return NULL;
    }
-   Font *font = allocateFont(codepoints, codepointCount, bitmapSize);
+   Font *const font = allocateFont(codepoints, codepointCount, bitmapSize);
    font->color = lgFont.color;
    copyFontPixel(font, &lgFont);
-
-   // rename font bitmap to font atlas
    return font;
 }
