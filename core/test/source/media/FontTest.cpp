@@ -60,7 +60,7 @@ protected:
          codepoint.rect.size.height = 2;
       }
       Font font = {};
-      font.bitmap = validBitmap();
+      font.atlas = validBitmap();
       font.codepointCount = codepointCount;
       font.codepoints = codepoints;
       return font;
@@ -168,21 +168,21 @@ TEST_F(FontTest, validateCodepointsZeroSize)
    assertResultMessages(result, {"codepoints with zero size"});
 }
 
-TEST_F(FontTest, validateCodepointsOutsideBitmap)
+TEST_F(FontTest, validateCodepointsOutsideAtlas)
 {
    Font font = validFont();
-   font.codepoints[0].rect.topLeft.x = font.bitmap.size.width;
+   font.codepoints[0].rect.topLeft.x = font.atlas.size.width;
    ValidationResult const result = fontValidate(&font);
-   assertResultMessages(result, {"codepoints outside bitmap"});
+   assertResultMessages(result, {"codepoints outside atlas"});
 }
 
-TEST_F(FontTest, validateCodepointsTooLargeForBitmap)
+TEST_F(FontTest, validateCodepointsTooLargeForAtlas)
 {
    Font font = validFont();
    font.codepoints[0].rect.topLeft.y++;
-   font.codepoints[0].rect.size.height = font.bitmap.size.height;
+   font.codepoints[0].rect.size.height = font.atlas.size.height;
    ValidationResult const result = fontValidate(&font);
-   assertResultMessages(result, {"codepoints outside bitmap"});
+   assertResultMessages(result, {"codepoints outside atlas"});
 }
 
 TEST_F(FontTest, fontFindCodepointReturnsNullForEmptyList)

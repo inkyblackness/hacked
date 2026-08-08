@@ -22,13 +22,13 @@ ValidationResult fontValidate(Font const *const font)
    {
       return validationResultAddMessage(&result, "font is NULL");
    }
-   validationResultMerge(&result, bitmapValidate(&font->bitmap), "font bitmap has issues");
+   validationResultMerge(&result, bitmapValidate(&font->atlas), "font atlas bitmap has issues");
    validationResultAddConditional(&result, font->codepoints != NULL, "codepoints is NULL");
    validationResultAddConditional(&result, font->codepointCount != 0, "codepointCount is zero");
    if ((font->codepoints != NULL) && (font->codepointCount > 0))
    {
       Codepoint lastCodepoint = font->codepoints[0].codepoint;
-      PixelRect bitmapRect = {.size = font->bitmap.size, .topLeft = {.x = 0, .y = 0}};
+      PixelRect bitmapRect = {.size = font->atlas.size, .topLeft = {.x = 0, .y = 0}};
       bool sorted = true;
       bool unique = true;
       bool inside = true;
@@ -60,7 +60,7 @@ ValidationResult fontValidate(Font const *const font)
       }
       validationResultAddConditional(&result, sorted, "codepoints not sorted");
       validationResultAddConditional(&result, unique, "codepoints not unique");
-      validationResultAddConditional(&result, inside, "codepoints outside bitmap");
+      validationResultAddConditional(&result, inside, "codepoints outside atlas");
       validationResultAddConditional(&result, properSize, "codepoints with zero size");
    }
    return result;

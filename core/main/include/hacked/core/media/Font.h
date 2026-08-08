@@ -21,12 +21,12 @@ typedef void (*FontReleaseFunc)(Font const *font);
 
 typedef struct Font
 {
-   Bitmap bitmap;
+   Bitmap atlas;
    bool color;
 
    size_t codepointCount;
    /**
-    * A list of codepoints supported by this font, with their pixel location values into the bitmap.
+    * A list of codepoints supported by this font, with their pixel location values into the atlas.
     * The list must be ordered by the codepoint values, to allow for binary search.
     */
    FontCodepointEntry *codepoints;
@@ -34,7 +34,7 @@ typedef struct Font
    void *userData;
    /**
     * release function for the font, called from fontRelease().
-    * This function is expected to release the userdata, the bitmap, and the corresponding font structure itself.
+    * This function is expected to release the userdata, the atlas, and the corresponding font structure itself.
     */
    FontReleaseFunc release;
 } Font;

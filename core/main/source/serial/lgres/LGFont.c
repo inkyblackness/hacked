@@ -227,8 +227,7 @@ static void copyFontPixel(Font const *const font, LGFont const *const lgFont)
    {
       for (int16_t y = 0; y < font->codepoints[i].rect.size.height; y++)
       {
-         uint8_t *out
-            = font->bitmap.data + (font->bitmap.stride * ((size_t)font->codepoints[i].rect.topLeft.y + (size_t)y)) + font->codepoints[i].rect.topLeft.x;
+         uint8_t *out = font->atlas.data + (font->atlas.stride * ((size_t)font->codepoints[i].rect.topLeft.y + (size_t)y)) + font->codepoints[i].rect.topLeft.x;
          for (int16_t x = 0; x < font->codepoints[i].rect.size.width; x++)
          {
             *out = lgFont->readPixel(lgFont, i, x, y);
@@ -258,7 +257,7 @@ static Font *allocateFont(FontCodepointEntry *const codepoints, size_t const cod
    font->release = freeFont;
    font->codepoints = codepoints;
    font->codepointCount = codepointCount;
-   font->bitmap = bitmap;
+   font->atlas = bitmap;
    return font;
 }
 
