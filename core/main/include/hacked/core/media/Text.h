@@ -52,7 +52,7 @@ typedef struct TextDecoder TextDecoder;
  * @param charset the charset for which to create a decoder
  * @return the corresponding instance, or @code NULL@endcode if given charset is not supported
  */
-extern TextDecoder *textDecoderCreate(TextCharset charset);
+[[nodiscard]] extern TextDecoder *textDecoderCreate(TextCharset charset);
 
 /**
  * Releases the decoder instance. In case it was a dynamically allocated memory, it will be freed.
