@@ -2,637 +2,17 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
-#include "hacked/nuklear/NuklearSdlBridge.h"
-
-struct nk_sdl_app
+struct SDLApp
 {
    SDL_Window *window;
    SDL_Renderer *renderer;
-   struct nk_context *ctx;
-   enum nk_anti_aliasing AA;
 };
 
-static SDL_AppResult nk_sdl_fail(char const *const message)
+static SDL_AppResult sdlFail(char const *const message)
 {
    SDL_LogError(SDL_LOG_CATEGORY_CUSTOM, "Error; %s: %s", message, SDL_GetError());
    return SDL_APP_FAILURE;
 }
-
-static void setStyle(struct nk_style *style)
-{
-   struct nk_style_text *text;
-   struct nk_style_button *button;
-   struct nk_style_toggle *toggle;
-   struct nk_style_selectable *select;
-   struct nk_style_slider *slider;
-   struct nk_style_knob *knob;
-   struct nk_style_progress *prog;
-   struct nk_style_scrollbar *scroll;
-   struct nk_style_edit *edit;
-   struct nk_style_property *property;
-   struct nk_style_combo *combo;
-   struct nk_style_chart *chart;
-   struct nk_style_tab *tab;
-   struct nk_style_window *win;
-
-   struct nk_vec2 const zero = nk_vec2(0.0f, 0.0f);
-
-   /* default text */
-   text = &style->text;
-   // text->color = table[NK_COLOR_TEXT];
-   text->padding = nk_vec2(0, 0);
-   text->color_factor = 1.0f;
-   text->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-
-   /* default button */
-   button = &style->button;
-   /*
-    button->normal                     = nk_style_item_color(table[NK_COLOR_BUTTON]);
-    button->hover                      = nk_style_item_color(table[NK_COLOR_BUTTON_HOVER]);
-    button->active                     = nk_style_item_color(table[NK_COLOR_BUTTON_ACTIVE]);
-    button->border_color               = table[NK_COLOR_BORDER];
-    button->text_background            = table[NK_COLOR_BUTTON];
-    button->text_normal                = table[NK_COLOR_TEXT];
-    button->text_hover                 = table[NK_COLOR_TEXT];
-    button->text_active                = table[NK_COLOR_TEXT];
-   */
-   button->padding = zero; // nk_vec2(2.0f, 2.0f);
-   button->image_padding = zero; // nk_vec2(0.0f, 0.0f);
-   button->touch_padding = zero; // nk_vec2(0.0f, 0.0f);
-   button->userdata = nk_handle_ptr(0);
-   button->text_alignment = NK_TEXT_CENTERED;
-   button->border = 1.0f;
-   button->rounding = 0.0f;
-   button->color_factor_text = 1.0f;
-   button->color_factor_background = 1.0f;
-   button->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-
-   /* contextual button */
-   button = &style->contextual_button;
-   /*
-    button->normal          = nk_style_item_color(table[NK_COLOR_WINDOW]);
-    button->hover           = nk_style_item_color(table[NK_COLOR_BUTTON_HOVER]);
-    button->active          = nk_style_item_color(table[NK_COLOR_BUTTON_ACTIVE]);
-    button->border_color    = table[NK_COLOR_WINDOW];
-    button->text_background = table[NK_COLOR_WINDOW];
-    button->text_normal     = table[NK_COLOR_TEXT];
-    button->text_hover      = table[NK_COLOR_TEXT];
-    button->text_active     = table[NK_COLOR_TEXT];
-   */
-   button->padding = zero; //(2.0f, 2.0f);
-   button->touch_padding = zero; //(0.0f, 0.0f);
-   button->userdata = nk_handle_ptr(0);
-   button->text_alignment = NK_TEXT_CENTERED;
-   button->border = 0.0f;
-   button->rounding = 0.0f;
-   button->color_factor_text = 1.0f;
-   button->color_factor_background = 1.0f;
-   button->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-
-   /* menu button */
-   button = &style->menu_button;
-   /*
-   button->normal = nk_style_item_color(table[NK_COLOR_WINDOW]);
-   button->hover = nk_style_item_color(table[NK_COLOR_WINDOW]);
-   button->active = nk_style_item_color(table[NK_COLOR_WINDOW]);
-   button->border_color = table[NK_COLOR_WINDOW];
-   button->text_background = table[NK_COLOR_WINDOW];
-   button->text_normal = table[NK_COLOR_TEXT];
-   button->text_hover = table[NK_COLOR_TEXT];
-   button->text_active = table[NK_COLOR_TEXT];
-   */
-   button->padding = zero; //(2.0f, 2.0f);
-   button->touch_padding = zero; //(0.0f, 0.0f);
-   button->text_alignment = NK_TEXT_CENTERED;
-   button->border = 0.0f;
-   button->rounding = 0.0f;
-   button->color_factor_text = 1.0f;
-   button->color_factor_background = 1.0f;
-   button->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-
-   /* checkbox toggle */
-   toggle = &style->checkbox;
-   /*
-   toggle->normal = nk_style_item_color(table[NK_COLOR_TOGGLE]);
-   toggle->hover = nk_style_item_color(table[NK_COLOR_TOGGLE_HOVER]);
-   toggle->active = nk_style_item_color(table[NK_COLOR_TOGGLE_HOVER]);
-   toggle->cursor_normal = nk_style_item_color(table[NK_COLOR_TOGGLE_CURSOR]);
-   toggle->cursor_hover = nk_style_item_color(table[NK_COLOR_TOGGLE_CURSOR]);
-   toggle->userdata = nk_handle_ptr(0);
-   toggle->text_background = table[NK_COLOR_WINDOW];
-   toggle->text_normal = table[NK_COLOR_TEXT];
-   toggle->text_hover = table[NK_COLOR_TEXT];
-   toggle->text_active = table[NK_COLOR_TEXT];
-   */
-   toggle->padding = zero; //(2.0f, 2.0f);
-   toggle->touch_padding = zero; //(0, 0);
-   toggle->border_color = nk_rgba(0, 0, 0, 0);
-   toggle->border = 0.0f;
-   toggle->spacing = 4;
-   toggle->color_factor = 1.0f;
-   toggle->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-
-   /* option toggle */
-   toggle = &style->option;
-   /*
-   toggle->normal = nk_style_item_color(table[NK_COLOR_TOGGLE]);
-   toggle->hover = nk_style_item_color(table[NK_COLOR_TOGGLE_HOVER]);
-   toggle->active = nk_style_item_color(table[NK_COLOR_TOGGLE_HOVER]);
-   toggle->cursor_normal = nk_style_item_color(table[NK_COLOR_TOGGLE_CURSOR]);
-   toggle->cursor_hover = nk_style_item_color(table[NK_COLOR_TOGGLE_CURSOR]);
-   toggle->userdata = nk_handle_ptr(0);
-   toggle->text_background = table[NK_COLOR_WINDOW];
-   toggle->text_normal = table[NK_COLOR_TEXT];
-   toggle->text_hover = table[NK_COLOR_TEXT];
-   toggle->text_active = table[NK_COLOR_TEXT];
-   */
-   toggle->padding = zero; //(3.0f, 3.0f);
-   toggle->touch_padding = zero; //(0, 0);
-   toggle->border_color = nk_rgba(0, 0, 0, 0);
-   toggle->border = 0.0f;
-   toggle->spacing = 4;
-   toggle->color_factor = 1.0f;
-   toggle->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-
-   /* selectable */
-   select = &style->selectable;
-   /*
-   select->normal = nk_style_item_color(table[NK_COLOR_SELECT]);
-   select->hover = nk_style_item_color(table[NK_COLOR_SELECT]);
-   select->pressed = nk_style_item_color(table[NK_COLOR_SELECT]);
-   select->normal_active = nk_style_item_color(table[NK_COLOR_SELECT_ACTIVE]);
-   select->hover_active = nk_style_item_color(table[NK_COLOR_SELECT_ACTIVE]);
-   select->pressed_active = nk_style_item_color(table[NK_COLOR_SELECT_ACTIVE]);
-   select->text_normal = table[NK_COLOR_TEXT];
-   select->text_hover = table[NK_COLOR_TEXT];
-   select->text_pressed = table[NK_COLOR_TEXT];
-   select->text_normal_active = table[NK_COLOR_TEXT];
-   select->text_hover_active = table[NK_COLOR_TEXT];
-   select->text_pressed_active = table[NK_COLOR_TEXT];
-   */
-   select->padding = zero; //(2.0f, 2.0f);
-   select->image_padding = zero; //(2.0f, 2.0f);
-   select->touch_padding = zero; //(0, 0);
-   select->rounding = 0.0f;
-   select->color_factor = 1.0f;
-   select->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-
-   /* slider */
-   slider = &style->slider;
-   slider->normal = nk_style_item_hide();
-   slider->hover = nk_style_item_hide();
-   slider->active = nk_style_item_hide();
-   /*
-   slider->bar_normal = table[NK_COLOR_SLIDER];
-   slider->bar_hover = table[NK_COLOR_SLIDER];
-   slider->bar_active = table[NK_COLOR_SLIDER];
-   slider->bar_filled = table[NK_COLOR_SLIDER_CURSOR];
-   slider->cursor_normal = nk_style_item_color(table[NK_COLOR_SLIDER_CURSOR]);
-   slider->cursor_hover = nk_style_item_color(table[NK_COLOR_SLIDER_CURSOR_HOVER]);
-   slider->cursor_active = nk_style_item_color(table[NK_COLOR_SLIDER_CURSOR_ACTIVE]);
-   */
-   slider->inc_symbol = NK_SYMBOL_TRIANGLE_RIGHT;
-   slider->dec_symbol = NK_SYMBOL_TRIANGLE_LEFT;
-   slider->cursor_size = zero; //(16, 16);
-   slider->padding = zero; //(2, 2);
-   slider->spacing = zero; //(2, 2);
-   slider->show_buttons = nk_false;
-   slider->bar_height = 4;
-   slider->rounding = 0;
-   slider->color_factor = 1.0f;
-   slider->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-
-   /* slider buttons */
-   button = &style->slider.inc_button;
-   /*
-   button->normal = nk_style_item_color(nk_rgb(40, 40, 40));
-   button->hover = nk_style_item_color(nk_rgb(42, 42, 42));
-   button->active = nk_style_item_color(nk_rgb(44, 44, 44));
-   button->border_color = nk_rgb(65, 65, 65);
-   button->text_background = nk_rgb(40, 40, 40);
-   button->text_normal = nk_rgb(175, 175, 175);
-   button->text_hover = nk_rgb(175, 175, 175);
-   button->text_active = nk_rgb(175, 175, 175);
-   */
-   button->padding = zero; //(8.0f, 8.0f);
-   button->touch_padding = zero; //(0.0f, 0.0f);
-   button->text_alignment = NK_TEXT_CENTERED;
-   button->border = 1.0f;
-   button->rounding = 0.0f;
-   button->color_factor_text = 1.0f;
-   button->color_factor_background = 1.0f;
-   button->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-   style->slider.dec_button = style->slider.inc_button;
-
-   /* knob */
-   knob = &style->knob;
-   knob->normal = nk_style_item_hide();
-   knob->hover = nk_style_item_hide();
-   knob->active = nk_style_item_hide();
-   /*
-   knob->knob_normal = table[NK_COLOR_KNOB];
-   knob->knob_hover = table[NK_COLOR_KNOB];
-   knob->knob_active = table[NK_COLOR_KNOB];
-   knob->cursor_normal = table[NK_COLOR_KNOB_CURSOR];
-   knob->cursor_hover = table[NK_COLOR_KNOB_CURSOR_HOVER];
-   knob->cursor_active = table[NK_COLOR_KNOB_CURSOR_ACTIVE];
-
-   knob->knob_border_color = table[NK_COLOR_BORDER];
-   */
-   knob->knob_border = 1.0f;
-
-   knob->padding = zero; //(2, 2);
-   knob->spacing = zero; //(2, 2);
-   knob->cursor_width = 2;
-   knob->color_factor = 1.0f;
-   knob->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-
-   /* progressbar */
-   prog = &style->progress;
-   /*
-   prog->normal = nk_style_item_color(table[NK_COLOR_SLIDER]);
-   prog->hover = nk_style_item_color(table[NK_COLOR_SLIDER]);
-   prog->active = nk_style_item_color(table[NK_COLOR_SLIDER]);
-   prog->cursor_normal = nk_style_item_color(table[NK_COLOR_SLIDER_CURSOR]);
-   prog->cursor_hover = nk_style_item_color(table[NK_COLOR_SLIDER_CURSOR_HOVER]);
-   prog->cursor_active = nk_style_item_color(table[NK_COLOR_SLIDER_CURSOR_ACTIVE]);
-   prog->border_color = nk_rgba(0, 0, 0, 0);
-   prog->cursor_border_color = nk_rgba(0, 0, 0, 0);
-   */
-   prog->padding = zero; //(4, 4);
-   prog->rounding = 0;
-   prog->border = 0;
-   prog->cursor_rounding = 0;
-   prog->cursor_border = 0;
-   prog->color_factor = 1.0f;
-   prog->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-
-   /* scrollbars */
-   scroll = &style->scrollh;
-   /*
-   scroll->normal = nk_style_item_color(table[NK_COLOR_SCROLLBAR]);
-   scroll->hover = nk_style_item_color(table[NK_COLOR_SCROLLBAR]);
-   scroll->active = nk_style_item_color(table[NK_COLOR_SCROLLBAR]);
-   scroll->cursor_normal = nk_style_item_color(table[NK_COLOR_SCROLLBAR_CURSOR]);
-   scroll->cursor_hover = nk_style_item_color(table[NK_COLOR_SCROLLBAR_CURSOR_HOVER]);
-   scroll->cursor_active = nk_style_item_color(table[NK_COLOR_SCROLLBAR_CURSOR_ACTIVE]);
-   */
-   scroll->dec_symbol = NK_SYMBOL_CIRCLE_SOLID;
-   scroll->inc_symbol = NK_SYMBOL_CIRCLE_SOLID;
-   /*
-   scroll->border_color = table[NK_COLOR_SCROLLBAR];
-   scroll->cursor_border_color = table[NK_COLOR_SCROLLBAR];
-   */
-   scroll->padding = zero; //(0, 0);
-   scroll->show_buttons = nk_false;
-   scroll->border = 0;
-   scroll->rounding = 0;
-   scroll->border_cursor = 0;
-   scroll->rounding_cursor = 0;
-   scroll->color_factor = 1.0f;
-   scroll->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-   style->scrollv = style->scrollh;
-
-   /* scrollbars buttons */
-   button = &style->scrollh.inc_button;
-   /*
-   button->normal = nk_style_item_color(nk_rgb(40, 40, 40));
-   button->hover = nk_style_item_color(nk_rgb(42, 42, 42));
-   button->active = nk_style_item_color(nk_rgb(44, 44, 44));
-   button->border_color = nk_rgb(65, 65, 65);
-   button->text_background = nk_rgb(40, 40, 40);
-   button->text_normal = nk_rgb(175, 175, 175);
-   button->text_hover = nk_rgb(175, 175, 175);
-   button->text_active = nk_rgb(175, 175, 175);
-   */
-   button->padding = zero; //(4.0f, 4.0f);
-   button->touch_padding = zero; //(0.0f, 0.0f);
-   button->text_alignment = NK_TEXT_CENTERED;
-   button->border = 1.0f;
-   button->rounding = 0.0f;
-   button->color_factor_text = 1.0f;
-   button->color_factor_background = 1.0f;
-   button->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-   style->scrollh.dec_button = style->scrollh.inc_button;
-   style->scrollv.inc_button = style->scrollh.inc_button;
-   style->scrollv.dec_button = style->scrollh.inc_button;
-
-   /* edit */
-   edit = &style->edit;
-   /*
-   edit->normal = nk_style_item_color(table[NK_COLOR_EDIT]);
-   edit->hover = nk_style_item_color(table[NK_COLOR_EDIT]);
-   edit->active = nk_style_item_color(table[NK_COLOR_EDIT]);
-   edit->cursor_normal = table[NK_COLOR_TEXT];
-   edit->cursor_hover = table[NK_COLOR_TEXT];
-   edit->cursor_text_normal = table[NK_COLOR_EDIT];
-   edit->cursor_text_hover = table[NK_COLOR_EDIT];
-   edit->border_color = table[NK_COLOR_BORDER];
-   edit->text_normal = table[NK_COLOR_TEXT];
-   edit->text_hover = table[NK_COLOR_TEXT];
-   edit->text_active = table[NK_COLOR_TEXT];
-   edit->selected_normal = table[NK_COLOR_TEXT];
-   edit->selected_hover = table[NK_COLOR_TEXT];
-   edit->selected_text_normal = table[NK_COLOR_EDIT];
-   edit->selected_text_hover = table[NK_COLOR_EDIT];
-   */
-   edit->scrollbar_size = zero; //(10, 10);
-   edit->scrollbar = style->scrollv;
-   edit->padding = zero; //(4, 4);
-   edit->row_padding = 2;
-   edit->cursor_size = 4;
-   edit->border = 1;
-   edit->rounding = 0;
-   edit->color_factor = 1.0f;
-   edit->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-
-   /* property */
-   property = &style->property;
-   /*
-   property->normal = nk_style_item_color(table[NK_COLOR_PROPERTY]);
-   property->hover = nk_style_item_color(table[NK_COLOR_PROPERTY]);
-   property->active = nk_style_item_color(table[NK_COLOR_PROPERTY]);
-   property->border_color = table[NK_COLOR_BORDER];
-   property->label_normal = table[NK_COLOR_TEXT];
-   property->label_hover = table[NK_COLOR_TEXT];
-   property->label_active = table[NK_COLOR_TEXT];
-   */
-   property->sym_left = NK_SYMBOL_TRIANGLE_LEFT;
-   property->sym_right = NK_SYMBOL_TRIANGLE_RIGHT;
-   property->padding = zero; //(4, 4);
-   property->border = 1;
-   property->rounding = 0;
-   property->color_factor = 1.0f;
-   property->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-
-   /* property buttons */
-   button = &style->property.dec_button;
-   /*
-   button->normal = nk_style_item_color(table[NK_COLOR_PROPERTY]);
-   button->hover = nk_style_item_color(table[NK_COLOR_PROPERTY]);
-   button->active = nk_style_item_color(table[NK_COLOR_PROPERTY]);
-   button->border_color = nk_rgba(0, 0, 0, 0);
-   button->text_background = table[NK_COLOR_PROPERTY];
-   button->text_normal = table[NK_COLOR_TEXT];
-   button->text_hover = table[NK_COLOR_TEXT];
-   button->text_active = table[NK_COLOR_TEXT];
-   */
-   button->padding = zero; //(0.0f, 0.0f);
-   button->touch_padding = zero; //(0.0f, 0.0f);
-   button->text_alignment = NK_TEXT_CENTERED;
-   button->border = 0.0f;
-   button->rounding = 0.0f;
-   button->color_factor_text = 1.0f;
-   button->color_factor_background = 1.0f;
-   button->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-   style->property.inc_button = style->property.dec_button;
-
-   /* property edit */
-   edit = &style->property.edit;
-   /*
-   edit->normal = nk_style_item_color(table[NK_COLOR_PROPERTY]);
-   edit->hover = nk_style_item_color(table[NK_COLOR_PROPERTY]);
-   edit->active = nk_style_item_color(table[NK_COLOR_PROPERTY]);
-   edit->border_color = nk_rgba(0, 0, 0, 0);
-   edit->cursor_normal = table[NK_COLOR_TEXT];
-   edit->cursor_hover = table[NK_COLOR_TEXT];
-   edit->cursor_text_normal = table[NK_COLOR_EDIT];
-   edit->cursor_text_hover = table[NK_COLOR_EDIT];
-   edit->text_normal = table[NK_COLOR_TEXT];
-   edit->text_hover = table[NK_COLOR_TEXT];
-   edit->text_active = table[NK_COLOR_TEXT];
-   edit->selected_normal = table[NK_COLOR_TEXT];
-   edit->selected_hover = table[NK_COLOR_TEXT];
-   edit->selected_text_normal = table[NK_COLOR_EDIT];
-   edit->selected_text_hover = table[NK_COLOR_EDIT];
-   */
-   edit->padding = zero; //(0, 0);
-   edit->cursor_size = 8;
-   edit->border = 0;
-   edit->rounding = 0;
-   edit->color_factor = 1.0f;
-   edit->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-
-   /* chart */
-   chart = &style->chart;
-   /*
-   chart->background = nk_style_item_color(table[NK_COLOR_CHART]);
-   chart->border_color = table[NK_COLOR_BORDER];
-   chart->selected_color = table[NK_COLOR_CHART_COLOR_HIGHLIGHT];
-   chart->color = table[NK_COLOR_CHART_COLOR];
-   */
-   chart->padding = zero; //(4, 4);
-   chart->border = 0;
-   chart->rounding = 0;
-   chart->color_factor = 1.0f;
-   chart->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-   chart->show_markers = nk_true;
-
-   /* combo */
-   combo = &style->combo;
-   /*
-   combo->normal = nk_style_item_color(table[NK_COLOR_COMBO]);
-   combo->hover = nk_style_item_color(table[NK_COLOR_COMBO]);
-   combo->active = nk_style_item_color(table[NK_COLOR_COMBO]);
-   combo->border_color = table[NK_COLOR_BORDER];
-   combo->label_normal = table[NK_COLOR_TEXT];
-   combo->label_hover = table[NK_COLOR_TEXT];
-   combo->label_active = table[NK_COLOR_TEXT];
-   */
-   combo->sym_normal = NK_SYMBOL_TRIANGLE_DOWN;
-   combo->sym_hover = NK_SYMBOL_TRIANGLE_DOWN;
-   combo->sym_active = NK_SYMBOL_TRIANGLE_DOWN;
-   combo->content_padding = zero; //(4, 4);
-   combo->button_padding = zero; //(0, 4);
-   combo->spacing = zero; //(4, 0);
-   combo->border = 1;
-   combo->rounding = 0;
-   combo->color_factor = 1.0f;
-   combo->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-
-   /* combo button */
-   button = &style->combo.button;
-   /*
-   button->normal = nk_style_item_color(table[NK_COLOR_COMBO]);
-   button->hover = nk_style_item_color(table[NK_COLOR_COMBO]);
-   button->active = nk_style_item_color(table[NK_COLOR_COMBO]);
-   button->border_color = nk_rgba(0, 0, 0, 0);
-   button->text_background = table[NK_COLOR_COMBO];
-   button->text_normal = table[NK_COLOR_TEXT];
-   button->text_hover = table[NK_COLOR_TEXT];
-   button->text_active = table[NK_COLOR_TEXT];
-   */
-   button->padding = zero; //(2.0f, 2.0f);
-   button->touch_padding = zero; //(0.0f, 0.0f);
-   button->text_alignment = NK_TEXT_CENTERED;
-   button->border = 0.0f;
-   button->rounding = 0.0f;
-   button->color_factor_text = 1.0f;
-   button->color_factor_background = 1.0f;
-   button->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-
-   /* tab */
-   tab = &style->tab;
-   /*
-   tab->background = nk_style_item_color(table[NK_COLOR_TAB_HEADER]);
-   tab->border_color = table[NK_COLOR_BORDER];
-   tab->text = table[NK_COLOR_TEXT];
-   */
-   tab->sym_minimize = NK_SYMBOL_TRIANGLE_RIGHT;
-   tab->sym_maximize = NK_SYMBOL_TRIANGLE_DOWN;
-   tab->padding = zero; //(4, 4);
-   tab->spacing = zero; //(4, 4);
-   tab->indent = 10.0f;
-   tab->border = 1;
-   tab->rounding = 0;
-   tab->color_factor = 1.0f;
-   tab->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-
-   /* tab button */
-   button = &style->tab.tab_minimize_button;
-   /*
-   button->normal = nk_style_item_color(table[NK_COLOR_TAB_HEADER]);
-   button->hover = nk_style_item_color(table[NK_COLOR_TAB_HEADER]);
-   button->active = nk_style_item_color(table[NK_COLOR_TAB_HEADER]);
-   button->border_color = nk_rgba(0, 0, 0, 0);
-   button->text_background = table[NK_COLOR_TAB_HEADER];
-   button->text_normal = table[NK_COLOR_TEXT];
-   button->text_hover = table[NK_COLOR_TEXT];
-   button->text_active = table[NK_COLOR_TEXT];
-   */
-   button->padding = zero; //(2.0f, 2.0f);
-   button->touch_padding = zero; //(0.0f, 0.0f);
-   button->text_alignment = NK_TEXT_CENTERED;
-   button->border = 0.0f;
-   button->rounding = 0.0f;
-   button->color_factor_text = 1.0f;
-   button->color_factor_background = 1.0f;
-   button->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-   style->tab.tab_maximize_button = *button;
-
-   /* node button */
-   button = &style->tab.node_minimize_button;
-   /*
-   button->normal = nk_style_item_color(table[NK_COLOR_WINDOW]);
-   button->hover = nk_style_item_color(table[NK_COLOR_WINDOW]);
-   button->active = nk_style_item_color(table[NK_COLOR_WINDOW]);
-   button->border_color = nk_rgba(0, 0, 0, 0);
-   button->text_background = table[NK_COLOR_TAB_HEADER];
-   button->text_normal = table[NK_COLOR_TEXT];
-   button->text_hover = table[NK_COLOR_TEXT];
-   button->text_active = table[NK_COLOR_TEXT];
-   */
-   button->padding = zero; //(2.0f, 2.0f);
-   button->touch_padding = zero; //(0.0f, 0.0f);
-   button->text_alignment = NK_TEXT_CENTERED;
-   button->border = 0.0f;
-   button->rounding = 0.0f;
-   button->color_factor_text = 1.0f;
-   button->color_factor_background = 1.0f;
-   button->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-   style->tab.node_maximize_button = *button;
-
-   /* window header */
-   win = &style->window;
-   win->header.align = NK_HEADER_RIGHT;
-   win->header.close_symbol = NK_SYMBOL_X;
-   win->header.minimize_symbol = NK_SYMBOL_MINUS;
-   win->header.maximize_symbol = NK_SYMBOL_PLUS;
-   /*
-   win->header.normal = nk_style_item_color(table[NK_COLOR_HEADER]);
-   win->header.hover = nk_style_item_color(table[NK_COLOR_HEADER]);
-   win->header.active = nk_style_item_color(table[NK_COLOR_HEADER]);
-   win->header.label_normal = table[NK_COLOR_TEXT];
-   win->header.label_hover = table[NK_COLOR_TEXT];
-   win->header.label_active = table[NK_COLOR_TEXT];
-   */
-   win->header.label_padding = zero; //(4, 4);
-   win->header.padding = zero; //(4, 4);
-   win->header.spacing = zero; //(0, 0);
-
-   /* window header close button */
-   button = &style->window.header.close_button;
-   /*
-   button->normal = nk_style_item_color(table[NK_COLOR_HEADER]);
-   button->hover = nk_style_item_color(table[NK_COLOR_HEADER]);
-   button->active = nk_style_item_color(table[NK_COLOR_HEADER]);
-   button->border_color = nk_rgba(0, 0, 0, 0);
-   button->text_background = table[NK_COLOR_HEADER];
-   button->text_normal = table[NK_COLOR_TEXT];
-   button->text_hover = table[NK_COLOR_TEXT];
-   button->text_active = table[NK_COLOR_TEXT];
-   */
-   button->padding = zero; //(0.0f, 0.0f);
-   button->touch_padding = zero; //(0.0f, 0.0f);
-   button->text_alignment = NK_TEXT_CENTERED;
-   button->border = 0.0f;
-   button->rounding = 0.0f;
-   button->color_factor_text = 1.0f;
-   button->color_factor_background = 1.0f;
-   button->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-
-   /* window header minimize button */
-   button = &style->window.header.minimize_button;
-   /*
-   button->normal = nk_style_item_color(table[NK_COLOR_HEADER]);
-   button->hover = nk_style_item_color(table[NK_COLOR_HEADER]);
-   button->active = nk_style_item_color(table[NK_COLOR_HEADER]);
-   button->border_color = nk_rgba(0, 0, 0, 0);
-   button->text_background = table[NK_COLOR_HEADER];
-   button->text_normal = table[NK_COLOR_TEXT];
-   button->text_hover = table[NK_COLOR_TEXT];
-   button->text_active = table[NK_COLOR_TEXT];
-   */
-   button->padding = zero; //(0.0f, 0.0f);
-   button->touch_padding = zero; //(0.0f, 0.0f);
-   button->text_alignment = NK_TEXT_CENTERED;
-   button->border = 0.0f;
-   button->rounding = 0.0f;
-   button->color_factor_text = 1.0f;
-   button->color_factor_background = 1.0f;
-   button->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-
-   /* window */
-   /*
-   win->background = table[NK_COLOR_WINDOW];
-   win->fixed_background = nk_style_item_color(table[NK_COLOR_WINDOW]);
-   win->border_color = table[NK_COLOR_BORDER];
-   win->popup_border_color = table[NK_COLOR_BORDER];
-   win->combo_border_color = table[NK_COLOR_BORDER];
-   win->contextual_border_color = table[NK_COLOR_BORDER];
-   win->menu_border_color = table[NK_COLOR_BORDER];
-   win->group_border_color = table[NK_COLOR_BORDER];
-   win->tooltip_border_color = table[NK_COLOR_BORDER];
-   win->scaler = nk_style_item_color(table[NK_COLOR_TEXT]);
-   */
-
-   win->rounding = 0.0f;
-   win->spacing = zero; //(4, 4);
-   win->scrollbar_size = zero; //(10, 10);
-   win->min_size = zero; //(64, 64);
-
-   win->combo_border = 1.0f;
-   win->contextual_border = 0.0f;
-   win->menu_border = 0.0f;
-   win->group_border = 0.0f;
-   win->tooltip_border = 1.0f;
-   win->popup_border = 0.0f;
-   win->border = 1.0f;
-   win->min_row_height_padding = 0;
-
-   win->padding = zero; //(4, 4);
-   win->group_padding = zero; //(4, 4);
-   win->popup_padding = zero; //(4, 4);
-   win->combo_padding = zero; //(4, 4);
-   win->contextual_padding = zero; //(4, 4);
-   win->menu_padding = zero; //(4, 4);
-   win->tooltip_padding = zero; //(4, 4);
-
-   win->tooltip_origin = NK_TOP_LEFT;
-   win->tooltip_offset = zero; //(12, 12);
-   win->tooltip_delay = 0.5f;
-}
-
 SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
 {
    (void)argc;
@@ -640,24 +20,24 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
 
    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
    {
-      return nk_sdl_fail("failed to initialize SDL");
+      return sdlFail("failed to initialize SDL");
    }
 
    SDL_SetAppMetadata("InkyBlackness - HackEd", REPO_SHORT_VERSION, "io.github.inkyblackness.hacked");
    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
    {
-      return nk_sdl_fail("failed to initialize SDL");
+      return sdlFail("failed to initialize SDL");
    }
-   struct nk_sdl_app *app = SDL_malloc(sizeof(*app));
+   struct SDLApp *app = SDL_malloc(sizeof(*app));
    if (app == NULL)
    {
-      return nk_sdl_fail("failed to allocate application memory");
+      return sdlFail("failed to allocate application memory");
    }
    if (!SDL_CreateWindowAndRenderer(
           "InkyBlackness - HackEd - " REPO_LONG_VERSION, 320, 200, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY, &app->window, &app->renderer))
    {
       SDL_free(app);
-      return nk_sdl_fail("failed to create window/renderer");
+      return sdlFail("failed to create window/renderer");
    }
    *appstate = app;
 
@@ -667,70 +47,12 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
    }
    SDL_SetRenderLogicalPresentation(app->renderer, 320, 200, SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
-   struct nk_context *ctx = nk_sdl_init(app->window, app->renderer, nk_sdl_allocator());
-   app->ctx = ctx;
-
-   {
-      float const scale = SDL_GetWindowDisplayScale(app->window);
-      nk_sdl_style_set_tiny_font(ctx, scale);
-
-      setStyle(&ctx->style);
-      /*
-      ctx->style.button.rounding = 0.0f;
-
-      ctx->style.menu_button.rounding = 0.0f;
-      ctx->style.menu_button.padding.x = 0.0f;
-      ctx->style.menu_button.padding.y = 0.0f;
-      ctx->style.menu_button.touch_padding.x = 0.0f;
-      ctx->style.menu_button.touch_padding.y = 0.0f;
-      ctx->style.property.rounding = 0.0f;
-      ctx->style.property.border = 0.0f;
-      ctx->style.option.border = 0.0f;
-      ctx->style.checkbox.border = 0.0f;
-      ctx->style.property.dec_button.border = 0.0f;
-      ctx->style.property.inc_button.border = 0.0f;
-      ctx->style.tab.tab_minimize_button.border = 0.0f;
-      ctx->style.tab.tab_maximize_button.border = 0.0f;
-      ctx->style.tab.node_minimize_button.border = 0.0f;
-      ctx->style.tab.node_maximize_button.border = 0.0f;
-      ctx->style.text.padding.x = 0.0f;
-      ctx->style.text.padding.y = 0.0f;
-      ctx->style.checkbox.spacing = 1.0f;
-      ctx->style.window.header.label_padding.x = 0.0f;
-      ctx->style.window.header.label_padding.y = 0.0f;
-      ctx->style.window.header.padding.x = 0.0f;
-      ctx->style.window.header.padding.y = 0.0f;
-      ctx->style.window.header.spacing.x = 0.0f;
-      ctx->style.window.header.spacing.y = 0.0f;
-      ctx->style.window.menu_padding.x = 0.0f;
-      ctx->style.window.menu_padding.y = 0.0f;
-      ctx->style.window.menu_border = 1.0f;
-      ctx->style.window.menu_border_color.r = 0xFF;
-      ctx->style.window.padding.x = 0.0f;
-      ctx->style.window.padding.y = 0.0f;
-      ctx->style.window.spacing.x = 0.0f;
-      ctx->style.window.spacing.y = 0.0f;
-      ctx->style.window.popup_padding.x = 0.0f;
-      ctx->style.window.popup_padding.y = 0.0f;
-      ctx->style.window.group_padding.x = 0.0f;
-      ctx->style.window.group_padding.y = 0.0f;
-      ctx->style.window.combo_padding.x = 0.0f;
-      ctx->style.window.combo_padding.y = 0.0f;
-      ctx->style.window.contextual_padding.x = 0.0f;
-      ctx->style.window.contextual_padding.y = 0.0f;
-      */
-
-      /* It's better to disable anti-aliasing when using small fonts */
-      app->AA = NK_ANTI_ALIASING_OFF;
-   }
-   nk_input_begin(ctx);
-
    return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 {
-   struct nk_sdl_app *app = (struct nk_sdl_app *)appstate;
+   struct SDLApp *app = (struct SDLApp *)appstate;
 
    switch (event->type)
    {
@@ -743,21 +65,13 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
       }
       break;
    case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
-      /* You may wish to rescale the renderer and Nuklear during this event.
-       * Without this the UI and Font could appear too small or too big.
-       * This is not handled by the demo in order to keep it simple,
-       * but you may wish to re-bake the Font whenever this happens. */
-      SDL_Log("Unhandled scale event! Nuklear may appear blurry");
+      // You may wish to rescale the renderer.
       return SDL_APP_CONTINUE;
    default:
       break;
    }
-
-   /* Remember to always rescale the event coordinates,
-    * if your renderer uses custom scale. */
+   // Remember to always rescale the event coordinates, if your renderer uses custom scale.
    SDL_ConvertEventToRenderCoordinates(app->renderer, event);
-
-   nk_sdl_handle_event(app->ctx, event);
 
    return SDL_APP_CONTINUE;
 }
@@ -770,81 +84,14 @@ static void appClearBackground(SDL_Renderer *const renderer)
 
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
-   struct nk_sdl_app *app = (struct nk_sdl_app *)appstate;
-   struct nk_context *ctx = app->ctx;
+   struct SDLApp *app = (struct SDLApp *)appstate;
    SDL_AppResult appResult = SDL_APP_CONTINUE;
-   float const scale = SDL_GetWindowDisplayScale(app->window);
-
-   nk_input_end(ctx);
-
-   if (nk_begin(ctx, "main-menu", nk_rect(0, 0, 10000, 8 * scale), NK_WINDOW_NO_SCROLLBAR))
-   {
-      nk_menubar_begin(ctx);
-      {
-         nk_layout_row_static(ctx, 8 * scale, 200, 1);
-         if (nk_menu_begin_label(ctx, "File", 0, nk_vec2(50, 100)))
-         {
-            nk_layout_row_dynamic(ctx, 10 * scale, 1);
-            if (nk_menu_item_label(ctx, "New...", 0))
-            {
-               SDL_Log("new...");
-            }
-            if (nk_menu_item_label(ctx, "Quit", 0))
-            {
-               appResult = SDL_APP_SUCCESS;
-            }
-            nk_menu_end(ctx);
-         }
-      }
-      nk_menubar_end(ctx);
-   }
-   nk_end(ctx);
-   /* GUI */
-   if (nk_begin(ctx, "Demo", nk_rect(50, 50, 230, 190), NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE))
-   {
-      enum
-      {
-         EASY,
-         HARD
-      };
-      static int op = EASY;
-      static int property = 20;
-      enum
-      {
-         textBufferSize = 1000
-      };
-      static char textBuffer[textBufferSize] = "";
-      static int textBufferUsedLen = 0;
-
-      nk_layout_row_static(ctx, 9, 60, 1);
-      if (nk_button_label(ctx, "button"))
-      {
-         SDL_Log("button pressed");
-      }
-      nk_layout_row_dynamic(ctx, 30, 2);
-      if (nk_option_label(ctx, "easy", op == EASY))
-         op = EASY;
-      if (nk_option_label(ctx, "hard", op == HARD))
-         op = HARD;
-      nk_layout_row_dynamic(ctx, 25, 1);
-      nk_property_int(ctx, "Compression:", 0, &property, 1000, 1, 1);
-
-      nk_layout_row_dynamic(ctx, 20, 1);
-      nk_label(ctx, "background:", NK_TEXT_LEFT);
-      nk_layout_row_dynamic(ctx, 25, 1);
-
-      nk_edit_string(ctx, NK_EDIT_ALWAYS_INSERT_MODE | NK_EDIT_MULTILINE, textBuffer, &textBufferUsedLen, textBufferSize, NULL);
-   }
-   nk_end(ctx);
+   // float const scale = SDL_GetWindowDisplayScale(app->window);
 
    appClearBackground(app->renderer);
 
-   nk_sdl_render(ctx, app->AA);
-   nk_sdl_update_TextInput(ctx);
-
    SDL_RenderPresent(app->renderer);
 
-   nk_input_begin(ctx);
    return appResult;
 }
 
@@ -852,24 +99,13 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
    (void)result;
 
-   struct nk_sdl_app *app = (struct nk_sdl_app *)appstate;
+   struct SDLApp *app = (struct SDLApp *)appstate;
 
    if (app)
    {
       SDL_Log("Quitting");
-      nk_input_end(app->ctx);
-      nk_sdl_shutdown(app->ctx);
       SDL_DestroyRenderer(app->renderer);
       SDL_DestroyWindow(app->window);
       SDL_free(app);
    }
-}
-
-char *nk_sdl_dtoa(char *str, double d)
-{
-   NK_ASSERT(str);
-   if (!str)
-      return NULL;
-   (void)SDL_snprintf(str, 99999, "%.17g", d);
-   return str;
 }
