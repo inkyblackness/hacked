@@ -9,8 +9,6 @@ FetchContent_Declare(
         GIT_TAG ${DearImGuiTag}
         OVERRIDE_FIND_PACKAGE
         EXCLUDE_FROM_ALL
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
 )
 FetchContent_MakeAvailable(dearimgui)
 
@@ -20,14 +18,16 @@ FetchContent_Declare(
         URL_HASH SHA256=${DCImGuiHash}
         OVERRIDE_FIND_PACKAGE
         EXCLUDE_FROM_ALL
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
 )
 FetchContent_MakeAvailable(dcimgui)
 
 add_library(DearImGui STATIC
+        ${dcimgui_SOURCE_DIR}/backends/dcimgui_impl_sdl3.cpp
+        ${dcimgui_SOURCE_DIR}/backends/dcimgui_impl_sdlrenderer3.cpp
         ${dcimgui_SOURCE_DIR}/dcimgui.cpp
         ${dcimgui_SOURCE_DIR}/dcimgui_internal.cpp
+        ${dearimgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
+        ${dearimgui_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.cpp
         ${dearimgui_SOURCE_DIR/imgui.cpp}
         ${dearimgui_SOURCE_DIR/imgui_internal.cpp}
 )
@@ -36,4 +36,6 @@ target_include_directories(DearImGui
         ${dcimgui_SOURCE_DIR}
         PRIVATE
         ${dearimgui_SOURCE_DIR}
+        ${dearimgui_SOURCE_DIR}/backends
 )
+target_link_libraries(DearImGui PUBLIC SDL3::SDL3-static)
