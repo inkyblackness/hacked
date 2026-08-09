@@ -28,14 +28,18 @@ add_library(DearImGui STATIC
         ${dcimgui_SOURCE_DIR}/dcimgui_internal.cpp
         ${dearimgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
         ${dearimgui_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.cpp
-        ${dearimgui_SOURCE_DIR/imgui.cpp}
-        ${dearimgui_SOURCE_DIR/imgui_internal.cpp}
+        ${dearimgui_SOURCE_DIR}/imgui.cpp
+        ${dearimgui_SOURCE_DIR}/imgui_demo.cpp
+        ${dearimgui_SOURCE_DIR}/imgui_draw.cpp
+        ${dearimgui_SOURCE_DIR}/imgui_tables.cpp
+        ${dearimgui_SOURCE_DIR}/imgui_widgets.cpp
 )
 target_include_directories(DearImGui
         PUBLIC
         ${dcimgui_SOURCE_DIR}
+        ${dcimgui_SOURCE_DIR}/backends
+        ${dearimgui_SOURCE_DIR} # TODO Public as long as there is no local IMGUI_USER_CONFIG
         PRIVATE
-        ${dearimgui_SOURCE_DIR}
         ${dearimgui_SOURCE_DIR}/backends
 )
 target_link_libraries(DearImGui PUBLIC SDL3::SDL3-static)

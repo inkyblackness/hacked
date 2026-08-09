@@ -2,6 +2,10 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
+#include "dcimgui.h"
+#include "dcimgui_impl_sdl3.h"
+#include "dcimgui_impl_sdlrenderer3.h"
+
 struct SDLApp
 {
    SDL_Window *window;
@@ -47,6 +51,17 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
    }
    SDL_SetRenderLogicalPresentation(app->renderer, 320, 200, SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
+   CIMGUI_CHECKVERSION();
+   ImGui_CreateContext(NULL);
+   ImGuiIO *io = ImGui_GetIO();
+   io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+   io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+   io->IniFilename = NULL;
+   ImGui_StyleColorsDark(NULL);
+
+   cImGui_ImplSDL3_InitForSDLRenderer(app->window, app->renderer);
+   cImGui_ImplSDLRenderer3_Init(app->renderer);
+
    return SDL_APP_CONTINUE;
 }
 
@@ -73,6 +88,8 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
    // Remember to always rescale the event coordinates, if your renderer uses custom scale.
    SDL_ConvertEventToRenderCoordinates(app->renderer, event);
 
+   cImGui_ImplSDL3_ProcessEvent(event);
+
    return SDL_APP_CONTINUE;
 }
 
@@ -88,8 +105,21 @@ SDL_AppResult SDL_AppIterate(void *appstate)
    SDL_AppResult appResult = SDL_APP_CONTINUE;
    // float const scale = SDL_GetWindowDisplayScale(app->window);
 
+   {
+      cImGui_ImplSDLRenderer3_NewFrame();
+      cImGui_ImplSDL3_NewFrame();
+      ImGui_NewFrame();
+
+      bool showDemoWindow = true;
+      ImGui_ShowDemoWindow(&showDemoWindow);
+
+      ImGui_Render();
+   }
+
    appClearBackground(app->renderer);
 
+   // SDL_SetRenderScale(app->renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y); // TODO: needed?
+   cImGui_ImplSDLRenderer3_RenderDrawData(ImGui_GetDrawData(), app->renderer);
    SDL_RenderPresent(app->renderer);
 
    return appResult;
@@ -104,6 +134,11 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
    if (app)
    {
       SDL_Log("Quitting");
+
+      cImGui_ImplSDLRenderer3_Shutdown();
+      cImGui_ImplSDL3_Shutdown();
+      ImGui_DestroyContext(ImGui_GetCurrentContext());
+
       SDL_DestroyRenderer(app->renderer);
       SDL_DestroyWindow(app->window);
       SDL_free(app);
