@@ -1,0 +1,39 @@
+SET(DearImGuiTag "b48d1afbe8ee8b238e2961dc363a949dd7304e23")
+SET(DearImGuiVersion "v1.92.9b-docking")
+SET(DCImGuiVersion "v0.21")
+SET(DCImGuiHash "df0ea4fdb73eca417c0ee8df9d5383362451c95ea3d3d7536c258820023488f9")
+
+FetchContent_Declare(
+        dearimgui
+        GIT_REPOSITORY https://github.com/ocornut/imgui
+        GIT_TAG ${DearImGuiTag}
+        OVERRIDE_FIND_PACKAGE
+        EXCLUDE_FROM_ALL
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND ""
+)
+FetchContent_MakeAvailable(dearimgui)
+
+FetchContent_Declare(
+        dcimgui
+        URL https://github.com/dearimgui/dear_bindings/releases/download/DearBindings_${DCImGuiVersion}_ImGui_${DearImGuiVersion}/DearBindings_${DCImGuiVersion}_ImGui_${DearImGuiVersion}.zip
+        URL_HASH SHA256=${DCImGuiHash}
+        OVERRIDE_FIND_PACKAGE
+        EXCLUDE_FROM_ALL
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND ""
+)
+FetchContent_MakeAvailable(dcimgui)
+
+add_library(DearImGui STATIC
+        ${dcimgui_SOURCE_DIR}/dcimgui.cpp
+        ${dcimgui_SOURCE_DIR}/dcimgui_internal.cpp
+        ${dearimgui_SOURCE_DIR/imgui.cpp}
+        ${dearimgui_SOURCE_DIR/imgui_internal.cpp}
+)
+target_include_directories(DearImGui
+        PUBLIC
+        ${dcimgui_SOURCE_DIR}
+        PRIVATE
+        ${dearimgui_SOURCE_DIR}
+)

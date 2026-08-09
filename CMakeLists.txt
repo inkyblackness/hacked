@@ -18,6 +18,7 @@ if (NOT DOS)
     include(cmake/modules/TestSupport.cmake)
 endif ()
 include(cmake/modules/SimpleDirectMediaLayer.cmake)
+include(cmake/modules/DearImGui.cmake)
 include(cmake/modules/BuildRules.cmake)
 include(cmake/modules/Version.cmake)
 
@@ -69,6 +70,7 @@ target_link_libraries(hacked
         hacked-core
         Version::all
         BuildRules::common
+        DearImGui
         SDL3::SDL3-static
 )
 
