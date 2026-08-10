@@ -42,4 +42,8 @@ target_include_directories(DearImGui
         PRIVATE
         ${dearimgui_SOURCE_DIR}/backends
 )
+target_compile_definitions(DearImGui
+        PUBLIC
+        IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+)
 target_link_libraries(DearImGui PUBLIC SDL3::SDL3-static)
