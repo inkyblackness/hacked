@@ -1,3 +1,5 @@
+#include <float.h>
+
 #define SDL_MAIN_USE_CALLBACKS 1
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -17,6 +19,7 @@ static SDL_AppResult sdlFail(char const *const message)
    SDL_LogError(SDL_LOG_CATEGORY_CUSTOM, "Error; %s: %s", message, SDL_GetError());
    return SDL_APP_FAILURE;
 }
+
 SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
 {
    (void)argc;
@@ -57,10 +60,50 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
    io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
    io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
    io->IniFilename = NULL;
-   ImGui_StyleColorsDark(NULL);
+
+   char const fontName[] = "tiny5.ttf";
+   SDL_PathInfo fontFileInfo = {0};
+   if (SDL_GetPathInfo(fontName, &fontFileInfo) && fontFileInfo.size > 0)
+   {
+      // tiny5: works with 9.0f ( https://github.com/Gissio/font_tiny5 )
+      // 3x5-font: works with 6.0f - smaller, but has wrong unicode chars ( https://alasseearfalas.itch.io/another-tiny-pixel-font-mono-3x5 )
+      ImFontConfig fontConfig = {0};
+      fontConfig.PixelSnapH = true;
+      fontConfig.SizePixels = 9.0f;
+      fontConfig.GlyphMaxAdvanceX = FLT_MAX;
+      fontConfig.RasterizerMultiply = 1.0f;
+      fontConfig.RasterizerDensity = 1.0f;
+      fontConfig.ExtraSizeScale = 1.0f;
+      ImFont *font = ImFontAtlas_AddFontFromFileTTF(io->Fonts, fontName, fontConfig.SizePixels, &fontConfig, NULL);
+      ImGui_StyleColorsDark(NULL);
+      ImGui_PushFontFloat(font, fontConfig.SizePixels);
+      // ImGui_GetStyle()->FontSizeBase = fontConfig.SizePixels;
+      ImGui_GetStyle()->FontScaleMain = 1.0f;
+      ImGui_GetStyle()->FontScaleDpi = 1.0f;
+      ImGui_GetStyle()->AntiAliasedLinesUseTex = false;
+   }
+
+   // Set all alpha values to 1.0f -- doesn't help, because the calculation is still performed.
+   // But still a good test to see if everything would be readable.
+   ImGui_GetStyle()->Alpha = 1.0f;
+   ImGui_GetStyle()->DisabledAlpha = 1.0f;
+   for (size_t i = 0; i < ImGuiCol_COUNT; i++)
+   {
+      ImGui_GetStyle()->Colors[i].w = 1.0f;
+   }
 
    cImGui_ImplSDL3_InitForSDLRenderer(app->window, app->renderer);
    cImGui_ImplSDLRenderer3_Init(app->renderer);
+   {
+      // Attempt to set renderer to ignore alpha blending.
+      SDL_BlendMode oldBlendMode = 0;
+      SDL_GetRenderDrawBlendMode(app->renderer, &oldBlendMode);
+      if (oldBlendMode != SDL_BLENDMODE_NONE)
+      {
+         SDL_Log("Setting blendmode to none");
+         SDL_SetRenderDrawBlendMode(app->renderer, SDL_BLENDMODE_NONE);
+      }
+   }
 
    return SDL_APP_CONTINUE;
 }
