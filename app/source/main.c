@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #define SDL_MAIN_USE_CALLBACKS 1
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -11,6 +13,11 @@ struct nk_sdl_app
    struct nk_context *ctx;
    enum nk_anti_aliasing AA;
 };
+
+static float appGetBaseScale()
+{
+   return 1.0f;
+}
 
 static SDL_AppResult nk_sdl_fail(char const *const message)
 {
@@ -671,7 +678,7 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
    app->ctx = ctx;
 
    {
-      float const scale = SDL_GetWindowDisplayScale(app->window);
+      float const scale = SDL_GetWindowDisplayScale(app->window) * appGetBaseScale();
       nk_sdl_style_set_tiny_font(ctx, scale);
 
       setStyle(&ctx->style);
@@ -773,16 +780,32 @@ SDL_AppResult SDL_AppIterate(void *appstate)
    struct nk_sdl_app *app = (struct nk_sdl_app *)appstate;
    struct nk_context *ctx = app->ctx;
    SDL_AppResult appResult = SDL_APP_CONTINUE;
-   float const scale = SDL_GetWindowDisplayScale(app->window);
+   float const scale = SDL_GetWindowDisplayScale(app->window) * appGetBaseScale();
 
+   static uint64_t previous = 0;
+
+   uint64_t now = SDL_GetTicksNS();
+   if (previous == 0)
+   {
+      previous = now;
+   }
+   uint64_t elapsed = now - previous;
+   if (elapsed == 0)
+   {
+      elapsed = 1;
+   }
+   double fps = 1000000000.0 / (double)elapsed;
+   char fpsLine[30];
+   sprintf(fpsLine, "%3lumsec - %.1f", (unsigned long)(elapsed / 1000000ULL), fps);
+   previous = now;
    nk_input_end(ctx);
 
    if (nk_begin(ctx, "main-menu", nk_rect(0, 0, 10000, 8 * scale), NK_WINDOW_NO_SCROLLBAR))
    {
       nk_menubar_begin(ctx);
       {
-         nk_layout_row_static(ctx, 8 * scale, 200, 1);
-         if (nk_menu_begin_label(ctx, "File", 0, nk_vec2(50, 100)))
+         nk_layout_row_static(ctx, 8 * scale, 200, 2);
+         if (nk_menu_begin_label(ctx, "File", 0, nk_vec2(100, 100)))
          {
             nk_layout_row_dynamic(ctx, 10 * scale, 1);
             if (nk_menu_item_label(ctx, "New...", 0))
@@ -793,6 +816,11 @@ SDL_AppResult SDL_AppIterate(void *appstate)
             {
                appResult = SDL_APP_SUCCESS;
             }
+            nk_menu_end(ctx);
+         }
+         if (nk_menu_begin_label(ctx, fpsLine, 0, nk_vec2(100, 100)))
+         {
+            nk_layout_row_dynamic(ctx, 10 * scale, 1);
             nk_menu_end(ctx);
          }
       }
