@@ -23,7 +23,8 @@ TEST(UIFontTest, fontIsAvailable)
 
       for (size_t i = 0; i < font->codepointCount; i++)
       {
-         printf("====== 0x%08X -> '%lc'\n", font->codepoints[i].codepoint, (wint_t)font->codepoints[i].codepoint);
+         printf("====== 0x%08X -> '%lc'; at %d|%d\n", font->codepoints[i].codepoint, (wint_t)font->codepoints[i].codepoint, font->codepoints[i].rect.topLeft.x,
+            font->codepoints[i].rect.topLeft.y);
          for (size_t y = 0; y < font->codepoints[i].rect.size.height; y++)
          {
             for (size_t x = 0; x < font->codepoints[i].rect.size.width; x++)
