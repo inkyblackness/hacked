@@ -116,11 +116,13 @@ static bool readHeader(LGFont *lgFont, uint8_t const *const data, size_t const d
 
 static PixelAxisSize const emptyMarkerHeight = 1;
 
-[[nodiscard]] static bool attemptAtlasLayoutForWidth(
-   LGFont const *const lgFont, FontCodepointEntry *const codepoints, size_t const codepointCount, PixelAxisSize const width, PixelAxisSize *const height)
+[[nodiscard]] static bool attemptAtlasLayoutForWidth(LGFont const *const lgFont, FontCodepointEntry *const codepoints, size_t const codepointCount,
+   PixelAxisSize const width, PixelAxisSize *const height, PixelAxisSize glyphPadding)
 {
-   PixelAxisOffset x = 1; // start with one to cover for the empty codepoint.
-   *height = lgFont->bitmapHeight;
+   PixelAxisSize const fullGlyphPadding = glyphPadding * 2; // apply padding on both sides
+   PixelAxisOffset x = 1 + fullGlyphPadding; // start with one to cover for the empty codepoint.
+   PixelAxisOffset y = glyphPadding;
+   *height = lgFont->bitmapHeight + fullGlyphPadding;
    for (size_t i = 0; i < codepointCount; i++)
    {
       if (codepoints[i].rect.size.height == emptyMarkerHeight)
@@ -128,19 +130,20 @@ static PixelAxisSize const emptyMarkerHeight = 1;
          // skip empty codepoint entries, they are placed at the very beginning, automatically.
          continue;
       }
-      PixelAxisOffset const right = x + codepoints[i].rect.size.width;
+      PixelAxisOffset const right = x + codepoints[i].rect.size.width + fullGlyphPadding;
       if (right <= width)
       {
-         codepoints[i].rect.topLeft.x = (PixelAxisPosition)x;
-         codepoints[i].rect.topLeft.y = (PixelAxisPosition)(*height - lgFont->bitmapHeight);
+         codepoints[i].rect.topLeft.x = (PixelAxisPosition)(x + glyphPadding);
+         codepoints[i].rect.topLeft.y = (PixelAxisPosition)y;
          x = right;
       }
       else if ((*height + lgFont->bitmapHeight) <= width)
       {
-         codepoints[i].rect.topLeft.x = (PixelAxisPosition)0;
-         codepoints[i].rect.topLeft.y = (PixelAxisPosition)*height;
-         x = codepoints[i].rect.size.width;
-         *height += lgFont->bitmapHeight;
+         y += lgFont->bitmapHeight + fullGlyphPadding;
+         codepoints[i].rect.topLeft.x = (PixelAxisPosition)glyphPadding;
+         codepoints[i].rect.topLeft.y = (PixelAxisPosition)y;
+         x = codepoints[i].rect.size.width + glyphPadding;
+         *height = y + lgFont->bitmapHeight + glyphPadding;
       }
       else
       {
@@ -151,7 +154,7 @@ static PixelAxisSize const emptyMarkerHeight = 1;
 }
 
 [[nodiscard]] static bool determineAtlasSize(
-   LGFont const *const lgFont, FontCodepointEntry *const codepoints, size_t const codepointCount, PixelSize *const size)
+   LGFont const *const lgFont, FontCodepointEntry *const codepoints, size_t const codepointCount, PixelSize *const size, PixelAxisSize const glyphPadding)
 {
    PixelSpaceLimits const limits = pixelSpaceLimits();
    PixelAxisSize left = limits.minSize;
@@ -160,7 +163,7 @@ static PixelAxisSize const emptyMarkerHeight = 1;
    while (left <= right)
    {
       PixelSize attempt = {.width = left + (right - left) / 2};
-      if (attemptAtlasLayoutForWidth(lgFont, codepoints, codepointCount, attempt.width, &attempt.height))
+      if (attemptAtlasLayoutForWidth(lgFont, codepoints, codepointCount, attempt.width, &attempt.height, glyphPadding))
       {
          *size = attempt;
          right = attempt.width;
@@ -175,7 +178,7 @@ static PixelAxisSize const emptyMarkerHeight = 1;
       }
    }
    // recalculate all positions again, because a previous attempt might have modified the positions of the codepoints.
-   return attemptAtlasLayoutForWidth(lgFont, codepoints, codepointCount, size->width, &size->height);
+   return attemptAtlasLayoutForWidth(lgFont, codepoints, codepointCount, size->width, &size->height, glyphPadding);
 }
 
 /*
@@ -188,7 +191,7 @@ static PixelAxisSize const emptyMarkerHeight = 1;
  * the number of characters and square-root this number.
  */
 [[nodiscard]] static bool determineAtlasLayout(
-   LGFont const *const lgFont, FontCodepointEntry *const codepoints, size_t const codepointCount, PixelSize *const size)
+   LGFont const *const lgFont, FontCodepointEntry *const codepoints, size_t const codepointCount, PixelSize *const size, PixelAxisSize const glyphPadding)
 {
    PixelRect const emptyCodepointRect = {.size = {.width = 1, .height = lgFont->bitmapHeight}, .topLeft = {.x = 0, .y = 0}};
    // first pass: initialize target with per codepoint, and determine whether it would be an "empty" codepoint.
@@ -211,7 +214,7 @@ static PixelAxisSize const emptyMarkerHeight = 1;
       }
    }
    // now determine whether any size of the atlas will make room for all characters.
-   if (!determineAtlasSize(lgFont, codepoints, codepointCount, size))
+   if (!determineAtlasSize(lgFont, codepoints, codepointCount, size, glyphPadding))
    {
       return false;
    }
@@ -264,7 +267,7 @@ static Font *allocateFont(FontCodepointEntry *const codepoints, size_t const cod
    return font;
 }
 
-[[nodiscard]] Font const *lgresDecodeFont(uint8_t const *const data, size_t const dataSize)
+[[nodiscard]] Font const *lgresDecodeFont(uint8_t const *const data, size_t const dataSize, PixelAxisSize const glyphPadding)
 {
    LGFont lgFont = {0};
    if (!readHeader(&lgFont, data, dataSize))
@@ -274,7 +277,7 @@ static Font *allocateFont(FontCodepointEntry *const codepoints, size_t const cod
    size_t codepointCount = 0;
    FontCodepointEntry *const codepoints = allocateCodepoints(&lgFont, &codepointCount);
    PixelSize bitmapSize = {0};
-   if (!determineAtlasLayout(&lgFont, codepoints, codepointCount, &bitmapSize))
+   if (!determineAtlasLayout(&lgFont, codepoints, codepointCount, &bitmapSize, glyphPadding))
    {
       free(codepoints);
       return NULL;

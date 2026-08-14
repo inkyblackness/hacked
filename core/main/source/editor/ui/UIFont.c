@@ -43,5 +43,8 @@ static uint8_t const tinyFont[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0
 
 Font const *uiFont()
 {
-   return lgresDecodeFont(tinyFont, sizeof(tinyFont));
+   // Add padding for:
+   // 1) outline of the font,
+   // 2) avoiding "nearest" rounding errors of pixel selection to reach into next glyph
+   return lgresDecodeFont(tinyFont, sizeof(tinyFont), 2);
 }
