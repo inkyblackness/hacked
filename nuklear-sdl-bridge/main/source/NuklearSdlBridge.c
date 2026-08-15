@@ -606,13 +606,13 @@ NK_INTERN void nk_sdl_query_tiny_font_glyph(
 
    // Some of the additions don't make sense in the following block. However, this particular combination is correct for all resolutions.
    float scale = height / (float)(entry->rect.size.height + 2);
-   glyph->height = (float)(entry->rect.size.height + 3) * scale;
+   glyph->height = (float)(entry->rect.size.height + 2) * scale;
    glyph->width = (float)(entry->rect.size.width + 2) * scale;
    glyph->xadvance = (float)(entry->rect.size.width) * scale;
    glyph->uv[0].x = (float)(entry->rect.topLeft.x - 1) / (float)bitmapWidth;
    glyph->uv[0].y = (float)(entry->rect.topLeft.y - 1) / (float)bitmapHeight;
-   glyph->uv[1].x = (float)(entry->rect.topLeft.x + entry->rect.size.width + 1) / (float)bitmapWidth;
-   glyph->uv[1].y = (float)(entry->rect.topLeft.y + entry->rect.size.height + 2) / (float)bitmapHeight;
+   glyph->uv[1].x = (float)(entry->rect.topLeft.x - 1 + entry->rect.size.width + 2) / (float)bitmapWidth;
+   glyph->uv[1].y = (float)(entry->rect.topLeft.y - 1 + entry->rect.size.height + 2) / (float)bitmapHeight;
    glyph->offset.x = 0.0f;
    glyph->offset.y = 0.0f;
 }
