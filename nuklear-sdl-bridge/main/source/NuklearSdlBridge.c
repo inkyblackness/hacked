@@ -157,7 +157,7 @@ NK_API void nk_sdl_update_TextInput(struct nk_context *ctx)
     */
 }
 
-NK_API void nk_sdl_render(struct nk_context *ctx, enum nk_anti_aliasing AA)
+NK_API void nk_sdl_render(struct nk_context *ctx)
 {
    NK_ASSERT(ctx);
    struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
@@ -170,6 +170,7 @@ NK_API void nk_sdl_render(struct nk_context *ctx, enum nk_anti_aliasing AA)
    }
 
    {
+      static enum nk_anti_aliasing const antiAliasing = NK_ANTI_ALIASING_ON;
       int const vs = sizeof(struct nk_sdl_vertex);
       size_t const vp = NK_OFFSETOF(struct nk_sdl_vertex, position);
       size_t const vt = NK_OFFSETOF(struct nk_sdl_vertex, uv);
@@ -191,8 +192,8 @@ NK_API void nk_sdl_render(struct nk_context *ctx, enum nk_anti_aliasing AA)
       config.curve_segment_count = 22;
       config.arc_segment_count = 22;
       config.global_alpha = 1.0f;
-      config.shape_AA = AA;
-      config.line_AA = AA;
+      config.shape_AA = antiAliasing;
+      config.line_AA = antiAliasing;
 
       /* convert shapes into vertices */
       struct nk_buffer vbuf, ebuf;

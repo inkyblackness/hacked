@@ -12,7 +12,6 @@ struct nk_sdl_app
    SDL_Window *window;
    SDL_Renderer *renderer;
    struct nk_context *ctx;
-   enum nk_anti_aliasing AA;
 };
 
 static float appGetBaseScale(SDL_Window *const window)
@@ -753,8 +752,6 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
       nk_sdl_style_set_tiny_font(ctx, scale);
 
       setStyle(ctx);
-
-      app->AA = NK_ANTI_ALIASING_ON;
    }
    nk_input_begin(ctx);
 
@@ -893,7 +890,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
    appClearBackground(app->renderer);
 
-   nk_sdl_render(ctx, app->AA);
+   nk_sdl_render(ctx);
    nk_sdl_update_TextInput(ctx);
 
    SDL_RenderPresent(app->renderer);
