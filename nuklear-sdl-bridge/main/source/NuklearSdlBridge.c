@@ -621,20 +621,13 @@ NK_INTERN void nk_sdl_query_tiny_font_glyph(
    glyph->offset.y = 0.0f;
 }
 
-typedef struct
-{
-   uint8_t r;
-   uint8_t g;
-   uint8_t b;
-} ColorRgb;
-
 static void renderMonochromeFontCharacter(
-   SDL_Surface *const surface, size_t const characterIndex, PixelOffset const off, Font const *const font, ColorRgb const color)
+   SDL_Surface *const surface, size_t const characterIndex, PixelOffset const off, Font const *const font, struct nk_color const color)
 {
    // TODO figure out types; when which is more appropriate.
    FontCodepointEntry const *const entry = &font->codepoints[characterIndex];
-   int outXBase = entry->rect.topLeft.x + off.x;
-   int outYBase = entry->rect.topLeft.y + off.y;
+   int const outXBase = entry->rect.topLeft.x + off.x;
+   int const outYBase = entry->rect.topLeft.y + off.y;
    for (int16_t y = 0; y < entry->rect.size.height; ++y)
    {
       for (int16_t x = 0; x < entry->rect.size.width; ++x)
@@ -642,7 +635,7 @@ static void renderMonochromeFontCharacter(
          uint8_t const in = *(font->atlas.data + (font->atlas.stride * (entry->rect.topLeft.y + y)) + entry->rect.topLeft.x + x);
          if (in != 0)
          {
-            SDL_WriteSurfacePixel(surface, outXBase + x, outYBase + y, color.b, color.g, color.r, 0xFF); // TODO: Why is this BGRA and not RGBA?
+            SDL_WriteSurfacePixel(surface, outXBase + x, outYBase + y, color.r, color.g, color.b, color.a);
          }
       }
    }
@@ -666,7 +659,7 @@ NK_API void nk_sdl_style_set_tiny_font(struct nk_context *const ctx, float const
    SDL_Surface *surface = SDL_CreateSurface(sdl->uiFont->atlas.size.width, sdl->uiFont->atlas.size.height, SDL_PIXELFORMAT_RGBA32);
    NK_ASSERT(surface);
 
-   ColorRgb black = {};
+   struct nk_color black = {.r = 0x30, .g = 0x30, .b = 0x30, .a = 0xFF};
 
    for (size_t currentCharOffset = 0; currentCharOffset < sdl->uiFont->codepointCount; ++currentCharOffset)
    {
@@ -678,7 +671,7 @@ NK_API void nk_sdl_style_set_tiny_font(struct nk_context *const ctx, float const
             renderMonochromeFontCharacter(surface, currentCharOffset, off, sdl->uiFont, black);
          }
       }
-      ColorRgb textColor = {.r = 0x5B, .g = 0xAC, .b = 0x1E};
+      struct nk_color textColor = {.r = 0xFF, .g = 0xFF, .b = 0xFF, .a = 0xFF};
       PixelOffset zeroOffset = {};
       renderMonochromeFontCharacter(surface, currentCharOffset, zeroOffset, sdl->uiFont, textColor);
    }
