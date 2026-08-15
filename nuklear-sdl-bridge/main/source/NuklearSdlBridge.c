@@ -615,13 +615,12 @@ static void uiBridgeQueryFontGlyph(
 static void renderMonochromeFontCharacter(
    SDL_Surface *const surface, size_t const characterIndex, PixelOffset const off, Font const *const font, struct nk_color const color)
 {
-   // TODO figure out types; when which is more appropriate.
    FontCodepointEntry const *const entry = &font->codepoints[characterIndex];
-   int const outXBase = entry->rect.topLeft.x + off.x;
-   int const outYBase = entry->rect.topLeft.y + off.y;
-   for (int16_t y = 0; y < entry->rect.size.height; ++y)
+   PixelAxisOffset const outXBase = (PixelAxisOffset)entry->rect.topLeft.x + off.x;
+   PixelAxisOffset const outYBase = (PixelAxisOffset)entry->rect.topLeft.y + off.y;
+   for (PixelAxisSize y = 0; y < entry->rect.size.height; ++y)
    {
-      for (int16_t x = 0; x < entry->rect.size.width; ++x)
+      for (PixelAxisSize x = 0; x < entry->rect.size.width; ++x)
       {
          uint8_t const in = *(font->atlas.data + (font->atlas.stride * (entry->rect.topLeft.y + y)) + entry->rect.topLeft.x + x);
          if (in != 0)
