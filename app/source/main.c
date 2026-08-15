@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 
 #define SDL_MAIN_USE_CALLBACKS 1
@@ -26,10 +27,98 @@ static SDL_AppResult nk_sdl_fail(char const *const message)
    return SDL_APP_FAILURE;
 }
 
-[[maybe_unused]] static void setStyle(struct nk_style *style)
+static struct nk_color color(uint8_t const r, uint8_t const g, uint8_t const b, uint8_t const a)
+{
+   struct nk_color const value = {.r = r, .g = g, .b = b, .a = a};
+   return value;
+}
+
+static uint8_t alphaByte(float const a)
+{
+   return (uint8_t)SDL_roundf(255.0f * a);
+}
+
+static struct nk_color colorDoubleFull(float const a)
+{
+   return color(0xC4, 0x38, 0x9F, alphaByte(a));
+}
+
+static struct nk_color colorDoubleDark(float const a)
+{
+   return color(0x31, 0x01, 0x38, alphaByte(a));
+}
+
+static struct nk_color colorTripleFull(float const a)
+{
+   return color(0x21, 0xFF, 0x43, alphaByte(a));
+}
+
+static struct nk_color colorTripleDark(float const a)
+{
+   return color(0x06, 0xCC, 0x94, alphaByte(a));
+}
+
+static struct nk_color colorTripleLight(float const a)
+{
+   return color(0x51, 0x99, 0x58, alphaByte(a));
+}
+
+[[maybe_unused]] static void setStyle(struct nk_context *ctx)
 {
    struct nk_vec2 const zero = nk_vec2(0.0f, 0.0f);
 
+   struct nk_color hackedColorStyle[NK_COLOR_COUNT] = {0};
+   for (size_t i = 0; i < NK_COLOR_COUNT; i++)
+   {
+      hackedColorStyle[i] = color(0xFF, 0x00, 0x00, 0xC0);
+   }
+   hackedColorStyle[NK_COLOR_TEXT] = color(0x5B, 0xAC, 0x1E, 0xFF);
+   hackedColorStyle[NK_COLOR_WINDOW] = colorDoubleDark(1.0f);
+   hackedColorStyle[NK_COLOR_HEADER] = colorTripleLight(0.70f);
+   hackedColorStyle[NK_COLOR_BORDER] = colorDoubleFull(1.0f);
+
+   hackedColorStyle[NK_COLOR_BUTTON] = colorTripleDark(0.4f);
+   hackedColorStyle[NK_COLOR_BUTTON_HOVER] = colorTripleFull(1.0f);
+   hackedColorStyle[NK_COLOR_BUTTON_ACTIVE] = colorDoubleFull(1.0f);
+
+   hackedColorStyle[NK_COLOR_TOGGLE] = colorTripleDark(0.4f);
+   hackedColorStyle[NK_COLOR_TOGGLE_HOVER] = colorTripleFull(1.0f);
+   hackedColorStyle[NK_COLOR_TOGGLE_CURSOR] = colorDoubleFull(1.0f);
+
+   hackedColorStyle[NK_COLOR_SELECT] = colorTripleDark(0.4f);
+   hackedColorStyle[NK_COLOR_SELECT_ACTIVE] = colorDoubleFull(1.0f);
+
+   hackedColorStyle[NK_COLOR_SLIDER] = colorTripleDark(0.4f);
+   hackedColorStyle[NK_COLOR_SLIDER_CURSOR] = colorTripleLight(1.0f);
+   hackedColorStyle[NK_COLOR_SLIDER_CURSOR_HOVER] = colorTripleFull(1.0f);
+   hackedColorStyle[NK_COLOR_SLIDER_CURSOR_ACTIVE] = colorDoubleFull(1.0f);
+
+   hackedColorStyle[NK_COLOR_PROPERTY] = colorDoubleDark(1.0f);
+
+   hackedColorStyle[NK_COLOR_EDIT] = colorDoubleDark(1.0f);
+   hackedColorStyle[NK_COLOR_EDIT_CURSOR] = colorDoubleFull(1.0f);
+
+   hackedColorStyle[NK_COLOR_COMBO] = colorDoubleDark(1.0f);
+
+   hackedColorStyle[NK_COLOR_CHART] = colorDoubleDark(1.0f);
+   hackedColorStyle[NK_COLOR_CHART_COLOR] = colorTripleFull(1.0f);
+   hackedColorStyle[NK_COLOR_CHART_COLOR_HIGHLIGHT] = colorTripleLight(1.0f);
+
+   hackedColorStyle[NK_COLOR_SCROLLBAR] = colorTripleDark(1.0f);
+   hackedColorStyle[NK_COLOR_SCROLLBAR_CURSOR] = colorTripleLight(1.0f);
+   hackedColorStyle[NK_COLOR_SCROLLBAR_CURSOR_HOVER] = colorTripleFull(1.0f);
+   hackedColorStyle[NK_COLOR_SCROLLBAR_CURSOR_ACTIVE] = colorDoubleFull(1.0f);
+
+   hackedColorStyle[NK_COLOR_TAB_HEADER] = colorTripleLight(0.54);
+
+   hackedColorStyle[NK_COLOR_KNOB] = colorTripleDark(1.0f);
+   hackedColorStyle[NK_COLOR_KNOB_CURSOR] = colorTripleLight(1.0f);
+   hackedColorStyle[NK_COLOR_KNOB_CURSOR_HOVER] = colorTripleFull(1.0f);
+   hackedColorStyle[NK_COLOR_KNOB_CURSOR_ACTIVE] = colorDoubleFull(1.0f);
+
+   nk_style_from_table(ctx, hackedColorStyle);
+
+   struct nk_style *style = &ctx->style;
    /* default text */
    struct nk_style_text *text = &style->text;
    // text->color = table[NK_COLOR_TEXT];
@@ -102,7 +191,7 @@ static SDL_AppResult nk_sdl_fail(char const *const message)
    button->color_factor_text = 1.0f;
    button->color_factor_background = 1.0f;
    button->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-
+#if 0
    /* checkbox toggle */
    struct nk_style_toggle *toggle = &style->checkbox;
    /*
@@ -524,7 +613,7 @@ static SDL_AppResult nk_sdl_fail(char const *const message)
    button->color_factor_background = 1.0f;
    button->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
    style->tab.node_maximize_button = *button;
-
+#endif
    /* window header */
    struct nk_style_window *win = &style->window;
    win->header.align = NK_HEADER_RIGHT;
@@ -601,8 +690,8 @@ static SDL_AppResult nk_sdl_fail(char const *const message)
 
    win->rounding = 0.0f;
    win->spacing = zero; //(4, 4);
-   win->scrollbar_size = zero; //(10, 10);
-   win->min_size = zero; //(64, 64);
+   win->scrollbar_size = nk_vec2(5, 5);
+   win->min_size = nk_vec2(6, 6); //(64, 64);
 
    win->combo_border = 1.0f;
    win->contextual_border = 0.0f;
@@ -613,13 +702,13 @@ static SDL_AppResult nk_sdl_fail(char const *const message)
    win->border = 1.0f;
    win->min_row_height_padding = 0;
 
-   win->padding = zero; //(4, 4);
-   win->group_padding = zero; //(4, 4);
-   win->popup_padding = zero; //(4, 4);
-   win->combo_padding = zero; //(4, 4);
-   win->contextual_padding = zero; //(4, 4);
-   win->menu_padding = zero; //(4, 4);
-   win->tooltip_padding = zero; //(4, 4);
+   win->padding = zero; // set to zero because it affects menu bars
+   win->group_padding = nk_vec2(1, 1); //(4, 4);
+   win->popup_padding = nk_vec2(1, 1); //(4, 4);
+   win->combo_padding = nk_vec2(1, 1); //(4, 4);
+   win->contextual_padding = nk_vec2(1, 1); //(4, 4);
+   win->menu_padding = nk_vec2(1, 1); //(4, 4);
+   win->tooltip_padding = nk_vec2(1, 1); //(4, 4);
 
    win->tooltip_origin = NK_TOP_LEFT;
    win->tooltip_offset = zero; //(12, 12);
@@ -667,7 +756,7 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
       float const scale = appGetBaseScale(app->window);
       nk_sdl_style_set_tiny_font(ctx, scale);
 
-      setStyle(&ctx->style);
+      setStyle(ctx);
       /*
       ctx->style.button.rounding = 0.0f;
 
