@@ -26,34 +26,19 @@ static SDL_AppResult nk_sdl_fail(char const *const message)
    return SDL_APP_FAILURE;
 }
 
-static void setStyle(struct nk_style *style)
+[[maybe_unused]] static void setStyle(struct nk_style *style)
 {
-   struct nk_style_text *text;
-   struct nk_style_button *button;
-   struct nk_style_toggle *toggle;
-   struct nk_style_selectable *select;
-   struct nk_style_slider *slider;
-   struct nk_style_knob *knob;
-   struct nk_style_progress *prog;
-   struct nk_style_scrollbar *scroll;
-   struct nk_style_edit *edit;
-   struct nk_style_property *property;
-   struct nk_style_combo *combo;
-   struct nk_style_chart *chart;
-   struct nk_style_tab *tab;
-   struct nk_style_window *win;
-
    struct nk_vec2 const zero = nk_vec2(0.0f, 0.0f);
 
    /* default text */
-   text = &style->text;
+   struct nk_style_text *text = &style->text;
    // text->color = table[NK_COLOR_TEXT];
    text->padding = nk_vec2(0, 0);
    text->color_factor = 1.0f;
    text->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
 
    /* default button */
-   button = &style->button;
+   struct nk_style_button *button = &style->button;
    /*
     button->normal                     = nk_style_item_color(table[NK_COLOR_BUTTON]);
     button->hover                      = nk_style_item_color(table[NK_COLOR_BUTTON_HOVER]);
@@ -119,7 +104,7 @@ static void setStyle(struct nk_style *style)
    button->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
 
    /* checkbox toggle */
-   toggle = &style->checkbox;
+   struct nk_style_toggle *toggle = &style->checkbox;
    /*
    toggle->normal = nk_style_item_color(table[NK_COLOR_TOGGLE]);
    toggle->hover = nk_style_item_color(table[NK_COLOR_TOGGLE_HOVER]);
@@ -163,7 +148,7 @@ static void setStyle(struct nk_style *style)
    toggle->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
 
    /* selectable */
-   select = &style->selectable;
+   struct nk_style_selectable *select = &style->selectable;
    /*
    select->normal = nk_style_item_color(table[NK_COLOR_SELECT]);
    select->hover = nk_style_item_color(table[NK_COLOR_SELECT]);
@@ -186,7 +171,7 @@ static void setStyle(struct nk_style *style)
    select->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
 
    /* slider */
-   slider = &style->slider;
+   struct nk_style_slider *slider = &style->slider;
    slider->normal = nk_style_item_hide();
    slider->hover = nk_style_item_hide();
    slider->active = nk_style_item_hide();
@@ -233,7 +218,7 @@ static void setStyle(struct nk_style *style)
    style->slider.dec_button = style->slider.inc_button;
 
    /* knob */
-   knob = &style->knob;
+   struct nk_style_knob *knob = &style->knob;
    knob->normal = nk_style_item_hide();
    knob->hover = nk_style_item_hide();
    knob->active = nk_style_item_hide();
@@ -256,7 +241,7 @@ static void setStyle(struct nk_style *style)
    knob->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
 
    /* progressbar */
-   prog = &style->progress;
+   struct nk_style_progress *prog = &style->progress;
    /*
    prog->normal = nk_style_item_color(table[NK_COLOR_SLIDER]);
    prog->hover = nk_style_item_color(table[NK_COLOR_SLIDER]);
@@ -276,7 +261,7 @@ static void setStyle(struct nk_style *style)
    prog->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
 
    /* scrollbars */
-   scroll = &style->scrollh;
+   struct nk_style_scrollbar *scroll = &style->scrollh;
    /*
    scroll->normal = nk_style_item_color(table[NK_COLOR_SCROLLBAR]);
    scroll->hover = nk_style_item_color(table[NK_COLOR_SCROLLBAR]);
@@ -326,7 +311,7 @@ static void setStyle(struct nk_style *style)
    style->scrollv.dec_button = style->scrollh.inc_button;
 
    /* edit */
-   edit = &style->edit;
+   struct nk_style_edit *edit = &style->edit;
    /*
    edit->normal = nk_style_item_color(table[NK_COLOR_EDIT]);
    edit->hover = nk_style_item_color(table[NK_COLOR_EDIT]);
@@ -355,7 +340,7 @@ static void setStyle(struct nk_style *style)
    edit->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
 
    /* property */
-   property = &style->property;
+   struct nk_style_property *property = &style->property;
    /*
    property->normal = nk_style_item_color(table[NK_COLOR_PROPERTY]);
    property->hover = nk_style_item_color(table[NK_COLOR_PROPERTY]);
@@ -422,7 +407,7 @@ static void setStyle(struct nk_style *style)
    edit->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
 
    /* chart */
-   chart = &style->chart;
+   struct nk_style_chart *chart = &style->chart;
    /*
    chart->background = nk_style_item_color(table[NK_COLOR_CHART]);
    chart->border_color = table[NK_COLOR_BORDER];
@@ -437,7 +422,7 @@ static void setStyle(struct nk_style *style)
    chart->show_markers = nk_true;
 
    /* combo */
-   combo = &style->combo;
+   struct nk_style_combo *combo = &style->combo;
    /*
    combo->normal = nk_style_item_color(table[NK_COLOR_COMBO]);
    combo->hover = nk_style_item_color(table[NK_COLOR_COMBO]);
@@ -480,7 +465,7 @@ static void setStyle(struct nk_style *style)
    button->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
 
    /* tab */
-   tab = &style->tab;
+   struct nk_style_tab *tab = &style->tab;
    /*
    tab->background = nk_style_item_color(table[NK_COLOR_TAB_HEADER]);
    tab->border_color = table[NK_COLOR_BORDER];
@@ -541,7 +526,7 @@ static void setStyle(struct nk_style *style)
    style->tab.node_maximize_button = *button;
 
    /* window header */
-   win = &style->window;
+   struct nk_style_window *win = &style->window;
    win->header.align = NK_HEADER_RIGHT;
    win->header.close_symbol = NK_SYMBOL_X;
    win->header.minimize_symbol = NK_SYMBOL_MINUS;
