@@ -611,7 +611,8 @@ NK_INTERN void nk_sdl_query_tiny_font_glyph(
    glyph->height = (float)(outlinedHeight)*scale;
    glyph->width = (float)(outlinedWidth)*scale;
    glyph->xadvance = (float)(outlinedWidth - 2) * scale; // one shift for outline, one because each glyph has its own spacing to the right
-   static float const dosFudge = 0.00001f;
+   // The renderer on MS-DOS appears to have a different rounding or some rounding error. This can be fixed by adding float's epsilon with no effect on others.
+   static float const dosFudge = SDL_FLT_EPSILON;
    glyph->uv[0].x = (float)(outlinedLeft) / bitmapWidth + dosFudge;
    glyph->uv[0].y = (float)(outlinedTop) / bitmapHeight + dosFudge;
    glyph->uv[1].x = (float)(outlinedLeft + outlinedWidth) / bitmapWidth + (dosFudge * 2.0f);
