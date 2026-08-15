@@ -743,6 +743,7 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
       SDL_LogError(SDL_LOG_CATEGORY_CUSTOM, "SDL_SetRenderVSync failed: %s", SDL_GetError());
    }
    SDL_SetRenderLogicalPresentation(app->renderer, 320, 200, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+   SDL_SetRenderDrawBlendMode(app->renderer, SDL_BLENDMODE_BLEND); // Ensure blend mode is set on all platforms
 
    struct nk_context *ctx = nk_sdl_init(app->window, app->renderer, nk_sdl_allocator());
    app->ctx = ctx;
@@ -753,7 +754,7 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
 
       setStyle(ctx);
 
-      app->AA = NK_ANTI_ALIASING_OFF; // ON would work, yet the window border is too thick.
+      app->AA = NK_ANTI_ALIASING_ON;
    }
    nk_input_begin(ctx);
 
