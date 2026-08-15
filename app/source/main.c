@@ -757,53 +757,8 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
       nk_sdl_style_set_tiny_font(ctx, scale);
 
       setStyle(ctx);
-      /*
-      ctx->style.button.rounding = 0.0f;
 
-      ctx->style.menu_button.rounding = 0.0f;
-      ctx->style.menu_button.padding.x = 0.0f;
-      ctx->style.menu_button.padding.y = 0.0f;
-      ctx->style.menu_button.touch_padding.x = 0.0f;
-      ctx->style.menu_button.touch_padding.y = 0.0f;
-      ctx->style.property.rounding = 0.0f;
-      ctx->style.property.border = 0.0f;
-      ctx->style.option.border = 0.0f;
-      ctx->style.checkbox.border = 0.0f;
-      ctx->style.property.dec_button.border = 0.0f;
-      ctx->style.property.inc_button.border = 0.0f;
-      ctx->style.tab.tab_minimize_button.border = 0.0f;
-      ctx->style.tab.tab_maximize_button.border = 0.0f;
-      ctx->style.tab.node_minimize_button.border = 0.0f;
-      ctx->style.tab.node_maximize_button.border = 0.0f;
-      ctx->style.text.padding.x = 0.0f;
-      ctx->style.text.padding.y = 0.0f;
-      ctx->style.checkbox.spacing = 1.0f;
-      ctx->style.window.header.label_padding.x = 0.0f;
-      ctx->style.window.header.label_padding.y = 0.0f;
-      ctx->style.window.header.padding.x = 0.0f;
-      ctx->style.window.header.padding.y = 0.0f;
-      ctx->style.window.header.spacing.x = 0.0f;
-      ctx->style.window.header.spacing.y = 0.0f;
-      ctx->style.window.menu_padding.x = 0.0f;
-      ctx->style.window.menu_padding.y = 0.0f;
-      ctx->style.window.menu_border = 1.0f;
-      ctx->style.window.menu_border_color.r = 0xFF;
-      ctx->style.window.padding.x = 0.0f;
-      ctx->style.window.padding.y = 0.0f;
-      ctx->style.window.spacing.x = 0.0f;
-      ctx->style.window.spacing.y = 0.0f;
-      ctx->style.window.popup_padding.x = 0.0f;
-      ctx->style.window.popup_padding.y = 0.0f;
-      ctx->style.window.group_padding.x = 0.0f;
-      ctx->style.window.group_padding.y = 0.0f;
-      ctx->style.window.combo_padding.x = 0.0f;
-      ctx->style.window.combo_padding.y = 0.0f;
-      ctx->style.window.contextual_padding.x = 0.0f;
-      ctx->style.window.contextual_padding.y = 0.0f;
-      */
-
-      /* It's better to disable anti-aliasing when using small fonts */
-      app->AA = NK_ANTI_ALIASING_OFF;
+      app->AA = NK_ANTI_ALIASING_OFF; // ON would work, yet the window border is too thick.
    }
    nk_input_begin(ctx);
 
