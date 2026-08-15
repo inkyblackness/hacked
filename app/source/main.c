@@ -27,52 +27,47 @@ static SDL_AppResult nk_sdl_fail(char const *const message)
    return SDL_APP_FAILURE;
 }
 
-static struct nk_color color(uint8_t const r, uint8_t const g, uint8_t const b, uint8_t const a)
+static struct nk_color color(uint8_t const r, uint8_t const g, uint8_t const b, float const a)
 {
-   struct nk_color const value = {.r = r, .g = g, .b = b, .a = a};
+   struct nk_color const value = {.r = r, .g = g, .b = b, .a = (uint8_t)SDL_roundf(255.0f * a)};
    return value;
-}
-
-static uint8_t alphaByte(float const a)
-{
-   return (uint8_t)SDL_roundf(255.0f * a);
 }
 
 static struct nk_color colorDoubleFull(float const a)
 {
-   return color(0xC4, 0x38, 0x9F, alphaByte(a));
+   return color(0xC4, 0x38, 0x9F, a);
 }
 
 static struct nk_color colorDoubleDark(float const a)
 {
-   return color(0x31, 0x01, 0x38, alphaByte(a));
+   return color(0x31, 0x01, 0x38, a);
 }
 
 static struct nk_color colorTripleFull(float const a)
 {
-   return color(0x21, 0xFF, 0x43, alphaByte(a));
+   return color(0x21, 0xFF, 0x43, a);
 }
 
 static struct nk_color colorTripleDark(float const a)
 {
-   return color(0x06, 0xCC, 0x94, alphaByte(a));
+   return color(0x06, 0xCC, 0x94, a);
 }
 
 static struct nk_color colorTripleLight(float const a)
 {
-   return color(0x51, 0x99, 0x58, alphaByte(a));
+   return color(0x51, 0x99, 0x58, a);
 }
 
-[[maybe_unused]] static void setStyle(struct nk_context *ctx)
+static void setStyle(struct nk_context *ctx)
 {
    struct nk_vec2 const zero = nk_vec2(0.0f, 0.0f);
 
    struct nk_color hackedColorStyle[NK_COLOR_COUNT] = {0};
    for (size_t i = 0; i < NK_COLOR_COUNT; i++)
    {
-      hackedColorStyle[i] = color(0xFF, 0x00, 0x00, 0xC0);
+      hackedColorStyle[i] = color(0xFF, 0x00, 0x00, 0x75f);
    }
-   hackedColorStyle[NK_COLOR_TEXT] = color(0x5B, 0xAC, 0x1E, 0xFF);
+   hackedColorStyle[NK_COLOR_TEXT] = color(0x5B, 0xAC, 0x1E, 1.0f);
    hackedColorStyle[NK_COLOR_WINDOW] = colorDoubleDark(1.0f);
    hackedColorStyle[NK_COLOR_HEADER] = colorTripleLight(0.70f);
    hackedColorStyle[NK_COLOR_BORDER] = colorDoubleFull(1.0f);
