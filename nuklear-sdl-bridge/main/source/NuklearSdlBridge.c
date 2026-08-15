@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "hacked/core/editor/ui/UIFont.h"
 #include "hacked/core/media/PixelSpace.h"
 
@@ -556,19 +558,21 @@ static float uiBridgeQueryFontWidth(nk_handle const handle, float const height, 
    struct UIBridge const *const bridge = handle.ptr;
    NK_ASSERT(bridge);
    int32_t width = 0;
-   char const *const end = text + len;
-   for (char const *it = text; it != end; ++it)
-   {
-      // TODO this is wrong, as the text is UTF-8, and it needs to be decoded and then translated into the right codepage.
-      char codepoint = *it;
 
-      FontCodepointEntry const *entry = fontFindCodepointEntry(bridge->uiFont, codepoint);
+   nk_rune unicode = 0;
+   int offset = 0;
+   int charsUsed = nk_utf_decode(text, &unicode, len);
+   while ((charsUsed > 0) && (offset < len))
+   {
+      FontCodepointEntry const *entry = fontFindCodepointEntry(bridge->uiFont, unicode);
       if (entry == NULL)
       {
          entry = fontFindCodepointEntry(bridge->uiFont, '?');
       }
-
       width += entry->rect.size.width - 1; // unclear why it is -1 compared to how the query function operates; yet it works.
+
+      offset += charsUsed;
+      charsUsed = nk_utf_decode(&text[offset], &unicode, len - offset);
    }
    // TODO: consider having a reference height value in the font structure
    float scale = height / (float)(bridge->uiFont->codepoints[0].rect.size.height + 2);
