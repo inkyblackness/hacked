@@ -601,18 +601,20 @@ NK_INTERN void nk_sdl_query_tiny_font_glyph(
       entry = fontFindCodepointEntry(sdl->uiFont, '?');
    }
 
-   int const bitmapWidth = sdl->uiFont->atlas.size.width;
-   int const bitmapHeight = sdl->uiFont->atlas.size.height;
-
-   // Some of the additions don't make sense in the following block. However, this particular combination is correct for all resolutions.
-   float scale = height / (float)(entry->rect.size.height + 2);
-   glyph->height = (float)(entry->rect.size.height + 2) * scale;
-   glyph->width = (float)(entry->rect.size.width + 2) * scale;
-   glyph->xadvance = (float)(entry->rect.size.width) * scale;
-   glyph->uv[0].x = (float)(entry->rect.topLeft.x - 1) / (float)bitmapWidth;
-   glyph->uv[0].y = (float)(entry->rect.topLeft.y - 1) / (float)bitmapHeight;
-   glyph->uv[1].x = (float)(entry->rect.topLeft.x - 1 + entry->rect.size.width + 2) / (float)bitmapWidth;
-   glyph->uv[1].y = (float)(entry->rect.topLeft.y - 1 + entry->rect.size.height + 2) / (float)bitmapHeight;
+   float const bitmapWidth = sdl->uiFont->atlas.size.width;
+   float const bitmapHeight = sdl->uiFont->atlas.size.height;
+   int const outlinedLeft = entry->rect.topLeft.x - 1;
+   int const outlinedTop = entry->rect.topLeft.y - 1;
+   int const outlinedHeight = entry->rect.size.height + 2;
+   int const outlinedWidth = entry->rect.size.width + 2;
+   float const scale = height / (float)(outlinedHeight);
+   glyph->height = (float)(outlinedHeight)*scale;
+   glyph->width = (float)(outlinedWidth)*scale;
+   glyph->xadvance = (float)(outlinedWidth - 2) * scale; // one shift for outline, one because each glyph has its own spacing to the right
+   glyph->uv[0].x = (float)(outlinedLeft) / bitmapWidth;
+   glyph->uv[0].y = (float)(outlinedTop) / bitmapHeight;
+   glyph->uv[1].x = (float)(outlinedLeft + outlinedWidth) / bitmapWidth;
+   glyph->uv[1].y = (float)(outlinedTop + outlinedHeight) / bitmapHeight;
    glyph->offset.x = 0.0f;
    glyph->offset.y = 0.0f;
 }
