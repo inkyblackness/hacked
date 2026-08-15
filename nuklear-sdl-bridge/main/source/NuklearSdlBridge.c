@@ -1,14 +1,8 @@
 #include "hacked/core/editor/ui/UIFont.h"
 #include "hacked/core/media/PixelSpace.h"
-#include "hacked/core/serial/io/Primitives.h"
 
 #define NK_IMPLEMENTATION
 #include "hacked/nuklear/NuklearSdlBridge.h"
-
-// This is the same default value as the one from "src/nuklear_internal.h"
-#ifndef NK_BUFFER_DEFAULT_INITIAL_SIZE
-#define NK_BUFFER_DEFAULT_INITIAL_SIZE (4 * 1024)
-#endif
 
 struct UIBridgeDevice
 {
