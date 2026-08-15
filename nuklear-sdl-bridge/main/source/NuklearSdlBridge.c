@@ -51,17 +51,17 @@ static void uiBridgeDeviceDropFontTexture(struct UIBridgeDevice *const device)
 nk_handle uiBridgeGetUserdata(struct nk_context const *const ctx)
 {
    NK_ASSERT(ctx);
-   struct UIBridge *sdl = ctx->userdata.ptr;
-   NK_ASSERT(sdl);
-   return sdl->userdata;
+   struct UIBridge *bridge = ctx->userdata.ptr;
+   NK_ASSERT(bridge);
+   return bridge->userdata;
 }
 
 void uiBridgeSetUserdata(struct nk_context *const ctx, nk_handle const userdata)
 {
    NK_ASSERT(ctx);
-   struct UIBridge *const sdl = ctx->userdata.ptr;
-   NK_ASSERT(sdl);
-   sdl->userdata = userdata;
+   struct UIBridge *const bridge = ctx->userdata.ptr;
+   NK_ASSERT(bridge);
+   bridge->userdata = userdata;
 }
 
 static void *nkAllocatorSDLAlloc(nk_handle const user, void *const old, nk_size const size)
@@ -101,24 +101,24 @@ static void uiBridgeUploadAtlas(struct nk_context *const ctx, void const *const 
    NK_ASSERT(width > 0);
    NK_ASSERT(height > 0);
 
-   struct UIBridge *sdl = ctx->userdata.ptr;
-   NK_ASSERT(sdl);
+   struct UIBridge *bridge = ctx->userdata.ptr;
+   NK_ASSERT(bridge);
 
-   uiBridgeDeviceDropFontTexture(&sdl->device);
+   uiBridgeDeviceDropFontTexture(&bridge->device);
 
-   sdl->device.fontTexture = SDL_CreateTexture(sdl->renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, width, height);
-   NK_ASSERT(sdl->device.fontTexture);
-   SDL_UpdateTexture(sdl->device.fontTexture, NULL, image, 4 * width);
-   SDL_SetTextureBlendMode(sdl->device.fontTexture, SDL_BLENDMODE_BLEND);
-   SDL_SetTextureScaleMode(sdl->device.fontTexture, SDL_SCALEMODE_NEAREST);
+   bridge->device.fontTexture = SDL_CreateTexture(bridge->renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, width, height);
+   NK_ASSERT(bridge->device.fontTexture);
+   SDL_UpdateTexture(bridge->device.fontTexture, NULL, image, 4 * width);
+   SDL_SetTextureBlendMode(bridge->device.fontTexture, SDL_BLENDMODE_BLEND);
+   SDL_SetTextureScaleMode(bridge->device.fontTexture, SDL_SCALEMODE_NEAREST);
 }
 
 void uiBridgeUpdateTextInput(struct nk_context *ctx)
 {
    bool active = false;
    NK_ASSERT(ctx);
-   struct UIBridge *const sdl = ctx->userdata.ptr;
-   NK_ASSERT(sdl);
+   struct UIBridge *const bridge = ctx->userdata.ptr;
+   NK_ASSERT(bridge);
 
    /* Determine if Nuklear is using any top-level "edit" widget.
     * Popups take higher priority because they block any incoming input.
@@ -132,22 +132,22 @@ void uiBridgeUpdateTextInput(struct nk_context *ctx)
 
    /* decide, if TextInputActive should be unchanged/stoped/started
     * and change its state accordingly for owned SDL Window */
-   if (active != sdl->editWasActive)
+   if (active != bridge->editWasActive)
    {
-      bool const window_edit_active = SDL_TextInputActive(sdl->window);
+      bool const window_edit_active = SDL_TextInputActive(bridge->window);
 
       /* If you ever hit this check, it means that the demo and your app
        * (or something else) are all trying to manage TextInputActive state.
        * This can cause subtle bugs where the state won't be what you expect.
        * You can safely remove this assert and the demo will keep working,
        * but make sure it does not cause any issues for you */
-      NK_ASSERT(window_edit_active == sdl->editWasActive && "something else changed TextInputActive state for this Window");
+      NK_ASSERT(window_edit_active == bridge->editWasActive && "something else changed TextInputActive state for this Window");
 
-      if (!window_edit_active && !sdl->editWasActive && active)
-         SDL_StartTextInput(sdl->window);
-      else if (window_edit_active && sdl->editWasActive && !active)
-         SDL_StopTextInput(sdl->window);
-      sdl->editWasActive = active;
+      if (!window_edit_active && !bridge->editWasActive && active)
+         SDL_StartTextInput(bridge->window);
+      else if (window_edit_active && bridge->editWasActive && !active)
+         SDL_StopTextInput(bridge->window);
+      bridge->editWasActive = active;
    }
 
    /* FIXME:
@@ -162,13 +162,13 @@ void uiBridgeUpdateTextInput(struct nk_context *ctx)
 void uiBridgeRender(struct nk_context *const ctx)
 {
    NK_ASSERT(ctx);
-   struct UIBridge *sdl = ctx->userdata.ptr;
-   NK_ASSERT(sdl);
+   struct UIBridge *bridge = ctx->userdata.ptr;
+   NK_ASSERT(bridge);
 
    { /* setup internal delta time that Nuklear needs for animations */
       Uint64 const now = SDL_GetTicksNS();
-      ctx->delta_time_seconds = (float)(now - sdl->lastRenderTick) / (float)SDL_NS_PER_SECOND;
-      sdl->lastRenderTick = now;
+      ctx->delta_time_seconds = (float)(now - bridge->lastRenderTick) / (float)SDL_NS_PER_SECOND;
+      bridge->lastRenderTick = now;
    }
 
    {
@@ -189,7 +189,7 @@ void uiBridgeRender(struct nk_context *const ctx)
       config.vertex_layout = vertex_layout;
       config.vertex_size = sizeof(struct UIBridgeVertex);
       config.vertex_alignment = NK_ALIGNOF(struct UIBridgeVertex);
-      config.tex_null = sdl->device.nullTexture;
+      config.tex_null = bridge->device.nullTexture;
       config.circle_segment_count = 22;
       config.curve_segment_count = 22;
       config.arc_segment_count = 22;
@@ -199,19 +199,19 @@ void uiBridgeRender(struct nk_context *const ctx)
 
       /* convert shapes into vertices */
       struct nk_buffer vbuf, ebuf;
-      nk_buffer_init(&vbuf, &sdl->allocator, NK_BUFFER_DEFAULT_INITIAL_SIZE);
-      nk_buffer_init(&ebuf, &sdl->allocator, NK_BUFFER_DEFAULT_INITIAL_SIZE);
-      nk_convert(&sdl->ctx, &sdl->device.cmds, &vbuf, &ebuf, &config);
+      nk_buffer_init(&vbuf, &bridge->allocator, NK_BUFFER_DEFAULT_INITIAL_SIZE);
+      nk_buffer_init(&ebuf, &bridge->allocator, NK_BUFFER_DEFAULT_INITIAL_SIZE);
+      nk_convert(&bridge->ctx, &bridge->device.cmds, &vbuf, &ebuf, &config);
 
       /* iterate over and execute each draw command */
       nk_draw_index const *offset = (const nk_draw_index *)nk_buffer_memory_const(&ebuf);
 
-      bool clipping_enabled = SDL_RenderClipEnabled(sdl->renderer);
+      bool clipping_enabled = SDL_RenderClipEnabled(bridge->renderer);
       SDL_Rect saved_clip;
-      SDL_GetRenderClipRect(sdl->renderer, &saved_clip);
+      SDL_GetRenderClipRect(bridge->renderer, &saved_clip);
 
       struct nk_draw_command const *cmd = NULL;
-      nk_draw_foreach(cmd, &sdl->ctx, &sdl->device.cmds)
+      nk_draw_foreach(cmd, &bridge->ctx, &bridge->device.cmds)
       {
          if (!cmd->elem_count)
             continue;
@@ -222,13 +222,13 @@ void uiBridgeRender(struct nk_context *const ctx)
             r.y = (int)nk_roundf(cmd->clip_rect.y);
             r.w = (int)nk_roundf(cmd->clip_rect.w);
             r.h = (int)nk_roundf(cmd->clip_rect.h);
-            SDL_SetRenderClipRect(sdl->renderer, &r);
+            SDL_SetRenderClipRect(bridge->renderer, &r);
          }
 
          {
             const void *vertices = nk_buffer_memory_const(&vbuf);
 
-            SDL_RenderGeometryRaw(sdl->renderer, (SDL_Texture *)cmd->texture.ptr, (const float *)((const nk_byte *)vertices + vp), vs,
+            SDL_RenderGeometryRaw(bridge->renderer, (SDL_Texture *)cmd->texture.ptr, (const float *)((const nk_byte *)vertices + vp), vs,
                (const SDL_FColor *)((const nk_byte *)vertices + vc), vs, (const float *)((const nk_byte *)vertices + vt), vs, (int)(vbuf.needed / vs),
                (void *)offset, (int)cmd->elem_count, 2);
 
@@ -236,14 +236,14 @@ void uiBridgeRender(struct nk_context *const ctx)
          }
       }
 
-      SDL_SetRenderClipRect(sdl->renderer, &saved_clip);
+      SDL_SetRenderClipRect(bridge->renderer, &saved_clip);
       if (!clipping_enabled)
       {
-         SDL_SetRenderClipRect(sdl->renderer, NULL);
+         SDL_SetRenderClipRect(bridge->renderer, NULL);
       }
 
-      nk_clear(&sdl->ctx);
-      nk_buffer_clear(&sdl->device.cmds);
+      nk_clear(&bridge->ctx);
+      nk_buffer_clear(&bridge->device.cmds);
       nk_buffer_free(&vbuf);
       nk_buffer_free(&ebuf);
    }
@@ -277,8 +277,8 @@ static void uiBridgeClipboardCopy(nk_handle const usr, char const *const text, i
    if (len <= 0 || text == NULL)
       return;
 
-   struct UIBridge const *sdl = usr.ptr;
-   NK_ASSERT(sdl);
+   struct UIBridge const *bridge = usr.ptr;
+   NK_ASSERT(bridge);
 
    /* FIXME: there is a bug in Nuklear that affects UTF8 clipboard handling
     * "len" is expected to be a buffer length, but due to bug it actually is a glyph count
@@ -293,12 +293,12 @@ static void uiBridgeClipboardCopy(nk_handle const usr, char const *const text, i
    bufLen = (size_t)(ptext - text) + 1;
 #endif
 
-   char *const str = sdl->allocator.alloc(sdl->allocator.userdata, NULL, bufLen);
+   char *const str = bridge->allocator.alloc(bridge->allocator.userdata, NULL, bufLen);
    if (!str)
       return;
    SDL_strlcpy(str, text, bufLen);
    SDL_SetClipboardText(str);
-   sdl->allocator.free(sdl->allocator.userdata, str);
+   bridge->allocator.free(bridge->allocator.userdata, str);
 }
 
 struct nk_context *uiBridgeInit(SDL_Window *const win, SDL_Renderer *const renderer)
@@ -306,22 +306,22 @@ struct nk_context *uiBridgeInit(SDL_Window *const win, SDL_Renderer *const rende
    NK_ASSERT(win);
    NK_ASSERT(renderer);
    struct nk_allocator const allocator = nkAllocatorFromSDL();
-   struct UIBridge *const sdl = allocator.alloc(allocator.userdata, NULL, sizeof(*sdl));
-   NK_ASSERT(sdl);
-   SDL_zerop(sdl);
-   sdl->allocator = allocator;
-   sdl->window = win;
-   sdl->renderer = renderer;
-   nk_init(&sdl->ctx, &sdl->allocator, NULL);
-   sdl->ctx.userdata = nk_handle_ptr((void *)sdl);
-   sdl->ctx.clip.copy = uiBridgeClipboardCopy;
-   sdl->ctx.clip.paste = uiBridgeClipboardPaste;
-   sdl->ctx.clip.userdata = nk_handle_ptr((void *)sdl);
-   nk_buffer_init(&sdl->device.cmds, &sdl->allocator, NK_BUFFER_DEFAULT_INITIAL_SIZE);
-   sdl->editWasActive = false;
-   sdl->insertKeyToggle = false;
-   sdl->lastRenderTick = SDL_GetTicksNS();
-   return &sdl->ctx;
+   struct UIBridge *const bridge = allocator.alloc(allocator.userdata, NULL, sizeof(*bridge));
+   NK_ASSERT(bridge);
+   SDL_zerop(bridge);
+   bridge->allocator = allocator;
+   bridge->window = win;
+   bridge->renderer = renderer;
+   nk_init(&bridge->ctx, &bridge->allocator, NULL);
+   bridge->ctx.userdata = nk_handle_ptr((void *)bridge);
+   bridge->ctx.clip.copy = uiBridgeClipboardCopy;
+   bridge->ctx.clip.paste = uiBridgeClipboardPaste;
+   bridge->ctx.clip.userdata = nk_handle_ptr((void *)bridge);
+   nk_buffer_init(&bridge->device.cmds, &bridge->allocator, NK_BUFFER_DEFAULT_INITIAL_SIZE);
+   bridge->editWasActive = false;
+   bridge->insertKeyToggle = false;
+   bridge->lastRenderTick = SDL_GetTicksNS();
+   return &bridge->ctx;
 }
 
 int uiBridgeHandleEvent(struct nk_context *const ctx, SDL_Event const *const evt)
@@ -329,11 +329,11 @@ int uiBridgeHandleEvent(struct nk_context *const ctx, SDL_Event const *const evt
    NK_ASSERT(ctx);
    NK_ASSERT(evt);
 
-   struct UIBridge *const sdl = ctx->userdata.ptr;
-   NK_ASSERT(sdl);
+   struct UIBridge *const bridge = ctx->userdata.ptr;
+   NK_ASSERT(bridge);
 
    /* We only care about Window currently used by Nuklear */
-   if (sdl->window != SDL_GetWindowFromEvent(evt))
+   if (bridge->window != SDL_GetWindowFromEvent(evt))
    {
       return 0;
    }
@@ -454,8 +454,8 @@ int uiBridgeHandleEvent(struct nk_context *const ctx, SDL_Event const *const evt
          break;
       case SDLK_INSERT:
          if (down)
-            sdl->insertKeyToggle = !sdl->insertKeyToggle;
-         if (sdl->insertKeyToggle)
+            bridge->insertKeyToggle = !bridge->insertKeyToggle;
+         if (bridge->insertKeyToggle)
          {
             nk_input_key(ctx, NK_KEY_TEXT_INSERT_MODE, down);
          }
@@ -544,23 +544,23 @@ int uiBridgeHandleEvent(struct nk_context *const ctx, SDL_Event const *const evt
 void uiBridgeShutdown(struct nk_context *const ctx)
 {
    NK_ASSERT(ctx);
-   struct UIBridge *const sdl = ctx->userdata.ptr;
-   NK_ASSERT(sdl);
+   struct UIBridge *const bridge = ctx->userdata.ptr;
+   NK_ASSERT(bridge);
 
-   nk_buffer_free(&sdl->device.cmds);
+   nk_buffer_free(&bridge->device.cmds);
 
-   uiBridgeDeviceDropFontTexture(&sdl->device);
-   fontRelease(&sdl->uiFont);
+   uiBridgeDeviceDropFontTexture(&bridge->device);
+   fontRelease(&bridge->uiFont);
 
    nk_free(ctx);
-   sdl->allocator.free(sdl->allocator.userdata, sdl->nkFont);
-   sdl->allocator.free(sdl->allocator.userdata, sdl);
+   bridge->allocator.free(bridge->allocator.userdata, bridge->nkFont);
+   bridge->allocator.free(bridge->allocator.userdata, bridge);
 }
 
 static float uiBridgeQueryFontWidth(nk_handle const handle, float const height, char const *text, int const len)
 {
-   struct UIBridge const *const sdl = handle.ptr;
-   NK_ASSERT(sdl);
+   struct UIBridge const *const bridge = handle.ptr;
+   NK_ASSERT(bridge);
    int32_t width = 0;
    char const *const end = text + len;
    for (char const *it = text; it != end; ++it)
@@ -568,16 +568,16 @@ static float uiBridgeQueryFontWidth(nk_handle const handle, float const height, 
       // TODO this is wrong, as the text is UTF-8, and it needs to be decoded and then translated into the right codepage.
       char codepoint = *it;
 
-      FontCodepointEntry const *entry = fontFindCodepointEntry(sdl->uiFont, codepoint);
+      FontCodepointEntry const *entry = fontFindCodepointEntry(bridge->uiFont, codepoint);
       if (entry == NULL)
       {
-         entry = fontFindCodepointEntry(sdl->uiFont, '?');
+         entry = fontFindCodepointEntry(bridge->uiFont, '?');
       }
 
       width += entry->rect.size.width - 1; // unclear why it is -1 compared to how the query function operates; yet it works.
    }
    // TODO: consider having a reference height value in the font structure
-   float scale = height / (float)(sdl->uiFont->codepoints[0].rect.size.height + 2);
+   float scale = height / (float)(bridge->uiFont->codepoints[0].rect.size.height + 2);
    return (float)(width + 1) * scale;
 }
 
@@ -586,17 +586,17 @@ static void uiBridgeQueryFontGlyph(
 {
    NK_UNUSED(next_codepoint);
 
-   struct UIBridge const *const sdl = handle.ptr;
-   NK_ASSERT(sdl);
+   struct UIBridge const *const bridge = handle.ptr;
+   NK_ASSERT(bridge);
 
-   FontCodepointEntry const *entry = fontFindCodepointEntry(sdl->uiFont, codepoint);
+   FontCodepointEntry const *entry = fontFindCodepointEntry(bridge->uiFont, codepoint);
    if (entry == NULL)
    {
-      entry = fontFindCodepointEntry(sdl->uiFont, '?');
+      entry = fontFindCodepointEntry(bridge->uiFont, '?');
    }
 
-   float const bitmapWidth = sdl->uiFont->atlas.size.width;
-   float const bitmapHeight = sdl->uiFont->atlas.size.height;
+   float const bitmapWidth = bridge->uiFont->atlas.size.width;
+   float const bitmapHeight = bridge->uiFont->atlas.size.height;
    int const outlinedLeft = entry->rect.topLeft.x - 1;
    int const outlinedTop = entry->rect.topLeft.y - 1;
    int const outlinedHeight = entry->rect.size.height + 2;
@@ -639,41 +639,41 @@ void uiBridgeSetFont(struct nk_context *const ctx, float const scale)
 {
    NK_ASSERT(ctx);
 
-   struct UIBridge *const sdl = ctx->userdata.ptr;
-   NK_ASSERT(sdl);
+   struct UIBridge *const bridge = ctx->userdata.ptr;
+   NK_ASSERT(bridge);
 
-   if (sdl->nkFont)
+   if (bridge->nkFont)
    {
-      sdl->allocator.free(sdl->allocator.userdata, sdl->nkFont);
-      sdl->nkFont = NULL;
+      bridge->allocator.free(bridge->allocator.userdata, bridge->nkFont);
+      bridge->nkFont = NULL;
    }
 
-   sdl->uiFont = uiFont();
+   bridge->uiFont = uiFont();
 
-   SDL_Surface *const surface = SDL_CreateSurface(sdl->uiFont->atlas.size.width, sdl->uiFont->atlas.size.height, SDL_PIXELFORMAT_RGBA32);
+   SDL_Surface *const surface = SDL_CreateSurface(bridge->uiFont->atlas.size.width, bridge->uiFont->atlas.size.height, SDL_PIXELFORMAT_RGBA32);
    NK_ASSERT(surface);
 
    struct nk_color const black = {.r = 0x30, .g = 0x30, .b = 0x30, .a = 0xFF};
 
-   for (size_t currentCharOffset = 0; currentCharOffset < sdl->uiFont->codepointCount; ++currentCharOffset)
+   for (size_t currentCharOffset = 0; currentCharOffset < bridge->uiFont->codepointCount; ++currentCharOffset)
    {
       for (PixelAxisOffset i = 0; i < 9; ++i)
       {
          PixelOffset const off = {.x = (PixelAxisOffset)((i % 3) - 1), .y = (PixelAxisOffset)((i / 3) - 1)};
          if (off.x != 0 || off.y != 0)
          {
-            renderMonochromeFontCharacter(surface, currentCharOffset, off, sdl->uiFont, black);
+            renderMonochromeFontCharacter(surface, currentCharOffset, off, bridge->uiFont, black);
          }
       }
       struct nk_color const textColor = {.r = 0xFF, .g = 0xFF, .b = 0xFF, .a = 0xFF};
       PixelOffset const zeroOffset = {};
-      renderMonochromeFontCharacter(surface, currentCharOffset, zeroOffset, sdl->uiFont, textColor);
+      renderMonochromeFontCharacter(surface, currentCharOffset, zeroOffset, bridge->uiFont, textColor);
    }
 
-   struct nk_user_font *const font = sdl->allocator.alloc(sdl->allocator.userdata, NULL, sizeof(*font));
+   struct nk_user_font *const font = bridge->allocator.alloc(bridge->allocator.userdata, NULL, sizeof(*font));
    NK_ASSERT(font);
-   font->userdata.ptr = sdl;
-   font->height = (float)(sdl->uiFont->codepoints[0].rect.size.height + 2) * scale;
+   font->userdata.ptr = bridge;
+   font->height = (float)(bridge->uiFont->codepoints[0].rect.size.height + 2) * scale;
    font->width = &uiBridgeQueryFontWidth;
    font->query = &uiBridgeQueryFontGlyph;
 
@@ -681,9 +681,9 @@ void uiBridgeSetFont(struct nk_context *const ctx, float const scale)
     *       and sets said Texture into sdl->ogl.font_tex
     *       then nk_sdl_render expects same Texture at font->texture */
    uiBridgeUploadAtlas(ctx, surface->pixels, surface->w, surface->h);
-   font->texture.ptr = sdl->device.fontTexture;
+   font->texture.ptr = bridge->device.fontTexture;
 
-   sdl->nkFont = font;
+   bridge->nkFont = font;
    nk_style_set_font(ctx, font);
 
    SDL_DestroySurface(surface);
