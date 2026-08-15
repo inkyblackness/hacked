@@ -41,26 +41,26 @@ struct nk_sdl
    bool edit_was_active;
 };
 
-NK_API nk_handle nk_sdl_get_userdata(struct nk_context *ctx)
+nk_handle uiBridgeGetUserdata(struct nk_context const *const ctx)
 {
    NK_ASSERT(ctx);
-   struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
+   struct nk_sdl *sdl = ctx->userdata.ptr;
    NK_ASSERT(sdl);
    return sdl->userdata;
 }
 
-NK_API void nk_sdl_set_userdata(struct nk_context *ctx, nk_handle userdata)
+void uiBridgeSetUserdata(struct nk_context *const ctx, nk_handle const userdata)
 {
    NK_ASSERT(ctx);
-   struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
+   struct nk_sdl *const sdl = ctx->userdata.ptr;
    NK_ASSERT(sdl);
    sdl->userdata = userdata;
 }
 
-NK_INTERN void *nk_sdl_alloc(nk_handle user, void *old, nk_size size)
+static void *nkAllocatorSDLAlloc(nk_handle const user, void *const old, nk_size const size)
 {
    NK_UNUSED(user);
-   /* FIXME: nk_sdl_alloc should use SDL_realloc here, not SDL_malloc
+   /* FIXME: should use SDL_realloc here, not SDL_malloc
     * but this could cause a double-free due to bug within Nuklear, see:
     * https://github.com/Immediate-Mode-UI/Nuklear/issues/768
     * */
@@ -72,32 +72,31 @@ NK_INTERN void *nk_sdl_alloc(nk_handle user, void *old, nk_size size)
 #endif
 }
 
-NK_INTERN void nk_sdl_free(nk_handle user, void *old)
+static void nkAllocatorSDLFree(nk_handle const user, void *const old)
 {
    NK_UNUSED(user);
    SDL_free(old);
 }
 
-NK_API struct nk_allocator nk_sdl_allocator()
+static struct nk_allocator nkAllocatorFromSDL()
 {
-   struct nk_allocator allocator;
+   struct nk_allocator allocator = {0};
    allocator.userdata.ptr = NULL;
-   allocator.alloc = nk_sdl_alloc;
-   allocator.free = nk_sdl_free;
+   allocator.alloc = nkAllocatorSDLAlloc;
+   allocator.free = nkAllocatorSDLFree;
    return allocator;
 }
 
-NK_INTERN void nk_sdl_device_upload_atlas(struct nk_context *ctx, void const *image, int width, int height)
+static void uiBridgeUploadAtlas(struct nk_context *const ctx, void const *const image, int const width, int const height)
 {
    NK_ASSERT(ctx);
    NK_ASSERT(image);
    NK_ASSERT(width > 0);
    NK_ASSERT(height > 0);
 
-   struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
+   struct nk_sdl *sdl = ctx->userdata.ptr;
    NK_ASSERT(sdl);
 
-   /* Clean up if the texture already exists. */
    if (sdl->ogl.font_tex != NULL)
    {
       SDL_DestroyTexture(sdl->ogl.font_tex);
@@ -111,11 +110,11 @@ NK_INTERN void nk_sdl_device_upload_atlas(struct nk_context *ctx, void const *im
    SDL_SetTextureScaleMode(sdl->ogl.font_tex, SDL_SCALEMODE_NEAREST);
 }
 
-NK_API void nk_sdl_update_TextInput(struct nk_context *ctx)
+void uiBridgeUpdateTextInput(struct nk_context *ctx)
 {
    bool active = false;
    NK_ASSERT(ctx);
-   struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
+   struct nk_sdl *const sdl = ctx->userdata.ptr;
    NK_ASSERT(sdl);
 
    /* Determine if Nuklear is using any top-level "edit" widget.
@@ -157,10 +156,10 @@ NK_API void nk_sdl_update_TextInput(struct nk_context *ctx)
     */
 }
 
-NK_API void nk_sdl_render(struct nk_context *ctx)
+void uiBridgeRender(struct nk_context *const ctx)
 {
    NK_ASSERT(ctx);
-   struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
+   struct nk_sdl *sdl = ctx->userdata.ptr;
    NK_ASSERT(sdl);
 
    { /* setup internal delta time that Nuklear needs for animations */
@@ -247,12 +246,11 @@ NK_API void nk_sdl_render(struct nk_context *ctx)
    }
 }
 
-NK_INTERN void nk_sdl_clipboard_paste(nk_handle usr, struct nk_text_edit *edit)
+static void uiBridgeClipboardPaste(nk_handle const usr, struct nk_text_edit *const edit)
 {
    NK_UNUSED(usr);
 
-   /* this function returns empty string on failure, not NULL */
-   char *text = SDL_GetClipboardText();
+   char *const text = SDL_GetClipboardText();
    NK_ASSERT(text);
 
    if (text[0] != '\0')
@@ -271,12 +269,12 @@ NK_INTERN void nk_sdl_clipboard_paste(nk_handle usr, struct nk_text_edit *edit)
    SDL_free(text);
 }
 
-NK_INTERN void nk_sdl_clipboard_copy(nk_handle usr, char const *text, int len)
+static void uiBridgeClipboardCopy(nk_handle const usr, char const *const text, int const len)
 {
    if (len <= 0 || text == NULL)
       return;
 
-   struct nk_sdl const *sdl = (struct nk_sdl *)usr.ptr;
+   struct nk_sdl const *sdl = usr.ptr;
    NK_ASSERT(sdl);
 
    /* FIXME: there is a bug in Nuklear that affects UTF8 clipboard handling
@@ -292,7 +290,7 @@ NK_INTERN void nk_sdl_clipboard_copy(nk_handle usr, char const *text, int len)
    bufLen = (size_t)(ptext - text) + 1;
 #endif
 
-   char *str = (char *)sdl->allocator.alloc(sdl->allocator.userdata, NULL, bufLen);
+   char *const str = sdl->allocator.alloc(sdl->allocator.userdata, NULL, bufLen);
    if (!str)
       return;
    SDL_strlcpy(str, text, bufLen);
@@ -300,24 +298,21 @@ NK_INTERN void nk_sdl_clipboard_copy(nk_handle usr, char const *text, int len)
    sdl->allocator.free(sdl->allocator.userdata, str);
 }
 
-NK_API struct nk_context *nk_sdl_init(SDL_Window *win, SDL_Renderer *renderer, struct nk_allocator allocator)
+struct nk_context *uiBridgeInit(SDL_Window *const win, SDL_Renderer *const renderer)
 {
    NK_ASSERT(win);
    NK_ASSERT(renderer);
-   NK_ASSERT(allocator.alloc);
-   NK_ASSERT(allocator.free);
-   struct nk_sdl *sdl = (struct nk_sdl *)allocator.alloc(allocator.userdata, NULL, sizeof(*sdl));
+   struct nk_allocator const allocator = nkAllocatorFromSDL();
+   struct nk_sdl *const sdl = allocator.alloc(allocator.userdata, NULL, sizeof(*sdl));
    NK_ASSERT(sdl);
    SDL_zerop(sdl);
-   sdl->allocator.userdata = allocator.userdata;
-   sdl->allocator.alloc = allocator.alloc;
-   sdl->allocator.free = allocator.free;
+   sdl->allocator = allocator;
    sdl->win = win;
    sdl->renderer = renderer;
    nk_init(&sdl->ctx, &sdl->allocator, NULL);
    sdl->ctx.userdata = nk_handle_ptr((void *)sdl);
-   sdl->ctx.clip.copy = nk_sdl_clipboard_copy;
-   sdl->ctx.clip.paste = nk_sdl_clipboard_paste;
+   sdl->ctx.clip.copy = uiBridgeClipboardCopy;
+   sdl->ctx.clip.paste = uiBridgeClipboardPaste;
    sdl->ctx.clip.userdata = nk_handle_ptr((void *)sdl);
    nk_buffer_init(&sdl->ogl.cmds, &sdl->allocator, NK_BUFFER_DEFAULT_INITIAL_SIZE);
    sdl->edit_was_active = false;
@@ -326,12 +321,12 @@ NK_API struct nk_context *nk_sdl_init(SDL_Window *win, SDL_Renderer *renderer, s
    return &sdl->ctx;
 }
 
-NK_API int nk_sdl_handle_event(struct nk_context *ctx, SDL_Event *evt)
+int uiBridgeHandleEvent(struct nk_context *const ctx, SDL_Event const *const evt)
 {
    NK_ASSERT(ctx);
    NK_ASSERT(evt);
 
-   struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
+   struct nk_sdl *const sdl = ctx->userdata.ptr;
    NK_ASSERT(sdl);
 
    /* We only care about Window currently used by Nuklear */
@@ -543,11 +538,10 @@ NK_API int nk_sdl_handle_event(struct nk_context *ctx, SDL_Event *evt)
    return 0;
 }
 
-NK_API
-void nk_sdl_shutdown(struct nk_context *ctx)
+void uiBridgeShutdown(struct nk_context *const ctx)
 {
    NK_ASSERT(ctx);
-   struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
+   struct nk_sdl *const sdl = ctx->userdata.ptr;
    NK_ASSERT(sdl);
 
    nk_buffer_free(&sdl->ogl.cmds);
@@ -557,16 +551,16 @@ void nk_sdl_shutdown(struct nk_context *ctx)
       SDL_DestroyTexture(sdl->ogl.font_tex);
       sdl->ogl.font_tex = NULL;
    }
+   fontRelease(&sdl->uiFont);
 
    nk_free(ctx);
    sdl->allocator.free(sdl->allocator.userdata, sdl->debug_font);
    sdl->allocator.free(sdl->allocator.userdata, sdl);
-   fontRelease(&sdl->uiFont);
 }
 
-NK_INTERN float nk_sdl_query_tiny_font_width(nk_handle const handle, float const height, char const *text, int const len)
+static float uiBridgeQueryFontWidth(nk_handle const handle, float const height, char const *text, int const len)
 {
-   struct nk_sdl *sdl = (struct nk_sdl *)handle.ptr;
+   struct nk_sdl const *const sdl = handle.ptr;
    NK_ASSERT(sdl);
    int32_t width = 0;
    char const *const end = text + len;
@@ -588,12 +582,12 @@ NK_INTERN float nk_sdl_query_tiny_font_width(nk_handle const handle, float const
    return (float)(width + 1) * scale;
 }
 
-NK_INTERN void nk_sdl_query_tiny_font_glyph(
+static void uiBridgeQueryFontGlyph(
    nk_handle const handle, float const height, struct nk_user_font_glyph *const glyph, nk_rune const codepoint, nk_rune const next_codepoint)
 {
    NK_UNUSED(next_codepoint);
 
-   struct nk_sdl *sdl = (struct nk_sdl *)handle.ptr;
+   struct nk_sdl const *const sdl = handle.ptr;
    NK_ASSERT(sdl);
 
    FontCodepointEntry const *entry = fontFindCodepointEntry(sdl->uiFont, codepoint);
@@ -642,11 +636,11 @@ static void renderMonochromeFontCharacter(
    }
 }
 
-NK_API void nk_sdl_style_set_tiny_font(struct nk_context *const ctx, float const scale)
+void uiBridgeSetFont(struct nk_context *const ctx, float const scale)
 {
    NK_ASSERT(ctx);
 
-   struct nk_sdl *sdl = (struct nk_sdl *)ctx->userdata.ptr;
+   struct nk_sdl *const sdl = ctx->userdata.ptr;
    NK_ASSERT(sdl);
 
    if (sdl->debug_font)
@@ -657,10 +651,10 @@ NK_API void nk_sdl_style_set_tiny_font(struct nk_context *const ctx, float const
 
    sdl->uiFont = uiFont();
 
-   SDL_Surface *surface = SDL_CreateSurface(sdl->uiFont->atlas.size.width, sdl->uiFont->atlas.size.height, SDL_PIXELFORMAT_RGBA32);
+   SDL_Surface *const surface = SDL_CreateSurface(sdl->uiFont->atlas.size.width, sdl->uiFont->atlas.size.height, SDL_PIXELFORMAT_RGBA32);
    NK_ASSERT(surface);
 
-   struct nk_color black = {.r = 0x30, .g = 0x30, .b = 0x30, .a = 0xFF};
+   struct nk_color const black = {.r = 0x30, .g = 0x30, .b = 0x30, .a = 0xFF};
 
    for (size_t currentCharOffset = 0; currentCharOffset < sdl->uiFont->codepointCount; ++currentCharOffset)
    {
@@ -672,22 +666,22 @@ NK_API void nk_sdl_style_set_tiny_font(struct nk_context *const ctx, float const
             renderMonochromeFontCharacter(surface, currentCharOffset, off, sdl->uiFont, black);
          }
       }
-      struct nk_color textColor = {.r = 0xFF, .g = 0xFF, .b = 0xFF, .a = 0xFF};
-      PixelOffset zeroOffset = {};
+      struct nk_color const textColor = {.r = 0xFF, .g = 0xFF, .b = 0xFF, .a = 0xFF};
+      PixelOffset const zeroOffset = {};
       renderMonochromeFontCharacter(surface, currentCharOffset, zeroOffset, sdl->uiFont, textColor);
    }
 
-   struct nk_user_font *font = (struct nk_user_font *)sdl->allocator.alloc(sdl->allocator.userdata, NULL, sizeof(*font));
+   struct nk_user_font *const font = sdl->allocator.alloc(sdl->allocator.userdata, NULL, sizeof(*font));
    NK_ASSERT(font);
    font->userdata.ptr = sdl;
    font->height = (float)(sdl->uiFont->codepoints[0].rect.size.height + 2) * scale;
-   font->width = &nk_sdl_query_tiny_font_width;
-   font->query = &nk_sdl_query_tiny_font_glyph;
+   font->width = &uiBridgeQueryFontWidth;
+   font->query = &uiBridgeQueryFontGlyph;
 
-   /* HACK: nk_sdl_device_upload_atlas turns pixels into SDL_Texture
+   /* HACK: upload atlas turns pixels into SDL_Texture
     *       and sets said Texture into sdl->ogl.font_tex
     *       then nk_sdl_render expects same Texture at font->texture */
-   nk_sdl_device_upload_atlas(ctx, surface->pixels, surface->w, surface->h);
+   uiBridgeUploadAtlas(ctx, surface->pixels, surface->w, surface->h);
    font->texture.ptr = sdl->ogl.font_tex;
 
    sdl->debug_font = font;

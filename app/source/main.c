@@ -744,12 +744,12 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
    SDL_SetRenderLogicalPresentation(app->renderer, 320, 200, SDL_LOGICAL_PRESENTATION_LETTERBOX);
    SDL_SetRenderDrawBlendMode(app->renderer, SDL_BLENDMODE_BLEND); // Ensure blend mode is set on all platforms
 
-   struct nk_context *ctx = nk_sdl_init(app->window, app->renderer, nk_sdl_allocator());
+   struct nk_context *ctx = uiBridgeInit(app->window, app->renderer);
    app->ctx = ctx;
 
    {
       float const scale = appGetBaseUIScale(app->window);
-      nk_sdl_style_set_tiny_font(ctx, scale);
+      uiBridgeSetFont(ctx, scale);
 
       appSetUIStyle(ctx);
    }
@@ -784,7 +784,7 @@ SDL_AppResult SDL_AppEvent(void *const appstate, SDL_Event *const event)
    }
 
    SDL_ConvertEventToRenderCoordinates(app->renderer, event);
-   nk_sdl_handle_event(app->ctx, event);
+   uiBridgeHandleEvent(app->ctx, event);
 
    return SDL_APP_CONTINUE;
 }
@@ -887,8 +887,8 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
    appClearBackground(app->renderer);
 
-   nk_sdl_render(ctx);
-   nk_sdl_update_TextInput(ctx);
+   uiBridgeRender(ctx);
+   uiBridgeUpdateTextInput(ctx);
 
    SDL_RenderPresent(app->renderer);
 
@@ -905,7 +905,7 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
    {
       SDL_Log("Quitting");
       nk_input_end(app->ctx);
-      nk_sdl_shutdown(app->ctx);
+      uiBridgeShutdown(app->ctx);
       SDL_DestroyRenderer(app->renderer);
       SDL_DestroyWindow(app->window);
       SDL_free(app);
