@@ -284,6 +284,7 @@ static Font *allocateFont(FontCodepointEntry *const codepoints, size_t const cod
    }
    Font *const font = allocateFont(codepoints, codepointCount, bitmapSize);
    font->color = lgFont.color;
+   font->height = lgFont.bitmapHeight;
    copyFontPixel(font, &lgFont);
    fontSortCodepoints(font->codepoints, font->codepointCount);
    return font;

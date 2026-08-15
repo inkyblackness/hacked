@@ -23,6 +23,7 @@ ValidationResult fontValidate(Font const *const font)
       return validationResultAddMessage(&result, "font is NULL");
    }
    validationResultMerge(&result, bitmapValidate(&font->atlas), "font atlas bitmap has issues");
+   validationResultAddConditional(&result, font->height != 0, "height is zero");
    validationResultAddConditional(&result, font->codepoints != NULL, "codepoints is NULL");
    validationResultAddConditional(&result, font->codepointCount != 0, "codepointCount is zero");
    if ((font->codepoints != NULL) && (font->codepointCount > 0))

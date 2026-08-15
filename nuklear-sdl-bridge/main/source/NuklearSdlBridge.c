@@ -574,8 +574,7 @@ static float uiBridgeQueryFontWidth(nk_handle const handle, float const height, 
       offset += charsUsed;
       charsUsed = nk_utf_decode(&text[offset], &unicode, len - offset);
    }
-   // TODO: consider having a reference height value in the font structure
-   float scale = height / (float)(bridge->uiFont->codepoints[0].rect.size.height + 2);
+   float const scale = height / (float)(bridge->uiFont->height + 2);
    return (float)(width + 1) * scale;
 }
 
@@ -671,7 +670,7 @@ void uiBridgeSetFont(struct nk_context *const ctx, float const scale)
    struct nk_user_font *const font = bridge->allocator.alloc(bridge->allocator.userdata, NULL, sizeof(*font));
    NK_ASSERT(font);
    font->userdata.ptr = bridge;
-   font->height = (float)(bridge->uiFont->codepoints[0].rect.size.height + 2) * scale;
+   font->height = (float)(bridge->uiFont->height + 2) * scale;
    font->width = &uiBridgeQueryFontWidth;
    font->query = &uiBridgeQueryFontGlyph;
 

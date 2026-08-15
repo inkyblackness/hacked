@@ -23,6 +23,7 @@ typedef struct Font
 {
    Bitmap atlas;
    bool color;
+   PixelAxisSize height;
 
    size_t codepointCount;
    /**
