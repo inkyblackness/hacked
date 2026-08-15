@@ -61,6 +61,7 @@ protected:
       }
       Font font = {};
       font.atlas = validBitmap();
+      font.height = 1;
       font.codepointCount = codepointCount;
       font.codepoints = codepoints;
       return font;
