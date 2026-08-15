@@ -7,7 +7,9 @@ namespace
 TEST(UIFontTest, fontIsAvailable)
 {
    Font const *font = uiFont();
-   EXPECT_TRUE(font != nullptr);
+   ASSERT_TRUE(font != nullptr);
+   ValidationResult const result = fontValidate(font);
+   EXPECT_FALSE(validationResultHasFailure(&result)) << "First problem: '" << result.messages[0] << "'";
 #if 0
    if (font != nullptr)
    {

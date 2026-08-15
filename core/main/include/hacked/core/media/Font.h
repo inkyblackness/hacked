@@ -48,6 +48,8 @@ extern void fontRelease(Font const **fontRef);
 
 extern ValidationResult fontValidate(Font const *font);
 
+extern void fontSortCodepoints(FontCodepointEntry *entries, size_t count);
+
 /**
  * Finds the entry of the font for given codepoint.
  *

@@ -66,6 +66,52 @@ ValidationResult fontValidate(Font const *const font)
    return result;
 }
 
+static void swapCodepointEntries(FontCodepointEntry *const entries, size_t const a, size_t const b)
+{
+   FontCodepointEntry temp = entries[a];
+   entries[a] = entries[b];
+   entries[b] = temp;
+}
+
+static size_t quicksortPartition(FontCodepointEntry *const entries, size_t const lo, size_t const hi)
+{
+   FontCodepointEntry const pivot = entries[hi];
+   size_t i = lo;
+   for (size_t j = lo; j < hi; j++)
+   {
+      if (entries[j].codepoint <= pivot.codepoint)
+      {
+         swapCodepointEntries(entries, i, j);
+         i++;
+      }
+   }
+   swapCodepointEntries(entries, i, hi);
+   return i;
+}
+
+static void quicksortCodepoints(FontCodepointEntry *const entries, size_t const lo, size_t const hi)
+{
+   if (lo >= hi)
+   {
+      return;
+   }
+   size_t const partition = quicksortPartition(entries, lo, hi);
+   if (partition > 0)
+   {
+      quicksortCodepoints(entries, lo, partition - 1);
+   }
+   quicksortCodepoints(entries, partition + 1, hi);
+}
+
+void fontSortCodepoints(FontCodepointEntry *const entries, size_t const count)
+{
+   if ((entries == NULL) || (count < 2))
+   {
+      return;
+   }
+   quicksortCodepoints(entries, 0, count - 1);
+}
+
 FontCodepointEntry const *fontFindCodepointEntry(Font const *const font, Codepoint const codepoint)
 {
    size_t begin = 0;
