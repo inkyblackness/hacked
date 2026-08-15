@@ -7,20 +7,20 @@
 
 #include "hacked/nuklear/NuklearSdlBridge.h"
 
-struct nk_sdl_app
+struct HackEdApp
 {
    SDL_Window *window;
    SDL_Renderer *renderer;
    struct nk_context *ctx;
 };
 
-static float appGetBaseScale(SDL_Window *const window)
+static float appGetBaseUIScale(SDL_Window *const window)
 {
    (void)window;
    return 1.0f; // SDL_GetWindowDisplayScale(window) * 1.0f;
 }
 
-static SDL_AppResult nk_sdl_fail(char const *const message)
+static SDL_AppResult appFailSDL(char const *const message)
 {
    SDL_LogError(SDL_LOG_CATEGORY_CUSTOM, "Error; %s: %s", message, SDL_GetError());
    return SDL_APP_FAILURE;
@@ -57,7 +57,7 @@ static struct nk_color colorTripleLight(float const a)
    return color(0x51, 0x99, 0x58, a);
 }
 
-static void setStyle(struct nk_context *ctx)
+static void appSetUIStyle(struct nk_context *ctx)
 {
    struct nk_vec2 const zero = nk_vec2(0.0f, 0.0f);
 
@@ -716,24 +716,24 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
 
    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
    {
-      return nk_sdl_fail("failed to initialize SDL");
+      return appFailSDL("failed to initialize SDL");
    }
 
    SDL_SetAppMetadata("InkyBlackness - HackEd", REPO_SHORT_VERSION, "io.github.inkyblackness.hacked");
    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
    {
-      return nk_sdl_fail("failed to initialize SDL");
+      return appFailSDL("failed to initialize SDL");
    }
-   struct nk_sdl_app *app = SDL_malloc(sizeof(*app));
+   struct HackEdApp *app = SDL_malloc(sizeof(*app));
    if (app == NULL)
    {
-      return nk_sdl_fail("failed to allocate application memory");
+      return appFailSDL("failed to allocate application memory");
    }
    if (!SDL_CreateWindowAndRenderer(
           "InkyBlackness - HackEd - " REPO_LONG_VERSION, 320, 200, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY, &app->window, &app->renderer))
    {
       SDL_free(app);
-      return nk_sdl_fail("failed to create window/renderer");
+      return appFailSDL("failed to create window/renderer");
    }
    *appstate = app;
 
@@ -748,19 +748,19 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
    app->ctx = ctx;
 
    {
-      float const scale = appGetBaseScale(app->window);
+      float const scale = appGetBaseUIScale(app->window);
       nk_sdl_style_set_tiny_font(ctx, scale);
 
-      setStyle(ctx);
+      appSetUIStyle(ctx);
    }
    nk_input_begin(ctx);
 
    return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
+SDL_AppResult SDL_AppEvent(void *const appstate, SDL_Event *const event)
 {
-   struct nk_sdl_app *app = (struct nk_sdl_app *)appstate;
+   struct HackEdApp const *const app = appstate;
 
    switch (event->type)
    {
@@ -783,10 +783,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
       break;
    }
 
-   /* Remember to always rescale the event coordinates,
-    * if your renderer uses custom scale. */
    SDL_ConvertEventToRenderCoordinates(app->renderer, event);
-
    nk_sdl_handle_event(app->ctx, event);
 
    return SDL_APP_CONTINUE;
@@ -800,10 +797,10 @@ static void appClearBackground(SDL_Renderer *const renderer)
 
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
-   struct nk_sdl_app *app = (struct nk_sdl_app *)appstate;
+   struct HackEdApp *app = appstate;
    struct nk_context *ctx = app->ctx;
    SDL_AppResult appResult = SDL_APP_CONTINUE;
-   float const scale = appGetBaseScale(app->window);
+   float const scale = appGetBaseUIScale(app->window);
 
    static uint64_t previous = 0;
 
@@ -903,9 +900,8 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
    (void)result;
 
-   struct nk_sdl_app *app = (struct nk_sdl_app *)appstate;
-
-   if (app)
+   struct HackEdApp *app = appstate;
+   if (app != NULL)
    {
       SDL_Log("Quitting");
       nk_input_end(app->ctx);
