@@ -611,10 +611,11 @@ NK_INTERN void nk_sdl_query_tiny_font_glyph(
    glyph->height = (float)(outlinedHeight)*scale;
    glyph->width = (float)(outlinedWidth)*scale;
    glyph->xadvance = (float)(outlinedWidth - 2) * scale; // one shift for outline, one because each glyph has its own spacing to the right
-   glyph->uv[0].x = (float)(outlinedLeft) / bitmapWidth;
-   glyph->uv[0].y = (float)(outlinedTop) / bitmapHeight;
-   glyph->uv[1].x = (float)(outlinedLeft + outlinedWidth) / bitmapWidth;
-   glyph->uv[1].y = (float)(outlinedTop + outlinedHeight) / bitmapHeight;
+   static float const dosFudge = 0.00001f;
+   glyph->uv[0].x = (float)(outlinedLeft) / bitmapWidth + dosFudge;
+   glyph->uv[0].y = (float)(outlinedTop) / bitmapHeight + dosFudge;
+   glyph->uv[1].x = (float)(outlinedLeft + outlinedWidth) / bitmapWidth + (dosFudge * 2.0f);
+   glyph->uv[1].y = (float)(outlinedTop + outlinedHeight) / bitmapHeight + (dosFudge * 2.0f);
    glyph->offset.x = 0.0f;
    glyph->offset.y = 0.0f;
 }
