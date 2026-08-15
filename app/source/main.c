@@ -57,7 +57,7 @@ static struct nk_color colorTripleLight(float const a)
    return color(0x51, 0x99, 0x58, a);
 }
 
-static void appSetUIStyle(struct nk_context *ctx)
+static void appSetUIStyle(struct nk_context *const ctx)
 {
    struct nk_vec2 const zero = nk_vec2(0.0f, 0.0f);
 
@@ -103,7 +103,7 @@ static void appSetUIStyle(struct nk_context *ctx)
    hackedColorStyle[NK_COLOR_SCROLLBAR_CURSOR_HOVER] = colorTripleFull(1.0f);
    hackedColorStyle[NK_COLOR_SCROLLBAR_CURSOR_ACTIVE] = colorDoubleFull(1.0f);
 
-   hackedColorStyle[NK_COLOR_TAB_HEADER] = colorTripleLight(0.54);
+   hackedColorStyle[NK_COLOR_TAB_HEADER] = colorTripleLight(0.54f);
 
    hackedColorStyle[NK_COLOR_KNOB] = colorTripleDark(1.0f);
    hackedColorStyle[NK_COLOR_KNOB_CURSOR] = colorTripleLight(1.0f);
@@ -135,7 +135,7 @@ static void appSetUIStyle(struct nk_context *ctx)
    button->padding = zero; // nk_vec2(2.0f, 2.0f);
    button->image_padding = zero; // nk_vec2(0.0f, 0.0f);
    button->touch_padding = zero; // nk_vec2(0.0f, 0.0f);
-   button->userdata = nk_handle_ptr(0);
+   button->userdata = nk_handle_ptr(NULL);
    button->text_alignment = NK_TEXT_CENTERED;
    button->border = 1.0f;
    button->rounding = 0.0f;
@@ -157,7 +157,7 @@ static void appSetUIStyle(struct nk_context *ctx)
    */
    button->padding = zero; //(2.0f, 2.0f);
    button->touch_padding = zero; //(0.0f, 0.0f);
-   button->userdata = nk_handle_ptr(0);
+   button->userdata = nk_handle_ptr(NULL);
    button->text_alignment = NK_TEXT_CENTERED;
    button->border = 0.0f;
    button->rounding = 0.0f;
@@ -795,10 +795,10 @@ static void appClearBackground(SDL_Renderer *const renderer)
    SDL_RenderClear(renderer);
 }
 
-SDL_AppResult SDL_AppIterate(void *appstate)
+SDL_AppResult SDL_AppIterate(void *const appstate)
 {
-   struct HackEdApp *app = appstate;
-   struct nk_context *ctx = app->ctx;
+   struct HackEdApp const *const app = appstate;
+   struct nk_context *const ctx = app->ctx;
    SDL_AppResult appResult = SDL_APP_CONTINUE;
    float const scale = appGetBaseUIScale(app->window);
 
@@ -814,7 +814,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
    {
       elapsed = 1;
    }
-   double fps = 1000000000.0 / (double)elapsed;
+   double const fps = 1000000000.0 / (double)elapsed;
    char fpsLine[30];
    sprintf(fpsLine, "%3lumsec - %.1f", (unsigned long)(elapsed / 1000000ULL), fps);
    previous = now;
@@ -896,11 +896,11 @@ SDL_AppResult SDL_AppIterate(void *appstate)
    return appResult;
 }
 
-void SDL_AppQuit(void *appstate, SDL_AppResult result)
+void SDL_AppQuit(void *const appstate, SDL_AppResult const result)
 {
    (void)result;
 
-   struct HackEdApp *app = appstate;
+   struct HackEdApp *const app = appstate;
    if (app != NULL)
    {
       SDL_Log("Quitting");
@@ -912,7 +912,7 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
    }
 }
 
-char *nk_sdl_dtoa(char *str, double d)
+char *nk_sdl_dtoa(char *const str, double const d)
 {
    NK_ASSERT(str);
    if (!str)
