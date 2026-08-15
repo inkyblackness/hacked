@@ -662,7 +662,7 @@ void uiBridgeSetFont(struct nk_context *const ctx, float const scale)
          }
       }
       struct nk_color const textColor = {.r = 0xFF, .g = 0xFF, .b = 0xFF, .a = 0xFF};
-      PixelOffset const zeroOffset = {};
+      PixelOffset const zeroOffset = {.x = 0, .y = 0};
       renderMonochromeFontCharacter(surface, currentCharOffset, zeroOffset, bridge->uiFont, textColor);
    }
 
