@@ -7,11 +7,25 @@
 
 #include "hacked/nuklear/NuklearSdlBridge.h"
 
+struct String
+{
+   char *text;
+   int len;
+};
+
 struct HackEdApp
 {
+   int originalDesktopWidth;
+   int originalDesktopHeight;
+
    SDL_Window *window;
    SDL_Renderer *renderer;
    struct nk_context *ctx;
+
+   struct String folderHome;
+   struct String folderDocuments;
+   struct String folderApp;
+   struct String folderPreferences;
 };
 
 static float appGetBaseUIScale(SDL_Window *const window)
@@ -392,7 +406,7 @@ static void appSetUIStyle(struct nk_context *const ctx)
    style->scrollh.dec_button = style->scrollh.inc_button;
    style->scrollv.inc_button = style->scrollh.inc_button;
    style->scrollv.dec_button = style->scrollh.inc_button;
-
+#endif
    /* edit */
    struct nk_style_edit *edit = &style->edit;
    /*
@@ -421,7 +435,7 @@ static void appSetUIStyle(struct nk_context *const ctx)
    edit->rounding = 0;
    edit->color_factor = 1.0f;
    edit->disabled_factor = NK_WIDGET_DISABLED_FACTOR;
-
+#if 0
    /* property */
    struct nk_style_property *property = &style->property;
    /*
@@ -709,6 +723,21 @@ static void appSetUIStyle(struct nk_context *const ctx)
    win->tooltip_delay = 0.5f;
 }
 
+static struct String newString(char const *const base)
+{
+   struct String result;
+   char const *const safeBase = (base != NULL) ? base : "";
+   result.len = SDL_strlen(safeBase);
+   result.text = SDL_strdup(safeBase);
+   result.text[result.len] = 0x00;
+   return result;
+}
+
+static struct String newStringFallback(char const *const base, char const *const fallback)
+{
+   return (base != NULL) ? newString(base) : newString(fallback);
+}
+
 SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
 {
    (void)argc;
@@ -729,9 +758,27 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
    {
       return appFailSDL("failed to allocate application memory");
    }
+   SDL_zerop(app);
+   {
+      SDL_DisplayMode const *const mode = SDL_GetDesktopDisplayMode(SDL_GetPrimaryDisplay());
+      app->originalDesktopWidth = mode->w;
+      app->originalDesktopHeight = mode->h;
+
+      app->folderHome = newStringFallback(SDL_GetUserFolder(SDL_FOLDER_HOME), "n/a");
+      app->folderDocuments = newStringFallback(SDL_GetUserFolder(SDL_FOLDER_DOCUMENTS), "n/a");
+      app->folderApp = newStringFallback(SDL_GetBasePath(), "n/a");
+
+      app->folderPreferences.text = SDL_GetPrefPath("InkyBlackness", "HackEd");
+      if (app->folderPreferences.text == NULL)
+      {
+         app->folderPreferences = newString("n/a");
+      }
+      app->folderPreferences.len = SDL_strlen(app->folderPreferences.text);
+   }
    if (!SDL_CreateWindowAndRenderer(
           "InkyBlackness - HackEd - " REPO_LONG_VERSION, 320, 200, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY, &app->window, &app->renderer))
    {
+      // TODO free app properly
       SDL_free(app);
       return appFailSDL("failed to create window/renderer");
    }
@@ -743,6 +790,7 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
    }
    SDL_SetRenderLogicalPresentation(app->renderer, 320, 200, SDL_LOGICAL_PRESENTATION_LETTERBOX);
    SDL_SetRenderDrawBlendMode(app->renderer, SDL_BLENDMODE_BLEND); // Ensure blend mode is set on all platforms
+   SDL_SetHint(SDL_HINT_MAIN_CALLBACK_RATE, "60.0");
 
    struct nk_context *ctx = uiBridgeInit(app->window, app->renderer);
    app->ctx = ctx;
@@ -797,7 +845,7 @@ static void appClearBackground(SDL_Renderer *const renderer)
 
 SDL_AppResult SDL_AppIterate(void *const appstate)
 {
-   struct HackEdApp const *const app = appstate;
+   struct HackEdApp *const app = appstate;
    struct nk_context *const ctx = app->ctx;
    SDL_AppResult appResult = SDL_APP_CONTINUE;
    float const scale = appGetBaseUIScale(app->window);
@@ -818,13 +866,15 @@ SDL_AppResult SDL_AppIterate(void *const appstate)
    char fpsLine[30];
    sprintf(fpsLine, "%3lumsec - %.1f", (unsigned long)(elapsed / 1000000ULL), fps);
    previous = now;
+   static bool showSystemInfo = false;
+
    nk_input_end(ctx);
 
    if (nk_begin(ctx, "main-menu", nk_rect(0, 0, 10000, 8 * scale), NK_WINDOW_NO_SCROLLBAR))
    {
       nk_menubar_begin(ctx);
       {
-         nk_layout_row_static(ctx, 8 * scale, 200, 2);
+         nk_layout_row_static(ctx, 8 * scale, 150, 3);
          if (nk_menu_begin_label(ctx, "File", 0, nk_vec2(100, 100)))
          {
             nk_layout_row_dynamic(ctx, 10 * scale, 1);
@@ -835,6 +885,15 @@ SDL_AppResult SDL_AppIterate(void *const appstate)
             if (nk_menu_item_label(ctx, "Quit", 0))
             {
                appResult = SDL_APP_SUCCESS;
+            }
+            nk_menu_end(ctx);
+         }
+         if (nk_menu_begin_label(ctx, "Help", 0, nk_vec2(100, 100)))
+         {
+            nk_layout_row_dynamic(ctx, 10 * scale, 1);
+            if (nk_menu_item_label(ctx, "System Info", 0))
+            {
+               showSystemInfo = true;
             }
             nk_menu_end(ctx);
          }
@@ -884,6 +943,39 @@ SDL_AppResult SDL_AppIterate(void *const appstate)
       nk_edit_string(ctx, NK_EDIT_ALWAYS_INSERT_MODE | NK_EDIT_MULTILINE, textBuffer, &textBufferUsedLen, textBufferSize, NULL);
    }
    nk_end(ctx);
+   if (showSystemInfo)
+   {
+      if (nk_begin(ctx, "System Info", nk_rect(100, 50, 230, 50),
+             NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE | NK_WINDOW_CLOSABLE))
+      {
+         nk_layout_row_static(ctx, 0, 500, 2);
+         SDL_DisplayMode const *const mode = SDL_GetDesktopDisplayMode(SDL_GetPrimaryDisplay());
+         nk_label(ctx, "Desktop Resolution (now)", 0);
+         char resolutionText[12];
+         snprintf(resolutionText, 12, "%5dx%5d", mode->w, mode->h);
+         resolutionText[12 - 1] = 0x00;
+         nk_label(ctx, resolutionText, 0);
+
+         nk_label(ctx, "Desktop Resolution (start)", 0);
+         snprintf(resolutionText, 12, "%5dx%5d", app->originalDesktopWidth, app->originalDesktopHeight);
+         resolutionText[12 - 1] = 0x00;
+         nk_label(ctx, resolutionText, 0);
+
+         nk_label(ctx, "User Home", 0);
+         nk_label(ctx, app->folderHome.text, 0);
+
+         nk_label(ctx, "User Documents", 0);
+         nk_label(ctx, app->folderDocuments.text, 0);
+
+         nk_label(ctx, "App Directory", 0);
+         nk_label(ctx, app->folderApp.text, 0);
+
+         nk_label(ctx, "App Preferences", 0);
+         nk_label(ctx, app->folderPreferences.text, 0);
+      }
+      nk_end(ctx);
+      showSystemInfo = !nk_window_is_hidden(ctx, "System Info");
+   }
 
    appClearBackground(app->renderer);
 
@@ -908,6 +1000,10 @@ void SDL_AppQuit(void *const appstate, SDL_AppResult const result)
       uiBridgeShutdown(app->ctx);
       SDL_DestroyRenderer(app->renderer);
       SDL_DestroyWindow(app->window);
+      SDL_free(app->folderHome.text);
+      SDL_free(app->folderDocuments.text);
+      SDL_free(app->folderApp.text);
+      SDL_free(app->folderPreferences.text);
       SDL_free(app);
    }
 }
