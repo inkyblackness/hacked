@@ -242,7 +242,29 @@ SDL_AppResult SDL_AppIterate(void *const appstate)
       cImGui_ImplSDL3_NewFrame();
       ImGui_NewFrame();
 
-      ImGui_ShowDemoWindow(&app->showDemoWindow);
+      if (ImGui_BeginMainMenuBar())
+      {
+         if (ImGui_BeginMenu("File"))
+         {
+            if (ImGui_MenuItem("Exit"))
+            {
+               // TODO: route exit request through system
+               appResult = SDL_APP_SUCCESS;
+            }
+            ImGui_EndMenu();
+         }
+         if (ImGui_BeginMenu("About"))
+         {
+            ImGui_Checkbox("Demo Window", &app->showDemoWindow);
+            ImGui_EndMenu();
+         }
+         ImGui_EndMainMenuBar();
+      }
+
+      if (app->showDemoWindow)
+      {
+         ImGui_ShowDemoWindow(&app->showDemoWindow);
+      }
 
       ImGui_Render();
    }
