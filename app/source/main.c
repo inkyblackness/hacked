@@ -13,7 +13,7 @@
 struct String
 {
    char *text;
-   int len;
+   size_t len;
 };
 
 struct HackEdApp
@@ -28,15 +28,14 @@ struct HackEdApp
    struct String folderDocuments;
    struct String folderApp;
    struct String folderPreferences;
+
+   bool showDemoWindow;
 };
 
-#if 0
 static float appGetBaseUIScale(SDL_Window *const window)
 {
-   (void)window;
-   return 1.0f; // SDL_GetWindowDisplayScale(window) * 1.0f;
+   return SDL_GetWindowDisplayScale(window);
 }
-#endif
 
 static SDL_AppResult appFailSDL(char const *const message)
 {
@@ -108,6 +107,8 @@ static void appSetStyle(ImGuiStyle *const style)
    style->Colors[ImGuiCol_ButtonActive] = colorDoubleFull(1.0f);
    style->Colors[ImGuiCol_SeparatorHovered] = colorDoubleFull(0.78f);
    style->Colors[ImGuiCol_SeparatorActive] = colorDoubleFull(1.0f);
+
+   style->WindowRounding = 0.0f;
 }
 
 static struct String newString(char const *const base)
@@ -175,7 +176,6 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
    {
       SDL_LogError(SDL_LOG_CATEGORY_CUSTOM, "SDL_SetRenderVSync failed: %s", SDL_GetError());
    }
-   SDL_SetRenderLogicalPresentation(app->renderer, 320, 200, SDL_LOGICAL_PRESENTATION_LETTERBOX);
    SDL_SetRenderDrawBlendMode(app->renderer, SDL_BLENDMODE_BLEND); // Ensure blend mode is set on all platforms
    SDL_SetHint(SDL_HINT_MAIN_CALLBACK_RATE, "60.0");
 
@@ -186,51 +186,12 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
    io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
    io->IniFilename = NULL;
 
-   char const fontName[] = "tiny5.ttf";
-   SDL_PathInfo fontFileInfo = {0};
-   if (SDL_GetPathInfo(fontName, &fontFileInfo) && fontFileInfo.size > 0)
-   {
-      // tiny5: works with 9.0f ( https://github.com/Gissio/font_tiny5 )
-      // 3x5-font: works with 6.0f - smaller, but has wrong unicode chars ( https://alasseearfalas.itch.io/another-tiny-pixel-font-mono-3x5 )
-      ImFontConfig fontConfig = {0};
-      fontConfig.PixelSnapH = true;
-      fontConfig.SizePixels = 9.0f;
-      fontConfig.GlyphMaxAdvanceX = FLT_MAX;
-      fontConfig.RasterizerMultiply = 1.0f;
-      fontConfig.RasterizerDensity = 1.0f;
-      fontConfig.ExtraSizeScale = 1.0f;
-      ImFont *font = ImFontAtlas_AddFontFromFileTTF(io->Fonts, fontName, fontConfig.SizePixels, &fontConfig, NULL);
-      ImGui_StyleColorsDark(NULL);
-      ImGuiStyle *style = ImGui_GetStyle();
-      appSetStyle(style);
-      ImGui_PushFontFloat(font, fontConfig.SizePixels);
-      // ImGui_GetStyle()->FontSizeBase = fontConfig.SizePixels;
-      ImGui_GetStyle()->FontScaleMain = 1.0f;
-      ImGui_GetStyle()->FontScaleDpi = 1.0f;
-      ImGui_GetStyle()->AntiAliasedLinesUseTex = false;
-   }
-
-   // Set all alpha values to 1.0f -- doesn't help, because the calculation is still performed.
-   // But still a good test to see if everything would be readable.
-   ImGui_GetStyle()->Alpha = 1.0f;
-   ImGui_GetStyle()->DisabledAlpha = 1.0f;
-   for (size_t i = 0; i < ImGuiCol_COUNT; i++)
-   {
-      ImGui_GetStyle()->Colors[i].w = 1.0f;
-   }
+   ImGuiStyle *style = ImGui_GetStyle();
+   appSetStyle(style);
+   style->FontScaleDpi = appGetBaseUIScale(app->window);
 
    cImGui_ImplSDL3_InitForSDLRenderer(app->window, app->renderer);
    cImGui_ImplSDLRenderer3_Init(app->renderer);
-   {
-      // Attempt to set renderer to ignore alpha blending.
-      SDL_BlendMode oldBlendMode = 0;
-      SDL_GetRenderDrawBlendMode(app->renderer, &oldBlendMode);
-      if (oldBlendMode != SDL_BLENDMODE_NONE)
-      {
-         SDL_Log("Setting blendmode to none");
-         SDL_SetRenderDrawBlendMode(app->renderer, SDL_BLENDMODE_NONE);
-      }
-   }
 
    return SDL_APP_CONTINUE;
 }
@@ -273,24 +234,7 @@ SDL_AppResult SDL_AppIterate(void *const appstate)
 {
    struct HackEdApp *const app = appstate;
    SDL_AppResult appResult = SDL_APP_CONTINUE;
-   // float const scale = appGetBaseUIScale(app->window);
 
-   static uint64_t previous = 0;
-
-   uint64_t now = SDL_GetTicksNS();
-   if (previous == 0)
-   {
-      previous = now;
-   }
-   uint64_t elapsed = now - previous;
-   if (elapsed == 0)
-   {
-      elapsed = 1;
-   }
-   double const fps = 1000000000.0 / (double)elapsed;
-   char fpsLine[30];
-   sprintf(fpsLine, "%3lumsec - %.1f", (unsigned long)(elapsed / 1000000ULL), fps);
-   previous = now;
    // static bool showSystemInfo = false;
 
    {
@@ -298,15 +242,14 @@ SDL_AppResult SDL_AppIterate(void *const appstate)
       cImGui_ImplSDL3_NewFrame();
       ImGui_NewFrame();
 
-      bool showDemoWindow = true;
-      ImGui_ShowDemoWindow(&showDemoWindow);
+      ImGui_ShowDemoWindow(&app->showDemoWindow);
 
       ImGui_Render();
    }
 
    appClearBackground(app->renderer);
 
-   // SDL_SetRenderScale(app->renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y); // TODO: needed?
+   SDL_SetRenderScale(app->renderer, ImGui_GetIO()->DisplayFramebufferScale.x, ImGui_GetIO()->DisplayFramebufferScale.y);
    cImGui_ImplSDLRenderer3_RenderDrawData(ImGui_GetDrawData(), app->renderer);
    SDL_RenderPresent(app->renderer);
 
