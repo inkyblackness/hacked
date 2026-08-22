@@ -18,7 +18,7 @@ if (NOT DOS)
     include(cmake/modules/TestSupport.cmake)
 endif ()
 include(cmake/modules/SimpleDirectMediaLayer.cmake)
-include(cmake/modules/Nuklear.cmake)
+include(cmake/modules/DearImGui.cmake)
 include(cmake/modules/BuildRules.cmake)
 include(cmake/modules/Version.cmake)
 
@@ -53,16 +53,6 @@ if (NOT DOS)
     gtest_add_tests(TARGET hacked-core-test EXTRA_ARGS --gtest_shuffle SKIP_DEPENDENCY)
 endif ()
 
-file(GLOB_RECURSE LIB_NUKLEAR_SDL_BRIDGE_SOURCES "${PROJECT_SOURCE_DIR}/nuklear-sdl-bridge/main/source/*.c")
-add_library(hacked-nuklear-sdl-bridge STATIC ${LIB_NUKLEAR_SDL_BRIDGE_SOURCES})
-target_include_directories(hacked-nuklear-sdl-bridge PUBLIC "${PROJECT_SOURCE_DIR}/nuklear-sdl-bridge/main/include")
-target_link_libraries(hacked-nuklear-sdl-bridge
-        PUBLIC
-        hacked-core
-        Nuklear
-        SDL3::SDL3-static
-)
-
 if (WIN32)
     enable_language(RC)
     set(APP_GUI_WIN_RESOURCES app/mswin/hacked.rc)
@@ -78,9 +68,9 @@ if (EMSCRIPTEN)
 endif ()
 target_link_libraries(hacked
         hacked-core
-        hacked-nuklear-sdl-bridge
         Version::all
         BuildRules::common
+        DearImGui
         SDL3::SDL3-static
 )
 
