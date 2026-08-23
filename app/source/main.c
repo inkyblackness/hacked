@@ -1,6 +1,4 @@
-#include <float.h>
 #include <stdint.h>
-#include <stdio.h>
 
 #define SDL_MAIN_USE_CALLBACKS 1
 #include <SDL3/SDL.h>
@@ -136,11 +134,6 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
 {
    (void)argc;
    (void)argv;
-
-   if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
-   {
-      return appFailSDL("failed to initialize SDL");
-   }
 
    SDL_SetAppMetadata("InkyBlackness - HackEd", REPO_SHORT_VERSION, "io.github.inkyblackness.hacked");
    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
