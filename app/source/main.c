@@ -32,6 +32,14 @@ struct HackEdApp
    bool showDemoWindow;
 };
 
+static void appCleanResources(struct HackEdApp *const app)
+{
+   SDL_free(app->folderHome.text);
+   SDL_free(app->folderDocuments.text);
+   SDL_free(app->folderApp.text);
+   SDL_free(app->folderPreferences.text);
+}
+
 static float appGetBaseUIScale(SDL_Window *const window)
 {
    return SDL_GetWindowDisplayScale(window);
@@ -166,7 +174,7 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
    if (!SDL_CreateWindowAndRenderer(
           "InkyBlackness - HackEd - " REPO_LONG_VERSION, 320, 200, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY, &app->window, &app->renderer))
    {
-      // TODO free app properly
+      appCleanResources(app);
       SDL_free(app);
       return appFailSDL("failed to create window/renderer");
    }
@@ -294,10 +302,8 @@ void SDL_AppQuit(void *const appstate, SDL_AppResult const result)
 
       SDL_DestroyRenderer(app->renderer);
       SDL_DestroyWindow(app->window);
-      SDL_free(app->folderHome.text);
-      SDL_free(app->folderDocuments.text);
-      SDL_free(app->folderApp.text);
-      SDL_free(app->folderPreferences.text);
+
+      appCleanResources(app);
       SDL_free(app);
    }
 }
