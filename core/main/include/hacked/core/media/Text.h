@@ -67,7 +67,7 @@ extern void textDecoderRelease(TextDecoder **decoder);
  * @param decoder the decoder to query
  * @return the maximum for the given decoder
  */
-extern size_t textDecoderMaxOutputPerInputByte(TextDecoder const *decoder);
+[[nodiscard]] extern size_t textDecoderMaxOutputPerInputByte(TextDecoder const *decoder);
 
 /**
  * Resets the decoder instance to a state as if it was freshly initialized.
@@ -114,7 +114,7 @@ extern void textDecoderReset(TextDecoder *decoder);
  * @param inSize in/out parameter. Input: number of provided bytes, at least 1. Output: See return value
  * @return the result of the processing
  */
-extern TextEncodingResult textDecoderDecode(TextDecoder *decoder, Codepoint *out, size_t *outSize, uint8_t const *in, size_t *inSize);
+[[nodiscard]] extern TextEncodingResult textDecoderDecode(TextDecoder *decoder, Codepoint *out, size_t *outSize, uint8_t const *in, size_t *inSize);
 
 /**
  * Flushes the decoder. It will consume any pending input data from its state and provide any resulting codepoints.
@@ -139,7 +139,7 @@ extern TextEncodingResult textDecoderDecode(TextDecoder *decoder, Codepoint *out
  * @param outSize in/out parameter. Input: number of available out items to write to, at least 1. Output: See return value
  * @return the result of the flushing
  */
-extern TextEncodingResult textDecoderFlush(TextDecoder *decoder, Codepoint *out, size_t *outSize);
+[[nodiscard]] extern TextEncodingResult textDecoderFlush(TextDecoder *decoder, Codepoint *out, size_t *outSize);
 
 /**
  * An opaque encoder structure.
@@ -157,7 +157,7 @@ typedef struct TextEncoder TextEncoder;
  * @param charset the charset for which to create an encoder
  * @return the corresponding instance, or @code NULL@endcode if given charset is not supported
  */
-extern TextEncoder *textEncoderCreate(TextCharset charset);
+[[nodiscard]] extern TextEncoder *textEncoderCreate(TextCharset charset);
 
 /**
  * Releases the encoder instance. In case it was a dynamically allocated memory, it will be freed.
@@ -172,7 +172,7 @@ extern void textEncoderRelease(TextEncoder **encoder);
  * @param encoder the encoder to query
  * @return the maximum for the given encoder
  */
-extern size_t textEncoderMaxOutputPerCodepoint(TextEncoder const *encoder);
+[[nodiscard]] extern size_t textEncoderMaxOutputPerCodepoint(TextEncoder const *encoder);
 
 /**
  * Resets the encoder instance to a state as if it was freshly initialized.
@@ -222,7 +222,7 @@ extern void textEncoderReset(TextEncoder *encoder);
  * @param inSize in/out parameter. Input: number of available codepoints to encode, at least 1. Output: See return value.
  * @return the result of the processing.
  */
-extern TextEncodingResult textEncoderEncode(TextEncoder *encoder, uint8_t *out, size_t *outSize, Codepoint const *in, size_t *inSize);
+[[nodiscard]] extern TextEncodingResult textEncoderEncode(TextEncoder *encoder, uint8_t *out, size_t *outSize, Codepoint const *in, size_t *inSize);
 
 /**
  * Flushes the encoder. It will consume any pending input data from its state and provide any resulting bytes.
@@ -247,7 +247,7 @@ extern TextEncodingResult textEncoderEncode(TextEncoder *encoder, uint8_t *out, 
  * @param outSize in/out parameter. Input: number of available out items to write to. Output: See return value
  * @return the result of the flushing. See documentation of TextEncodingResult for details.
  */
-extern TextEncodingResult textEncoderFlush(TextEncoder *encoder, uint8_t *out, size_t *outSize);
+[[nodiscard]] extern TextEncodingResult textEncoderFlush(TextEncoder *encoder, uint8_t *out, size_t *outSize);
 
 #ifdef __cplusplus
 }
