@@ -70,11 +70,11 @@ typedef struct
    PixelSize size;
 } PixelRect;
 
-extern PixelSpaceLimits pixelSpaceLimits();
+[[nodiscard]] extern PixelSpaceLimits pixelSpaceLimits();
 
-extern ValidationResult pixelSpaceValidateSize(PixelSize size);
+[[nodiscard]] extern ValidationResult pixelSpaceValidateSize(PixelSize size);
 
-extern bool pixelSpaceAreaContainsRect(PixelRect area, PixelRect rect);
+[[nodiscard]] extern bool pixelSpaceAreaContainsRect(PixelRect area, PixelRect rect);
 
 #ifdef __cplusplus
 }
