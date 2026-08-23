@@ -18,9 +18,6 @@ struct String
 
 struct HackEdApp
 {
-   int originalDesktopWidth;
-   int originalDesktopHeight;
-
    SDL_Window *window;
    SDL_Renderer *renderer;
 
@@ -30,6 +27,7 @@ struct HackEdApp
    struct String folderPreferences;
 
    bool showDemoWindow;
+   bool showSystemInfo;
 };
 
 static void appCleanResources(struct HackEdApp *const app)
@@ -156,10 +154,6 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
    }
    SDL_zerop(app);
    {
-      SDL_DisplayMode const *const mode = SDL_GetDesktopDisplayMode(SDL_GetPrimaryDisplay());
-      app->originalDesktopWidth = mode->w;
-      app->originalDesktopHeight = mode->h;
-
       app->folderHome = newStringFallback(SDL_GetUserFolder(SDL_FOLDER_HOME), "n/a");
       app->folderDocuments = newStringFallback(SDL_GetUserFolder(SDL_FOLDER_DOCUMENTS), "n/a");
       app->folderApp = newStringFallback(SDL_GetBasePath(), "n/a");
@@ -238,12 +232,37 @@ static void appClearBackground(SDL_Renderer *const renderer)
    SDL_RenderClear(renderer);
 }
 
+static void appShowSystemInfoRow(char const *const title, struct String const *const text)
+{
+   ImGui_TableNextColumn();
+   ImGui_Text("%s", title);
+   ImGui_TableNextColumn();
+   ImGui_Text("%s", text->text);
+}
+
+static void appShowSystemInfo(struct HackEdApp *const app)
+{
+   if (ImGui_Begin("System Info", &app->showSystemInfo, 0))
+   {
+      if (ImGui_BeginTable("System Strings", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY))
+      {
+         ImGui_TableSetupColumn("Info", 0);
+         ImGui_TableSetupColumn("Value", 0);
+         ImGui_TableHeadersRow();
+         appShowSystemInfoRow("User Home", &app->folderHome);
+         appShowSystemInfoRow("User Documents", &app->folderDocuments);
+         appShowSystemInfoRow("App Folder", &app->folderApp);
+         appShowSystemInfoRow("App Preferences", &app->folderPreferences);
+         ImGui_EndTable();
+      }
+      ImGui_End();
+   }
+}
+
 SDL_AppResult SDL_AppIterate(void *const appstate)
 {
    struct HackEdApp *const app = appstate;
    SDL_AppResult appResult = SDL_APP_CONTINUE;
-
-   // static bool showSystemInfo = false;
 
    {
       cImGui_ImplSDLRenderer3_NewFrame();
@@ -263,6 +282,7 @@ SDL_AppResult SDL_AppIterate(void *const appstate)
          }
          if (ImGui_BeginMenu("About"))
          {
+            ImGui_Checkbox("Show System Info", &app->showSystemInfo);
             ImGui_Checkbox("Demo Window", &app->showDemoWindow);
             ImGui_EndMenu();
          }
@@ -272,6 +292,10 @@ SDL_AppResult SDL_AppIterate(void *const appstate)
       if (app->showDemoWindow)
       {
          ImGui_ShowDemoWindow(&app->showDemoWindow);
+      }
+      if (app->showSystemInfo)
+      {
+         appShowSystemInfo(app);
       }
 
       ImGui_Render();
