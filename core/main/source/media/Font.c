@@ -29,7 +29,7 @@ ValidationResult fontValidate(Font const *const font)
    if ((font->codepoints != NULL) && (font->codepointCount > 0))
    {
       Codepoint lastCodepoint = font->codepoints[0].codepoint;
-      PixelRect bitmapRect = {.size = font->atlas.size, .topLeft = {.x = 0, .y = 0}};
+      PixelRect const bitmapRect = {.size = font->atlas.size, .topLeft = {.x = 0, .y = 0}};
       bool sorted = true;
       bool unique = true;
       bool inside = true;
@@ -69,7 +69,7 @@ ValidationResult fontValidate(Font const *const font)
 
 static void swapCodepointEntries(FontCodepointEntry *const entries, size_t const a, size_t const b)
 {
-   FontCodepointEntry temp = entries[a];
+   FontCodepointEntry const temp = entries[a];
    entries[a] = entries[b];
    entries[b] = temp;
 }
