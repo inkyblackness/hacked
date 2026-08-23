@@ -36,13 +36,13 @@ bool pixelSpaceAreaContainsRect(PixelRect const area, PixelRect const rect)
    {
       return false;
    }
-   PixelAxisOffset areaRight = (PixelAxisOffset)area.topLeft.x + (PixelAxisOffset)area.size.width;
-   PixelAxisOffset rectRight = (PixelAxisOffset)rect.topLeft.x + (PixelAxisOffset)rect.size.width;
+   PixelAxisOffset const areaRight = (PixelAxisOffset)area.topLeft.x + (PixelAxisOffset)area.size.width;
+   PixelAxisOffset const rectRight = (PixelAxisOffset)rect.topLeft.x + (PixelAxisOffset)rect.size.width;
    if (areaRight < rectRight)
    {
       return false;
    }
-   PixelAxisOffset areaBottom = (PixelAxisOffset)area.topLeft.y + (PixelAxisOffset)area.size.height;
-   PixelAxisOffset rectBottom = (PixelAxisOffset)rect.topLeft.y + (PixelAxisOffset)rect.size.height;
+   PixelAxisOffset const areaBottom = (PixelAxisOffset)area.topLeft.y + (PixelAxisOffset)area.size.height;
+   PixelAxisOffset const rectBottom = (PixelAxisOffset)rect.topLeft.y + (PixelAxisOffset)rect.size.height;
    return areaBottom >= rectBottom;
 }

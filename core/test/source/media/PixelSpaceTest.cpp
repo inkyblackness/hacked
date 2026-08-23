@@ -69,6 +69,85 @@ TEST(PixelSpaceTest, validateSizeTooBig)
    assertResultMessages(result, {"height above limit"});
 }
 
-// TODO: write tests for area contains rect
+TEST(PixelSpaceTest, areaContainsRectWithin)
+{
+   PixelRect area = {};
+   area.topLeft.x = 100;
+   area.topLeft.y = 200;
+   area.size.width = 20;
+   area.size.height = 30;
+   EXPECT_TRUE(pixelSpaceAreaContainsRect(area, area)) << "area should contain itself";
+   PixelRect smaller = area;
+   smaller.topLeft.x += 10;
+   smaller.topLeft.y += 10;
+   smaller.size.width -= 10;
+   smaller.size.height -= 10;
+   EXPECT_TRUE(pixelSpaceAreaContainsRect(area, smaller)) << "smaller area should be contained";
+}
+
+TEST(PixelSpaceTest, areaContainsRectOverlapFailures)
+{
+   PixelRect area = {};
+   area.topLeft.x = 100;
+   area.topLeft.y = 200;
+   area.size.width = 20;
+   area.size.height = 30;
+   {
+      PixelRect overlap = area;
+      overlap.topLeft.y -= 1;
+      EXPECT_FALSE(pixelSpaceAreaContainsRect(area, overlap)) << "rect above should not be contained";
+   }
+   {
+      PixelRect overlap = area;
+      overlap.topLeft.x -= 1;
+      EXPECT_FALSE(pixelSpaceAreaContainsRect(area, overlap)) << "rect left should not be contained";
+   }
+   {
+      PixelRect overlap = area;
+      overlap.size.width += 1;
+      EXPECT_FALSE(pixelSpaceAreaContainsRect(area, overlap)) << "rect right should not be contained";
+   }
+   {
+      PixelRect overlap = area;
+      overlap.size.height += 1;
+      EXPECT_FALSE(pixelSpaceAreaContainsRect(area, overlap)) << "rect below should not be contained";
+   }
+}
+
+TEST(PixelSpaceTest, areaContainsRectOutsideFailures)
+{
+   PixelRect area = {};
+   area.topLeft.x = 100;
+   area.topLeft.y = 200;
+   area.size.width = 20;
+   area.size.height = 30;
+   PixelSize oneByOne = {};
+   oneByOne.width = 1;
+   oneByOne.height = 1;
+   {
+      PixelRect outside = area;
+      outside.size = oneByOne;
+      outside.topLeft.y -= 1;
+      EXPECT_FALSE(pixelSpaceAreaContainsRect(area, outside)) << "rect above should not be contained";
+   }
+   {
+      PixelRect outside = area;
+      outside.size = oneByOne;
+      outside.topLeft.x -= 1;
+      EXPECT_FALSE(pixelSpaceAreaContainsRect(area, outside)) << "rect left should not be contained";
+   }
+   {
+      PixelRect outside = area;
+      outside.size = oneByOne;
+      outside.topLeft.x += area.size.width;
+      EXPECT_FALSE(pixelSpaceAreaContainsRect(area, outside)) << "rect right should not be contained";
+   }
+   {
+      PixelRect outside = area;
+      outside.size = oneByOne;
+      outside.topLeft.y += area.size.height;
+      EXPECT_FALSE(pixelSpaceAreaContainsRect(area, outside)) << "rect below should not be contained";
+   }
+}
 
 }
