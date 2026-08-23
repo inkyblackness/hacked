@@ -38,7 +38,7 @@ target_include_directories(DearImGui
         PUBLIC
         ${dcimgui_SOURCE_DIR}
         ${dcimgui_SOURCE_DIR}/backends
-        ${dearimgui_SOURCE_DIR} # TODO Public as long as there is no local IMGUI_USER_CONFIG
+        ${dearimgui_SOURCE_DIR} # Needed public because imconfig.h is only in that directory, always included.
         PRIVATE
         ${dearimgui_SOURCE_DIR}/backends
 )
