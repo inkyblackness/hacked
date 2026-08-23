@@ -1,10 +1,10 @@
 #pragma once
 
-#include <stdbool.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <stdbool.h>
 
 #define VALIDATION_RESULT_MAX_MESSAGES 10
 
@@ -28,7 +28,7 @@ typedef struct
  * @param result the result to check
  * @return true if there are issues, false otherwise
  */
-extern bool validationResultHasFailure(ValidationResult const *result);
+[[nodiscard]] extern bool validationResultHasFailure(ValidationResult const *result);
 
 /**
  * Add a validation message to the result.

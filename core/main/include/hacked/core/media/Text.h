@@ -1,11 +1,11 @@
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <stddef.h>
+#include <stdint.h>
 
 /**
  * Codepoint values must be Unicode scalar values: @code 0x0000..0xD7FF@endcode or @code 0xE000..0x10FFFF@endcode.

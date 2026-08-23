@@ -1,14 +1,14 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 
 #include "hacked/core/media/PixelSpace.h"
 #include "hacked/core/system/Validation.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 typedef struct
 {
@@ -19,7 +19,7 @@ typedef struct
    size_t stride;
 } Bitmap;
 
-extern ValidationResult bitmapValidate(Bitmap const *bitmap);
+[[nodiscard]] extern ValidationResult bitmapValidate(Bitmap const *bitmap);
 
 #ifdef __cplusplus
 }

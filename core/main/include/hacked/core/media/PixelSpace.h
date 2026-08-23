@@ -1,12 +1,12 @@
 #pragma once
 
-#include <stdint.h>
-
-#include "hacked/core/system/Validation.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <stdint.h>
+
+#include "hacked/core/system/Validation.h"
 
 /**
  * Position is an absolute location based on an origin (0).

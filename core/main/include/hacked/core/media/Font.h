@@ -1,14 +1,14 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdbool.h>
 
 #include "hacked/core/media/Bitmap.h"
 #include "hacked/core/media/Text.h"
 #include "hacked/core/system/Validation.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 typedef struct
 {
@@ -47,7 +47,7 @@ typedef struct Font
  */
 extern void fontRelease(Font const **fontRef);
 
-extern ValidationResult fontValidate(Font const *font);
+[[nodiscard]] extern ValidationResult fontValidate(Font const *font);
 
 extern void fontSortCodepoints(FontCodepointEntry *entries, size_t count);
 
@@ -58,7 +58,7 @@ extern void fontSortCodepoints(FontCodepointEntry *entries, size_t count);
  * @param codepoint the codepoint to find
  * @return the entry, if existing, or NULL
  */
-extern FontCodepointEntry const *fontFindCodepointEntry(Font const *font, Codepoint codepoint);
+[[nodiscard]] extern FontCodepointEntry const *fontFindCodepointEntry(Font const *font, Codepoint codepoint);
 
 #ifdef __cplusplus
 }
