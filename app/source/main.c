@@ -8,6 +8,8 @@
 #include "dcimgui_impl_sdl3.h"
 #include "dcimgui_impl_sdlrenderer3.h"
 
+#include "hacked/infrastructure/compliance/Licenses.h"
+
 struct String
 {
    char *text;
@@ -24,8 +26,9 @@ struct HackEdApp
    struct String folderApp;
    struct String folderPreferences;
 
-   bool showDemoWindow;
+   bool showLicenses;
    bool showSystemInfo;
+   bool showDemoWindow;
 };
 
 static void appCleanResources(struct HackEdApp *const app)
@@ -233,9 +236,36 @@ static void appShowSystemInfoRow(char const *const title, struct String const *c
    ImGui_Text("%s", text->text);
 }
 
+static void appShowLicenses(struct HackEdApp *const app)
+{
+   if (ImGui_Begin("Licenses", &app->showLicenses, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_HorizontalScrollbar))
+   {
+      if (ImGui_TreeNodeEx("System Shock", ImGuiTreeNodeFlags_DefaultOpen))
+      {
+         ImGui_Text("System Shock by Night Dive Studios, LLC.\nOriginally by Looking Glass Technologies");
+         ImGui_TreePop();
+      }
+      size_t const count = licensesGetLicenseCount();
+      for (size_t i = 0; i < count; i++)
+      {
+         LicenseInfo const *const info = licensesGetLicense(i);
+         if (ImGui_TreeNode(info->title))
+         {
+            if (info->url != NULL)
+            {
+               ImGui_TextLinkOpenURL(info->url);
+            }
+            ImGui_Text("%s", info->text);
+            ImGui_TreePop();
+         }
+      }
+      ImGui_End();
+   }
+}
+
 static void appShowSystemInfo(struct HackEdApp *const app)
 {
-   if (ImGui_Begin("System Info", &app->showSystemInfo, 0))
+   if (ImGui_Begin("System Info", &app->showSystemInfo, ImGuiWindowFlags_NoSavedSettings))
    {
       if (ImGui_BeginTable("System Strings", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY))
       {
@@ -275,6 +305,7 @@ SDL_AppResult SDL_AppIterate(void *const appstate)
          }
          if (ImGui_BeginMenu("About"))
          {
+            ImGui_Checkbox("Show Licenses", &app->showLicenses);
             ImGui_Checkbox("Show System Info", &app->showSystemInfo);
             ImGui_Checkbox("Demo Window", &app->showDemoWindow);
             ImGui_EndMenu();
@@ -285,6 +316,10 @@ SDL_AppResult SDL_AppIterate(void *const appstate)
       if (app->showDemoWindow)
       {
          ImGui_ShowDemoWindow(&app->showDemoWindow);
+      }
+      if (app->showLicenses)
+      {
+         appShowLicenses(app);
       }
       if (app->showSystemInfo)
       {

@@ -53,6 +53,25 @@ if (NOT DOS)
     gtest_add_tests(TARGET hacked-core-test EXTRA_ARGS --gtest_shuffle SKIP_DEPENDENCY)
 endif ()
 
+file(GLOB_RECURSE LIB_INFRASTRUCTURE_SOURCES "${PROJECT_SOURCE_DIR}/infrastructure/main/source/*.c")
+add_library(hacked-infrastructure STATIC ${LIB_INFRASTRUCTURE_SOURCES})
+target_include_directories(hacked-infrastructure PUBLIC "${PROJECT_SOURCE_DIR}/infrastructure/main/include")
+target_link_libraries(hacked-infrastructure
+        PRIVATE
+        BuildRules::common
+)
+
+if (NOT DOS)
+    file(GLOB_RECURSE TEST_INFRASTRUCTURE_SOURCES "${PROJECT_SOURCE_DIR}/infrastructure/test/source/*.cpp")
+    add_executable(hacked-infrastructure-test ${TEST_INFRASTRUCTURE_SOURCES})
+    target_link_libraries(hacked-infrastructure-test
+            hacked-infrastructure
+            BuildRules::common
+            GTest::gmock_main
+    )
+    gtest_add_tests(TARGET hacked-infrastructure-test EXTRA_ARGS --gtest_shuffle SKIP_DEPENDENCY)
+endif ()
+
 if (WIN32)
     enable_language(RC)
     set(APP_GUI_WIN_RESOURCES app/mswin/hacked.rc)
@@ -68,6 +87,7 @@ if (EMSCRIPTEN)
 endif ()
 target_link_libraries(hacked
         hacked-core
+        hacked-infrastructure
         Version::all
         BuildRules::common
         DearImGui
