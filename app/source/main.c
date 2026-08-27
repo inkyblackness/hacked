@@ -228,14 +228,6 @@ static void appClearBackground(SDL_Renderer *const renderer)
    SDL_RenderClear(renderer);
 }
 
-static void appShowSystemInfoRow(char const *const title, struct String const *const text)
-{
-   ImGui_TableNextColumn();
-   ImGui_Text("%s", title);
-   ImGui_TableNextColumn();
-   ImGui_Text("%s", text->text);
-}
-
 static void appShowLicenses(struct HackEdApp *const app)
 {
    if (ImGui_Begin("Licenses", &app->showLicenses, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_HorizontalScrollbar))
@@ -261,6 +253,14 @@ static void appShowLicenses(struct HackEdApp *const app)
       }
       ImGui_End();
    }
+}
+
+static void appShowSystemInfoRow(char const *const title, struct String const *const text)
+{
+   ImGui_TableNextColumn();
+   ImGui_Text("%s", title);
+   ImGui_TableNextColumn();
+   ImGui_Text("%s", text->text);
 }
 
 static void appShowSystemInfo(struct HackEdApp *const app)
