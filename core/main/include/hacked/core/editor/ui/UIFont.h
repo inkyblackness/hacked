@@ -1,12 +1,12 @@
 #pragma once
 
-#include <stdint.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern int32_t sampleReturn(int32_t input);
+#include "hacked/core/media/Font.h"
+
+[[nodiscard]] extern Font const *uiFont();
 
 #ifdef __cplusplus
 }

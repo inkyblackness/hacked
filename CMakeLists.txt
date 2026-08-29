@@ -18,6 +18,7 @@ if (NOT DOS)
     include(cmake/modules/TestSupport.cmake)
 endif ()
 include(cmake/modules/SimpleDirectMediaLayer.cmake)
+include(cmake/modules/DearImGui.cmake)
 include(cmake/modules/BuildRules.cmake)
 include(cmake/modules/Version.cmake)
 
@@ -30,14 +31,45 @@ target_link_libraries(hacked-core
 )
 
 if (NOT DOS)
+    file(GLOB_RECURSE TEST_SUPPORT_CORE_SOURCES "${PROJECT_SOURCE_DIR}/core/test-support/source/*.cpp")
+    add_library(hacked-core-test-support STATIC ${TEST_SUPPORT_CORE_SOURCES})
+    target_include_directories(hacked-core-test-support PUBLIC "${PROJECT_SOURCE_DIR}/core/test-support/include")
+    target_link_libraries(hacked-core-test-support
+            PUBLIC
+            hacked-core
+            GTest::gmock
+            PRIVATE
+            BuildRules::common
+    )
+
     file(GLOB_RECURSE TEST_CORE_SOURCES "${PROJECT_SOURCE_DIR}/core/test/source/*.cpp")
     add_executable(hacked-core-test ${TEST_CORE_SOURCES})
     target_link_libraries(hacked-core-test
             hacked-core
+            hacked-core-test-support
             BuildRules::common
             GTest::gmock_main
     )
-    gtest_add_tests(TARGET hacked-core-test EXTRA_ARGS --gtest_shuffle)
+    gtest_add_tests(TARGET hacked-core-test EXTRA_ARGS --gtest_shuffle SKIP_DEPENDENCY)
+endif ()
+
+file(GLOB_RECURSE LIB_INFRASTRUCTURE_SOURCES "${PROJECT_SOURCE_DIR}/infrastructure/main/source/*.c")
+add_library(hacked-infrastructure STATIC ${LIB_INFRASTRUCTURE_SOURCES})
+target_include_directories(hacked-infrastructure PUBLIC "${PROJECT_SOURCE_DIR}/infrastructure/main/include")
+target_link_libraries(hacked-infrastructure
+        PRIVATE
+        BuildRules::common
+)
+
+if (NOT DOS)
+    file(GLOB_RECURSE TEST_INFRASTRUCTURE_SOURCES "${PROJECT_SOURCE_DIR}/infrastructure/test/source/*.cpp")
+    add_executable(hacked-infrastructure-test ${TEST_INFRASTRUCTURE_SOURCES})
+    target_link_libraries(hacked-infrastructure-test
+            hacked-infrastructure
+            BuildRules::common
+            GTest::gmock_main
+    )
+    gtest_add_tests(TARGET hacked-infrastructure-test EXTRA_ARGS --gtest_shuffle SKIP_DEPENDENCY)
 endif ()
 
 if (WIN32)
@@ -55,8 +87,10 @@ if (EMSCRIPTEN)
 endif ()
 target_link_libraries(hacked
         hacked-core
+        hacked-infrastructure
         Version::all
         BuildRules::common
+        DearImGui
         SDL3::SDL3-static
 )
 
