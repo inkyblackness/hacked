@@ -8,6 +8,8 @@
 #include "dcimgui_impl_sdl3.h"
 #include "dcimgui_impl_sdlrenderer3.h"
 
+#include "flecs.h"
+
 #include "hacked/infrastructure/compliance/Licenses.h"
 
 struct String
@@ -18,6 +20,8 @@ struct String
 
 struct HackEdApp
 {
+   ecs_world_t *world;
+
    SDL_Window *window;
    SDL_Renderer *renderer;
 
@@ -37,6 +41,8 @@ static void appCleanResources(struct HackEdApp *const app)
    SDL_free(app->folderDocuments.text);
    SDL_free(app->folderApp.text);
    SDL_free(app->folderPreferences.text);
+
+   ecs_fini(app->world);
 }
 
 static float appGetBaseUIScale(SDL_Window *const window)
@@ -149,6 +155,9 @@ SDL_AppResult SDL_AppInit(void **const appstate, int const argc, char *argv[])
       return appFailSDL("failed to allocate application memory");
    }
    SDL_zerop(app);
+   {
+      app->world = ecs_init();
+   }
    {
       app->folderHome = newStringFallback(SDL_GetUserFolder(SDL_FOLDER_HOME), "n/a");
       app->folderDocuments = newStringFallback(SDL_GetUserFolder(SDL_FOLDER_DOCUMENTS), "n/a");
