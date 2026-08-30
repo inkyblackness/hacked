@@ -12,6 +12,8 @@
 
 #include "hacked/infrastructure/compliance/Licenses.h"
 
+#include <float.h>
+
 struct String
 {
    char *text;
@@ -20,6 +22,7 @@ struct String
 
 struct HackEdApp
 {
+   uint64_t lastIterateTick;
    ecs_world_t *world;
 
    SDL_Window *window;
@@ -291,10 +294,25 @@ static void appShowSystemInfo(struct HackEdApp *const app)
    }
 }
 
+static float appIterateDeltaTime(struct HackEdApp *const app)
+{
+   static float const nanosPerSecond = 1000000000.0f;
+   uint64_t const now = SDL_GetTicksNS();
+   if (app->lastIterateTick == 0)
+   {
+      app->lastIterateTick = now;
+   }
+   float const deltaTime = (float)(now - app->lastIterateTick) / nanosPerSecond;
+   app->lastIterateTick = now;
+   return (deltaTime > 0.0f) ? deltaTime : FLT_MIN;
+}
+
 SDL_AppResult SDL_AppIterate(void *const appstate)
 {
    struct HackEdApp *const app = appstate;
    SDL_AppResult appResult = SDL_APP_CONTINUE;
+
+   ecs_progress(app->world, appIterateDeltaTime(app));
 
    {
       cImGui_ImplSDLRenderer3_NewFrame();
