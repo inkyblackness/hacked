@@ -19,6 +19,7 @@ if (NOT DOS)
 endif ()
 include(cmake/modules/SimpleDirectMediaLayer.cmake)
 include(cmake/modules/DearImGui.cmake)
+include(cmake/modules/Flecs.cmake)
 include(cmake/modules/BuildRules.cmake)
 include(cmake/modules/Version.cmake)
 
@@ -26,6 +27,8 @@ file(GLOB_RECURSE LIB_CORE_SOURCES "${PROJECT_SOURCE_DIR}/core/main/source/*.c")
 add_library(hacked-core STATIC ${LIB_CORE_SOURCES})
 target_include_directories(hacked-core PUBLIC "${PROJECT_SOURCE_DIR}/core/main/include")
 target_link_libraries(hacked-core
+        PUBLIC
+        flecs_static
         PRIVATE
         BuildRules::common
 )
